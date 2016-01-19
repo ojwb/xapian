@@ -1,7 +1,7 @@
 /** @file constants.h
  * @brief Constants in the Xapian namespace
  */
-/* Copyright (C) 2012,2013,2014 Olly Betts
+/* Copyright (C) 2012,2013,2014,2015 Olly Betts
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -127,7 +127,7 @@ const int DB_DANGEROUS		 = 0x10;
  *     (again, possible with inexact statistics).
  *   - Currently the list of which values are used in each document is stored
  *     in the termlist table, so things like iterating the values in a document
- *     require it (which is probably reasonably since iterating the terms in
+ *     require it (which is probably reasonable since iterating the terms in
  *     a document requires it).
  *
  *  You can also convert an existing database to not have a termlist table
@@ -231,6 +231,31 @@ const int DBCHECK_SHOW_STATS = 8;
  *      committed).
  */
 const int DBCHECK_FIX = 16;
+
+
+/** Use the same document ids in the output as in the input(s).
+ *
+ *  By default compaction renumbers the document ids in the output database,
+ *  currently by applying the same offset to all the document ids in a
+ *  particular source database.  If this flag is specified, then this
+ *  renumbering doesn't happen, but all the document ids must be unique over
+ *  all source databases.  Currently the ranges of document ids in each source
+ *  must not overlap either, though this restriction may be removed in the
+ *  future.
+ */
+const int DBCOMPACT_NO_RENUMBER = 4;
+
+/** If merging more than 3 databases, merge the postlists in multiple passes.
+ *
+ *  This is generally faster but requires more disk space for temporary files.
+ */
+const int DBCOMPACT_MULTIPASS = 8;
+
+/** Produce a single-file database.
+ *
+ *  Only supported by the glass backend currently.
+ */
+const int DBCOMPACT_SINGLE_FILE = 16;
 
 }
 

@@ -3,7 +3,7 @@
  */
 /* Copyright 1999,2000,2001 BrightStation PLC
  * Copyright 2002 Ananova Ltd
- * Copyright 2002,2003,2004,2005,2007,2008,2009,2011,2013,2014 Olly Betts
+ * Copyright 2002,2003,2004,2005,2007,2008,2009,2011,2013,2014,2015 Olly Betts
  * Copyright 2007,2009 Lemur Consulting Ltd
  *
  * This program is free software; you can redistribute it and/or
@@ -74,6 +74,11 @@ class GlassPostListTable : public GlassTable {
 	      doclen_pl()
 	{ }
 
+	GlassPostListTable(int fd, off_t offset_, bool readonly_)
+	    : GlassTable("postlist", fd, offset_, readonly_),
+	      doclen_pl()
+	{ }
+
 	void open(int flags_, const RootInfo & root_info,
 		  glass_revision_number_t rev) {
 	    doclen_pl.reset(0);
@@ -124,6 +129,9 @@ class GlassPostListTable : public GlassTable {
 	/** Check if document @a did exists. */
 	bool document_exists(Xapian::docid did,
 			     Xapian::Internal::intrusive_ptr<const GlassDatabase> db) const;
+
+	void get_used_docid_range(Xapian::docid & first,
+				  Xapian::docid & last) const;
 };
 
 /** A postlist in a glass database.

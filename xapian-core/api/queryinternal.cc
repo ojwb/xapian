@@ -1,7 +1,7 @@
 /** @file queryinternal.cc
  * @brief Xapian::Query internals
  */
-/* Copyright (C) 2007,2008,2009,2010,2011,2012,2013,2014,2015 Olly Betts
+/* Copyright (C) 2007,2008,2009,2010,2011,2012,2013,2014,2015,2016 Olly Betts
  * Copyright (C) 2008,2009 Lemur Consulting Ltd
  *
  * This program is free software; you can redistribute it and/or
@@ -78,18 +78,8 @@ namespace Internal {
  *  selected.
  */
 struct CmpMaxOrTerms {
-    /** Return true if and only if a has a strictly greater termweight than b;
-     *  with the proviso that if the termfrequency of a or b is 0, then the
-     *  termweight is considered to be 0.
-     *
-     *  We use termfreq_max() because we really don't want to exclude a
-     *  postlist which has a low but non-zero termfrequency: the estimate
-     *  is quite likely to be zero in this case.
-     */
+    /** Return true if and only if a has a strictly greater termweight than b. */
     bool operator()(const PostList *a, const PostList *b) {
-	if (a->get_termfreq_max() == 0) return false;
-	if (b->get_termfreq_max() == 0) return true;
-
 #if (defined(__i386__) && !defined(__SSE2_MATH__)) || defined(__mc68000__) || defined(__mc68010__) || defined(__mc68020__) || defined(__mc68030__)
 	// On some architectures, most common of which is x86, floating point
 	// values are calculated and stored in registers with excess precision.
@@ -164,14 +154,19 @@ class OrContext : public Context {
     explicit OrContext(size_t reserve) : Context(reserve) { }
 
     /// Select the best set_size postlists from the last out_of added.
-    void select_elite_set(size_t set_size, size_t out_of);
+    void select_elite_set(QueryOptimiser * qopt,
+			  size_t set_size, size_t out_of);
+
+    /// Select the set_size postlists with the highest term frequency.
+    void select_most_frequent(QueryOptimiser * qopt, size_t set_size);
 
     PostList * postlist(QueryOptimiser* qopt);
     PostList * postlist_max(QueryOptimiser* qopt);
 };
 
 void
-OrContext::select_elite_set(size_t set_size, size_t out_of)
+OrContext::select_elite_set(QueryOptimiser * qopt,
+			    size_t set_size, size_t out_of)
 {
     // Call recalc_maxweight() as otherwise get_maxweight()
     // may not be valid before next() or skip_to()
@@ -179,8 +174,36 @@ OrContext::select_elite_set(size_t set_size, size_t out_of)
     for_each(begin, pls.end(), mem_fun(&PostList::recalc_maxweight));
 
     nth_element(begin, begin + set_size - 1, pls.end(), CmpMaxOrTerms());
-    for_each(begin + set_size, pls.end(), delete_ptr<PostList>());
+    const PostList * hint_pl = qopt->get_hint_postlist();
+    for_each(begin + set_size, pls.end(),
+	[&qopt, &hint_pl](const PostList * p) {
+	    if (rare(p == hint_pl)) {
+		qopt->take_hint_ownership();
+		hint_pl = NULL;
+	    } else {
+		delete p;
+	    }
+	});
     pls.resize(pls.size() - out_of + set_size);
+}
+
+void
+OrContext::select_most_frequent(QueryOptimiser * qopt, size_t set_size)
+{
+    vector<PostList*>::iterator begin = pls.begin();
+    nth_element(begin, begin + set_size - 1, pls.end(),
+		ComparePostListTermFreqAscending());
+    const PostList * hint_pl = qopt->get_hint_postlist();
+    for_each(begin + set_size, pls.end(),
+	[&qopt, &hint_pl](const PostList * p) {
+	    if (rare(p == hint_pl)) {
+		qopt->take_hint_ownership();
+		hint_pl = NULL;
+	    } else {
+		delete p;
+	    }
+	});
+    pls.resize(set_size);
 }
 
 PostList *
@@ -358,7 +381,7 @@ AndContext::postlist(QueryOptimiser* qopt)
 Query::Internal::~Internal() { }
 
 size_t
-Query::Internal::get_num_subqueries() const
+Query::Internal::get_num_subqueries() const XAPIAN_NOEXCEPT
 {
     return 0;
 }
@@ -375,7 +398,7 @@ Query::Internal::gather_terms(void *) const
 }
 
 Xapian::termcount
-Query::Internal::get_length() const
+Query::Internal::get_length() const XAPIAN_NOEXCEPT
 {
     return 0;
 }
@@ -391,12 +414,13 @@ Query::Internal::unserialise(const char ** p, const char * end,
 	case 4: case 5: case 6: case 7: { // Multi-way branch
 	    size_t n_subqs = ch & 0x07;
 	    if (n_subqs == 0) {
-		n_subqs = decode_length(p, end, false) + 8;
+		decode_length(p, end, n_subqs);
+		n_subqs += 8;
 	    }
 	    unsigned char code = (ch >> 3) & 0x0f;
 	    Xapian::termcount parameter = 0;
 	    if (code >= 13)
-		parameter = decode_length(p, end, false);
+		decode_length(p, end, parameter);
 	    Xapian::Internal::QueryBranch * result;
 	    switch (code) {
 		case 0: // OP_AND
@@ -447,8 +471,10 @@ Query::Internal::unserialise(const char ** p, const char * end,
 	}
 	case 2: case 3: { // Term
 	    size_t len = ch & 0x0f;
-	    if (len == 0)
-		len = decode_length(p, end, false) + 16;
+	    if (len == 0) {
+		decode_length(p, end, len);
+		len += 16;
+	    }
 	    if (size_t(end - *p) < len)
 		throw SerialisationError("Not enough data");
 	    string term(*p, len);
@@ -458,17 +484,22 @@ Query::Internal::unserialise(const char ** p, const char * end,
 
 	    Xapian::termcount wqf = static_cast<Xapian::termcount>(code > 0);
 	    if (code == 3)
-		wqf = decode_length(p, end, false);
+		decode_length(p, end, wqf);
 
-	    Xapian::termpos pos = code >= 2 ? decode_length(p, end, false) : 0;
+	    Xapian::termpos pos = 0;
+	    if (code >= 2)
+		decode_length(p, end, pos);
 
 	    return new Xapian::Internal::QueryTerm(term, wqf, pos);
 	}
 	case 1: { // OP_VALUE_RANGE or OP_VALUE_GE or OP_VALUE_LE
 	    Xapian::valueno slot = ch & 15;
-	    if (slot == 15)
-		slot = decode_length(p, end, false) + 15;
-	    size_t len = decode_length(p, end, true);
+	    if (slot == 15) {
+		decode_length(p, end, slot);
+		slot += 15;
+	    }
+	    size_t len;
+	    decode_length_and_check(p, end, len);
 	    string begin(*p, len);
 	    *p += len;
 	    if (ch & 0x10) {
@@ -477,7 +508,7 @@ Query::Internal::unserialise(const char ** p, const char * end,
 	    }
 
 	    // OP_VALUE_RANGE
-	    len = decode_length(p, end, true);
+	    decode_length_and_check(p, end, len);
 	    string end_(*p, len);
 	    *p += len;
 	    if (begin.empty()) // FIXME: is this right?
@@ -489,18 +520,24 @@ Query::Internal::unserialise(const char ** p, const char * end,
 		case 0x0b: { // Wildcard
 		    if (*p == end)
 			throw SerialisationError("not enough data");
-		    Xapian::termcount max_expansion = decode_length(p, end,
-								    false);
+		    Xapian::termcount max_expansion;
+		    decode_length(p, end, max_expansion);
+		    if (end - *p < 2)
+			throw SerialisationError("not enough data");
+		    int max_type = static_cast<unsigned char>(*(*p)++);
 		    op combiner = static_cast<op>(*(*p)++);
-		    size_t len = decode_length(p, end, true);
+		    size_t len;
+		    decode_length_and_check(p, end, len);
 		    string pattern(*p, len);
 		    *p += len;
 		    return new Xapian::Internal::QueryWildcard(pattern,
 							       max_expansion,
+							       max_type,
 							       combiner);
 		}
 		case 0x0c: { // PostingSource
-		    size_t len = decode_length(p, end, true);
+		    size_t len;
+		    decode_length_and_check(p, end, len);
 		    string name(*p, len);
 		    *p += len;
 
@@ -512,7 +549,7 @@ Query::Internal::unserialise(const char ** p, const char * end,
 			throw SerialisationError(m);
 		    }
 
-		    len = decode_length(p, end, true);
+		    decode_length_and_check(p, end, len);
 		    PostingSource * source =
 			reg_source->unserialise_with_registry(string(*p, len),
 							      reg);
@@ -526,8 +563,10 @@ Query::Internal::unserialise(const char ** p, const char * end,
 						Query(unserialise(p, end, reg)));
 		}
 		case 0x0e: {
-		    Xapian::termcount wqf = decode_length(p, end, false);
-		    Xapian::termpos pos = decode_length(p, end, false);
+		    Xapian::termcount wqf;
+		    Xapian::termpos pos;
+		    decode_length(p, end, wqf);
+		    decode_length(p, end, pos);
 		    return new Xapian::Internal::QueryTerm(string(), wqf, pos);
 		}
 		case 0x0f:
@@ -570,7 +609,7 @@ Query::Internal::postlist_sub_xor(XorContext& ctx,
 namespace Internal {
 
 Query::op
-QueryTerm::get_type() const
+QueryTerm::get_type() const XAPIAN_NOEXCEPT
 {
     return term.empty() ? Query::LEAF_MATCH_ALL : Query::LEAF_TERM;
 }
@@ -616,7 +655,7 @@ QueryPostingSource::~QueryPostingSource()
 }
 
 Query::op
-QueryPostingSource::get_type() const
+QueryPostingSource::get_type() const XAPIAN_NOEXCEPT
 {
     return Query::LEAF_POSTING_SOURCE;
 }
@@ -638,13 +677,13 @@ QueryScaleWeight::QueryScaleWeight(double factor, const Query & subquery_)
 }
 
 Query::op
-QueryScaleWeight::get_type() const
+QueryScaleWeight::get_type() const XAPIAN_NOEXCEPT
 {
     return Query::OP_SCALE_WEIGHT;
 }
 
 size_t
-QueryScaleWeight::get_num_subqueries() const
+QueryScaleWeight::get_num_subqueries() const XAPIAN_NOEXCEPT
 {
     return 1;
 }
@@ -712,8 +751,25 @@ QueryValueRange::postlist(QueryOptimiser *qopt, double factor) const
     const Xapian::Database::Internal & db = qopt->db;
     const string & lb = db.get_value_lower_bound(slot);
     // If lb.empty(), the backend doesn't provide value bounds.
-    if (!lb.empty() && (end < lb || begin > db.get_value_upper_bound(slot))) {
-	RETURN(new EmptyPostList);
+    if (!lb.empty()) {
+	if (end < lb) {
+	    RETURN(new EmptyPostList);
+	}
+	const string & ub = db.get_value_upper_bound(slot);
+	if (begin > ub) {
+	    RETURN(new EmptyPostList);
+	}
+	if (end >= ub) {
+	    // If begin <= lb too, then the range check isn't needed, but we do
+	    // still need to consider which documents have a value set in this
+	    // slot.  If this value is set for all documents, we can replace it
+	    // with the MatchAll postlist, which is especially efficient if
+	    // there are no gaps in the docids.
+	    if (begin <= lb && db.get_value_freq(slot) == db.get_doccount()) {
+		RETURN(db.open_post_list(string()));
+	    }
+	    RETURN(new ValueGePostList(&db, slot, begin));
+	}
     }
     RETURN(new ValueRangePostList(&db, slot, begin, end));
 }
@@ -734,7 +790,7 @@ QueryValueRange::serialise(string & result) const
 }
 
 Query::op
-QueryValueRange::get_type() const
+QueryValueRange::get_type() const XAPIAN_NOEXCEPT
 {
     return Query::OP_VALUE_RANGE;
 }
@@ -758,8 +814,22 @@ QueryValueLE::postlist(QueryOptimiser *qopt, double factor) const
     if (factor != 0.0)
 	qopt->inc_total_subqs();
     const Xapian::Database::Internal & db = qopt->db;
-    if (limit < db.get_value_lower_bound(slot)) {
-	RETURN(new EmptyPostList);
+    const string & lb = db.get_value_lower_bound(slot);
+    // If lb.empty(), the backend doesn't provide value bounds.
+    if (!lb.empty()) {
+	if (limit < lb) {
+	    RETURN(new EmptyPostList);
+	}
+	if (limit >= db.get_value_upper_bound(slot)) {
+	    // The range check isn't needed, but we do still need to consider
+	    // which documents have a value set in this slot.  If this value is
+	    // set for all documents, we can replace it with the MatchAll
+	    // postlist, which is especially efficient if there are no gaps in
+	    // the docids.
+	    if (db.get_value_freq(slot) == db.get_doccount()) {
+		RETURN(db.open_post_list(string()));
+	    }
+	}
     }
     RETURN(new ValueRangePostList(&db, slot, string(), limit));
 }
@@ -781,7 +851,7 @@ QueryValueLE::serialise(string & result) const
 }
 
 Query::op
-QueryValueLE::get_type() const
+QueryValueLE::get_type() const XAPIAN_NOEXCEPT
 {
     return Query::OP_VALUE_LE;
 }
@@ -804,8 +874,21 @@ QueryValueGE::postlist(QueryOptimiser *qopt, double factor) const
 	qopt->inc_total_subqs();
     const Xapian::Database::Internal & db = qopt->db;
     const string & lb = db.get_value_lower_bound(slot);
-    if (!lb.empty() && limit > db.get_value_upper_bound(slot)) {
-	RETURN(new EmptyPostList);
+    // If lb.empty(), the backend doesn't provide value bounds.
+    if (!lb.empty()) {
+	if (limit > db.get_value_upper_bound(slot)) {
+	    RETURN(new EmptyPostList);
+	}
+	if (limit < lb) {
+	    // The range check isn't needed, but we do still need to consider
+	    // which documents have a value set in this slot.  If this value is
+	    // set for all documents, we can replace it with the MatchAll
+	    // postlist, which is especially efficient if there are no gaps in
+	    // the docids.
+	    if (db.get_value_freq(slot) == db.get_doccount()) {
+		RETURN(db.open_post_list(string()));
+	    }
+	}
     }
     RETURN(new ValueGePostList(&db, slot, limit));
 }
@@ -824,7 +907,7 @@ QueryValueGE::serialise(string & result) const
 }
 
 Query::op
-QueryValueGE::get_type() const
+QueryValueGE::get_type() const XAPIAN_NOEXCEPT
 {
     return Query::OP_VALUE_GE;
 }
@@ -863,16 +946,30 @@ QueryWildcard::postlist(QueryOptimiser * qopt, double factor) const
 	t->next();
 	if (t->at_end())
 	    break;
-	if (expansions_left-- == 0) {
-	    string msg("Wildcard ");
-	    msg += pattern;
-	    msg += "* expands to more than ";
-	    msg += str(max_expansion);
-	    msg += " terms";
-	    throw Xapian::WildcardError(msg);
+	if (max_type < Xapian::Query::WILDCARD_LIMIT_MOST_FREQUENT) {
+	    if (expansions_left-- == 0) {
+		if (max_type == Xapian::Query::WILDCARD_LIMIT_FIRST)
+		    break;
+		string msg("Wildcard ");
+		msg += pattern;
+		msg += "* expands to more than ";
+		msg += str(max_expansion);
+		msg += " terms";
+		throw Xapian::WildcardError(msg);
+	    }
 	}
 	const string & term = t->get_termname();
 	ctx.add_postlist(qopt->open_lazy_post_list(term, 1, or_factor));
+    }
+
+    if (max_type == Xapian::Query::WILDCARD_LIMIT_MOST_FREQUENT) {
+	// FIXME: open_lazy_post_list() results in the term getting registered
+	// for stats, so we still incur an avoidable cost from the full
+	// expansion size of the wildcard, which is most likely to be visible
+	// with the remote backend.  Perhaps we should split creating the lazy
+	// postlist from registering the term for stats.
+	if (ctx.size() > max_expansion)
+	    ctx.select_most_frequent(qopt, max_expansion);
     }
 
     if (factor != 0.0) {
@@ -900,7 +997,7 @@ QueryWildcard::postlist(QueryOptimiser * qopt, double factor) const
 }
 
 termcount
-QueryWildcard::get_length() const
+QueryWildcard::get_length() const XAPIAN_NOEXCEPT
 {
     // We currently assume wqf is 1 for calculating the synonym's weight
     // since conceptually the synonym is one "virtual" term.  If we were
@@ -914,13 +1011,14 @@ QueryWildcard::serialise(string & result) const
 {
     result += static_cast<char>(0x0b);
     result += encode_length(max_expansion);
+    result += static_cast<unsigned char>(max_type);
     result += static_cast<unsigned char>(combiner);
     result += encode_length(pattern.size());
     result += pattern;
 }
 
 Query::op
-QueryWildcard::get_type() const
+QueryWildcard::get_type() const XAPIAN_NOEXCEPT
 {
     return Query::OP_WILDCARD;
 }
@@ -948,7 +1046,7 @@ QueryWildcard::get_description() const
 }
 
 Xapian::termcount
-QueryBranch::get_length() const
+QueryBranch::get_length() const XAPIAN_NOEXCEPT
 {
     // Sum results from all subqueries.
     Xapian::termcount result = 0;
@@ -1073,7 +1171,7 @@ QueryBranch::do_or_like(OrContext& ctx, QueryOptimiser * qopt, double factor,
     }
 
     if (elite_set_size && elite_set_size < subqueries.size()) {
-	ctx.select_elite_set(elite_set_size, subqueries.size());
+	ctx.select_elite_set(qopt, elite_set_size, subqueries.size());
 	// FIXME: not right!
     }
 }
@@ -1121,13 +1219,13 @@ QueryBranch::do_max(QueryOptimiser * qopt, double factor) const
 }
 
 Xapian::Query::op
-QueryBranch::get_type() const
+QueryBranch::get_type() const XAPIAN_NOEXCEPT
 {
     return get_op();
 }
 
 size_t
-QueryBranch::get_num_subqueries() const
+QueryBranch::get_num_subqueries() const XAPIAN_NOEXCEPT
 {
     return subqueries.size();
 }

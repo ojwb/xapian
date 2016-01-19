@@ -1,7 +1,7 @@
 /** @file fdtracker.cc
  * @brief Track leaked file descriptors.
  */
-/* Copyright (C) 2010,2014 Olly Betts
+/* Copyright (C) 2010,2014,2015 Olly Betts
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as

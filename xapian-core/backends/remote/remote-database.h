@@ -1,7 +1,7 @@
 /** @file remote-database.h
  *  @brief RemoteDatabase is the baseclass for remote database implementations.
  */
-/* Copyright (C) 2006,2007,2009,2010,2011,2014 Olly Betts
+/* Copyright (C) 2006,2007,2009,2010,2011,2014,2015 Olly Betts
  * Copyright (C) 2007,2009,2010 Lemur Consulting Ltd
  *
  * This program is free software; you can redistribute it and/or
@@ -22,6 +22,7 @@
 #ifndef XAPIAN_INCLUDED_REMOTE_DATABASE_H
 #define XAPIAN_INCLUDED_REMOTE_DATABASE_H
 
+#include "backends/backends.h"
 #include "backends/database.h"
 #include "api/omenquireinternal.h"
 #include "api/queryinternal.h"
@@ -122,9 +123,6 @@ class RemoteDatabase : public Xapian::Database::Internal {
     double timeout;
 
   public:
-    /// Return this pointer as a RemoteDatabase*.
-    RemoteDatabase * as_remotedatabase();
-
     /// Send a keep-alive message.
     void keep_alive();
 
@@ -146,7 +144,7 @@ class RemoteDatabase : public Xapian::Database::Internal {
      * @param weight_cutoff		Weight cutoff.
      * @param wtscheme			Weighting scheme.
      * @param omrset			The rset.
-     * @param matchspies                The matchspies to use.  NULL if none.
+     * @param matchspies                The matchspies to use.
      */
     void set_query(const Xapian::Query& query,
 		   Xapian::termcount qlen,
@@ -160,7 +158,7 @@ class RemoteDatabase : public Xapian::Database::Internal {
 		   int percent_cutoff, double weight_cutoff,
 		   const Xapian::Weight *wtscheme,
 		   const Xapian::RSet &omrset,
-		   const vector<Xapian::MatchSpy *> & matchspies);
+		   const vector<Xapian::Internal::opt_intrusive_ptr<Xapian::MatchSpy>> & matchspies);
 
     /** Get the stats from the remote server.
      *
@@ -176,7 +174,7 @@ class RemoteDatabase : public Xapian::Database::Internal {
 
     /// Get the MSet from the remote server.
     void get_mset(Xapian::MSet &mset,
-		  const vector<Xapian::MatchSpy *> & matchspies);
+		  const vector<Xapian::Internal::opt_intrusive_ptr<Xapian::MatchSpy>> & matchspies);
 
     /// Get remote metadata key list.
     TermList * open_metadata_keylist(const std::string & prefix) const;
@@ -256,6 +254,11 @@ class RemoteDatabase : public Xapian::Database::Internal {
     void add_spelling(const std::string&, Xapian::termcount) const;
 
     void remove_spelling(const std::string&,  Xapian::termcount freqdec) const;
+
+    int get_backend_info(string * path) const {
+	if (path) *path = context;
+	return BACKEND_REMOTE;
+    }
 };
 
 #endif // XAPIAN_INCLUDED_REMOTE_DATABASE_H

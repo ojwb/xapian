@@ -1,7 +1,7 @@
 /* api_replicate.cc: tests of replication functionality
  *
  * Copyright 2008 Lemur Consulting Ltd
- * Copyright 2009,2010,2011,2012,2013,2014 Olly Betts
+ * Copyright 2009,2010,2011,2012,2013,2014,2015 Olly Betts
  * Copyright 2010 Richard Boulton
  * Copyright 2011 Dan Colish
  *
@@ -36,7 +36,6 @@
 #include "safefcntl.h"
 #include "safesysstat.h"
 #include "safeunistd.h"
-#include "str.h"
 #include "testsuite.h"
 #include "testutils.h"
 #include "unixcmds.h"
@@ -482,9 +481,6 @@ replicate_with_brokenness(Xapian::DatabaseMaster & master,
 
 // Test changesets which are truncated (and therefore invalid).
 DEFINE_TESTCASE(replicate3, replicas) {
-    // FIXME: This currently fails for glass - not worked out what's going on,
-    // but glass replication is going to get further reworked soon anyway.
-    SKIP_TEST_FOR_BACKEND("glass");
     UNSET_MAX_CHANGESETS_AFTERWARDS;
     string tempdir = ".replicatmp";
     mktmpdir(tempdir);

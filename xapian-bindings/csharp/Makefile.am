@@ -59,7 +59,6 @@ XAPIAN_SWIG_CS_SRCS=\
 	generated-csharp/SWIGTYPE_p_std__string.cs \
 	generated-csharp/Registry.cs \
 	generated-csharp/SimpleStopper.cs \
-	generated-csharp/Snipper.cs \
 	generated-csharp/Stem.cs \
 	generated-csharp/StemImplementation.cs \
 	generated-csharp/Stopper.cs \
@@ -164,9 +163,11 @@ dist_exampledata_DATA =\
 	docs/examples/SimpleExpand.cs
 
 docdatadir = $(docdir)/csharp
-dist_docdata_DATA = docs/index.html
+EXTRA_DIST += docs/index.html
 
 if DOCUMENTATION_RULES
+docdata_DATA = docs/index.html
+
 .rst.html:
 	-case "$@" in */*) d=`echo "$@"|sed 's,/[^/]*$$,,'`; $(MKDIR_P) "$$d" ;; esac
 	$(RST2HTML) --exit-status=warning $< $@

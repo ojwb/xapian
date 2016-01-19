@@ -47,6 +47,9 @@ check-inmemory: apitest$(EXEEXT)
 check-multi: apitest$(EXEEXT)
 	$(TESTS_ENVIRONMENT) ./apitest$(EXEEXT) -b multi
 
+check-singlefile: apitest$(EXEEXT)
+	$(TESTS_ENVIRONMENT) ./apitest$(EXEEXT) -b singlefile
+
 if BUILD_BACKEND_REMOTE
 check-remote: check-remoteprog check-remotetcp
 
@@ -86,6 +89,8 @@ check-multi-glass: apitest$(EXEEXT)
 	$(TESTS_ENVIRONMENT) ./apitest$(EXEEXT) -b multi_glass
 check-glass: apitest$(EXEEXT)
 	$(TESTS_ENVIRONMENT) ./apitest$(EXEEXT) -b glass
+check-singlefile-glass: apitest$(EXEEXT)
+	$(TESTS_ENVIRONMENT) ./apitest$(EXEEXT) -b singlefile_glass
 endif
 
 if BUILD_BACKEND_CHERT
@@ -116,6 +121,7 @@ collated_apitest_sources = \
  api_closedb.cc \
  api_collapse.cc \
  api_compact.cc \
+ api_compactold.cc \
  api_db.cc \
  api_generated.cc \
  api_geospatial.cc \
@@ -134,7 +140,7 @@ collated_apitest_sources = \
  api_replicate.cc \
  api_scalability.cc \
  api_serialise.cc \
- api_snipper.cc \
+ api_snippets.cc \
  api_sorting.cc \
  api_spelling.cc \
  api_stem.cc \
@@ -148,27 +154,27 @@ collated_apitest_sources = \
 apitest_SOURCES = apitest.cc dbcheck.cc $(collated_apitest_sources) \
  api_all.h api_collated.h $(testharness_sources)
 
-apitest_LDFLAGS = @NO_INSTALL@ $(ldflags)
+apitest_LDFLAGS = $(NO_INSTALL) $(ldflags)
 apitest_LDADD = ../libgetopt.la ../$(libxapian_la)
 
 stemtest_SOURCES = stemtest.cc $(testharness_sources)
-stemtest_LDFLAGS = @NO_INSTALL@ $(ldflags)
+stemtest_LDFLAGS = $(NO_INSTALL) $(ldflags)
 stemtest_LDADD = ../libgetopt.la ../$(libxapian_la)
 
 internaltest_SOURCES = internaltest.cc $(testharness_sources)
-internaltest_LDFLAGS = @NO_INSTALL@ $(ldflags)
+internaltest_LDFLAGS = $(NO_INSTALL) $(ldflags)
 internaltest_LDADD = ../libgetopt.la ../$(libxapian_la)
 
 queryparsertest_SOURCES = queryparsertest.cc $(testharness_sources)
-queryparsertest_LDFLAGS = @NO_INSTALL@ $(ldflags)
+queryparsertest_LDFLAGS = $(NO_INSTALL) $(ldflags)
 queryparsertest_LDADD = ../libgetopt.la ../$(libxapian_la)
 
 termgentest_SOURCES = termgentest.cc $(testharness_sources)
-termgentest_LDFLAGS = @NO_INSTALL@ $(ldflags)
+termgentest_LDFLAGS = $(NO_INSTALL) $(ldflags)
 termgentest_LDADD = ../libgetopt.la ../$(libxapian_la)
 
 unittest_SOURCES = unittest.cc $(utestharness_sources)
-unittest_LDFLAGS = @NO_INSTALL@ $(ldflags)
+unittest_LDFLAGS = $(NO_INSTALL) $(ldflags)
 unittest_LDADD = ../libgetopt.la
 
 BUILT_SOURCES =
@@ -223,10 +229,11 @@ EXTRA_DIST +=\
 	testdata/apitest_sortconsist.txt \
 	testdata/apitest_sortrel.txt \
 	testdata/apitest_declen.txt \
-	testdata/etext.txt
+	testdata/etext.txt \
+	testdata/snippet.txt
 
 remove-cached-databases:
-	rm -rf .chert .glass .multichert .multiglass .replicatmp .stub
+	rm -rf .chert .glass .multichert .multiglass .replicatmp .singlefileglass .stub
 
 clean-local: remove-cached-databases
 

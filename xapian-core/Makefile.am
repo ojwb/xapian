@@ -13,7 +13,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/common -I$(top_srcdir)/include
 if VPATH_BUILD
 # Needed for the generated files include/xapian/version.h
 # include/xapian/error.h and include/xapian/errordispatch.h
-AM_CPPFLAGS += -I$(top_builddir)/include
+AM_CPPFLAGS += -I'$(top_builddir)/include'
 endif
 
 # Order is relevant: when building, tests must be after ".".
@@ -94,7 +94,7 @@ lib_LTLIBRARIES = libxapian-1.3.la
 libxapian_1_3_la_SOURCES = $(lib_src)
 libxapian_1_3_la_LIBADD = $(XAPIAN_LIBS)
 libxapian_1_3_la_LDFLAGS = \
-    $(XAPIAN_LDFLAGS) -no-undefined -version-info $(LIBRARY_VERSION_INFO)
+    $(XAPIAN_LDFLAGS) $(NO_UNDEFINED) -version-info $(LIBRARY_VERSION_INFO)
 
 lib_src =
 

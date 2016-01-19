@@ -7,12 +7,10 @@ noinst_HEADERS +=\
 	backends/glass/glass_alltermslist.h\
 	backends/glass/glass_changes.h\
 	backends/glass/glass_check.h\
-	backends/glass/glass_compact.h\
 	backends/glass/glass_cursor.h\
 	backends/glass/glass_database.h\
 	backends/glass/glass_databasereplicator.h\
 	backends/glass/glass_dbcheck.h\
-	backends/glass/glass_dbstats.h\
 	backends/glass/glass_defs.h\
 	backends/glass/glass_docdata.h\
 	backends/glass/glass_document.h\
@@ -43,7 +41,6 @@ lib_src +=\
 	backends/glass/glass_database.cc\
 	backends/glass/glass_databasereplicator.cc\
 	backends/glass/glass_dbcheck.cc\
-	backends/glass/glass_dbstats.cc\
 	backends/glass/glass_document.cc\
 	backends/glass/glass_freelist.cc\
 	backends/glass/glass_inverter.cc\

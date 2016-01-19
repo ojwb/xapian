@@ -24,13 +24,13 @@ xapianinclude_HEADERS =\
 	include/xapian/iterator.h\
 	include/xapian/keymaker.h\
 	include/xapian/matchspy.h\
+	include/xapian/mset.h\
 	include/xapian/positioniterator.h\
 	include/xapian/postingiterator.h\
 	include/xapian/postingsource.h\
 	include/xapian/query.h\
 	include/xapian/queryparser.h\
 	include/xapian/registry.h\
-	include/xapian/snipper.h\
 	include/xapian/stem.h\
 	include/xapian/termgenerator.h\
 	include/xapian/termiterator.h\

@@ -2,7 +2,7 @@
  *
  * Copyright 1999,2000,2001 BrightStation PLC
  * Copyright 2002 Ananova Ltd
- * Copyright 2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014 Olly Betts
+ * Copyright 2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015 Olly Betts
  * Copyright 2008 Lemur Consulting Ltd
  * Copyright 2010 Richard Boulton
  *
@@ -58,7 +58,6 @@
 
 #include "filetests.h"
 #include "io_utils.h"
-#include "omassert.h"
 #include "debuglog.h"
 #include "pack.h"
 #include "str.h"
@@ -501,7 +500,7 @@ ChertTable::split_root(uint4 split_n)
     /* check level overflow - this isn't something that should ever happen
      * but deserves more than an Assert()... */
     if (level == BTREE_CURSOR_LEVELS) {
-	throw Xapian::DatabaseCorruptError("Btree has grown impossibly large ("STRINGIZE(BTREE_CURSOR_LEVELS)" levels)");
+	throw Xapian::DatabaseCorruptError("Btree has grown impossibly large (" STRINGIZE(BTREE_CURSOR_LEVELS) " levels)");
     }
 
     byte * q = zeroed_new(block_size);
@@ -989,11 +988,15 @@ ChertTable::add(const string &key, string tag, bool already_compressed)
     if (already_compressed) {
 	compressed = true;
     } else if (compress_strategy != DONT_COMPRESS && tag.size() > COMPRESS_MIN) {
-	CompileTimeAssert(DONT_COMPRESS != Z_DEFAULT_STRATEGY);
-	CompileTimeAssert(DONT_COMPRESS != Z_FILTERED);
-	CompileTimeAssert(DONT_COMPRESS != Z_HUFFMAN_ONLY);
+	static_assert(DONT_COMPRESS != Z_DEFAULT_STRATEGY,
+		      "DONT_COMPRESS clashes with zlib constant");
+	static_assert(DONT_COMPRESS != Z_FILTERED,
+		      "DONT_COMPRESS clashes with zlib constant");
+	static_assert(DONT_COMPRESS != Z_HUFFMAN_ONLY,
+		      "DONT_COMPRESS clashes with zlib constant");
 #ifdef Z_RLE
-	CompileTimeAssert(DONT_COMPRESS != Z_RLE);
+	static_assert(DONT_COMPRESS != Z_RLE,
+		      "DONT_COMPRESS clashes with zlib constant");
 #endif
 
 	lazy_alloc_deflate_zstream();
@@ -1134,6 +1137,48 @@ ChertTable::del(const string &key)
 }
 
 bool
+ChertTable::readahead_key(const string &key) const
+{
+    LOGCALL(DB, bool, "ChertTable::readahead_key", key);
+    Assert(!key.empty());
+
+    // Two cases:
+    //
+    // handle = -1:  Lazy table which isn't yet open
+    //
+    // handle = -2:  Table has been closed.  Since the readahead is just a
+    // hint, we can safely ignore it for a closed table.
+    if (handle < 0)
+	RETURN(false);
+
+    // If the table only has one level, there are no branch blocks to preread.
+    if (level == 0)
+	RETURN(false);
+
+    form_key(key);
+    Key ktkey = kt.key();
+
+    // We'll only readahead the first level, since descending the B-tree would
+    // require actual reads that would likely hurt performance more than help.
+    const byte * p = C[level].p;
+    int c = find_in_block(p, ktkey, false, C[level].c);
+    uint4 n = Item(p, c).block_given_by();
+    // Don't preread if it's the block we last preread or already in the
+    // cursor.
+    if (n != last_readahead && n != C[level - 1].n) {
+	/* Use the base bit_map_size not the bitmap's size, because the latter
+	 * is uninitialised in readonly mode.
+	 */
+	Assert(n / CHAR_BIT < base.get_bit_map_size());
+
+	last_readahead = n;
+	if (!io_readahead_block(handle, block_size, n))
+	    RETURN(false);
+    }
+    RETURN(true);
+}
+
+bool
 ChertTable::get_exact_entry(const string &key, string & tag) const
 {
     LOGCALL(DB, bool, "ChertTable::get_exact_entry", key | tag);
@@ -1196,7 +1241,7 @@ ChertTable::read_tag(Cursor * C_, string *tag, bool keep_compressed) const
     // it to the next key (ChertCursor::get_tag() relies on this).
     if (!compressed || keep_compressed) RETURN(compressed);
 
-    // FIXME: Perhaps we should we decompress each chunk as we read it so we
+    // FIXME: Perhaps we should decompress each chunk as we read it so we
     // don't need both the full compressed and uncompressed tags in memory
     // at once.
 
@@ -1398,6 +1443,11 @@ ChertTable::basic_open(bool revision_supplied, chert_revision_number_t revision_
 
     base_letter = ch;
 
+    if (cursor_created_since_last_modification) {
+	cursor_created_since_last_modification = false;
+	++cursor_version;
+    }
+
     /* ready to open the main file */
 
     RETURN(true);
@@ -1456,9 +1506,7 @@ ChertTable::do_open_to_write(bool revision_supplied,
     if (handle == -2) {
 	ChertTable::throw_database_closed();
     }
-    int flags = O_RDWR | O_BINARY | O_CLOEXEC;
-    if (create_db) flags |= O_CREAT | O_TRUNC;
-    handle = ::open((name + "DB").c_str(), flags, 0666);
+    handle = io_open_block_wr(name + "DB", create_db);
     if (handle < 0) {
 	// lazy doesn't make a lot of sense with create_db anyway, but ENOENT
 	// with O_CREAT means a parent directory doesn't exist.
@@ -1534,7 +1582,8 @@ ChertTable::ChertTable(const char * tablename_, const string & path_,
 	  compress_strategy(compress_strategy_),
 	  deflate_zstream(NULL),
 	  inflate_zstream(NULL),
-	  lazy(lazy_)
+	  lazy(lazy_),
+	  last_readahead(BLK_UNUSED)
 {
     LOGCALL_CTOR(DB, "ChertTable", tablename_ | path_ | readonly_ | compress_strategy_ | lazy_);
 }
@@ -1714,7 +1763,7 @@ ChertTable::~ChertTable() {
 }
 
 void ChertTable::close(bool permanent) {
-    LOGCALL_VOID(DB, "ChertTable::close", NO_ARGS);
+    LOGCALL_VOID(DB, "ChertTable::close", permanent);
 
     if (handle >= 0) {
 	// If an error occurs here, we just ignore it, since we're just
@@ -1945,6 +1994,11 @@ ChertTable::cancel()
     changed_n = 0;
     changed_c = DIR_START;
     seq_count = SEQ_START_POINT;
+
+    if (cursor_created_since_last_modification) {
+	cursor_created_since_last_modification = false;
+	++cursor_version;
+    }
 }
 
 /************ B-tree reading ************/
@@ -1956,7 +2010,7 @@ ChertTable::do_open_to_read(bool revision_supplied, chert_revision_number_t revi
     if (handle == -2) {
 	ChertTable::throw_database_closed();
     }
-    handle = ::open((name + "DB").c_str(), O_RDONLY | O_BINARY | O_CLOEXEC);
+    handle = io_open_block_rd(name + "DB");
     if (handle < 0) {
 	if (lazy) {
 	    // This table is optional when reading!

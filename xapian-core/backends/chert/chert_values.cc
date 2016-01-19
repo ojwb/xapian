@@ -1,7 +1,7 @@
 /** @file chert_values.cc
  * @brief ChertValueManager class
  */
-/* Copyright (C) 2008,2009,2011,2012 Olly Betts
+/* Copyright (C) 2008,2009,2011,2012,2016 Olly Betts
  * Copyright (C) 2008,2009 Lemur Consulting Ltd
  *
  * This program is free software; you can redistribute it and/or modify
@@ -52,7 +52,7 @@ make_slot_key(Xapian::docid did)
     // and will sort just after the corresponding termlist entry key.
     // FIXME: should we store this in the *same entry* as the list of terms?
     string key;
-    pack_uint_preserving_sort(key, did);
+    C_pack_uint_preserving_sort(key, did);
     key += '\0';
     RETURN(key);
 }
@@ -179,7 +179,7 @@ ChertValueManager::get_chunk_containing_did(Xapian::valueno slot,
 	if (v != slot) RETURN(0);
 
 	// And get the first docid for the chunk so we can return it.
-	if (!unpack_uint_preserving_sort(&p, end, &did) || p != end) {
+	if (!C_unpack_uint_preserving_sort(&p, end, &did) || p != end) {
 	    throw Xapian::DatabaseCorruptError("Bad value key");
 	}
     }
@@ -191,8 +191,6 @@ ChertValueManager::get_chunk_containing_did(Xapian::valueno slot,
 }
 
 static const size_t CHUNK_SIZE_THRESHOLD = 2000;
-
-static const Xapian::docid MAX_DOCID = static_cast<Xapian::docid>(-1);
 
 class ValueUpdater {
     ChertPostListTable * table;
@@ -268,7 +266,7 @@ class ValueUpdater {
 	    last_allowed_did = 0;
 	}
 	if (last_allowed_did == 0) {
-	    last_allowed_did = MAX_DOCID;
+	    last_allowed_did = CHERT_MAX_DOCID;
 	    Assert(tag.empty());
 	    new_first_did = 0;
 	    AutoPtr<ChertCursor> cursor(table->cursor_get());

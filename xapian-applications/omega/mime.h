@@ -1,7 +1,10 @@
-/** @file glass_compact.h
- * @brief Compact a glass database, or merge and compact several.
+/** @file mime.h
+ * @brief Find MIME type for a file
  */
-/* Copyright (C) 2004,2005,2006,2007,2008,2009,2010 Olly Betts
+/* Copyright 1999,2000,2001 BrightStation PLC
+ * Copyright 2001,2005 James Aylett
+ * Copyright 2001,2002 Ananova Ltd
+ * Copyright 2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015 Olly Betts
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -19,20 +22,20 @@
  * USA
  */
 
-#ifndef XAPIAN_INCLUDED_GLASS_COMPACT_H
-#define XAPIAN_INCLUDED_GLASS_COMPACT_H
+#ifndef OMEGA_INCLUDED_MIME_H
+#define OMEGA_INCLUDED_MIME_H
 
-#include <vector>
+#include <sys/types.h>
+#include <map>
 #include <string>
 
-#include "xapian/compactor.h"
-#include "xapian/types.h"
+extern size_t max_ext_len;
 
-void
-compact_glass(Xapian::Compactor & compactor,
-	      const char * destdir, const std::vector<std::string> & sources,
-	      const std::vector<Xapian::docid> & offset, size_t block_size,
-	      Xapian::Compactor::compaction_level compaction, bool multipass,
-	      Xapian::docid last_docid);
+const char *
+built_in_mime_map(const std::string & ext);
 
-#endif
+std::string
+mimetype_from_ext(const std::map<std::string, std::string> & mime_map,
+		  std::string ext);
+
+#endif // OMEGA_INCLUDED_MIME_H

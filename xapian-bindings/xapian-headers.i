@@ -1,7 +1,7 @@
 %{
 /* xapian-headers.i: Getting SWIG to parse Xapian's C++ headers.
  *
- * Copyright 2004,2006,2011,2012,2013,2014 Olly Betts
+ * Copyright 2004,2006,2011,2012,2013,2014,2015,2016 Olly Betts
  * Copyright 2014 Assem Chelli
  *
  * This program is free software; you can redistribute it and/or
@@ -24,6 +24,7 @@
 /* Ignore these functions: */
 %ignore Xapian::iterator_rewind;
 %ignore Xapian::iterator_valid;
+%ignore Xapian::sortable_serialise_;
 
 /* A class which can usefully be subclassed in the target language. */
 %define SUBCLASSABLE(NS, CLASS)
@@ -120,12 +121,15 @@
 %ignore const_iterator;
 %ignore size_type;
 %ignore unserialise(const char **, const char *);
+%ignore release();
 
 /* These methods won't throw exceptions. */
 %exception Xapian::major_version "$action"
 %exception Xapian::minor_version "$action"
 %exception Xapian::revision "$action"
 %exception Xapian::version_string "$action"
+// For XAPIAN_DOCID_BASE_TYPE and XAPIAN_TERMCOUNT_BASE_TYPE:
+%import <xapian/version.h>
 %include <xapian.h>
 
 // Disable errors about not including headers individually.
@@ -159,6 +163,9 @@ CONSTANT(int, Xapian, DBCHECK_SHOW_FREELIST);
 CONSTANT(int, Xapian, DBCHECK_SHOW_BITMAP);
 CONSTANT(int, Xapian, DBCHECK_SHOW_STATS);
 CONSTANT(int, Xapian, DBCHECK_FIX);
+CONSTANT(int, Xapian, DBCOMPACT_MULTIPASS);
+CONSTANT(int, Xapian, DBCOMPACT_NO_RENUMBER);
+CONSTANT(int, Xapian, DBCOMPACT_SINGLE_FILE);
 %include <xapian/constants.h>
 
 /* The Error subclasses are handled separately for languages where we wrap
@@ -205,6 +212,10 @@ STANDARD_IGNORES(Xapian, Query)
 %ignore *::operator*;
 %ignore *::operator/;
 #endif
+%ignore Xapian::Query::LEAF_TERM;
+%ignore Xapian::Query::LEAF_POSTING_SOURCE;
+%ignore Xapian::Query::LEAF_MATCH_ALL;
+%ignore Xapian::Query::LEAF_MATCH_NOTHING;
 
 %warnfilter(SWIGWARN_TYPE_UNDEFINED_CLASS) Xapian::Query::Internal;
 #if defined SWIGCSHARP || defined SWIGJAVA || defined SWIGPERL || \
@@ -266,13 +277,17 @@ STANDARD_IGNORES(Xapian, MSet)
 	return self->convert_to_percent((*self)[i]);
     }
 }
+
+BIDIRECTIONAL_ITERATOR_METHODS(Xapian, MSetIterator, Xapian::docid, get_docid)
+
+%include <xapian/mset.h>
+
 STANDARD_IGNORES(Xapian, ESet)
 %ignore Xapian::ESet::operator[];
 STANDARD_IGNORES(Xapian, RSet)
 
 STANDARD_IGNORES(Xapian, Enquire)
 
-BIDIRECTIONAL_ITERATOR_METHODS(Xapian, MSetIterator, Xapian::docid, get_docid)
 BIDIRECTIONAL_ITERATOR_METHODS(Xapian, ESetIterator, std::string, get_term)
 
 SUBCLASSABLE(Xapian, MatchDecider)
@@ -327,6 +342,9 @@ SUBCLASSABLE(Xapian, KeyMaker)
 SUBCLASSABLE(Xapian, FieldProcessor)
 SUBCLASSABLE(Xapian, Stopper)
 SUBCLASSABLE(Xapian, ValueRangeProcessor)
+// Suppress warning that Xapian::Internal::opt_intrusive_base is unknown.
+%warnfilter(SWIGWARN_TYPE_UNDEFINED_CLASS) Xapian::ValueRangeProcessor;
+%warnfilter(SWIGWARN_TYPE_UNDEFINED_CLASS) Xapian::FieldProcessor;
 STANDARD_IGNORES(Xapian, QueryParser)
 %ignore Xapian::QueryParser::QueryParser(const QueryParser &);
 %include <xapian/queryparser.h>
@@ -346,6 +364,9 @@ STANDARD_IGNORES(Xapian, Weight)
 %ignore Xapian::Weight::clone;
 %ignore Xapian::Weight::clone_;
 %ignore Xapian::Weight::init_;
+%ignore Xapian::Weight::get_sumpart_needs_doclength_;
+%ignore Xapian::Weight::get_sumpart_needs_uniqueterms_;
+%ignore Xapian::Weight::get_sumpart_needs_wdf_;
 %ignore Xapian::Weight::serialise;
 %ignore Xapian::Weight::unserialise;
 %include <xapian/weight.h>
@@ -362,6 +383,8 @@ SUBCLASSABLE(Xapian, PostingSource)
 %ignore Xapian::PostingSource::unserialise_with_registry;
 %include <xapian/postingsource.h>
 
+// Suppress warning that Xapian::Internal::intrusive_base is unknown.
+%warnfilter(SWIGWARN_TYPE_UNDEFINED_CLASS) Xapian::MatchSpy;
 SUBCLASSABLE(Xapian, MatchSpy)
 %ignore Xapian::MatchSpy::serialise_results;
 %include <xapian/matchspy.h>
@@ -376,15 +399,13 @@ STANDARD_IGNORES(Xapian, WritableDatabase)
 %ignore Xapian::WritableDatabase::WritableDatabase(Database::Internal *);
 %ignore Xapian::Database::get_document_lazily_;
 %ignore Xapian::Database::check(const std::string &, int, std::ostream *);
+%ignore Xapian::Database::check(int fd, int, std::ostream *);
 %include <xapian/database.h>
 %extend Xapian::Database {
     static size_t check(const std::string &path, int opts = 0) {
 	return Xapian::Database::check(path, opts, opts ? &std::cout : NULL);
     }
 }
-
-STANDARD_IGNORES(Xapian, Snipper)
-%include <xapian/snipper.h>
 
 #if defined SWIGCSHARP || defined SWIGJAVA
 
@@ -393,7 +414,6 @@ STANDARD_IGNORES(Xapian, Snipper)
 
 #else
 
-#define XAPIAN_HAS_INMEMORY_BACKEND
 %rename("inmemory_open") Xapian::InMemory::open;
 
 #ifdef XAPIAN_BINDINGS_SKIP_DEPRECATED_DB_FACTORIES
@@ -408,7 +428,6 @@ STANDARD_IGNORES(Xapian, Snipper)
 %ignore Xapian::Chert::open(const std::string &dir, int action, int block_size = 8192);
 #endif
 
-#define XAPIAN_HAS_CHERT_BACKEND
 %rename("chert_open") Xapian::Chert::open;
 
 #ifndef SWIGPHP
@@ -418,7 +437,6 @@ STANDARD_IGNORES(Xapian, Snipper)
 
 #endif
 
-#define XAPIAN_HAS_REMOTE_BACKEND
 %rename("remote_open") Xapian::Remote::open;
 %rename("remote_open_writable") Xapian::Remote::open_writable;
 

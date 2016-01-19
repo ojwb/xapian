@@ -3,7 +3,7 @@
  * Copyright 1999,2000,2001 BrightStation PLC
  * Copyright 2001 Hein Ragas
  * Copyright 2002 Ananova Ltd
- * Copyright 2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014 Olly Betts
+ * Copyright 2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015 Olly Betts
  * Copyright 2006,2008 Lemur Consulting Ltd
  * Copyright 2009,2010 Richard Boulton
  * Copyright 2009 Kan-Ru Chen
@@ -80,7 +80,7 @@ using Xapian::Internal::intrusive_ptr;
 // store the term using pack_string_preserving_sort() which takes the
 // length of the string plus an extra byte (assuming the string doesn't
 // contain any zero bytes), followed by the docid with encoded with
-// pack_uint_preserving_sort() which takes up to 5 bytes.
+// C_pack_uint_preserving_sort() which takes up to 5 bytes.
 //
 // The Btree manager's key length limit is 252 bytes so the maximum safe term
 // length is 252 - 1 - 5 = 246 bytes.  We use 245 rather than 246 for
@@ -350,15 +350,15 @@ ChertDatabase::get_changeset_revisions(const string & path,
     const char *start = buf;
     const char *end = buf + io_read(changes_fd, buf,
 				    REASONABLE_CHANGESET_SIZE, 0);
-    if (strncmp(start, CHANGES_MAGIC_STRING,
-		CONST_STRLEN(CHANGES_MAGIC_STRING)) != 0) {
+    if (size_t(end - start) < CONST_STRLEN(CHANGES_MAGIC_STRING))
+	throw Xapian::DatabaseError("Changeset too short at " + path);
+    if (memcmp(start, CHANGES_MAGIC_STRING,
+	       CONST_STRLEN(CHANGES_MAGIC_STRING)) != 0) {
 	string message = string("Changeset at ")
 		+ path + " does not contain valid magic string";
 	throw Xapian::DatabaseError(message);
     }
     start += CONST_STRLEN(CHANGES_MAGIC_STRING);
-    if (start >= end)
-	throw Xapian::DatabaseError("Changeset too short at " + path);
 
     unsigned int changes_version;
     if (!unpack_uint(&start, end, &changes_version))
@@ -469,6 +469,23 @@ ChertDatabase::set_revision_number(chert_revision_number_t new_revision)
 	// when max_changesets = 1
 	unsigned rev = new_revision - max_changesets - 1;
 	while (io_unlink(db_dir + "/changes" + str(rev--))) { }
+    }
+}
+
+void
+ChertDatabase::request_document(Xapian::docid did) const
+{
+    record_table.readahead_for_record(did);
+}
+
+void
+ChertDatabase::readahead_for_query(const Xapian::Query &query)
+{
+    Xapian::TermIterator t;
+    for (t = query.get_unique_terms_begin(); t != Xapian::TermIterator(); ++t) {
+	const string & term = *t;
+	if (!postlist_table.readahead_key(ChertPostListTable::make_key(term)))
+	    break;
     }
 }
 
@@ -1015,6 +1032,19 @@ ChertDatabase::throw_termlist_table_close_exception() const
     throw Xapian::FeatureUnavailableError("Database has no termlist");
 }
 
+void
+ChertDatabase::get_used_docid_range(Xapian::docid & first,
+				    Xapian::docid & last) const
+{
+    last = stats.get_last_docid();
+    if (last == record_table.get_doccount()) {
+	// Contiguous range starting at 1.
+	first = 1;
+	return;
+    }
+    postlist_table.get_used_docid_range(first, last);
+}
+
 ///////////////////////////////////////////////////////////////////////////
 
 ChertWritableDatabase::ChertWritableDatabase(const string &dir, int action,
@@ -1145,7 +1175,7 @@ ChertWritableDatabase::add_document(const Xapian::Document & document)
 {
     LOGCALL(DB, Xapian::docid, "ChertWritableDatabase::add_document", document);
     // Make sure the docid counter doesn't overflow.
-    if (stats.get_last_docid() == Xapian::docid(-1))
+    if (stats.get_last_docid() == CHERT_MAX_DOCID)
 	throw Xapian::DatabaseError("Run out of docids - you'll have to use copydatabase to eliminate any gaps before you can add more documents");
     // Use the next unused document ID.
     RETURN(add_document_(stats.get_next_docid(), document));
@@ -1175,7 +1205,7 @@ ChertWritableDatabase::add_document_(Xapian::docid did,
 
 		string tname = *term;
 		if (tname.size() > MAX_SAFE_TERM_LENGTH)
-		    throw Xapian::InvalidArgumentError("Term too long (> "STRINGIZE(MAX_SAFE_TERM_LENGTH)"): " + tname);
+		    throw Xapian::InvalidArgumentError("Term too long (> " STRINGIZE(MAX_SAFE_TERM_LENGTH) "): " + tname);
 		add_freq_delta(tname, 1, wdf);
 		insert_mod_plist(did, tname, wdf);
 
@@ -1381,7 +1411,7 @@ ChertWritableDatabase::replace_document(Xapian::docid did,
 		    new_doclen += new_wdf;
 		    stats.check_wdf(new_wdf);
 		    if (new_tname.size() > MAX_SAFE_TERM_LENGTH)
-			throw Xapian::InvalidArgumentError("Term too long (> "STRINGIZE(MAX_SAFE_TERM_LENGTH)"): " + new_tname);
+			throw Xapian::InvalidArgumentError("Term too long (> " STRINGIZE(MAX_SAFE_TERM_LENGTH) "): " + new_tname);
 		    add_freq_delta(new_tname, 1, new_wdf);
 		    update_mod_plist(did, new_tname, 'A', new_wdf);
 		    if (pos_modified) {

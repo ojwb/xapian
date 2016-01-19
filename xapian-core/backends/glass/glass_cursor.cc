@@ -1,7 +1,7 @@
 /* glass_cursor.cc: Btree cursor implementation
  *
  * Copyright 1999,2000,2001 BrightStation PLC
- * Copyright 2002,2003,2004,2005,2006,2007,2008,2009,2010,2012,2013 Olly Betts
+ * Copyright 2002,2003,2004,2005,2006,2007,2008,2009,2010,2012,2013,2015 Olly Betts
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -90,10 +90,12 @@ GlassCursor::rebuild()
     level = new_level;
     C[level].clone(B->C[level]);
     version = B->cursor_version;
+    B->cursor_created_since_last_modification = true;
 }
 
 GlassCursor::~GlassCursor()
 {
+    // We must not use B here, as it may have already been destroyed.
     delete [] C;
 }
 
@@ -119,7 +121,7 @@ GlassCursor::prev()
 		is_positioned = false;
 		RETURN(false);
 	    }
-	    if (Item(C[0].get_p(), C[0].c).component_of() == 1) {
+	    if (LeafItem(C[0].get_p(), C[0].c).component_of() == 1) {
 		break;
 	    }
 	}
@@ -130,7 +132,7 @@ GlassCursor::prev()
 	    is_positioned = false;
 	    RETURN(false);
 	}
-	if (Item(C[0].get_p(), C[0].c).component_of() == 1) {
+	if (LeafItem(C[0].get_p(), C[0].c).component_of() == 1) {
 	    break;
 	}
     }
@@ -159,7 +161,7 @@ GlassCursor::next()
 		is_positioned = false;
 		break;
 	    }
-	    if (Item(C[0].get_p(), C[0].c).component_of() == 1) {
+	    if (LeafItem(C[0].get_p(), C[0].c).component_of() == 1) {
 		is_positioned = true;
 		break;
 	    }
@@ -207,7 +209,7 @@ GlassCursor::find_entry(const string &key)
 	    C[0].c = DIR_START;
 	    if (! B->prev(C, 0)) goto done;
 	}
-	while (Item(C[0].get_p(), C[0].c).component_of() != 1) {
+	while (LeafItem(C[0].get_p(), C[0].c).component_of() != 1) {
 	    if (! B->prev(C, 0)) {
 		is_positioned = false;
 		throw Xapian::DatabaseCorruptError("find_entry failed to find any entry at all!");
@@ -283,7 +285,7 @@ GlassCursor::find_entry_ge(const string &key)
 	    is_positioned = false;
 	    RETURN(false);
 	}
-	Assert(Item(C[0].get_p(), C[0].c).component_of() == 1);
+	Assert(LeafItem(C[0].get_p(), C[0].c).component_of() == 1);
 	get_key(&current_key);
     }
     tag_status = UNREAD;
@@ -298,7 +300,7 @@ GlassCursor::get_key(string * key) const
     Assert(B->level <= level);
     Assert(is_positioned);
 
-    (void)Item(C[0].get_p(), C[0].c).key().read(key);
+    (void)LeafItem(C[0].get_p(), C[0].c).key().read(key);
 }
 
 bool

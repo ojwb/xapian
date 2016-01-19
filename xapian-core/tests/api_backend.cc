@@ -1,7 +1,7 @@
 /** @file api_backend.cc
  * @brief Backend-related tests.
  */
-/* Copyright (C) 2008,2009,2010,2011,2012,2013,2014 Olly Betts
+/* Copyright (C) 2008,2009,2010,2011,2012,2013,2014,2015 Olly Betts
  * Copyright (C) 2010 Richard Boulton
  *
  * This program is free software; you can redistribute it and/or
@@ -27,8 +27,10 @@
 #define XAPIAN_DEPRECATED(X) X
 #include <xapian.h>
 
+#include "backendmanager.h"
 #include "filetests.h"
 #include "str.h"
+#include "testrunner.h"
 #include "testsuite.h"
 #include "testutils.h"
 #include "unixcmds.h"
@@ -43,6 +45,8 @@
 # include <signal.h>
 # include "safesyswait.h"
 #endif
+
+#include <fstream>
 
 using namespace std;
 
@@ -80,11 +84,58 @@ DEFINE_TESTCASE(totaldoclen1, writable) {
     TEST_EQUAL(db.get_avlength(), 2000000000);
     db.commit();
     TEST_EQUAL(db.get_avlength(), 2000000000);
+    for (int i = 0; i != 20; ++i) {
+	db.add_document(doc);
+    }
+    TEST_EQUAL(db.get_avlength(), 2000000000);
+    db.commit();
+    TEST_EQUAL(db.get_avlength(), 2000000000);
     if (get_dbtype() != "inmemory") {
 	// InMemory doesn't support get_writable_database_as_database().
 	Xapian::Database dbr = get_writable_database_as_database();
 	TEST_EQUAL(dbr.get_avlength(), 2000000000);
     }
+    return true;
+}
+
+// Check that exceeding 32bit in combined database doesn't cause a problem
+// when using 64bit docids.
+DEFINE_TESTCASE(exceed32bitcombineddb1, writable) {
+    // Test case is for 64-bit Xapian::docid.
+    // FIXME: Though we should check that the overflow is handled gracefully
+    // for 32-bit...
+    if (sizeof(Xapian::docid) == 4) return true;
+
+    // The InMemory backend uses a vector for the documents, so trying to add
+    // a document with the maximum docid is likely to fail because we can't
+    // allocate enough memory!
+    SKIP_TEST_FOR_BACKEND("inmemory");
+
+    Xapian::WritableDatabase db1 = get_writable_database();
+    Xapian::WritableDatabase db2 = get_writable_database();
+    Xapian::Document doc;
+    doc.set_data("prose");
+    doc.add_term("word");
+
+    Xapian::docid max_id = 0xffffffff;
+
+    db1.replace_document(max_id, doc);
+    db2.replace_document(max_id, doc);
+
+    Xapian::Database db;
+    db.add_database(db1);
+    db.add_database(db2);
+
+    Xapian::Enquire enquire(db);
+    enquire.set_query(Xapian::Query::MatchAll);
+    Xapian::MSet mymset = enquire.get_mset(0, 10);
+
+    TEST_EQUAL(2, mymset.size());
+
+    for (Xapian::MSetIterator i = mymset.begin(); i != mymset.end(); ++i) {
+	TEST_EQUAL("prose", i.get_document().get_data());
+    }
+
     return true;
 }
 
@@ -97,21 +148,62 @@ DEFINE_TESTCASE(dbstats1, backend) {
     const Xapian::termcount max_len = 532;
     const Xapian::termcount max_wdf = 22;
 
-    if (get_dbtype().find("chert") != string::npos ||
-	get_dbtype().find("glass") != string::npos) {
-	// Should be exact for chert and glass as no deletions have happened.
+    if (get_dbtype() != "inmemory") {
+	// Should be exact as no deletions have happened.
 	TEST_EQUAL(db.get_doclength_upper_bound(), max_len);
 	TEST_EQUAL(db.get_doclength_lower_bound(), min_len);
     } else {
-	// For other backends, we usually give rather loose bounds.
+	// For inmemory, we usually give rather loose bounds.
 	TEST_REL(db.get_doclength_upper_bound(),>=,max_len);
 	TEST_REL(db.get_doclength_lower_bound(),<=,min_len);
     }
 
-    TEST_REL(db.get_wdf_upper_bound("the"),>=,max_wdf);
+    if (get_dbtype() != "inmemory" && !startswith(get_dbtype(), "remote")) {
+	TEST_EQUAL(db.get_wdf_upper_bound("the"), max_wdf);
+    } else {
+	// For inmemory and remote backends, we usually give rather loose
+	// bounds (remote matches use tighter bounds, but querying the
+	// wdf bound gives a looser one).
+	TEST_REL(db.get_wdf_upper_bound("the"),>=,max_wdf);
+    }
 
     // This failed with an assertion during development between 1.3.1 and
     // 1.3.2.
+    TEST_EQUAL(db.get_wdf_upper_bound(""), 0);
+
+    return true;
+}
+
+// Check stats with a single document.  In a multi-database situation, this
+// gave 0 for get-_doclength_lower_bound() in 1.3.2.
+DEFINE_TESTCASE(dbstats2, backend) {
+    Xapian::Database db = get_database("apitest_onedoc");
+
+    // Use precalculated values to avoid expending CPU cycles to calculate
+    // these every time without improving test coverage.
+    const Xapian::termcount min_len = 15;
+    const Xapian::termcount max_len = 15;
+    const Xapian::termcount max_wdf = 7;
+
+    if (get_dbtype() != "inmemory") {
+	// Should be exact as no deletions have happened.
+	TEST_EQUAL(db.get_doclength_upper_bound(), max_len);
+	TEST_EQUAL(db.get_doclength_lower_bound(), min_len);
+    } else {
+	// For inmemory, we usually give rather loose bounds.
+	TEST_REL(db.get_doclength_upper_bound(),>=,max_len);
+	TEST_REL(db.get_doclength_lower_bound(),<=,min_len);
+    }
+
+    if (get_dbtype() != "inmemory" && !startswith(get_dbtype(), "remote")) {
+	TEST_EQUAL(db.get_wdf_upper_bound("word"), max_wdf);
+    } else {
+	// For inmemory and remote backends, we usually give rather loose
+	// bounds (remote matches use tighter bounds, but querying the
+	// wdf bound gives a looser one).
+	TEST_REL(db.get_wdf_upper_bound("word"),>=,max_wdf);
+    }
+
     TEST_EQUAL(db.get_wdf_upper_bound(""), 0);
 
     return true;
@@ -151,9 +243,11 @@ DEFINE_TESTCASE(modifiedpostlist1, writable) {
 DEFINE_TESTCASE(doclenaftercommit1, writable) {
     Xapian::WritableDatabase db = get_writable_database();
     TEST_EXCEPTION(Xapian::DocNotFoundError, db.get_doclength(1));
+    TEST_EXCEPTION(Xapian::DocNotFoundError, db.get_unique_terms(1));
     db.replace_document(1, Xapian::Document());
     db.commit();
     TEST_EQUAL(db.get_doclength(1), 0);;
+    TEST_EQUAL(db.get_unique_terms(1), 0);;
     return true;
 }
 
@@ -377,7 +471,7 @@ DEFINE_TESTCASE(qpmemoryleak1, writable && !inmemory) {
 
     doc.add_term("foo");
     for (int i = 100; i < 120; ++i) {
-        doc.add_term(str(i));
+	doc.add_term(str(i));
     }
 
     for (int j = 0; j < 50; ++j) {
@@ -1022,12 +1116,12 @@ DEFINE_TESTCASE(phrasebug1, generated && positional) {
     Xapian::Database db = get_database("phrasebug1", make_phrasebug1_db);
     const char * qterms[] = { "katrina", "hurricane" };
     Xapian::Enquire e(db);
-    Xapian::Query q(q.OP_PHRASE, qterms, qterms + 2, 5);
+    Xapian::Query q(Xapian::Query::OP_PHRASE, qterms, qterms + 2, 5);
     e.set_query(q);
     Xapian::MSet mset = e.get_mset(0, 100);
     TEST_EQUAL(mset.size(), 0);
     const char * qterms2[] = { "hurricane", "katrina" };
-    Xapian::Query q2(q.OP_PHRASE, qterms2, qterms2 + 2, 5);
+    Xapian::Query q2(Xapian::Query::OP_PHRASE, qterms2, qterms2 + 2, 5);
     e.set_query(q2);
     mset = e.get_mset(0, 100);
     TEST_EQUAL(mset.size(), 1);
@@ -1146,6 +1240,164 @@ DEFINE_TESTCASE(retrylock1, writable && !inmemory && !remote) {
     tout << string(result, r) << endl;
     TEST_EQUAL(result[0], 'y');
 #endif
+
+    return true;
+}
+
+// Opening a WritableDatabase with low fds available - it should avoid them.
+DEFINE_TESTCASE(dbfilefd012, chert || glass) {
+#if !defined __WIN32__ && !defined __CYGWIN__ && !defined __OS2__
+    int oldfds[3];
+    for (int i = 0; i < 3; ++i) {
+	oldfds[i] = dup(i);
+    }
+    try {
+	for (int j = 0; j < 3; ++j) {
+	    close(j);
+	    TEST_EQUAL(lseek(j, 0, SEEK_CUR), -1);
+	    TEST_EQUAL(errno, EBADF);
+	}
+
+	Xapian::WritableDatabase db = get_writable_database();
+
+	// Check we didn't use any of those low fds for tables, as that risks
+	// data corruption if some other code in the same process tries to
+	// write to them (see #651).
+	for (int fd = 0; fd < 3; ++fd) {
+	    // Check that the fd is still closed, or isn't open O_RDWR (the
+	    // lock file gets opened O_WRONLY), or it's a pipe (if we're using
+	    // a child process to hold a non-OFD fcntl lock).
+	    int flags = fcntl(fd, F_GETFL);
+	    if (flags == -1) {
+		TEST_EQUAL(errno, EBADF);
+	    } else if ((flags & O_ACCMODE) != O_RDWR) {
+		// OK.
+	    } else {
+		struct stat sb;
+		TEST_NOT_EQUAL(fstat(fd, &sb), -1);
+#ifdef S_ISSOCK
+		TEST(S_ISSOCK(sb.st_mode));
+#else
+		// If we can't check it is a socket, at least check it is not a
+		// regular file.
+		TEST(!S_ISREG(sb.st_mode));
+#endif
+	    }
+	}
+    } catch (...) {
+	for (int j = 0; j < 3; ++j) {
+	    dup2(oldfds[j], j);
+	    close(oldfds[j]);
+	}
+	throw;
+    }
+
+    for (int j = 0; j < 3; ++j) {
+	dup2(oldfds[j], j);
+	close(oldfds[j]);
+    }
+#endif
+
+    return true;
+}
+
+/// Regression test for #675, fixed in 1.3.3 and 1.2.21.
+DEFINE_TESTCASE(cursorbug1, chert || glass) {
+    Xapian::WritableDatabase wdb = get_writable_database();
+    Xapian::Database db = get_writable_database_as_database();
+    Xapian::Enquire enq(db);
+    enq.set_query(Xapian::Query::MatchAll);
+    Xapian::MSet mset;
+    // The original problem triggers for chert and glass on repeat==7.
+    for (int repeat = 0; repeat < 10; ++repeat) {
+	tout.str(string());
+	tout << "iteration #" << repeat << endl;
+
+	const int ITEMS = 10;
+	int free_id = db.get_doccount();
+	int offset = max(free_id, ITEMS * 2) - (ITEMS * 2);
+	int limit = offset + (ITEMS * 2);
+
+	mset = enq.get_mset(offset, limit);
+	for (Xapian::MSetIterator m1 = mset.begin(); m1 != mset.end(); ++m1) {
+	    (void)m1.get_document().get_value(0);
+	}
+
+	for (int i = free_id; i <= free_id + ITEMS; ++i) {
+	    Xapian::Document doc;
+	    const string & id = str(i);
+	    string qterm = "Q" + id;
+	    doc.add_value(0, id);
+	    doc.add_boolean_term(qterm);
+	    wdb.replace_document(qterm, doc);
+	}
+	wdb.commit();
+
+	db.reopen();
+	mset = enq.get_mset(offset, limit);
+	for (Xapian::MSetIterator m2 = mset.begin(); m2 != mset.end(); ++m2) {
+	    (void)m2.get_document().get_value(0);
+	}
+    }
+
+    return true;
+}
+
+// Regression test for #674, fixed in 1.2.21 and 1.3.3.
+DEFINE_TESTCASE(sortvalue2, backend) {
+    Xapian::Database db = get_database("apitest_simpledata");
+    db.add_database(get_database("apitest_simpledata2"));
+    Xapian::Enquire enq(db);
+    enq.set_query(Xapian::Query::MatchAll);
+    enq.set_sort_by_value(0, false);
+    Xapian::MSet mset = enq.get_mset(0, 50);
+
+    // Check all results are in key order - the bug was that they were sorted
+    // by docid instead with multiple remote databases.
+    string old_key;
+    for (Xapian::MSetIterator i = mset.begin(); i != mset.end(); ++i) {
+	string key = db.get_document(*i).get_value(0);
+	TEST(old_key <= key);
+	swap(old_key, key);
+    }
+    return true;
+}
+
+/// Check behaviour of Enquire::get_query().
+DEFINE_TESTCASE(enquiregetquery1, backend) {
+    Xapian::Database db = get_database("apitest_simpledata");
+    Xapian::Enquire enq(db);
+    TEST_EQUAL(enq.get_query().get_description(), "Query()");
+    return true;
+}
+
+DEFINE_TESTCASE(embedded1, singlefile) {
+    // In reality you should align the embedded database to a multiple of
+    // database block size, but any offset is meant to work.
+    off_t offset = 1234;
+
+    Xapian::Database db = get_database("apitest_simpledata");
+    const string & db_path = get_database_path("apitest_simpledata");
+    const string & tmp_path = db_path + "-embedded";
+    ofstream out(tmp_path, fstream::trunc|fstream::binary);
+    out.seekp(offset);
+    out << ifstream(db_path, fstream::binary).rdbuf();
+    out.close();
+
+    {
+	int fd = open(tmp_path.c_str(), O_RDONLY|O_BINARY);
+	lseek(fd, offset, SEEK_SET);
+	Xapian::Database db_embedded(fd);
+	TEST_EQUAL(db.get_doccount(), db_embedded.get_doccount());
+    }
+
+    {
+	int fd = open(tmp_path.c_str(), O_RDONLY|O_BINARY);
+	lseek(fd, offset, SEEK_SET);
+	size_t check_errors =
+	    Xapian::Database::check(fd, Xapian::DBCHECK_SHOW_STATS, &tout);
+	TEST_EQUAL(check_errors, 0);
+    }
 
     return true;
 }

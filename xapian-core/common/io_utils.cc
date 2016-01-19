@@ -1,7 +1,7 @@
 /** @file io_utils.cc
  * @brief Wrappers for low-level POSIX I/O routines.
  */
-/* Copyright (C) 2004,2006,2007,2008,2009,2011,2014 Olly Betts
+/* Copyright (C) 2004,2006,2007,2008,2009,2011,2014,2015 Olly Betts
  * Copyright (C) 2010 Richard Boulton
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,11 +27,13 @@
 #include "safeerrno.h"
 #include "safeunistd.h"
 
+#include <cstring>
 #include <string>
 
 #include <xapian/error.h>
 
 #include "noreturn.h"
+#include "omassert.h"
 #include "str.h"
 
 // Trying to include the correct headers with the correct defines set to
@@ -56,6 +58,64 @@ io_unlink(const std::string & filename)
 	throw Xapian::DatabaseError(filename + ": delete failed", errno);
     }
     return false;
+}
+
+// The smallest fd we want to use for a writable handle.
+const int MIN_WRITE_FD = 3;
+
+int
+io_open_block_wr(const char * fname, bool anew)
+{
+    int flags = O_RDWR | O_BINARY | O_CLOEXEC;
+    if (anew) flags |= O_CREAT | O_TRUNC;
+    int fd = ::open(fname, flags, 0666);
+    if (fd >= MIN_WRITE_FD || fd < 0) return fd;
+
+    // We want to avoid using fd < MIN_WRITE_FD, in case some other code in
+    // the same process tries to write to stdout or stderr, which would end up
+    // corrupting our database.
+    int badfd = fd;
+#ifdef F_DUPFD_CLOEXEC
+    // dup to the first unused fd >= MIN_WRITE_FD.
+    fd = fcntl(badfd, F_DUPFD_CLOEXEC, MIN_WRITE_FD);
+    // F_DUPFD_CLOEXEC may not be supported.
+    if (fd < 0 && errno == EINVAL)
+#endif
+#ifdef F_DUPFD
+    {
+	fd = fcntl(badfd, F_DUPFD, MIN_WRITE_FD);
+# ifdef FD_CLOEXEC
+	if (fd >= 0)
+	    (void)fcntl(fd, F_SETFD, FD_CLOEXEC);
+# endif
+    }
+    int save_errno = errno;
+    (void)close(badfd);
+    errno = save_errno;
+#else
+    {
+	char toclose[MIN_WRITE_FD];
+	memset(toclose, 0, sizeof(toclose));
+	fd = badfd;
+	do {
+	    toclose[fd] = 1;
+	    fd = dup(fd);
+	} while (fd >= 0 && fd < MIN_WRITE_FD);
+	int save_errno = errno;
+	for (badfd = 0; badfd != MIN_WRITE_FD; ++badfd)
+	    if (toclose[badfd])
+		close(badfd);
+	if (fd < 0) {
+	    errno = save_errno;
+	} else {
+# ifdef FD_CLOEXEC
+	    (void)fcntl(fd, F_SETFD, FD_CLOEXEC);
+# endif
+	}
+    }
+#endif
+    Assert(fd >= MIN_WRITE_FD || fd < 0);
+    return fd;
 }
 
 size_t
@@ -104,10 +164,21 @@ throw_block_error(const char * s, off_t b, int e)
     throw Xapian::DatabaseError(m, e);
 }
 
-void
-io_read_block(int fd, char * p, size_t n, off_t b)
+#ifdef HAVE_POSIX_FADVISE
+bool
+io_readahead_block(int fd, size_t n, off_t b, off_t o)
 {
-    off_t o = b * n;
+    o += b * n;
+    // Assume that any failure is likely to also happen for another call with
+    // the same fd.
+    return posix_fadvise(fd, o, n, POSIX_FADV_WILLNEED) == 0;
+}
+#endif
+
+void
+io_read_block(int fd, char * p, size_t n, off_t b, off_t o)
+{
+    o += b * n;
     // Prefer pread if available since it's typically implemented as a
     // separate syscall, and that eliminates the overhead of an extra syscall
     // per block read.
@@ -153,9 +224,9 @@ io_read_block(int fd, char * p, size_t n, off_t b)
 }
 
 void
-io_write_block(int fd, const char * p, size_t n, off_t b)
+io_write_block(int fd, const char * p, size_t n, off_t b, off_t o)
 {
-    off_t o = b * n;
+    o += b * n;
     // Prefer pwrite if available since it's typically implemented as a
     // separate syscall, and that eliminates the overhead of an extra syscall
     // per block write.

@@ -47,11 +47,15 @@ class QueryTerm : public Query::Internal {
 	      Xapian::termpos pos_)
 	: term(term_), wqf(wqf_), pos(pos_) { }
 
-    Xapian::Query::op get_type() const;
+    Xapian::Query::op get_type() const XAPIAN_NOEXCEPT XAPIAN_PURE_FUNCTION;
+
+    const std::string & get_term() const { return term; }
 
     PostingIterator::Internal * postlist(QueryOptimiser * qopt, double factor) const;
 
-    termcount get_length() const { return wqf; }
+    termcount get_length() const XAPIAN_NOEXCEPT XAPIAN_PURE_FUNCTION {
+	return wqf;
+    }
 
     void serialise(std::string & result) const;
 
@@ -74,7 +78,7 @@ class QueryPostingSource : public Query::Internal {
 
     void serialise(std::string & result) const;
 
-    Xapian::Query::op get_type() const;
+    Xapian::Query::op get_type() const XAPIAN_NOEXCEPT XAPIAN_PURE_FUNCTION;
 
     std::string get_description() const;
 };
@@ -89,12 +93,14 @@ class QueryScaleWeight : public Query::Internal {
 
     PostingIterator::Internal * postlist(QueryOptimiser *qopt, double factor) const;
 
-    termcount get_length() const { return subquery.internal->get_length(); }
+    termcount get_length() const XAPIAN_NOEXCEPT XAPIAN_PURE_FUNCTION {
+	return subquery.internal->get_length();
+    }
 
     void serialise(std::string & result) const;
 
-    Xapian::Query::op get_type() const;
-    size_t get_num_subqueries() const;
+    Xapian::Query::op get_type() const XAPIAN_NOEXCEPT XAPIAN_PURE_FUNCTION;
+    size_t get_num_subqueries() const XAPIAN_NOEXCEPT XAPIAN_PURE_FUNCTION;
     const Query get_subquery(size_t n) const;
 
     std::string get_description() const;
@@ -117,7 +123,7 @@ class QueryValueRange : public Query::Internal {
 
     void serialise(std::string & result) const;
 
-    Xapian::Query::op get_type() const;
+    Xapian::Query::op get_type() const XAPIAN_NOEXCEPT XAPIAN_PURE_FUNCTION;
 
     std::string get_description() const;
 };
@@ -135,7 +141,7 @@ class QueryValueLE : public Query::Internal {
 
     void serialise(std::string & result) const;
 
-    Xapian::Query::op get_type() const;
+    Xapian::Query::op get_type() const XAPIAN_NOEXCEPT XAPIAN_PURE_FUNCTION;
 
     std::string get_description() const;
 };
@@ -153,7 +159,7 @@ class QueryValueGE : public Query::Internal {
 
     void serialise(std::string & result) const;
 
-    Xapian::Query::op get_type() const;
+    Xapian::Query::op get_type() const XAPIAN_NOEXCEPT XAPIAN_PURE_FUNCTION;
 
     std::string get_description() const;
 };
@@ -179,16 +185,16 @@ class QueryBranch : public Query::Internal {
 					     Xapian::termcount window = 0) const;
 
   public:
-    termcount get_length() const;
- 
+    termcount get_length() const XAPIAN_NOEXCEPT XAPIAN_PURE_FUNCTION;
+
     void serialise(std::string & result) const;
 
     void gather_terms(void * void_terms) const;
 
     virtual void add_subquery(const Xapian::Query & subquery) = 0;
 
-    Xapian::Query::op get_type() const;
-    size_t get_num_subqueries() const;
+    Xapian::Query::op get_type() const XAPIAN_NOEXCEPT XAPIAN_PURE_FUNCTION;
+    size_t get_num_subqueries() const XAPIAN_NOEXCEPT XAPIAN_PURE_FUNCTION;
     const Query get_subquery(size_t n) const;
 
     virtual Query::Internal * done() = 0;
@@ -307,6 +313,8 @@ class QueryWindowed : public QueryAndLike {
 			   QueryOptimiser * qopt, double factor) const;
 
   public:
+    size_t get_window() const { return window; }
+
     Query::Internal * done();
 };
 
@@ -386,6 +394,8 @@ class QueryWildcard : public Query::Internal {
 
     Xapian::termcount max_expansion;
 
+    int max_type;
+
     Query::op combiner;
 
     Xapian::Query::op get_op() const;
@@ -393,15 +403,21 @@ class QueryWildcard : public Query::Internal {
   public:
     QueryWildcard(const std::string &pattern_,
 		  Xapian::termcount max_expansion_,
+		  int max_type_,
 		  Query::op combiner_)
-	: pattern(pattern_), max_expansion(max_expansion_), combiner(combiner_)
+	: pattern(pattern_),
+	  max_expansion(max_expansion_),
+	  max_type(max_type_),
+	  combiner(combiner_)
     { }
 
-    Xapian::Query::op get_type() const;
+    Xapian::Query::op get_type() const XAPIAN_NOEXCEPT XAPIAN_PURE_FUNCTION;
+
+    const std::string & get_pattern() const { return pattern; }
 
     PostingIterator::Internal * postlist(QueryOptimiser * qopt, double factor) const;
 
-    termcount get_length() const;
+    termcount get_length() const XAPIAN_NOEXCEPT XAPIAN_PURE_FUNCTION;
 
     void serialise(std::string & result) const;
 

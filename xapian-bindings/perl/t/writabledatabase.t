@@ -1,3 +1,4 @@
+use strict;
 # Before 'make install' is performed this script should be runnable with
 # 'make test'. After 'make install' it should work as 'perl test.pl'
 
@@ -89,7 +90,7 @@ $repdoc->set_data( "$term $num" );
 $repdoc->add_posting( $term, 0 );
 $repdoc->add_posting( $num, 1 );
 $repdoc->add_value(0, $num);
-$repterm = "five";
+my $repterm = "five";
 
 ok(!$write->term_exists($num), "check term exists");
 ok($write->term_exists($repterm), "check term exists");

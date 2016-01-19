@@ -1,3 +1,4 @@
+use strict;
 # Before 'make install' is performed this script should be runnable with
 # 'make test'. After 'make install' it should work as 'perl test.pl'
 
@@ -10,9 +11,9 @@ my $disable_fixme = 1;
 use warnings;
 BEGIN {$SIG{__WARN__} = sub { die "Terminating test due to warning: $_[0]" } };
 
-use Test;
+use Test::More;
 use Devel::Peek;
-BEGIN { plan tests => 61 };
+BEGIN { plan tests => 73 };
 use Xapian qw(:standard);
 ok(1); # If we made it this far, we're ok.
 
@@ -20,6 +21,15 @@ ok(1); # If we made it this far, we're ok.
 
 # Insert your test code below, the Test module is use()ed here so read
 # its man page ( perldoc Test ) for help writing this test script.
+
+sub mset_expect_order (\@@) {
+    my ($m, @a) = @_;
+    my @m = map { $_->get_docid() } @{$m};
+    is( scalar @m, scalar @a );
+    for my $j (0 .. (scalar @a - 1)) {
+	is( $m[$j], $a[$j] );
+    }
+}
 
 # first create database dir, if it doesn't exist;
 my $db_dir = 'testdb';
@@ -37,10 +47,10 @@ $qp->set_default_op( OP_AND );
 my $query;
 ok( $query = $qp->parse_query( 'one or two', FLAG_BOOLEAN|FLAG_BOOLEAN_ANY_CASE|FLAG_SPELLING_CORRECTION ) );
 ok( not $qp->get_corrected_query_string());
-ok( $query->get_description(), 'Query((one@1 OR two@2))' );
+is( $query->get_description(), 'Query((one@1 OR two@2))' );
 
 ok( $query = $qp->parse_query( 'one OR (two AND three)' ) );
-ok( $query->get_description(), 'Query((one@1 OR (two@2 AND three@3)))' );
+is( $query->get_description(), 'Query((one@1 OR (two@2 AND three@3)))' );
 
 ok( my $enq = $database->enquire( $query ) );
 
@@ -54,7 +64,7 @@ ok( my $enq = $database->enquire( $query ) );
   foreach (qw(one two three four five)) {
     ok( !$stopper->stop_word($_) );
   }
-  ok( $qp->set_stopper($stopper), undef );
+  is( $qp->set_stopper($stopper), undef );
 }
 ok( $qp->parse_query("one two many") );
 
@@ -82,7 +92,7 @@ foreach $pair (
     ) {
     my ($str, $res) = @{$pair};
     my $query = $qp->parse_query($str);
-    ok( $query->get_description(), "Query($res)" );
+    is( $query->get_description(), "Query($res)" );
 }
 
 $qp = new Xapian::QueryParser();
@@ -124,7 +134,7 @@ foreach $pair (
     ) {
     my ($str, $res) = @{$pair};
     my $query = $qp->parse_query($str);
-    ok( $query->get_description(), "Query($res)" );
+    is( $query->get_description(), "Query($res)" );
 }
 
 $qp = new Xapian::QueryParser();
@@ -141,7 +151,7 @@ foreach $pair (
     ) {
     my ($str, $res) = @{$pair};
     my $query = $qp->parse_query($str);
-    ok( $query->get_description(), "Query($res)" );
+    is( $query->get_description(), "Query($res)" );
 }
 
 # Regression test for Xapian bug fixed in 1.0.5.0.  In 1.0.0.0-1.0.4.0
@@ -152,12 +162,37 @@ eval {
     $qp->parse_query('other* AND', FLAG_BOOLEAN|FLAG_WILDCARD);
 };
 ok($@);
-ok(ref($@), "Xapian::QueryParserError", "correct class for exception");
+is(ref($@), "Xapian::QueryParserError", "correct class for exception");
 ok($@->isa('Xapian::Error'));
-ok($@->get_msg, "Syntax: <expression> AND <expression>", "get_msg works");
+is($@->get_msg, "Syntax: <expression> AND <expression>", "get_msg works");
 ok( $disable_fixme || $@ =~ /^Exception: Syntax: <expression> AND <expression>(?: at \S+ line \d+\.)?$/ );
 
 # Check FLAG_DEFAULT is wrapped (new in 1.0.11.0).
 ok( $qp->parse_query('hello world', FLAG_DEFAULT|FLAG_BOOLEAN_ANY_CASE) );
+
+# Test OP_WILDCARD with limits.
+my ($q, @matches);
+ok( $enq = Xapian::Enquire->new($database) );
+
+$qp->set_max_expansion(1, Xapian::WILDCARD_LIMIT_FIRST);
+ok( $q = $qp->parse_query('t*', FLAG_WILDCARD) );
+$enq->set_query($q);
+@matches = $enq->matches(0, 10);
+mset_expect_order(@matches, (1, 2));
+
+$qp->set_max_expansion(1, Xapian::WILDCARD_LIMIT_MOST_FREQUENT);
+ok( $q = $qp->parse_query('t*', FLAG_WILDCARD) );
+$enq->set_query($q);
+@matches = $enq->matches(0, 10);
+mset_expect_order(@matches, (1, 2));
+
+$qp->set_max_expansion(1, Xapian::WILDCARD_LIMIT_ERROR);
+ok( $q = $qp->parse_query('t*', FLAG_WILDCARD) );
+$enq->set_query($q);
+eval {
+    @matches = $enq->matches(0, 10);
+};
+ok( $@ );
+is(ref($@), "Xapian::WildcardError", "correct class for exception");
 
 1;

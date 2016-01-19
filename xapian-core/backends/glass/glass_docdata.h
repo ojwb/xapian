@@ -48,6 +48,10 @@ class GlassDocDataTable : public GlassLazyTable {
 	: GlassLazyTable("docdata", dbdir + "/docdata.", readonly,
 			 Z_DEFAULT_STRATEGY) { }
 
+    GlassDocDataTable(int fd, off_t offset_, bool readonly)
+	: GlassLazyTable("docdata", fd, offset_, readonly,
+			 Z_DEFAULT_STRATEGY) { }
+
     /** Get the document data for document @a did.
      *
      *  If the document doesn't exist, the empty string is returned.
@@ -99,6 +103,10 @@ class GlassDocDataTable : public GlassLazyTable {
      *		     there's no such document, or the document has no data).
      */
     bool delete_document_data(Xapian::docid did) { return del(make_key(did)); }
+
+    void readahead_for_document(Xapian::docid did) const {
+	readahead_key(make_key(did));
+    }
 };
 
 #endif // XAPIAN_INCLUDED_GLASS_DOCDATA_H

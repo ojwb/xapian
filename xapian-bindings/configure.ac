@@ -4,7 +4,8 @@ dnl See xapian-core's HACKING document for details of the reasons for required
 dnl versions.
 AC_PREREQ([2.63])
 
-AC_INIT([xapian-bindings], [1.3.2], [http://xapian.org/bugs])
+m4_define([project_version], [1.3.4])
+AC_INIT([xapian-bindings], project_version, [http://xapian.org/bugs])
 
 dnl See xapian-core's HACKING document for details of the reasons for required
 dnl versions.
@@ -84,8 +85,13 @@ esac
 dnl Run tests using the C++ compiler.
 AC_LANG_CPLUSPLUS
 
+dnl Probe for any options needed to enable C++11 support.
+AX_CXX_COMPILE_STDCXX_11
+
 dnl Check for xapian-core.
-XO_LIB_XAPIAN([], [], [xapian-config])
+XO_LIB_XAPIAN([], [],
+    [xapian-config]regexp(project_version,
+			  [^\([0-9]*\.[0-9]*[13579]\)\..*$], [-\1]))
 
 NEED_JNILIB_EXT=no
 NEED_INTREE_DYLD=no
@@ -299,12 +305,12 @@ if test no != "$with_python" ; then
   fi
   AC_ARG_VAR(PYTHON2, [Python 2 interpreter])
   if test -n "$PYTHON2" ; then
-    dnl Require Python 2.4 or newer.  Older versions are essentially
+    dnl Require Python 2.6 or newer.  Older versions are essentially
     dnl unsupported upstream.
     AC_MSG_CHECKING([$PYTHON2 version])
     version=`$PYTHON2 -c 'import sys;print("%d.%d" % sys.version_info[[:2]])' 2>/dev/null`
     case $version in
-    [2.[4-9]*|2.[12][0-9][0-9]*])
+    [2.[6-9]*|2.[1-5][0-9]*])
       AC_MSG_RESULT([$version])
       ;;
     [[3-9].*])
@@ -317,7 +323,7 @@ if test no != "$with_python" ; then
     *)
       AC_MSG_RESULT([$version (too old)])
       if test yes = "$with_python" ; then
-	AC_MSG_ERROR([Only Python 2.4 or newer is supported ($PYTHON2 is $version)])
+	AC_MSG_ERROR([Only Python 2.6 or newer is supported ($PYTHON2 is $version)])
       fi
       PYTHON2=
       ;;
@@ -391,7 +397,7 @@ if test no != "$with_python3" ; then
     AC_MSG_CHECKING([$PYTHON3 version])
     version=`$PYTHON3 -c 'import sys;print("%d.%d" % sys.version_info[[:2]])' 2>/dev/null`
     case $version in
-    [3.[2-9]*|3.[12][0-9][0-9]*|[4-9].*])
+    [3.[2-9]*|3.1[0-9]*|[4-9].*])
       AC_MSG_RESULT([$version])
       ;;
     *)
@@ -451,6 +457,11 @@ if test no != "$with_python3" ; then
 	AC_SUBST(PYTHON3_CACHE_TAG)
 	AC_MSG_RESULT([$PYTHON3_CACHE_TAG])
 
+	AC_MSG_CHECKING([for extension of cached and optimized python3 bytecode])
+	PYTHON3_CACHE_OPT1_EXT=`$PYTHON3 -c 'import imp,sys;print("%s.pyo"%imp.get_tag()) if sys.version_info.minor<5 else print("{1}{2}".format(*imp.util.cache_from_source("",optimization=1).rpartition(imp.get_tag())))'`
+	AC_SUBST(PYTHON3_CACHE_OPT1_EXT)
+	AC_MSG_RESULT([$PYTHON3_CACHE_OPT1_EXT])
+
 	BINDINGS="$BINDINGS python3"
       else
 	AC_MSG_RESULT([no (install python3-dev or python3-devel package or similar)])
@@ -493,10 +504,10 @@ if test no != "$with_php" ; then
     AC_MSG_CHECKING([$PHP_CONFIG version])
     version=`$PHP_CONFIG --version 2>/dev/null`
     case $version in
-    [[01234].*|5.[012]])
-      AC_MSG_RESULT([$version (not supported, need PHP >= 5.2)])
+    [[01234].*|5.[01234].*])
+      AC_MSG_RESULT([$version (not supported, need PHP >= 5.5)])
       if test yes = "$with_php" ; then
-	AC_MSG_ERROR([Only PHP >= 5.2 is supported ($PHP_CONFIG reports version $version)])
+	AC_MSG_ERROR([Only PHP >= 5.5 is supported ($PHP_CONFIG reports version $version)])
       fi
       with_php=no
       ;;
@@ -577,14 +588,23 @@ if test no != "$with_php" ; then
 fi
 
 if test no != "$with_tcl" ; then
+  dnl The documented minimum requirement is Tcl 8.5.  Older versions may work,
+  dnl but we don't test with them regularly, and they are no longer supported
+  dnl upstream.  Also ::tcl::pckconfig was added in Tcl 8.5, which makes the
+  dnl tests below simpler and more reliable.
+  dnl
+  dnl If you really want to build with an older version, run configure with
+  dnl a lower tcl_min and specify at least TCL_INC explicitly:
+  dnl
+  dnl ./configure tcl_min=8.4 TCL_INC=/usr/include/tcl8.4
+  dnl
+  dnl We definitely need at least Tcl 8.1 for TCL_STUBS.
+  : ${tcl_min=8.5}
   AC_PATH_PROGS(TCLSH, ["${TCLSH-tclsh}"], [])
   AC_ARG_VAR(TCLSH, [Tcl interpreter])
   if test -n "$TCLSH" ; then
-    dnl We need Tcl 8.1 or later for TCL_STUBS.
-    dnl Note: The bindings can easily be made to work with Tcl 8.0 (just
-    dnl don't pass -DUSE_TCL_STUBS when compiling) should you need that.
     AC_MSG_CHECKING([$TCLSH version])
-    if echo 'if {$tcl_version < 8.1 } { exit 1 }'|$TCLSH 2> /dev/null ; then
+    if echo 'if {$tcl_version < '"$tcl_min"' } { exit 1 }'|$TCLSH 2> /dev/null ; then
       tcl_version=`echo 'puts "$tcl_version"'|$TCLSH`
       AC_MSG_RESULT([$tcl_version])
 
@@ -598,27 +618,13 @@ if test no != "$with_tcl" ; then
       if test -z "$TCL_INC" ; then
 	dnl ::tcl::pkgconfig was added in Tcl 8.5.
 	[TCL_INC=`echo 'puts [::tcl::pkgconfig get includedir,runtime]'|$TCLSH 2> /dev/null`]
-	if test -z "$TCL_INC" ; then
-	  dnl Prior to Tcl 8.5, there's no good way to get
-	  dnl "/usr/include/tcl8.N" directly - tclConfig.sh contains it, but
-	  dnl there's no reliable way to locate that prior to Tcl 8.5!
-	  dnl
-	  dnl So first we find the prefix Tcl is installed under (e.g. "/usr")
-	  dnl from the path on TCLSH (or default to /usr if the path doesn't
-	  dnl contain "/bin/"), and then we append "/include/tcl" and
-	  dnl $tcl_version.
-	  tcl_prefix=`echo "$TCLSH"|sed 's!/bin/.*!!p;d'`
-	  test -n "$tcl_prefix" || tcl_prefix=/usr
-	  TCL_INC=${tcl_prefix}/include/tcl${tcl_version}
-	  test -f "$TCL_INC/tcl.h" || TCL_INC=/usr/include
-	fi
       fi
 
       dnl Check that the headers are there (the tcl8.N-dev package
       dnl may not be installed).
       TCL_CPPFLAGS=
-      AC_MSG_CHECKING([for tcl.h for version $tcl_version])
-      if test -f "$TCL_INC/tcl.h" ; then
+      AC_MSG_CHECKING([for tcl.h from Tcl $tcl_version])
+      if test x"$TCL_INC" != x && test -f "$TCL_INC/tcl.h" ; then
 	tcl_hdr_version=`awk '($1 == "#define" && $2 == "TCL_VERSION") {print $3}' "$TCL_INC/tcl.h"|sed 's/"//g'`
 	if test x"$tcl_hdr_version" = x"$tcl_version" ; then
 	  AC_MSG_RESULT([$TCL_INC/tcl.h])
@@ -629,7 +635,7 @@ if test no != "$with_tcl" ; then
 	else
 	  AC_MSG_RESULT([not found])
 	  if test yes = "$with_tcl" ; then
-	    AC_MSG_ERROR([Found tcl.h for version $tcl_hdr_version, not $tcl_version])
+	    AC_MSG_ERROR([Found tcl.h from version $tcl_hdr_version, not $tcl_version - specify TCL_INC on configure command line])
 	  fi
 	  TCLSH=
 	fi
@@ -655,8 +661,7 @@ if test no != "$with_tcl" ; then
 	  dnl necessary to link against -ltclstub anyway.
 	  [TCLCONFIG_SH=`echo 'puts [file join [::tcl::pkgconfig get libdir,runtime] tclConfig.sh]'|$TCLSH 2> /dev/null`]
 	  if test -n "$TCLCONFIG_SH" && test -r "$TCLCONFIG_SH" ; then
-	    eval "`grep ^TCL_STUB_LIB_SPEC= $TCLCONFIG_SH`"
-	    TCL_LIBS=$TCL_STUB_LIB_SPEC
+	    eval "`sed 's/^TCL_STUB_LIB_SPEC=/TCL_LIBS=/p;d' $TCLCONFIG_SH`"
 	  fi
 	  TCL_CPPFLAGS="$TCL_CPPFLAGS -DUSE_TCL_STUBS" ;;
 	esac
@@ -665,9 +670,9 @@ if test no != "$with_tcl" ; then
       AC_SUBST(TCL_CPPFLAGS)
       AC_SUBST(TCL_LIBS)
     else
-      AC_MSG_RESULT([< 8.1 (too old)])
+      AC_MSG_RESULT([< $tcl_min (too old)])
       if test yes = "$with_tcl" ; then
-	AC_MSG_ERROR([$TCLSH too old (Tcl 8.1 or newer required)])
+	AC_MSG_ERROR([$TCLSH too old (Tcl $tcl_min or newer required)])
       fi
     fi
   else
@@ -776,7 +781,7 @@ if test no != "$with_csharp" ; then
 	  AC_ARG_VAR(CLI, [CSharp bytecode interpreter (optional - only needed to run CSharp testsuite with)])
 	  if test -n "$CLI" ; then
 	    AC_MSG_CHECKING([whether $CLI can run CSharp programs])
-	    if OK = "`$CLI ./conftest.exe 2> /dev/null`" ; then
+	    if test OK = "`$CLI ./conftest.exe 2> /dev/null`" ; then
 	      AC_MSG_RESULT(yes)
 	      RUN_CSHARP=$CLI
 	    else
@@ -969,10 +974,6 @@ if test no != "$with_ruby" ; then
     dnl gives a deprecation warning with Ruby 1.9.3).
     version=`$RUBY -e 'print RUBY_VERSION' 2>/dev/null`
     case $version in
-    [1.[89]*]) ;; # Ruby 1.8, 1.9
-    [1.[1-9][0-9]*]) ;; # Ruby 1.10+
-    [[2-9]*]) ;; # Ruby 2-Ruby 9
-    [1[0-9]*]) ;; # Ruby 10+
     "")
       AC_MSG_RESULT([\$RUBY -e 'print RUBY_VERSION' didn't work])
       if test yes = "$with_ruby" ; then
@@ -980,7 +981,7 @@ if test no != "$with_ruby" ; then
       fi
       RUBY=
       ;;
-    *)
+    [0.*|1.[0-7]|1.[0-7].*])
       AC_MSG_RESULT([$version (too old)])
       if test yes = "$with_ruby" ; then
 	AC_MSG_ERROR([Only Ruby 1.8 or newer is supported ($RUBY is $version)])
@@ -1141,7 +1142,7 @@ if test no != "$with_lua" ; then
   if test -n "$LUA" ; then
     dnl We need Lua 5.1 or later.
     AC_MSG_CHECKING([$LUA version])
-    lua_version=`$LUA -e 'print(_VERSION)' | cut -f 2 -d ' '`
+    lua_version=`$LUA -e 'print(_VERSION)' | cut -f 2 -d ' ' 2>&AS_MESSAGE_LOG_FD`
 
     case $lua_version in
     [[01234]].*|5.0|5.0.*)
@@ -1313,37 +1314,24 @@ if test yes = "$GXX" ; then
       SWIG_CXXFLAGS="$SWIG_CXXFLAGS -Wall -w1 -wd177,1572"
     ],
     [
-      dnl GCC:
+      dnl GCC or clang:
       dnl
       dnl Swig generated code gives lots of unused and uninitialized warnings.
       dnl They're non-harmful, so suppress them.
       SWIG_CXXFLAGS="$SWIG_CXXFLAGS -fshow-column -Wall -Wno-unused -Wno-uninitialized"
-
-      if test no != "$enable_visibility"; then
-	AC_MSG_CHECKING([whether to use -fvisibility=hidden])
-	dnl To be robust, we check both that -fvisibility=hidden is recognised
-	dnl and that SWIG will have added the visibility attributes.
-	dnl The GCC wiki says it's supported from GCC 4.0 onwards.  GCC 3.4
-	dnl also supports -fvisibility, but doesn't allow visibility to be
-	dnl specified for classes, which probably breaks throwing exception
-	dnl classes from the library.  We want that to work, so only switch
-	dnl this on for GCC 4.0 onwards.
-	SAVE_CXXFLAGS=$CXXFLAGS
-	CXXFLAGS="-Werror -fvisibility=hidden"
-	AC_TRY_COMPILE([], [
-#if __GNUC__ >= 4
-  /* GCC supports -fvisibility and allows specifying visibility for classes. */
-#else
-  choke me
-#endif
-],
-		     AC_MSG_RESULT(yes)
-		     SWIG_CXXFLAGS="$SWIG_CXXFLAGS -fvisibility=hidden"
-		     ,
-		     AC_MSG_RESULT(no))
-	CXXFLAGS=$SAVE_CXXFLAGS
-      fi
     ])
+
+  if test no != "$enable_visibility"; then
+    dnl GCC doesn't support symbol visibility on all platforms (e.g. it isn't
+    dnl on mingw).
+    AC_MSG_CHECKING([if $CXX -fvisibility=hidden works])
+    if echo 'int bar() __attribute__((visibility("default"))); int foo() {return 42;}'|$CXX -Werror -fvisibility=hidden -c -oconftest.o -xc++ - >&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD ; then
+      AC_MSG_RESULT([yes])
+      SWIG_CXXFLAGS="$SWIG_CXXFLAGS -fvisibility=hidden"
+    else
+      AC_MSG_RESULT([no])
+    fi
+  fi
 fi
 AC_SUBST(SWIG_CXXFLAGS)
 
