@@ -1,0 +1,16 @@
+Description: Fix Python testsuite
+ Not fully dug into this to work out what's causing this - it used to work OK.
+ Applying this simple patch for now to get a build into experimental.
+Author: Olly Betts <olly@survex.com>
+Forwarded: no
+Last-Update: 2016-02-03
+
+--- xapian-bindings-1.3.4.orig/python/run-python-test
++++ xapian-bindings-1.3.4/python/run-python-test
+@@ -3,5 +3,5 @@
+ # versions we set a trap which will delete any generated .pyc files after
+ # the test, or upon a signal.
+ trap 'rm -f "${srcdir-.}/*.pyc"' 0 1 2 13 15
+-PYTHONPATH=".:$PYTHONPATH" PYTHONDONTWRITEBYTECODE=1 ${PYTHON-python} "$@"
++PYTHONPATH=".:xapian:$PYTHONPATH" PYTHONDONTWRITEBYTECODE=1 ${PYTHON-python} "$@"
+ exit $?

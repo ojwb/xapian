@@ -5,7 +5,6 @@ Architecture: any
 Depends: ${python:Depends}, ${shlibs:Depends}, ${misc:Depends}
 Suggests: xapian-doc
 Provides: ${python:Provides}
-@XB_PYTHON_VERSION@
 Description: Xapian search engine interface for Python
  This package provides Xapian Python bindings for all the packaged versions
  of Python.

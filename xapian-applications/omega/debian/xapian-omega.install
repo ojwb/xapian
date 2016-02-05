@@ -4,9 +4,12 @@ usr/share/omega/htdig2omega.script usr/share/doc/xapian-omega/examples/
 usr/bin/mbox2omega usr/share/doc/xapian-omega/examples/
 usr/share/omega/mbox2omega.script usr/share/doc/xapian-omega/examples/
 usr/bin/omindex
+usr/bin/omindex-list
 usr/bin/scriptindex
 usr/lib/xapian-omega/bin/omega usr/lib/cgi-bin/omega
+usr/lib/xapian-omega/bin/mhtml2html
 usr/lib/xapian-omega/bin/outlookmsg2html
+usr/lib/xapian-omega/bin/rfc822tohtml
 usr/share/images
 etc/omega.conf
 usr/share/man

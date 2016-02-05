@@ -1,7 +1,7 @@
 #!/usr/bin/make -f
 #
 # Copyright (C) 2004,2005,2006 Lemur Consulting Ltd
-# Copyright (C) 2006,2007,2008,2009,2010,2011,2012,2013,2014 Olly Betts
+# Copyright (C) 2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016 Olly Betts
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -27,7 +27,7 @@
 CODENAME := $(shell cat debian/codename 2>/dev/null||echo sid)
 
 # Version without the "-N" suffix.
-XAPIAN_VERSION := $(shell sed 's/.*(\([^-]*\)\(-.*\)*).*/\1/;q' debian/changelog)
+XAPIAN_VERSION := $(shell sed 's/.*(\([^-+]*\)\([-+].*\)*).*/\1/;q' debian/changelog)
 
 # The next incompatible version - i.e. the first release of the next release
 # branch.  So for XAPIAN_VERSION "1.0.<n>", this should be "1.1.0".
@@ -36,8 +36,7 @@ XAPIAN_VERSION_CEILING := $(shell echo '$(XAPIAN_VERSION)'|awk -F. '{print $$1".
 # `--exclude=.EXT' arguments to pass dh_install
 DH_INSTALL_EXCLUDE := --exclude=.pyc --exclude=.pyo
 
-# >= 7.0.50~ needed for Ruby packaging.
-BUILD_DEPS := debhelper (>= 7.0.50~),
+BUILD_DEPS := debhelper (>= $(shell cat debian/compat)),
 
 # PHP is disabled by default due to incompatibility of GPL and PHP licence.
 DEFAULT_LANGUAGES := python ruby tcl
@@ -60,26 +59,19 @@ endif
 XS_RUBY_VERSIONS := X-Dummy-Ruby: Ruby bindings not being packaged
 ifneq ($(findstring ruby, $(LANGUAGES)), )
 # Be conservative for now and leave backported versions on old ruby policy.
-ifeq ($(findstring .$(CODENAME)., .lucid.precise.quantal.raring.squeeze.wheezy.), )
+ifeq ($(findstring .$(CODENAME)., .precise.squeeze.wheezy.), )
 # For new ruby policy:
 XB_RUBY_VERSIONS := XB-Ruby-Versions: $${ruby:Versions}
 XS_RUBY_VERSIONS := XS-Ruby-Versions: all
 rubylibdir := vendorlibdir
 rubyarchdir := vendorarchdir
-# Ruby 2.0 will debut in jessie and was in Ubuntu saucy, which neatly matches
-# the versions on new ruby policy.
-ifeq ($(findstring .$(CODENAME)., .saucy.), )
 # More recent versions all have the ruby-all-dev and ruby packages.
 BUILD_DEPS += ruby-all-dev, ruby,
+# Ruby 2.2 unbundled unit/test.
+BUILD_DEPS += ruby-test-unit,
 RUBY_VERSIONS := $(shell ruby -rruby_debian_dev -e 'print RubyDebianDev::RUBY_CONFIG_VERSION.values.join(" ")')
-RUBY_PROVIDES := $(shell ruby -rruby_debian_dev -e 'p = RubyDebianDev::RUBY_CONFIG_VERSION.values.grep(/^1\./).map {|v| "libxapian-ruby"+v }.join(", "); print p.size() ? "Provides: "+p : "X-Dummy: No provides"')
+RUBY_PROVIDES := $(shell ruby -rruby_debian_dev -e 'p = RubyDebianDev::RUBY_CONFIG_VERSION.values.grep(/^1\./).map {|v| "libxapian-ruby"+v }.join(", "); print p.size() > 0 ? "Provides: "+p : "X-Dummy: No provides"')
 RUBY_LATEST_VERSION := $(shell ruby -rruby_debian_dev -e 'print RubyDebianDev::RUBY_CONFIG_VERSION.values[-1]')
-else
-# Ubuntu saucy didn't have the ruby-all-dev and ruby packages.
-RUBY_VERSIONS := 1.8 1.9.1 2.0
-RUBY_PROVIDES := Provides: libxapian-ruby1.8, libxapian-ruby1.9.1
-RUBY_LATEST_VERSION := 2.0
-endif
 else
 # For old ruby policy:
 XS_RUBY_VERSIONS := X-Dummy-Ruby: Remove me once old ruby policy support is dropped
@@ -102,17 +94,8 @@ ifneq ($(findstring python, $(LANGUAGES)), )
 # The python versions to build for:
 PYTHON_VERSIONS := $(shell pyversions -r debian/control)
 
-ifeq ($(findstring .$(CODENAME)., .lucid.), )
-USING_PYCENTRAL := 0
 BUILD_DEPS += python, python-all-dev (>= 2.6.6-3~),
-XB_PYTHON_VERSION := X-Dummy-Python: Remove me once python-central support is dropped
 X_PYTHON_VERSION := X-Python-Version: >= 2.3
-else
-USING_PYCENTRAL := 1
-BUILD_DEPS += python, python-central (>= 0.4.10), python-all-dev,
-XB_PYTHON_VERSION := XB-Python-Version: $${python:Versions}
-X_PYTHON_VERSION := XS-Python-Version: all
-endif
 endif
 
 ifneq ($(findstring tcl, $(LANGUAGES)), )
@@ -120,19 +103,9 @@ ifneq ($(findstring tcl, $(LANGUAGES)), )
 # bindings will work with any Tcl version from 8.0.6 upwards, whichever
 # version they were built against.
 #
-# lenny/hardy onwards have a "tcl-dev" dummy package which pulls in the package
-# for the current preferred version.
+# The "tcl-dev" dependency package pulls in the package for the current
+# preferred version.
 BUILD_DEPS += tcl-dev,# NB Trailing ',' required here!
-ifeq ($(findstring .$(CODENAME)., .lucid.precise.quantal.raring.saucy.trusty.squeeze.wheezy.), )
-# /usr/bin/tclsh-default is going to be dropped.
-TCLSH=/usr/bin/tclsh
-# tclsh8.6 requires us to link to libtclstub.a - upstream doesn't yet do this
-# automatically.
-TCL_MAKE_OPTS = TCL_LIBS=-ltclstub
-else
-TCLSH=/usr/bin/tclsh-default
-TCL_MAKE_OPTS =
-endif
 BUILD_TCL := 1
 endif
 
@@ -176,7 +149,7 @@ endif
 ifneq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
     MAKE_CHECK := :
 else
-    MAKE_CHECK := make check
+    MAKE_CHECK := make check VERBOSE=1
 endif
 
 # We need a versioned build dependency on libxapian-dev.
@@ -186,7 +159,6 @@ BUILD_DEPS += \
 	libxapian-dev (<< $(XAPIAN_VERSION_CEILING)),
 
 commonconfflags := \
-	XAPIAN_CONFIG=/usr/bin/xapian-config-1.3 \
 	$(confflags) \
 	--prefix=/usr \
 	--sysconfdir=/etc
@@ -218,8 +190,7 @@ ifeq ($(BUILD_TCL), 1)
 	cat debian/control-tcl.in >> debian/control.tmp
 endif
 ifneq ($(PYTHON_VERSIONS), )
-	sed -e 's/@XB_PYTHON_VERSION@/$(XB_PYTHON_VERSION)/g' \
-	    < debian/control-python.in >> debian/control.tmp
+	cat debian/control-python.in >> debian/control.tmp
 endif
 ifneq ($(PHP_VERSIONS), )
 	for v in $(PHP_VERSIONS); do \
@@ -304,7 +275,7 @@ configure-stamp:
 ifeq ($(BUILD_TCL), 1)
 	mkdir -p debian/build/tcl
 	cd debian/build/tcl && ../../../configure $(commonconfflags) \
-	    --with-tcl TCLSH=$(TCLSH) TCL_LIB=/usr/lib/tcltk
+	    --with-tcl TCL_LIB=/usr/lib/tcltk
 endif
 
 	touch $@
@@ -332,7 +303,7 @@ build-stamp: configure-stamp
 	    $(MAKE_CHECK) -C debian/build/ruby$$v ; \
 	done
 ifeq ($(BUILD_TCL), 1)
-	$(MAKE) -C debian/build/tcl $(TCL_MAKE_OPTS)
+	$(MAKE) -C debian/build/tcl
 	$(MAKE_CHECK) -C debian/build/tcl
 endif
 	touch $@
@@ -410,11 +381,7 @@ binary-arch: build-arch install
 	dh_fixperms
 	dh_makeshlibs
 ifneq ($(PYTHON_VERSIONS), )
-ifeq ($(USING_PYCENTRAL), 1)
-	DH_PYCENTRAL=include-links dh_pycentral
-else
 	dh_python2
-endif
 endif
 	dh_installdeb
 
@@ -422,7 +389,7 @@ endif
 	# Rewrite the dependency on libxapianN to be >= our version, since
 	# we may require features added in that version.
 	sed -i \
-	    's/^shlibs:Depends=.*libxapian[0-9]\+/& (>= $(XAPIAN_VERSION))/' \
+	    's/^shlibs:Depends=.*libxapian[0-9][0-9a-z]*/& (>= $(XAPIAN_VERSION))/' \
 	    debian/*.substvars
 
 	for v in $(PHP_VERSIONS); do \

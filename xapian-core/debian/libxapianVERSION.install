@@ -1,1 +1,1 @@
-usr/lib/libxapian@VERSION_SUFFIX@.so.*
+usr/lib/*/libxapian@VERSION_SUFFIX@.so.*

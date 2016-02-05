@@ -1,131 +1,85 @@
-xapian-core (1.3.1.avature20) precise; urgency=medium
+xapian-core (1.3.4.avature1) UNRELEASED; urgency=medium
 
-  * Merge in changes from git master (up to 575eab1):
-    + Lazily expand wildcards.
+  * Rebase on package from Debian experimental.
+    + Drop bigram-indexing.patch as other changes have addressed those issues.
 
- -- Olly Betts <olly@survex.com>  Tue, 10 Mar 2015 15:05:41 +1300
-
-xapian-core (1.3.1.avature19) precise; urgency=medium
-
-  * Merge in changes from git master (up to 1ca4d2f):
-    + Don't convert an unweighted term which indexes all docs to an all docs
-      postlist if we need positional data for it.
-
- -- Olly Betts <olly@survex.com>  Mon, 09 Feb 2015 16:02:47 +1300
-
-xapian-core (1.3.1.avature18) precise; urgency=medium
-
-  * Merge in changes from git master (up to 52ea044):
-    + Fix edge case in freelist handling.
-  * Merge in packaging changes:
-    + debian/libxapianVERSION-dev.install: Package the new .pc file.
-
- -- Olly Betts <olly@survex.com>  Fri, 09 Jan 2015 18:24:09 +1300
-
-xapian-core (1.3.1.avature17) precise; urgency=medium
-
-  * Merge in changes from git master (up to 2086d8a):
-    + Fix compaction and db checking for glass position key format change.
-    + More assertions in glass backend.
-
- -- Olly Betts <olly@survex.com>  Fri, 09 Jan 2015 15:50:55 +1300
-
-xapian-core (1.3.1.avature16) precise; urgency=medium
-
-  * Merge in changes from git master (up to 3545bbb).
-  * debian/rules: Add support for DEB_BUILD_OPTIONS=assertions
-
- -- Olly Betts <olly@survex.com>  Mon, 22 Dec 2014 16:45:31 +1300
-
-xapian-core (1.3.1.avature15) precise; urgency=medium
-
-  * Merge in changes from git master (up to 9c31cb4):
-    + Avoid any mutual recursion between GlassFreeList::get_block() and
-      GlassFreeList::mark_block_unused().
-
- -- Olly Betts <olly@survex.com>  Fri, 19 Dec 2014 17:45:45 +1300
-
-xapian-core (1.3.1.avature14) precise; urgency=medium
-
-  * Merge in changes from SVN trunk (up to r18359):
-    + Bug fixes in brass freelist handling.
-    + Rename 'brass' to 'glass'.
-
- -- Olly Betts <olly@survex.com>  Mon, 24 Nov 2014 14:37:21 +1300
-
-xapian-core (1.3.1.avature13) precise; urgency=medium
-
-  * Merge in changes from SVN trunk (up to r18326):
-    + Assorted bug fixes.
-  * Revert change to allow xapian-compact to handle compact a single old-format
-    brass table to new-format brass, as the brass format has evolved further.
-
- -- Olly Betts <olly@survex.com>  Tue, 04 Nov 2014 20:40:31 +0000
-
-xapian-core (1.3.1.avature12) precise; urgency=medium
-
-  * If we hit a key without a termname while checking the position table,
-    report what that key was.
-
- -- Olly Betts <olly@survex.com>  Thu, 11 Sep 2014 17:27:09 +0000
-
-xapian-core (1.3.1.avature11) precise; urgency=medium
-
-  * Better handling of config.guess and config.status.
-
- -- Olly Betts <olly@survex.com>  Fri, 29 Aug 2014 13:58:34 +0000
-
-xapian-core (1.3.1.avature10) precise; urgency=medium
-
-  * Don't sync handles for tables which aren't open.
-
- -- Olly Betts <olly@survex.com>  Thu, 28 Aug 2014 14:51:44 +0000
-
-xapian-core (1.3.1.avature9) precise; urgency=medium
-
-  * Extend xapian-compact to handle compacting a single old-format brass table
-    to new-format brass.
-
- -- Olly Betts <olly@survex.com>  Fri, 01 Aug 2014 18:28:35 +1200
-
-xapian-core (1.3.1.avature8) precise; urgency=medium
-
-  * Merge in changes from SVN trunk (up to r18176):
-    + Includes the changes to replace base files with freelists plus minimal
-      data stored in the "iambrass" file.
-
- -- Olly Betts <olly@survex.com>  Wed, 30 Jul 2014 15:39:58 +1200
-
-xapian-core (1.3.1.avature7) precise; urgency=medium
-
-  * Merge in changes from SVN trunk (up to r18079).
-
- -- Olly Betts <olly@survex.com>  Mon, 16 Jun 2014 17:15:17 +1200
-
-xapian-core (1.3.1.avature6) precise; urgency=medium
-
-  * Custom build of package - xapian-core trunk with patches:
-    + bigram-indexing.patch
-
- -- Olly Betts <olly@survex.com>  Sat, 01 Feb 2014 01:04:28 +1300
-
-xapian-core (1.3.1-6) UNRELEASED; urgency=low
+xapian-core (1.3.4-1) experimental; urgency=low
 
   * Upstream development release.
-  * Remaining changes over 1.2.18-1:
-    + Patch phrase-settling-pond-update-20130517.patch.
-    + Remove xapian-chert-update from xapian-tools.install, as it's dropped
-      upstream.
-    + Include -1.3 suffix in xapian-tools.install.
-    + debian/watch: Update to work for 1.3.x development releases.
-    + libxapian-1.3-1 Breaks+Replaces libxapian13-1 and libxapian1.3-1, which
-      were the runtime library package name in an earlier versions of the 1.3
-      packaging.
-  * debian/rules: Use dh_autotools-dev_updateconfig and
-    dh_autotools-dev_restoreconfig.
-  * debian/libxapianVERSION-dev.install: Package the new .pc file.
+  * debian/rules: Add support for DEB_BUILD_OPTIONS=assertions
+  * debian/rules: Ignore stopword lists for now
 
- -- Olly Betts <olly@survex.com>  Fri, 23 Jan 2015 14:33:37 +1300
+ -- Olly Betts <olly@survex.com>  Fri, 22 Jan 2016 12:39:01 +1300
+
+xapian-core (1.2.22-1) unstable; urgency=medium
+
+  * New upstream release:
+    + Newer than 1.2.21_git68, so Closes: #808610
+  * Ack NMU; adjust changes so building backports should just work.
+  * Update list of tools in description of xapian-tools package.
+  * debian/control.in: Drop "Suggests: libstdc++6-4.6-dbg" from our -dbg
+    package.  The package name is now out of date, and the work required
+    to keep updating it doesn't seem worth the small benefit.
+  * Add multi-arch support (Closes: #765820).  Thanks to Norman Rasmussen
+    and Wookey.
+  * Set AUTOMATED_TESTING=1 when running "make check" to skip timed tests
+    which can be flaky under uneven load.
+  * debian/copyright: Update copyright years for packaging.
+
+ -- Olly Betts <olly@survex.com>  Thu, 21 Jan 2016 12:00:22 +1300
+
+xapian-core (1.2.21-1.2) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Upload to unstable.
+
+ -- Matthias Klose <doko@debian.org>  Sun, 02 Aug 2015 18:50:47 +0200
+
+xapian-core (1.2.21-1.1) experimental; urgency=medium
+
+  * Non maintainer upload.
+  * Build using GCC 5. Closes: #791312.
+  * Rename libxapian22-dbg to libxapian22v5-dbg.
+  * Rename libxapian22 to libxapian22v5.
+  * Add Conflict/Replaces.
+
+ -- Matthias Klose <doko@debian.org>  Tue, 28 Jul 2015 20:58:38 +0200
+
+xapian-core (1.2.21-1) unstable; urgency=medium
+
+  * New upstream release:
+    + Now provides pkg-config file, packaged in libxapian-dev.
+  * debian/rules: It's safe to assume dpkg >= 1.16.1 now, so simplify
+    use of dpkg-buildflags.
+  * Upstream releases are now bootstrapped with a newer libtool, so
+    dh_autoreconf is no longer needed.
+
+ -- Olly Betts <olly@survex.com>  Fri, 22 May 2015 00:17:27 +1200
+
+xapian-core (1.2.19-1) unstable; urgency=low
+
+  * New upstream release.
+  * Ack NMU.
+  * New patch force-serial-tests.patch to clean up fall out from
+    dh-autoreconf change.
+  * debian/control.in: "Standards-Version: 3.9.6" (no changes required).
+
+ -- Olly Betts <olly@survex.com>  Wed, 22 Oct 2014 00:50:39 +1300
+
+xapian-core (1.2.18-1.1) unstable; urgency=medium
+
+  * Non-maintainer upload with maintainer permission.
+  * Build using dh-autoreconf.  (Closes: #746238, #757155).
+
+ -- Aurelien Jarno <aurel32@debian.org>  Tue, 02 Sep 2014 16:12:09 +0200
+
+xapian-core (1.2.18-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Raise priority of libxapian22 to 'important', since aptitude depends on
+    it.  (Closes: #741637)
+
+ -- Olly Betts <olly@survex.com>  Sun, 29 Jun 2014 11:05:16 +1200
 
 xapian-core (1.2.17-1) unstable; urgency=medium
 
