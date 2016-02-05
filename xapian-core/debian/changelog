@@ -1,7 +1,10 @@
-xapian-core (1.3.4.avature1) UNRELEASED; urgency=medium
+xapian-core (1.3.4.avature1) experimental; urgency=medium
 
   * Rebase on package from Debian experimental.
     + Drop bigram-indexing.patch as other changes have addressed those issues.
+  * Merge changes for xapian git master (up to b643e151).
+
+ -- Olly Betts <olly@survex.com>  Fri, 05 Feb 2016 17:29:52 +1300
 
 xapian-core (1.3.4-1) experimental; urgency=low
 
