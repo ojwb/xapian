@@ -29,6 +29,7 @@ RST_DOCS = \
 BUILT_SOURCES = xapian_wrap.cc xapian_wrap.h xapian.py
 
 EXTRA_DIST = python.i util.i extra.i extracomments.i except.i \
+	doxy2swig.py \
 	generate-python-exceptions \
 	run-python-test \
 	testsuite.py \
@@ -147,21 +148,11 @@ dist_exampledata_DATA = \
 
 sphinxdocs = docs/html/index.html
 
-dist-hook:
-	$(MKDIR_P) '$(distdir)/docs'
-	cp -R -p `test -r docs/html || echo '$(srcdir)/'`docs/html '$(distdir)/docs'
-
 install-data-local:
 	$(mkinstalldirs) '$(DESTDIR)$(docdir)/python'
 	cp -R -p `test -r docs/html || echo '$(srcdir)/'`docs/html '$(DESTDIR)$(docdir)/python'
 
-if DOCUMENTATION_RULES
 all-local: $(sphinxdocs)
 
 $(sphinxdocs): xapian/__init__.py docs/conf.py $(RST_DOCS) $(dist_exampledata_DATA)
 	PYTHONPATH=..:$$PYTHONPATH $(PYTHON3) $(SPHINX_BUILD) -b html -d doctrees -c docs $(srcdir)/docs docs/html
-else
-## Create empty directory so the install-data-local target doesn't fail.
-all-local:
-	$(MKDIR_P) docs/html
-endif

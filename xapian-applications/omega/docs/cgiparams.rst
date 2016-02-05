@@ -89,8 +89,17 @@ Filtering parameters
 --------------------
 
 B
-        general boolean filter terms.  See the `overview document
-        <overview.html>`_ for details of how multiple B parameters are handled.
+        general boolean filter terms.
+
+        See the `overview document <overview.html>`_ for details of how
+        multiple `B` and `N` parameters are handled.
+
+N
+        negated general boolean filter terms (new in Omega 1.3.5 - older
+        versions will just ignore any `N` parameters).
+
+        See the `overview document <overview.html>`_ for details of how
+        multiple `B` and `N` parameters are handled.
 
 COLLAPSE
 	value number to use for removing duplicate documents.
@@ -139,14 +148,26 @@ Reordering parameters
 ---------------------
 
 SORT
-	reorder results by this value number.  The comparison used is a string
-	compare of the unsigned byte values, and greater values are better
-	by default (but this can be changed by setting SORTREVERSE to a
-	non-zero value).
+	specifies a value slot number to order results by.  The comparison used
+	is a string compare of the unsigned byte values.
+
+	The format of this parameter's value is a `+` or `-` specifying the
+	direction of the sort followed by an unsigned integer value slot
+	number.  Normally `+` means an ascending sort (so the first result has
+	the lowest value of the sort key) and `-` means a descending sort -
+	however `SORTREVERSE` can change this (see below).
+
+	The sort direction character was added in 1.3.5 - earlier versions
+	defaulted to a descending sort (and for compatibility this is still
+	the behaviour if you omit the `+` or `-`).
+
+	Earlier versions also parsed the value as a signed integer and then
+	cast it to unsigned, so beware of using updated templates with older
+	versions.
 
 SORTREVERSE
-	if non-zero, reverse the sort order so that lower values are better.
-	This parameter has no effect unless SORT is also specified.
+	if non-zero, reverses the sort order specified by `SORT`.  This
+	parameter has no effect unless `SORT` is also specified.
 
 SORTAFTER
 	if non-zero, order results by relevance, only sorting by value to

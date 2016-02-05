@@ -9,7 +9,7 @@ AM_LOG_FLAGS = -I.libs -I'$(srcdir)'
 
 BUILT_SOURCES = xapian_wrap.cc xapian_wrap.h
 
-EXTRA_DIST = ruby.i extra.i docs/rdocs docs/index.rst $(TESTS) $(BUILT_SOURCES)
+EXTRA_DIST = ruby.i extra.i docs/index.rst $(TESTS) $(BUILT_SOURCES)
 
 rubylibdir = $(RUBY_LIB)
 dist_rubylib_DATA = xapian.rb
@@ -82,23 +82,23 @@ uninstall-local:
 	  done
 
 docdatadir = $(docdir)/ruby
-EXTRA_DIST += docs/index.html
+dist_docdata_DATA = docs/index.html
 
 EXTRA_DIST += generate-rdoc-stubs
-
-if DOCUMENTATION_RULES
-docdata_DATA = docs/index.html
 
 BUILT_SOURCES += docs/rdocs/index.html
 
 docs/rdocs: docs/rdocs/index.html
 
-docs/xapian.rb: generate-rdoc-stubs xapian.rb ../doxygen-xml/index.xml
-	$(PERL) $(srcdir)/generate-rdoc-stubs
-
 docs/rdocs/index.html: docs/xapian.rb
 	rm -rf docs/rdocs
 	cd docs && $(RDOC) --op rdocs xapian.rb
+
+if DOCUMENTATION_RULES
+docs/xapian.rb: generate-rdoc-stubs xapian.rb ../doxygen-xml/index.xml
+	$(PERL) $(srcdir)/generate-rdoc-stubs
+
+BUILT_SOURCES += docs/index.html
 
 .rst.html:
 	-case "$@" in */*) d=`echo "$@"|sed 's,/[^/]*$$,,'`; $(MKDIR_P) "$$d" ;; esac

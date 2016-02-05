@@ -436,6 +436,7 @@ set_probabilistic(const string &oldp)
 }
 
 static multimap<string, string> filter_map;
+static set<string> neg_filters;
 
 typedef multimap<string, string>::const_iterator FMCI;
 
@@ -445,12 +446,18 @@ void add_bterm(const string &term) {
 	filter_map.insert(multimap<string, string>::value_type(prefix, term));
 }
 
+void add_nterm(const string &term) {
+    if (!term.empty())
+	neg_filters.insert(term);
+}
+
 static void
 run_query()
 {
     bool force_boolean = false;
     if (!filter_map.empty()) {
-	// OR together filters with the same prefix, then AND together
+	// OR together filters with the same prefix (or AND for non-exclusive
+	// prefixes), then AND together the resultant groups.
 	vector<Xapian::Query> filter_vec;
 	vector<string> same_vec;
 	string current;
@@ -527,6 +534,20 @@ run_query()
 	}
     }
 
+    if (!neg_filters.empty()) {
+	// OR together all negated filters.
+	Xapian::Query filter(Xapian::Query::OP_OR,
+			     neg_filters.begin(), neg_filters.end());
+
+	if (query.empty()) {
+	    // If we only have a negative filter for the query, use MatchAll as
+	    // the query to apply the filters to.
+	    query = Xapian::Query::MatchAll;
+	    force_boolean = true;
+	}
+	query = Xapian::Query(Xapian::Query::OP_AND_NOT, query, filter);
+    }
+
     if (!enquire || !error_msg.empty()) return;
 
     set_weighting_scheme(*enquire, option, force_boolean);
@@ -535,9 +556,9 @@ run_query()
 
     if (sort_key != Xapian::BAD_VALUENO) {
 	if (sort_after) {
-	    enquire->set_sort_by_relevance_then_value(sort_key, sort_ascending);
+	    enquire->set_sort_by_relevance_then_value(sort_key, reverse_sort);
 	} else {
-	    enquire->set_sort_by_value_then_relevance(sort_key, sort_ascending);
+	    enquire->set_sort_by_value_then_relevance(sort_key, reverse_sort);
 	}
     }
 

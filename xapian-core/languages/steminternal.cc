@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2001, Dr Martin Porter
  * Copyright (c) 2004,2005, Richard Boulton
- * Copyright (c) 2006,2007,2008,2009 Olly Betts
+ * Copyright (c) 2006,2007,2008,2009,2016 Olly Betts
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -74,7 +74,7 @@ extern symbol * create_s() {
     if (mem == NULL) throw std::bad_alloc();
     symbol * p = reinterpret_cast<symbol*>(HEAD + static_cast<char *>(mem));
     SET_CAPACITY(p, CREATE_SIZE);
-    SET_SIZE(p, CREATE_SIZE);
+    SET_SIZE(p, 0);
     return p;
 }
 
@@ -444,6 +444,16 @@ symbol * SnowballStemImplementation::assign_to(symbol * v) {
     memmove(v, p, len * sizeof(symbol));
     SET_SIZE(v, len);
     return v;
+}
+
+int SnowballStemImplementation::len_utf8(const symbol * v) {
+    int size = SIZE(v);
+    int len = 0;
+    while (size--) {
+        symbol b = *v++;
+        if (b >= 0xC0 || b < 0x80) ++len;
+    }
+    return len;
 }
 
 #if 0

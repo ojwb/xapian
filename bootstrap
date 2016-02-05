@@ -2,7 +2,7 @@
 # bootstrap a xapian source tree obtained from git to produce a tree like
 # you'd get from unpacking the results of "make dist"
 #
-# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015 Olly Betts
+# Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016 Olly Betts
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -32,8 +32,8 @@ fi
 trap 'echo "Bootstrap failed"' EXIT
 set -e
 
-# The variables which specify the autotools to use.  And doxygen.
-autotools="AUTORECONF AUTOCONF AUTOHEADER AUTOM4TE AUTOMAKE ACLOCAL LIBTOOLIZE DOXYGEN"
+# The variables which specify the autotools to use.
+autotools="AUTORECONF AUTOCONF AUTOHEADER AUTOM4TE AUTOMAKE ACLOCAL LIBTOOLIZE"
 
 # Tool for downloading a file from a URL (currently wget or curl).
 FETCH_URL_TOOL=
@@ -141,12 +141,6 @@ END
       fi
     fi
     case $basename in
-    doxygen-*)
-      if [ "$use_ftp" = yes ] ; then
-	url="ftp://ftp.stack.nl/pub/users/dimitri/$tarball"
-      else
-	url="http://ftp.stack.nl/pub/users/dimitri/$tarball"
-      fi ;;
     file-*)
       if [ "$use_ftp" = yes ] ; then
 	url="ftp://ftp.astron.com/pub/file/$tarball"
@@ -212,14 +206,6 @@ END
       patch -p1 < "../../patches/$package/$p"
     done
 
-    # Fix doxygen/Qt stupid and pointless enumerating of Mac OS X releases
-    # which stops it building on each new OS X release.
-    if [ -f qtools/qglobal.h ] ; then
-	sed 's!^[	 ]*#[	 ]*\(error\|warning\).*Mac *OS *X is unsupported!// &!' \
-	    qtools/qglobal.h > qtools/qglobal.hT
-	mv qtools/qglobal.hT qtools/qglobal.h
-    fi
-
     if test -n "$AUTOCONF" ; then
       ./configure --prefix "$instdir" AUTOCONF="$AUTOCONF"
     else
@@ -275,7 +261,7 @@ case $srcdir in
 esac
 
 # Commit hash to pass to handle_git_external for swig.
-swig_git_commit_hash=1a99212c2c1f2c1819ae84fe553a27889be46791
+swig_git_commit_hash=33c17b6d5ee325d0b537ed21f3ae949923e5af85
 
 if [ ! -d .git ] ; then
   echo "$0: No '.git' directory found - this script should be run from a"
@@ -320,7 +306,7 @@ case $origin_url in
   *[@/]github.com[:/]*)
     github_base_url=`echo "X$origin_url"|sed 's/^X//;s!\([@/]github.com[:/]\).*!\1!'` ;;
   *)
-    github_base_url=git://github.com/ ;;
+    github_base_url=https://github.com/ ;;
 esac
 swig_origin_url=${github_base_url}swig/swig.git
 handle_git_external swig "$swig_git_commit_hash" "$swig_origin_url"
@@ -360,8 +346,6 @@ else
   cd BUILD
 
   # The last field is the SHA1 checksum of the tarball.
-  lazy_build doxygen 1.8.8 \
-    src.tar.gz cd511c73e7669dde5ac3e14a5d1abae093aaf1d9
   lazy_build autoconf 2.68 \
     tar.xz 63a3b495400c1c053f2f6b62efb7a5c0ad4156c9 \
     tar.bz2 b534c293b22048c022b1ff3a372b9c03f26170b4 \

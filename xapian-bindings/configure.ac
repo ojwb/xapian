@@ -5,7 +5,7 @@ dnl versions.
 AC_PREREQ([2.63])
 
 m4_define([project_version], [1.3.4])
-AC_INIT([xapian-bindings], project_version, [http://xapian.org/bugs])
+AC_INIT([xapian-bindings], project_version, [https://xapian.org/bugs])
 
 dnl See xapian-core's HACKING document for details of the reasons for required
 dnl versions.
@@ -157,7 +157,7 @@ dnl configure --enable-maintainer-mode is used.
 AM_MAINTAINER_MODE
 
 AC_ARG_ENABLE(documentation,
-  [AS_HELP_STRING([--enable-documentation], [enable make rules to rebuild documentation [default=maintainer-mode]])],
+  [AS_HELP_STRING([--enable-documentation], [enable make rules to rebuild shipped documentation [default=maintainer-mode]])],
   [case ${enableval} in
     yes|no) ;;
     *) AC_MSG_ERROR([bad value ${enableval} for --enable-documentation]) ;;
@@ -186,11 +186,11 @@ if test x$USE_MAINTAINER_MODE = xyes; then
   fi
   dnl Check for new enough SWIG.
   dnl
-  dnl 3.0.3 fixes some problems with subclassing wrapped Xapian classes in PHP.
+  dnl 3.0.8 fixes conversion of integers large than an int in Python 3.
   v=`$SWIG -version 2>&1|sed 's/^SWIG Version \([[0-9\.]]*\).*/\1/p;d'`
   case $v in
-    [[012].*|3.0.[012]|""])
-      msg="SWIG >= 3.0.3 (commit e12322d) required (you have ${v:-an unknown version})"
+    [[012].*|3.0.[01234567]|""])
+      msg="SWIG >= 3.0.8 required (you have ${v:-an unknown version})"
       if test -n "$swigoverridden" ; then
 	dnl If SWIG was explicitly set, make this a warning only.
 	AC_MSG_WARN([$msg])
@@ -486,12 +486,13 @@ if test x$USE_MAINTAINER_MODE = xyes; then
   test -z "$PYTHON" && AC_MSG_ERROR([python is required in maintainer mode])
 fi
 
-dnl If we're building documentation for either python version,
-dnl we need sphinx-build
-case $enable_documentation$BINDINGS in
-yes*python*)
+dnl If we're building either python version we need sphinx-build.
+case $BINDINGS in
+*python*)
   AC_PATH_PROG(SPHINX_BUILD, sphinx-build, [])
-  test -z "$SPHINX_BUILD" && AC_MSG_ERROR([sphinx-build is required to build python documentation (try packages python-sphinx and python3-sphinx)])
+  if test -z "$SPHINX_BUILD" ; then
+    AC_MSG_ERROR([sphinx-build is required to build python documentation (try packages python-sphinx or python3-sphinx)])
+  fi
   ;;
 esac
 
@@ -1053,21 +1054,22 @@ if test no != "$with_ruby" ; then
 	fi
 	AC_SUBST(RUBY_LIBS)
 
-	if test yes = "$enable_documentation" ; then
-	  if test -n "$RDOC" ; then
-	    AC_PATH_PROGS(RDOC, ["$RDOC"], [])
-	  else
-	    dnl Try replace the *last* 'ruby' with 'rdoc'.
-	    rdoc_best_guess=`echo "$RUBY"|sed 's,\(.*\)ruby,\1rdoc,'`
-	    AC_PATH_PROGS(RDOC, ["$rdoc_best_guess"], [])
-	    if test -z "$RDOC"; then
-	      AC_PATH_PROGS(RDOC, [rdoc1.8 rdoc], [])
-	      test -n "$RDOC" || RDOC="$MISSING rdoc"
-	    fi
+	dnl rdoc is included as part of the Ruby core distribution, so run it
+	dnl at build time rather shipping the rather large generated output in
+	dnl our source tarball.
+	if test -n "$RDOC" ; then
+	  AC_PATH_PROGS(RDOC, ["$RDOC"], [])
+	else
+	  dnl Try replace the *last* 'ruby' with 'rdoc'.
+	  rdoc_best_guess=`echo "$RUBY"|sed 's,\(.*\)ruby,\1rdoc,'`
+	  AC_PATH_PROGS(RDOC, ["$rdoc_best_guess"], [])
+	  if test -z "$RDOC"; then
+	    AC_PATH_PROGS(RDOC, [rdoc], [])
 	  fi
 	fi
-
-	BINDINGS="$BINDINGS ruby"
+	if test -n "$RDOC"; then
+	  BINDINGS="$BINDINGS ruby"
+	fi
       else
 	AC_MSG_RESULT([no (install ruby-dev or ruby-devel package or similar)])
 	if test yes = "$with_ruby" ; then
