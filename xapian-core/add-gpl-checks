@@ -1,0 +1,41 @@
+#!/usr/bin/perl -w
+use strict;
+use autodie;
+
+my (%gpl, %doomed);
+
+for (`git grep -l 'GNU General Public License'`) {
+    chomp;
+    next unless /\.cc$/ || /\.h$/;
+    ++$gpl{$_};
+}
+
+for (`git grep -l 'BrightStation\\|Ananova\\|Orange'`) {
+    chomp;
+    next unless /\.cc$/ || /\.h$/;
+    ++$doomed{$_};
+}
+
+my $err = '
+#ifdef XAPIAN_NO_GPL
+# error GPL source we cannot relicense
+#endif
+';
+
+my $warn = '
+#ifdef XAPIAN_NO_GPL
+# warning GPL source we probably can relicense
+#endif
+';
+
+$warn = undef;
+
+for my $f (sort keys %gpl) {
+    print "$f : ", ($doomed{$f}//0), "\n";
+    my $a = $doomed{$f} ? $err : $warn;
+    next unless defined $a;
+    my $fh;
+    open $fh, '>>', $f;
+    print $fh $a;
+    close $fh;
+}
