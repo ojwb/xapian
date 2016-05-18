@@ -73,7 +73,21 @@ class LeafPostList : public PostList {
 				   Xapian::Weight::Internal * stats,
 				   Xapian::termcount qlen,
 				   Xapian::termcount wqf,
-				   double factor);
+				   double factor)
+    {
+	weight_->init_(*stats, qlen, term, wqf, factor);
+	// There should be an existing LazyWeight set already.
+	Assert(weight);
+	const Xapian::Weight * const_weight_ = weight_;
+	std::swap(weight, const_weight_);
+	delete const_weight_;
+	need_doclength = weight->get_sumpart_needs_doclength_();
+#if 0
+	stats->termfreqs[term].max_part += weight->get_maxpart();
+	return stats->termfreqs[term].max_part;
+#endif
+	return 0.0;
+    }
 
     /** Return the exact term frequency.
      *
