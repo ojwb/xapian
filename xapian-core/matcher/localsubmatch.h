@@ -52,7 +52,7 @@ class LocalSubMatch : public SubMatch {
     Xapian::termcount qlen;
 
     /// The (sub-)Database we're searching.
-    const void *db;
+    const Xapian::Database::Internal *db;
 
     /** The RSet (used to calculate R and r).
      *
@@ -65,7 +65,7 @@ class LocalSubMatch : public SubMatch {
 
   public:
     /// Constructor.
-    LocalSubMatch(const void *db_,
+    LocalSubMatch(const Xapian::Database::Internal *db_,
 		  const Xapian::Query & query_,
 		  Xapian::termcount qlen_,
 		  const Xapian::RSet & rset_,

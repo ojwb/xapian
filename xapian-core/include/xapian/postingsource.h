@@ -373,6 +373,380 @@ class XAPIAN_VISIBILITY_DEFAULT PostingSource
     }
 };
 
+#if 0
+/** A posting source which generates weights from a value slot.
+ *
+ *  This is a base class for classes which generate weights using values stored
+ *  in the specified slot. For example, ValueWeightPostingSource uses
+ *  sortable_unserialise to convert values directly to weights.
+ *
+ *  The upper bound on the weight returned is set to DBL_MAX.  Subclasses
+ *  should call set_maxweight() in their init() methods after calling
+ *  ValuePostingSource::init() if they know a tighter bound on the weight.
+ */
+class XAPIAN_VISIBILITY_DEFAULT ValuePostingSource : public PostingSource {
+    // We want to give a deprecation warning for uses of the members from user
+    // code, but we also want to be able to inline functions to access them,
+    // without those functions generating deprecated warnings.  To achieve
+    // this, we make the old names references to members with a "real_" prefix
+    // and then use the latter in the inlined accessor functions.  The
+    // constructor initialises all the references to point to their "real_"
+    // counterparts.
+    Xapian::Database real_db;
+
+    Xapian::valueno real_slot;
+
+    Xapian::ValueIterator real_value_it;
+
+    bool real_started;
+
+    Xapian::doccount real_termfreq_min;
+
+    Xapian::doccount real_termfreq_est;
+
+    Xapian::doccount real_termfreq_max;
+
+  protected:
+    /** The database we're reading values from.
+     *
+     *  @deprecated Use @a get_database() in preference.
+     */
+    XAPIAN_DEPRECATED(Xapian::Database& db);
+
+    /** The slot we're reading values from.
+     *
+     *  @deprecated Use @a get_slot() in preference.
+     */
+    XAPIAN_DEPRECATED(Xapian::valueno& slot);
+
+    /** Value stream iterator.
+     *
+     *  @deprecated Use @a get_value() in preference to *value_it, and other
+     *  methods of ValuePostingSource in preference to calling methods of
+     *  value_it.
+     */
+    XAPIAN_DEPRECATED(Xapian::ValueIterator& value_it);
+
+    /** Flag indicating if we've started (true if we have).
+     *
+     *  @deprecated Use @a get_started() in preference.
+     */
+    XAPIAN_DEPRECATED(bool& started);
+
+    /** A lower bound on the term frequency.
+     *
+     *  Subclasses should set this if they are overriding the next(), skip_to()
+     *  or check() methods to return fewer documents.
+     *
+     *  @deprecated Use @a set_termfreq_min() in preference.
+     */
+    XAPIAN_DEPRECATED(Xapian::doccount& termfreq_min);
+
+    /** An estimate of the term frequency.
+     *
+     *  Subclasses should set this if they are overriding the next(), skip_to()
+     *  or check() methods.
+     *
+     *  @deprecated Use @a set_termfreq_est() in preference.
+     */
+    XAPIAN_DEPRECATED(Xapian::doccount& termfreq_est);
+
+    /** An upper bound on the term frequency.
+     *
+     *  Subclasses should set this if they are overriding the next(), skip_to()
+     *  or check() methods.
+     *
+     *  @deprecated Use @a set_termfreq_max() in preference.
+     */
+    XAPIAN_DEPRECATED(Xapian::doccount& termfreq_max);
+
+  public:
+    /** Construct a ValuePostingSource.
+     *
+     *  @param slot_ The value slot to read values from.
+     */
+    explicit ValuePostingSource(Xapian::valueno slot_);
+
+    Xapian::doccount get_termfreq_min() const;
+    Xapian::doccount get_termfreq_est() const;
+    Xapian::doccount get_termfreq_max() const;
+
+    void next(double min_wt);
+    void skip_to(Xapian::docid min_docid, double min_wt);
+    bool check(Xapian::docid min_docid, double min_wt);
+
+    bool at_end() const;
+
+    Xapian::docid get_docid() const;
+
+    void init(const Database & db_);
+
+    /** The database we're reading values from.
+     *
+     *  Added in 1.2.23 and 1.3.5.
+     */
+    Xapian::Database get_database() const { return real_db; }
+
+    /** The slot we're reading values from.
+     *
+     *  Added in 1.2.23 and 1.3.5.
+     */
+    Xapian::valueno get_slot() const { return real_slot; }
+
+    /** Read current value.
+     *
+     *  Added in 1.2.23 and 1.3.5.
+     */
+    std::string get_value() const { return *real_value_it; }
+
+    /** End the iteration.
+     *
+     *  Calls to at_end() will return true after calling this method.
+     *
+     *  Added in 1.2.23 and 1.3.5.
+     */
+    void done() {
+	real_value_it = real_db.valuestream_end(real_slot);
+	real_started = true;
+    }
+
+    /** Flag indicating if we've started (true if we have).
+     *
+     *  Added in 1.2.23 and 1.3.5.
+     */
+    bool get_started() const { return real_started; }
+
+    /** Set a lower bound on the term frequency.
+     *
+     *  Subclasses should set this if they are overriding the next(), skip_to()
+     *  or check() methods to return fewer documents.
+     *
+     *  Added in 1.2.23 and 1.3.5.
+     */
+    void set_termfreq_min(Xapian::doccount termfreq_min_) {
+	real_termfreq_min = termfreq_min_;
+    }
+
+    /** An estimate of the term frequency.
+     *
+     *  Subclasses should set this if they are overriding the next(), skip_to()
+     *  or check() methods.
+     *
+     *  Added in 1.2.23 and 1.3.5.
+     */
+    void set_termfreq_est(Xapian::doccount termfreq_est_) {
+	real_termfreq_est = termfreq_est_;
+    }
+
+    /** An upper bound on the term frequency.
+     *
+     *  Subclasses should set this if they are overriding the next(), skip_to()
+     *  or check() methods.
+     *
+     *  Added in 1.2.23 and 1.3.5.
+     */
+    void set_termfreq_max(Xapian::doccount termfreq_max_) {
+	real_termfreq_max = termfreq_max_;
+    }
+};
+
+
+/** A posting source which reads weights from a value slot.
+ *
+ *  This returns entries for all documents in the given database which have a
+ *  non empty values in the specified slot.  It returns a weight calculated by
+ *  applying sortable_unserialise to the value stored in the slot (so the
+ *  values stored should probably have been calculated by applying
+ *  sortable_serialise to a floating point number at index time).
+ *
+ *  The upper bound on the weight returned is set using the upper bound on the
+ *  values in the specified slot, or DBL_MAX if value bounds aren't supported
+ *  by the current backend.
+ *
+ *  For efficiency, this posting source doesn't check that the stored values
+ *  are valid in any way, so it will never raise an exception due to invalid
+ *  stored values.  In particular, it doesn't ensure that the unserialised
+ *  values are positive, which is a requirement for weights.  The behaviour if
+ *  the slot contains values which unserialise to negative values is undefined.
+ */
+class XAPIAN_VISIBILITY_DEFAULT ValueWeightPostingSource
+	: public ValuePostingSource {
+  public:
+    /** Construct a ValueWeightPostingSource.
+     *
+     *  @param slot_ The value slot to read values from.
+     */
+    explicit ValueWeightPostingSource(Xapian::valueno slot_);
+
+    double get_weight() const;
+    ValueWeightPostingSource * clone() const;
+    std::string name() const;
+    std::string serialise() const;
+    ValueWeightPostingSource * unserialise(const std::string &serialised) const;
+    void init(const Database & db_);
+
+    std::string get_description() const;
+};
+
+
+/** Read weights from a value which is known to decrease as docid increases.
+ *
+ *  This posting source can be used, like ValueWeightPostingSource, to add a
+ *  weight contribution to a query based on the values stored in a slot.  The
+ *  values in the slot must be serialised as by @a sortable_serialise().
+ *
+ *  However, this posting source is additionally given a range of document IDs,
+ *  within which the weight is known to be decreasing.  ie, for all documents
+ *  with ids A and B within this range (including the endpoints), where A is
+ *  less than B, the weight of A is less than or equal to the weight of B.
+ *  This can allow the posting source to skip to the end of the range quickly
+ *  if insufficient weight is left in the posting source for a particular
+ *  source.
+ *
+ *  By default, the range is assumed to cover all document IDs.
+ *
+ *  The ordering property can be arranged at index time, or by sorting an
+ *  indexed database to produce a new, sorted, database.
+ */
+class XAPIAN_VISIBILITY_DEFAULT DecreasingValueWeightPostingSource
+	: public Xapian::ValueWeightPostingSource {
+  protected:
+    Xapian::docid range_start;
+    Xapian::docid range_end;
+    double curr_weight;
+
+    /// Flag, set to true if there are docs after the end of the range.
+    bool items_at_end;
+
+    /// Skip the iterator forward if in the decreasing range, and weight is low.
+    void skip_if_in_range(double min_wt);
+
+  public:
+    DecreasingValueWeightPostingSource(Xapian::valueno slot_,
+				       Xapian::docid range_start_ = 0,
+				       Xapian::docid range_end_ = 0);
+
+    double get_weight() const;
+    DecreasingValueWeightPostingSource * clone() const;
+    std::string name() const;
+    std::string serialise() const;
+    DecreasingValueWeightPostingSource * unserialise(const std::string &serialised) const;
+    void init(const Xapian::Database & db_);
+
+    void next(double min_wt);
+    void skip_to(Xapian::docid min_docid, double min_wt);
+    bool check(Xapian::docid min_docid, double min_wt);
+
+    std::string get_description() const;
+};
+
+
+/** A posting source which looks up weights in a map using values as the key.
+ *
+ *  This allows will return entries for all documents in the given database
+ *  which have a value in the slot specified.  The values will be mapped to the
+ *  corresponding weight in the weight map. If there is no mapping for a
+ *  particular value, the default weight will be returned (which itself
+ *  defaults to 0.0).
+ */
+class XAPIAN_VISIBILITY_DEFAULT ValueMapPostingSource
+	: public ValuePostingSource {
+    /// The default weight
+    double default_weight;
+
+    /// The maximum weight in weight_map.
+    double max_weight_in_map;
+
+    /// The value -> weight map
+    std::map<std::string, double> weight_map;
+
+  public:
+    /** Construct a ValueWeightPostingSource.
+     *
+     *  @param slot_ The value slot to read values from.
+     */
+    explicit ValueMapPostingSource(Xapian::valueno slot_);
+
+    /** Add a mapping.
+     *
+     *  @param key The key looked up from the value slot.
+     *  @param wt The weight to give this key.
+     */
+    void add_mapping(const std::string &key, double wt);
+
+    /** Clear all mappings. */
+    void clear_mappings();
+
+    /** Set a default weight for document values not in the map.
+     *
+     *  @param wt The weight to set as the default.
+     */
+    void set_default_weight(double wt);
+
+    double get_weight() const;
+    ValueMapPostingSource * clone() const;
+    std::string name() const;
+    std::string serialise() const;
+    ValueMapPostingSource * unserialise(const std::string &serialised) const;
+    void init(const Database & db_);
+
+    std::string get_description() const;
+};
+
+
+/** A posting source which returns a fixed weight for all documents.
+ *
+ *  This returns entries for all documents in the given database, with a fixed
+ *  weight (specified by a parameter to the constructor).
+ */
+class XAPIAN_VISIBILITY_DEFAULT FixedWeightPostingSource : public PostingSource {
+    /// The database we're reading documents from.
+    Xapian::Database db;
+
+    /// Number of documents in the posting source.
+    Xapian::doccount termfreq;
+
+    /// Iterator over all documents.
+    Xapian::PostingIterator it;
+
+    /// Flag indicating if we've started (true if we have).
+    bool started;
+
+    /// The docid last passed to check() (0 if check() wasn't the last move).
+    Xapian::docid check_docid;
+
+  public:
+    /** Construct a FixedWeightPostingSource.
+     *
+     *  @param wt The fixed weight to return.
+     */
+    explicit FixedWeightPostingSource(double wt);
+
+    Xapian::doccount get_termfreq_min() const;
+    Xapian::doccount get_termfreq_est() const;
+    Xapian::doccount get_termfreq_max() const;
+
+    double get_weight() const;
+
+    void next(double min_wt);
+    void skip_to(Xapian::docid min_docid, double min_wt);
+    bool check(Xapian::docid min_docid, double min_wt);
+
+    bool at_end() const;
+
+    Xapian::docid get_docid() const;
+
+    FixedWeightPostingSource * clone() const;
+    std::string name() const;
+    std::string serialise() const;
+    FixedWeightPostingSource * unserialise(const std::string &serialised) const;
+    void init(const Database & db_);
+
+    std::string get_description() const;
+};
+#endif
+
+
 }
 
 #endif // XAPIAN_INCLUDED_POSTINGSOURCE_H

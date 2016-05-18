@@ -66,7 +66,7 @@ class QueryOptimiser {
 		   MultiMatch * matcher_)
 	: localsubmatch(localsubmatch_), total_subqs(0),
 	  hint(0), hint_owned(false),
-	  need_positions(false), db(db_), db_size(0),
+	  need_positions(false), db(db_), db_size(db.get_doccount()),
 	  matcher(matcher_) { }
 
     ~QueryOptimiser() {
