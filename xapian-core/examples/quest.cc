@@ -244,7 +244,6 @@ try {
 
     bool have_database = false;
 
-    Xapian::Database db;
     Xapian::QueryParser parser;
     unsigned flags = parser.FLAG_DEFAULT|parser.FLAG_SPELLING_CORRECTION;
     int weight = -1;
@@ -275,7 +274,6 @@ try {
 		break;
 	    }
 	    case 'd':
-		db.add_database(Xapian::Database(optarg));
 		have_database = true;
 		break;
 	    case 's':
@@ -354,7 +352,6 @@ try {
 	exit(1);
     }
 
-    parser.set_database(db);
     parser.set_stemmer(stemmer);
     parser.set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
     parser.set_stopper(&mystopper);
@@ -371,53 +368,6 @@ try {
 	exit(0);
     }
 
-    Xapian::Enquire enquire(db);
-    enquire.set_query(query);
-
-    switch (weight) {
-	case WEIGHT_BB2:
-	    enquire.set_weighting_scheme(Xapian::BB2Weight());
-	    break;
-	case WEIGHT_BOOL:
-	    enquire.set_weighting_scheme(Xapian::BoolWeight());
-	    break;
-	case WEIGHT_BM25:
-	    enquire.set_weighting_scheme(Xapian::BM25Weight());
-	    break;
-	case WEIGHT_DLH:
-	    enquire.set_weighting_scheme(Xapian::DLHWeight());
-	    break;
-	case WEIGHT_DPH:
-	    enquire.set_weighting_scheme(Xapian::DPHWeight());
-	    break;
-	case WEIGHT_IFB2:
-	    enquire.set_weighting_scheme(Xapian::IfB2Weight());
-	    break;
-	case WEIGHT_INEB2:
-	    enquire.set_weighting_scheme(Xapian::IneB2Weight());
-	    break;
-	case WEIGHT_INL2:
-	    enquire.set_weighting_scheme(Xapian::InL2Weight());
-	    break;
-	case WEIGHT_PL2:
-	    enquire.set_weighting_scheme(Xapian::PL2Weight());
-	    break;
-	case WEIGHT_TFIDF:
-	    enquire.set_weighting_scheme(Xapian::TfIdfWeight());
-	    break;
-	case WEIGHT_TRAD:
-	    enquire.set_weighting_scheme(Xapian::TradWeight());
-	    break;
-    }
-
-    Xapian::MSet mset = enquire.get_mset(0, msize, check_at_least);
-
-    cout << "MSet:" << endl;
-    for (Xapian::MSetIterator i = mset.begin(); i != mset.end(); ++i) {
-	Xapian::Document doc = i.get_document();
-	string data = doc.get_data();
-	cout << *i << ": [" << i.get_weight() << "]\n" << data << "\n";
-    }
     cout << flush;
 } catch (const Xapian::QueryParserError & e) {
     cout << "Couldn't parse query: " << e.get_msg() << endl;

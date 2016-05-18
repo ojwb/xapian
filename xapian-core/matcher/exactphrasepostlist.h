@@ -25,6 +25,7 @@
 #include "selectpostlist.h"
 #include <vector>
 
+#include <xapian/positioniterator.h>
 typedef Xapian::PositionIterator::Internal PositionList;
 
 /** Postlist which matches an exact phrase using positional information.

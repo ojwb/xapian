@@ -60,6 +60,7 @@ PhrasePostList::test_doc()
     LOGCALL(MATCH, bool, "PhrasePostList::test_doc", NO_ARGS);
 
     start_position_list(0);
+#if 0
     poslists[0]->next();
     if (poslists[0]->at_end()) RETURN(false);
 
@@ -84,6 +85,7 @@ PhrasePostList::test_doc()
 	// in given the current position of term i.
 	poslists[0]->skip_to(b - window);
     } while (!poslists[0]->at_end());
+#endif
     RETURN(false);
 }
 

@@ -18,10 +18,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
+#if 0
 #include <config.h>
 
 #include "valuestreamdocument.h"
 #include "omassert.h"
+#include "xapian/types.h"
+
+#include <map>
 
 using namespace std;
 
@@ -107,3 +111,4 @@ ValueStreamDocument::do_get_data() const
     }
     return doc->do_get_data();
 }
+#endif

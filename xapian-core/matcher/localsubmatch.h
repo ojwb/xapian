@@ -24,9 +24,11 @@
 
 #include "backends/database.h"
 #include "debuglog.h"
+#include "api/leafpostlist.h"
 #include "api/queryinternal.h"
 #include "submatch.h"
 #include "xapian/enquire.h"
+#include "xapian/rset.h"
 #include "xapian/weight.h"
 
 #include <map>
@@ -50,7 +52,7 @@ class LocalSubMatch : public SubMatch {
     Xapian::termcount qlen;
 
     /// The (sub-)Database we're searching.
-    const Xapian::Database::Internal *db;
+    const void *db;
 
     /** The RSet (used to calculate R and r).
      *
@@ -63,7 +65,7 @@ class LocalSubMatch : public SubMatch {
 
   public:
     /// Constructor.
-    LocalSubMatch(const Xapian::Database::Internal *db_,
+    LocalSubMatch(const void *db_,
 		  const Xapian::Query & query_,
 		  Xapian::termcount qlen_,
 		  const Xapian::RSet & rset_,

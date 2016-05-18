@@ -21,6 +21,7 @@
  * USA
  */
 
+#if 0
 #include <config.h>
 
 #include "xapian/geospatial.h"
@@ -47,3 +48,4 @@ LatLongDistanceKeyMaker::~LatLongDistanceKeyMaker()
 {
     delete metric;
 }
+#endif

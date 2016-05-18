@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-#ifndef XAPIAN_INCLUDED_ESETINTERNAL_H
+#if 0 //ndef XAPIAN_INCLUDED_ESETINTERNAL_H
 #define XAPIAN_INCLUDED_ESETINTERNAL_H
 
 #include "xapian/intrusive_ptr.h"

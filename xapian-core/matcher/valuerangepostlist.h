@@ -50,7 +50,7 @@ class ValueRangePostList : public PostList {
 		       Xapian::valueno slot_,
 		       const std::string &begin_, const std::string &end_)
 	: db(db_), slot(slot_), begin(begin_), end(end_),
-	  db_size(db->get_doccount()), valuelist(0) { }
+	  db_size(0), valuelist(0) { }
 
     ~ValueRangePostList();
 

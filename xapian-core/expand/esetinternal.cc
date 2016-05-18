@@ -19,6 +19,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
+#if 0
 #include <config.h>
 
 #include "esetinternal.h"
@@ -225,3 +226,4 @@ ESet::Internal::get_description() const
 }
 
 }
+#endif

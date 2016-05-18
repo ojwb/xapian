@@ -34,7 +34,7 @@ PostList *
 ValueGePostList::next(double)
 {
     Assert(db);
-    if (!valuelist) valuelist = db->open_value_list(slot);
+//    if (!valuelist) valuelist = db->open_value_list(slot);
     valuelist->next();
     while (!valuelist->at_end()) {
 	const string & v = valuelist->get_value();
@@ -49,7 +49,7 @@ PostList *
 ValueGePostList::skip_to(Xapian::docid did, double)
 {
     Assert(db);
-    if (!valuelist) valuelist = db->open_value_list(slot);
+//    if (!valuelist) valuelist = db->open_value_list(slot);
     valuelist->skip_to(did);
     while (!valuelist->at_end()) {
 	const string & v = valuelist->get_value();
@@ -65,7 +65,7 @@ ValueGePostList::check(Xapian::docid did, double, bool &valid)
 {
     Assert(db);
     AssertRelParanoid(did, <=, db->get_lastdocid());
-    if (!valuelist) valuelist = db->open_value_list(slot);
+//    if (!valuelist) valuelist = db->open_value_list(slot);
     valid = valuelist->check(did);
     if (!valid) {
 	return NULL;

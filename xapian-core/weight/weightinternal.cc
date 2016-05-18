@@ -49,6 +49,7 @@ TermFreqs::get_description() const {
     return desc;
 }
 
+#if 0
 namespace Xapian {
 
 Weight::Internal &
@@ -150,3 +151,4 @@ Weight::Internal::get_description() const
 }
 
 }
+#endif

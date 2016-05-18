@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
+#if 0
 #include <config.h>
 
 #include "collapser.h"
@@ -159,3 +160,4 @@ Collapser::get_matches_lower_bound() const
     return matches_lower_bound + (collapse_max - max_kept);
 #endif
 }
+#endif

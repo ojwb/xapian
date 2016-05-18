@@ -239,7 +239,7 @@ OrContext::postlist(QueryOptimiser* qopt)
 	pop_heap(pls.begin(), pls.end(), ComparePostListTermFreqAscending());
 	pls.pop_back();
 	PostList * pl;
-	pl = new OrPostList(pls.front(), r, qopt->matcher, qopt->db_size);
+	(void)qopt; pl = r; // new OrPostList(pls.front(), r, qopt->matcher, qopt->db_size);
 
 	if (pls.size() == 1) {
 	    pls.clear();
@@ -268,7 +268,8 @@ OrContext::postlist_max(QueryOptimiser* qopt)
     sort(pls.begin(), pls.end(), ComparePostListTermFreqAscending());
 
     PostList * pl;
-    pl = new MaxPostList(pls.begin(), pls.end(), qopt->matcher, qopt->db_size);
+    (void)qopt; pl = NULL;
+    //pl = new MaxPostList(pls.begin(), pls.end(), qopt->matcher, qopt->db_size);
 
     pls.clear();
     return pl;
@@ -734,7 +735,8 @@ QueryPostingSource::postlist(QueryOptimiser * qopt, double factor) const
     Assert(source.get());
     if (factor != 0.0)
 	qopt->inc_total_subqs();
-    Xapian::Database wrappeddb(new ConstDatabaseWrapper(&(qopt->db)));
+//      Xapian::Database wrappeddb(new ConstDatabaseWrapper(&(qopt->db)));
+    Xapian::Database wrappeddb;
     RETURN(new ExternalPostList(wrappeddb, source.get(), factor, qopt->matcher));
 }
 
@@ -762,6 +764,8 @@ QueryValueRange::postlist(QueryOptimiser *qopt, double factor) const
     LOGCALL(QUERY, PostingIterator::Internal *, "QueryValueRange::postlist", qopt | factor);
     if (factor != 0.0)
 	qopt->inc_total_subqs();
+    return NULL;
+#if 0
     const Xapian::Database::Internal & db = qopt->db;
     const string & lb = db.get_value_lower_bound(slot);
     // If lb.empty(), the backend doesn't provide value bounds.
@@ -786,6 +790,7 @@ QueryValueRange::postlist(QueryOptimiser *qopt, double factor) const
 	}
     }
     RETURN(new ValueRangePostList(&db, slot, begin, end));
+#endif
 }
 
 void
@@ -827,6 +832,8 @@ QueryValueLE::postlist(QueryOptimiser *qopt, double factor) const
     LOGCALL(QUERY, PostingIterator::Internal *, "QueryValueLE::postlist", qopt | factor);
     if (factor != 0.0)
 	qopt->inc_total_subqs();
+    return NULL;
+#if 0
     const Xapian::Database::Internal & db = qopt->db;
     const string & lb = db.get_value_lower_bound(slot);
     // If lb.empty(), the backend doesn't provide value bounds.
@@ -846,6 +853,7 @@ QueryValueLE::postlist(QueryOptimiser *qopt, double factor) const
 	}
     }
     RETURN(new ValueRangePostList(&db, slot, string(), limit));
+#endif
 }
 
 void
@@ -886,6 +894,8 @@ QueryValueGE::postlist(QueryOptimiser *qopt, double factor) const
     LOGCALL(QUERY, PostingIterator::Internal *, "QueryValueGE::postlist", qopt | factor);
     if (factor != 0.0)
 	qopt->inc_total_subqs();
+    return NULL;
+#if 0
     const Xapian::Database::Internal & db = qopt->db;
     const string & lb = db.get_value_lower_bound(slot);
     // If lb.empty(), the backend doesn't provide value bounds.
@@ -905,6 +915,7 @@ QueryValueGE::postlist(QueryOptimiser *qopt, double factor) const
 	}
     }
     RETURN(new ValueGePostList(&db, slot, limit));
+#endif
 }
 
 void
@@ -940,6 +951,8 @@ PostingIterator::Internal *
 QueryWildcard::postlist(QueryOptimiser * qopt, double factor) const
 {
     LOGCALL(QUERY, PostingIterator::Internal *, "QueryWildcard::postlist", qopt | factor);
+    (void)qopt; (void)factor; return NULL;
+#if 0
     Query::op op = combiner;
     double or_factor = 0.0;
     if (factor == 0.0) {
@@ -1008,6 +1021,7 @@ QueryWildcard::postlist(QueryOptimiser * qopt, double factor) const
     // SynonymPostList, which supplies the weights.
     PostingIterator::Internal * r = qopt->make_synonym_postlist(pl, factor);
     RETURN(r);
+#endif
 }
 
 termcount
@@ -1510,6 +1524,8 @@ PostingIterator::Internal *
 QueryAndNot::postlist(QueryOptimiser * qopt, double factor) const
 {
     LOGCALL(QUERY, PostingIterator::Internal *, "QueryAndNot::postlist", qopt | factor);
+    (void)qopt; (void)factor; return NULL;
+#if 0
     // FIXME: Combine and-like side with and-like stuff above.
     AutoPtr<PostList> l(subqueries[0].internal->postlist(qopt, factor));
     OrContext ctx(subqueries.size() - 1);
@@ -1517,6 +1533,7 @@ QueryAndNot::postlist(QueryOptimiser * qopt, double factor) const
     AutoPtr<PostList> r(ctx.postlist(qopt));
     RETURN(new AndNotPostList(l.release(), r.release(),
 			      qopt->matcher, qopt->db_size));
+#endif
 }
 
 PostingIterator::Internal *
@@ -1543,6 +1560,8 @@ PostingIterator::Internal *
 QueryAndMaybe::postlist(QueryOptimiser * qopt, double factor) const
 {
     LOGCALL(QUERY, PostingIterator::Internal *, "QueryAndMaybe::postlist", qopt | factor);
+    (void)qopt; (void)factor; return NULL;
+#if 0
     // FIXME: Combine and-like side with and-like stuff above.
     AutoPtr<PostList> l(subqueries[0].internal->postlist(qopt, factor));
     OrContext ctx(subqueries.size() - 1);
@@ -1550,6 +1569,7 @@ QueryAndMaybe::postlist(QueryOptimiser * qopt, double factor) const
     AutoPtr<PostList> r(ctx.postlist(qopt));
     RETURN(new AndMaybePostList(l.release(), r.release(),
 				qopt->matcher, qopt->db_size));
+#endif
 }
 
 PostingIterator::Internal *
@@ -1582,7 +1602,7 @@ void
 QueryWindowed::postlist_windowed(Query::op op, AndContext& ctx, QueryOptimiser * qopt, double factor) const
 {
     // FIXME: should has_positions() be on the combined DB (not this sub)?
-    if (qopt->db.has_positions()) {
+    if (false /*qopt->db.has_positions()*/) {
 	bool old_need_positions = qopt->need_positions;
 	qopt->need_positions = true;
 

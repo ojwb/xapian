@@ -25,7 +25,7 @@
 #include "selectpostlist.h"
 #include <vector>
 
-typedef Xapian::PositionIterator::Internal PositionList;
+//typedef Xapian::PositionIterator::Internal PositionList;
 
 /** Postlist which matches terms occurring within a specified window.
  *

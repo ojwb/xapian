@@ -48,7 +48,7 @@ SynonymPostList::next(double w_min)
 {
     LOGCALL(MATCH, PostList *, "SynonymPostList::next", w_min);
     (void)w_min;
-    next_handling_prune(subtree, 0, matcher);
+//    next_handling_prune(subtree, 0, matcher);
     RETURN(NULL);
 }
 
@@ -57,7 +57,8 @@ SynonymPostList::skip_to(Xapian::docid did, double w_min)
 {
     LOGCALL(MATCH, PostList *, "SynonymPostList::skip_to", did | w_min);
     (void)w_min;
-    skip_to_handling_prune(subtree, did, 0, matcher);
+    (void)did;
+//    skip_to_handling_prune(subtree, did, 0, matcher);
     RETURN(NULL);
 }
 

@@ -20,6 +20,7 @@
  * USA
  */
 
+#if 0
 #include <config.h>
 
 #include "xapian/valuesetmatchdecider.h"
@@ -42,3 +43,4 @@ ValueSetMatchDecider::operator()(const Xapian::Document& doc) const
 }
 
 }
+#endif

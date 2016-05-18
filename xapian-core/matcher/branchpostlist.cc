@@ -19,6 +19,7 @@
  * USA
  */
 
+#if 0
 #include <config.h>
 
 #include "branchpostlist.h"
@@ -28,3 +29,4 @@ BranchPostList::~BranchPostList()
     delete l;
     delete r;
 }
+#endif

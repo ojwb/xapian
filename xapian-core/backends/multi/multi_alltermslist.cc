@@ -46,6 +46,8 @@ template<class CLASS> struct delete_ptr {
 MultiAllTermsList::MultiAllTermsList(const vector<intrusive_ptr<Xapian::Database::Internal> > & dbs,
 				     const string & prefix)
 {
+    (void)dbs; (void)prefix;
+#if 0
     // The 0 and 1 cases should be handled by our caller.
     AssertRel(dbs.size(), >=, 2);
     termlists.reserve(dbs.size());
@@ -58,6 +60,7 @@ MultiAllTermsList::MultiAllTermsList(const vector<intrusive_ptr<Xapian::Database
 	for_each(termlists.begin(), termlists.end(), delete_ptr<TermList>());
 	throw;
     }
+#endif
 }
 
 MultiAllTermsList::~MultiAllTermsList()

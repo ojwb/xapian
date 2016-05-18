@@ -20,7 +20,7 @@
  */
 
 
-#ifndef XAPIAN_INCLUDED_MSETCMP_H
+#if 0 //ndef XAPIAN_INCLUDED_MSETCMP_H
 #define XAPIAN_INCLUDED_MSETCMP_H
 
 #include "api/omenquireinternal.h"

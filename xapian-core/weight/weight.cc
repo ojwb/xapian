@@ -42,10 +42,12 @@ Weight::init_(const Internal & stats, Xapian::termcount query_length)
     rset_size_ = stats.rset_size;
     if (stats_needed & AVERAGE_LENGTH)
 	average_length_ = stats.get_average_length();
+#if 0
     if (stats_needed & DOC_LENGTH_MAX)
 	doclength_upper_bound_ = stats.db.get_doclength_upper_bound();
     if (stats_needed & DOC_LENGTH_MIN)
 	doclength_lower_bound_ = stats.db.get_doclength_lower_bound();
+#endif
     collectionfreq_ = 0;
     wdf_upper_bound_ = 0;
     termfreq_ = 0;
@@ -64,12 +66,14 @@ Weight::init_(const Internal & stats, Xapian::termcount query_length,
     rset_size_ = stats.rset_size;
     if (stats_needed & AVERAGE_LENGTH)
 	average_length_ = stats.get_average_length();
+#if 0
     if (stats_needed & DOC_LENGTH_MAX)
 	doclength_upper_bound_ = stats.db.get_doclength_upper_bound();
     if (stats_needed & DOC_LENGTH_MIN)
 	doclength_lower_bound_ = stats.db.get_doclength_lower_bound();
     if (stats_needed & WDF_MAX)
 	wdf_upper_bound_ = stats.db.get_wdf_upper_bound(term);
+#endif
     if (stats_needed & (TERMFREQ | RELTERMFREQ | COLLECTION_FREQ)) {
 	bool ok = stats.get_stats(term,
 				  termfreq_, reltermfreq_, collectionfreq_);
@@ -92,6 +96,7 @@ Weight::init_(const Internal & stats, Xapian::termcount query_length,
     rset_size_ = stats.rset_size;
     if (stats_needed & AVERAGE_LENGTH)
 	average_length_ = stats.get_average_length();
+#if 0
     if (stats_needed & DOC_LENGTH_MAX)
 	doclength_upper_bound_ = stats.db.get_doclength_upper_bound();
     if (stats_needed & DOC_LENGTH_MIN)
@@ -105,6 +110,7 @@ Weight::init_(const Internal & stats, Xapian::termcount query_length,
     // term of the synonym is repeated.)
     if (stats_needed & WDF_MAX)
 	wdf_upper_bound_ = stats.db.get_doclength_upper_bound();
+#endif
 
     termfreq_ = termfreq;
     reltermfreq_ = reltermfreq;
