@@ -1,4 +1,3 @@
-#if 0
 /** @file documentvaluelist.cc
  * @brief Iteration over values in a document.
  */
@@ -89,4 +88,3 @@ DocumentValueList::get_description() const
     }
     return desc;
 }
-#endif

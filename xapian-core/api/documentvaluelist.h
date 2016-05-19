@@ -1,4 +1,3 @@
-#if 0
 /** @file documentvaluelist.h
  * @brief Iteration over values in a document.
  */
@@ -64,4 +63,3 @@ class DocumentValueList : public ValueList {
 };
 
 #endif // XAPIAN_INCLUDED_DOCUMENTVALUELIST_H
-#endif
