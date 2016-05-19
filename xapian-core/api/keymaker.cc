@@ -34,7 +34,6 @@ namespace Xapian {
 
 KeyMaker::~KeyMaker() { }
 
-#if 0
 string
 MultiValueKeyMaker::operator()(const Xapian::Document & doc) const
 {
@@ -102,6 +101,5 @@ MultiValueKeyMaker::operator()(const Xapian::Document & doc) const
     }
     return result;
 }
-#endif
 
 }
