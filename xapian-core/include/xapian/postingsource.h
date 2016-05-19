@@ -30,7 +30,9 @@
 #include <xapian/database.h>
 #include <xapian/deprecated.h>
 #include <xapian/intrusive_ptr.h>
+#include <xapian/postingiterator.h>
 #include <xapian/types.h>
+#include <xapian/valueiterator.h>
 #include <xapian/visibility.h>
 
 #include <string>
@@ -373,7 +375,7 @@ class XAPIAN_VISIBILITY_DEFAULT PostingSource
     }
 };
 
-#if 0
+
 /** A posting source which generates weights from a value slot.
  *
  *  This is a base class for classes which generate weights using values stored
@@ -744,7 +746,6 @@ class XAPIAN_VISIBILITY_DEFAULT FixedWeightPostingSource : public PostingSource 
 
     std::string get_description() const;
 };
-#endif
 
 
 }

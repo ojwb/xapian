@@ -20,7 +20,7 @@
  * USA
  */
 
-#if 0 //ndef XAPIAN_INCLUDED_VALUESETMATCHDECIDER_H
+#ifndef XAPIAN_INCLUDED_VALUESETMATCHDECIDER_H
 #define XAPIAN_INCLUDED_VALUESETMATCHDECIDER_H
 
 #if !defined XAPIAN_IN_XAPIAN_H && !defined XAPIAN_LIB_BUILD
@@ -29,6 +29,7 @@
 
 #include <xapian/enquire.h>
 #include <xapian/types.h>
+#include <xapian/visibility.h>
 
 #include <string>
 #include <set>
@@ -36,6 +37,10 @@
 namespace Xapian {
 
 class Document;
+
+class XAPIAN_VISIBILITY_DEFAULT MatchDecider {
+  public:
+};
 
 /** MatchDecider filtering results based on whether document values are in a
  *  user-defined set.

@@ -1,4 +1,3 @@
-#if 0
 /** @file matchspy.cc
  * @brief MatchSpy implementation.
  */
@@ -413,4 +412,3 @@ ValueCountMatchSpy::get_description() const {
     }
     return d;
 }
-#endif

@@ -1,4 +1,3 @@
-#if 0
 /** @file decvalwtsource.cc
  * @brief A posting source which returns decreasing weights from a value.
  */
@@ -155,4 +154,3 @@ std::string
 DecreasingValueWeightPostingSource::get_description() const {
     return "DecreasingValueWeightPostingSource()";
 }
-#endif

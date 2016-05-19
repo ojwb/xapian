@@ -119,7 +119,6 @@ PostingSource::get_description() const
     return "Xapian::PostingSource subclass";
 }
 
-#if 0
 
 ValuePostingSource::ValuePostingSource(Xapian::valueno slot_)
 	: real_slot(slot_),
@@ -565,7 +564,5 @@ FixedWeightPostingSource::get_description() const
     desc += ")";
     return desc;
 }
-
-#endif
 
 }
