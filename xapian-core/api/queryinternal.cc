@@ -735,8 +735,7 @@ QueryPostingSource::postlist(QueryOptimiser * qopt, double factor) const
     Assert(source.get());
     if (factor != 0.0)
 	qopt->inc_total_subqs();
-//      Xapian::Database wrappeddb(new ConstDatabaseWrapper(&(qopt->db)));
-    Xapian::Database wrappeddb;
+    Xapian::Database wrappeddb(new ConstDatabaseWrapper(&(qopt->db)));
     RETURN(new ExternalPostList(wrappeddb, source.get(), factor, qopt->matcher));
 }
 
@@ -764,8 +763,6 @@ QueryValueRange::postlist(QueryOptimiser *qopt, double factor) const
     LOGCALL(QUERY, PostingIterator::Internal *, "QueryValueRange::postlist", qopt | factor);
     if (factor != 0.0)
 	qopt->inc_total_subqs();
-    return NULL;
-#if 0
     const Xapian::Database::Internal & db = qopt->db;
     const string & lb = db.get_value_lower_bound(slot);
     // If lb.empty(), the backend doesn't provide value bounds.
@@ -790,7 +787,6 @@ QueryValueRange::postlist(QueryOptimiser *qopt, double factor) const
 	}
     }
     RETURN(new ValueRangePostList(&db, slot, begin, end));
-#endif
 }
 
 void
@@ -832,8 +828,6 @@ QueryValueLE::postlist(QueryOptimiser *qopt, double factor) const
     LOGCALL(QUERY, PostingIterator::Internal *, "QueryValueLE::postlist", qopt | factor);
     if (factor != 0.0)
 	qopt->inc_total_subqs();
-    return NULL;
-#if 0
     const Xapian::Database::Internal & db = qopt->db;
     const string & lb = db.get_value_lower_bound(slot);
     // If lb.empty(), the backend doesn't provide value bounds.
@@ -853,7 +847,6 @@ QueryValueLE::postlist(QueryOptimiser *qopt, double factor) const
 	}
     }
     RETURN(new ValueRangePostList(&db, slot, string(), limit));
-#endif
 }
 
 void
@@ -894,8 +887,6 @@ QueryValueGE::postlist(QueryOptimiser *qopt, double factor) const
     LOGCALL(QUERY, PostingIterator::Internal *, "QueryValueGE::postlist", qopt | factor);
     if (factor != 0.0)
 	qopt->inc_total_subqs();
-    return NULL;
-#if 0
     const Xapian::Database::Internal & db = qopt->db;
     const string & lb = db.get_value_lower_bound(slot);
     // If lb.empty(), the backend doesn't provide value bounds.
@@ -915,7 +906,6 @@ QueryValueGE::postlist(QueryOptimiser *qopt, double factor) const
 	}
     }
     RETURN(new ValueGePostList(&db, slot, limit));
-#endif
 }
 
 void
@@ -951,8 +941,6 @@ PostingIterator::Internal *
 QueryWildcard::postlist(QueryOptimiser * qopt, double factor) const
 {
     LOGCALL(QUERY, PostingIterator::Internal *, "QueryWildcard::postlist", qopt | factor);
-    (void)qopt; (void)factor; return NULL;
-#if 0
     Query::op op = combiner;
     double or_factor = 0.0;
     if (factor == 0.0) {
@@ -1021,7 +1009,6 @@ QueryWildcard::postlist(QueryOptimiser * qopt, double factor) const
     // SynonymPostList, which supplies the weights.
     PostingIterator::Internal * r = qopt->make_synonym_postlist(pl, factor);
     RETURN(r);
-#endif
 }
 
 termcount
@@ -1602,7 +1589,7 @@ void
 QueryWindowed::postlist_windowed(Query::op op, AndContext& ctx, QueryOptimiser * qopt, double factor) const
 {
     // FIXME: should has_positions() be on the combined DB (not this sub)?
-    if (false /*qopt->db.has_positions()*/) {
+    if (qopt->db.has_positions()) {
 	bool old_need_positions = qopt->need_positions;
 	qopt->need_positions = true;
 

@@ -19,7 +19,8 @@ class XAPIAN_VISIBILITY_DEFAULT Database {
   public:
     class Internal;
     Database() { }
-    Database(const std::string&) { }
+    explicit Database(const std::string&) { }
+    explicit Database(Internal*) { }
     void add_database(const Database&) { }
     Xapian::doccount get_doccount() const { return 0; }
     double get_avlength() const { return 0; }
