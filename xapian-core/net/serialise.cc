@@ -50,7 +50,6 @@ serialise_stats(const Xapian::Weight::Internal &stats)
     result += static_cast<char>(stats.have_max_part);
 
     result += encode_length(stats.termfreqs.size());
-#if 0
     map<string, TermFreqs>::const_iterator i;
     for (i = stats.termfreqs.begin(); i != stats.termfreqs.end(); ++i) {
 	result += encode_length(i->first.size());
@@ -62,7 +61,6 @@ serialise_stats(const Xapian::Weight::Internal &stats)
 	if (stats.have_max_part)
 	    result += serialise_double(i->second.max_part);
     }
-#endif
 
     return result;
 }
@@ -97,7 +95,6 @@ unserialise_stats(const string &s, Xapian::Weight::Internal & stat)
 	}
 	Xapian::termcount collfreq;
 	decode_length(&p, p_end, collfreq);
-#if 0
 	double max_part = 0.0;
 	if (stat.have_max_part)
 	    max_part = unserialise_double(&p, p_end);
@@ -106,16 +103,14 @@ unserialise_stats(const string &s, Xapian::Weight::Internal & stat)
 						  reltermfreq,
 						  collfreq,
 						  max_part)));
-#endif
     }
 }
 
 string
 serialise_mset(const Xapian::MSet &mset)
 {
-    (void)mset;
     string result;
-#if 0
+
     result += encode_length(mset.get_firstitem());
     result += encode_length(mset.get_matches_lower_bound());
     result += encode_length(mset.get_matches_estimated());
@@ -142,11 +137,10 @@ serialise_mset(const Xapian::MSet &mset)
 
     if (mset.internal->stats)
 	result += serialise_stats(*(mset.internal->stats));
-#endif
+
     return result;
 }
 
-#if 0
 Xapian::MSet
 unserialise_mset(const char * p, const char * p_end)
 {
@@ -196,7 +190,6 @@ unserialise_mset(const char * p, const char * p_end)
     }
 
     Xapian::MSet mset;
-#if 0
     mset.internal = new Xapian::MSet::Internal(
 				       firstitem,
 				       matches_upper_bound,
@@ -208,15 +201,14 @@ unserialise_mset(const char * p, const char * p_end)
 				       max_possible, max_attained,
 				       items, percent_factor);
     mset.internal->stats = stats.release();
-#endif
     return mset;
 }
-#endif
 
 string
 serialise_rset(const Xapian::RSet &rset)
 {
     string result;
+    (void)rset;
 #if 0
     const set<Xapian::docid> & items = rset.internal->get_items();
     set<Xapian::docid>::const_iterator i;
@@ -227,11 +219,9 @@ serialise_rset(const Xapian::RSet &rset)
 	lastdid = did;
     }
 #endif
-    (void)rset;
     return result;
 }
 
-#if 0
 Xapian::RSet
 unserialise_rset(const string &s)
 {
@@ -256,7 +246,7 @@ serialise_document(const Xapian::Document &doc)
 {
     string result;
 
-    size_t n = doc.values_count();
+    Xapian::valueno n = doc.values_count();
     result += encode_length(n);
     Xapian::ValueIterator value;
     for (value = doc.values_begin(); value != doc.values_end(); ++value) {
@@ -340,4 +330,3 @@ unserialise_document(const string &s)
     doc.set_data(string(p, p_end - p));
     return doc;
 }
-#endif

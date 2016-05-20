@@ -75,7 +75,7 @@ NearPostList::test_doc()
     sort(terms.begin(), terms.end(), TermCmp());
 
     poslists[0] = terms[0]->read_position_list();
-//    poslists[0]->next();
+    poslists[0]->next();
 
     Xapian::termpos last = poslists[0]->get_position();
     PositionList ** end = poslists + 1;
@@ -88,9 +88,9 @@ NearPostList::test_doc()
 		PositionList * posl =
 		    terms[end - poslists]->read_position_list();
 		if (last < window) {
-//		    posl->next();
+		    posl->next();
 		} else {
-//		    posl->skip_to(last - window + 1);
+		    posl->skip_to(last - window + 1);
 		}
 		if (posl->at_end()) RETURN(false);
 		Xapian::termpos pos = posl->get_position();
@@ -114,9 +114,9 @@ NearPostList::test_doc()
 	    while (true) {
 		pop_heap<PositionList **, Cmp>(poslists, i, Cmp());
 		if ((*--i)->get_position() == pos) {
-//		    (*i)->next();
-//		    if ((*i)->at_end())
-//			RETURN(false);
+		    (*i)->next();
+		    if ((*i)->at_end())
+			RETURN(false);
 		    Xapian::termpos newpos = (*i)->get_position();
 		    if (newpos - end[-1]->get_position() >= window) {
 			// No longer fits in the window.
