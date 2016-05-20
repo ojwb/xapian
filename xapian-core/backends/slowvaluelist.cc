@@ -66,12 +66,12 @@ SlowValueList::next()
 	try {
 	    // Open document lazily so that we don't waste time checking for
 	    // its existence.
-	    void * d = NULL; //db->open_document(current_did, true);
+	    void * d = db->open_document(current_did, true);
 	    if (!d)
 		continue;
 	    AutoPtr<Xapian::Document::Internal>
 		doc(static_cast<Xapian::Document::Internal*>(d));
-	    string value; // = doc->get_value(slot);
+	    string value = doc->get_value(slot);
 	    if (!value.empty()) {
 		swap(current_value, value);
 		return;
@@ -112,11 +112,11 @@ SlowValueList::check(Xapian::docid did)
 
     current_did = did;
     try {
-	void * d = NULL; //db->open_document(current_did, true);
+	void * d = db->open_document(current_did, true);
 	if (d) {
 	    AutoPtr<Xapian::Document::Internal>
 		doc(static_cast<Xapian::Document::Internal*>(d));
-	    //current_value = doc->get_value(slot);
+	    current_value = doc->get_value(slot);
 	    if (!current_value.empty()) return true;
 	}
     } catch (const Xapian::DocNotFoundError &) {

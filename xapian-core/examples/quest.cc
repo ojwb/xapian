@@ -275,9 +275,7 @@ try {
 		break;
 	    }
 	    case 'd':
-#if 0
 		db.add_database(Xapian::Database(optarg));
-#endif
 		have_database = true;
 		break;
 	    case 's':

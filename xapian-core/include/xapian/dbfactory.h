@@ -45,7 +45,6 @@ namespace Xapian {
 typedef unsigned useconds_t;
 #endif
 
-#if 0
 /// Database factory functions which determine the database type automatically.
 namespace Auto {
 
@@ -153,7 +152,6 @@ open(const std::string &dir, int action, int block_size)
 }
 
 }
-#endif
 #endif
 
 #ifdef XAPIAN_HAS_REMOTE_BACKEND
