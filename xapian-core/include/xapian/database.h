@@ -11,10 +11,16 @@
 #include <xapian/visibility.h>
 
 namespace Xapian {
-struct XAPIAN_VISIBILITY_DEFAULT Database {
+class Compactor;
+
+class XAPIAN_VISIBILITY_DEFAULT Database {
+    void compact_(const std::string* output_ptr, int fd, unsigned flags,
+		  int block_size, Xapian::Compactor* compactor) const;
+  public:
     class Internal;
     Database() { }
     Database(const std::string&) { }
+    void add_database(const Database&) { }
     Xapian::doccount get_doccount() const { return 0; }
     double get_avlength() const { return 0; }
     Xapian::termcount get_collection_freq(const std::string&) const { return 0; }
@@ -38,6 +44,7 @@ struct XAPIAN_VISIBILITY_DEFAULT Database {
     std::string get_value_upper_bound(Xapian::valueno) const { return std::string(); }
     Xapian::Document get_document(Xapian::docid) const { return Xapian::Document(); }
     std::string get_metadata(const std::string&) const { return std::string(); }
+    void compact(const std::string&, unsigned, int, const Xapian::Compactor&) const { }
 };
 struct XAPIAN_VISIBILITY_DEFAULT WritableDatabase : public Database {
     WritableDatabase() { }
