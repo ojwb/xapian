@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-#if 0
 #include <config.h>
 
 #include "msetpostlist.h"
@@ -165,4 +164,3 @@ MSetPostList::get_description() const
     desc += ')';
     return desc;
 }
-#endif

@@ -2,12 +2,10 @@
 
 #include <xapian/mset.h>
 
+#include "omenquireinternal.h"
 #include <xapian/document.h>
 
 namespace Xapian {
-
-class MSet::Internal : public Xapian::Internal::intrusive_base {
-};
 
 MSet::MSet() { }
 
