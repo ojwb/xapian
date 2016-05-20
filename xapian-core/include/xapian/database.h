@@ -12,11 +12,7 @@
 
 namespace Xapian {
 struct XAPIAN_VISIBILITY_DEFAULT Database {
-    struct Internal : public Xapian::Internal::intrusive_base {
-	mutable unsigned _refs;
-	Xapian::doccount get_doccount() const { return 0; }
-	Xapian::docid get_lastdocid() const { return 0; }
-    };
+    class Internal;
     Database() { }
     Database(const std::string&) { }
     Xapian::doccount get_doccount() const { return 0; }

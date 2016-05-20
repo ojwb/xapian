@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-#if 0 //ndef XAPIAN_INCLUDED_COLLAPSER_H
+#ifndef XAPIAN_INCLUDED_COLLAPSER_H
 #define XAPIAN_INCLUDED_COLLAPSER_H
 
 #include "backends/document.h"
@@ -27,6 +27,7 @@
 #include "api/postlist.h"
 
 #include <map>
+#include <vector>
 
 /// Enumeration reporting how a document was handled by the Collapser.
 typedef enum {
@@ -47,7 +48,7 @@ class CollapseData {
      *  preallocate space for that many entries and/or allocate space in
      *  larger blocks to divvy up?
      */
-    vector<Xapian::Internal::MSetItem> items;
+    std::vector<Xapian::Internal::MSetItem> items;
 
     /// The highest weight of a document we've rejected.
     double next_best_weight;
@@ -59,7 +60,7 @@ class CollapseData {
     /// Construct with the given MSetItem @a item.
     CollapseData(const Xapian::Internal::MSetItem & item)
 	: items(1, item), next_best_weight(0), collapse_count(0) {
-	items[0].collapse_key = string();
+	items[0].collapse_key = std::string();
     }
 
     /** Handle a new MSetItem with this collapse key value.

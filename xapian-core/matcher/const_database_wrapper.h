@@ -29,6 +29,7 @@
 
 #include "api/termlist.h"
 #include "backends/document.h"
+#include "backends/positionlist.h"
 #include "backends/valuelist.h"
 
 class LeafPostList;

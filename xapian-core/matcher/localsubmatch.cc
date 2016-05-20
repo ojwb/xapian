@@ -190,7 +190,6 @@ LocalSubMatch::get_postlist(MultiMatch * matcher,
 			    Xapian::termcount * total_subqs_ptr)
 {
     LOGCALL(MATCH, PostList *, "LocalSubMatch::get_postlist", matcher | total_subqs_ptr);
-    (void)total_subqs_ptr;
 
     if (query.empty())
 	RETURN(new EmptyPostList); // MatchNothing
@@ -198,14 +197,11 @@ LocalSubMatch::get_postlist(MultiMatch * matcher,
     // Build the postlist tree for the query.  This calls
     // LocalSubMatch::open_post_list() for each term in the query.
     PostList * pl;
-    pl = NULL;
-#if 0
     {
 	QueryOptimiser opt(*db, *this, matcher);
 	pl = query.internal->postlist(&opt, 1.0);
 	*total_subqs_ptr = opt.get_total_subqs();
     }
-#endif
 
     AutoPtr<Xapian::Weight> extra_wt(wt_factory->clone());
     // Only uses term-independent stats.
@@ -229,9 +225,6 @@ LocalSubMatch::make_synonym_postlist(PostList * or_pl, MultiMatch * matcher,
 	// or_pl is an EmptyPostList or equivalent.
 	return or_pl;
     }
-    (void)matcher; (void)factor;
-    return NULL;
-#if 0
     LOGVALUE(MATCH, or_pl->get_termfreq_est());
     Xapian::termcount len_lb = db->get_doclength_lower_bound();
     AutoPtr<SynonymPostList> res(new SynonymPostList(or_pl, matcher, len_lb));
@@ -251,7 +244,6 @@ LocalSubMatch::make_synonym_postlist(PostList * or_pl, MultiMatch * matcher,
 
     res->set_weight(wt.release());
     RETURN(res.release());
-#endif
 }
 
 LeafPostList *
@@ -269,7 +261,6 @@ LocalSubMatch::open_post_list(const string& term,
     LeafPostList * pl = NULL;
     if (!term.empty() && !need_positions) {
 	if (!weighted || !wt_factory->get_sumpart_needs_wdf_()) {
-#if 0
 	    Xapian::doccount sub_tf;
 	    db->get_freqs(term, &sub_tf, NULL);
 	    if (sub_tf == db->get_doccount()) {
@@ -279,7 +270,6 @@ LocalSubMatch::open_post_list(const string& term,
 		// are no gaps in the docids.
 		pl = db->open_post_list(string());
 	    }
-#endif
 	}
     }
 
@@ -287,13 +277,12 @@ LocalSubMatch::open_post_list(const string& term,
 	const LeafPostList * hint = qopt->get_hint_postlist();
 	if (hint)
 	    pl = hint->open_nearby_postlist(term);
-//	if (!pl)
-//	    pl = db->open_post_list(term);
+	if (!pl)
+	    pl = db->open_post_list(term);
 	qopt->set_hint_postlist(pl);
     }
 
     if (lazy_weight) {
-#if 0
 	// Term came from a wildcard, but we may already have that term in the
 	// query anyway, so check before accumulating its TermFreqs.
 	map<string, TermFreqs>::iterator i = stats->termfreqs.find(term);
@@ -303,14 +292,13 @@ LocalSubMatch::open_post_list(const string& term,
 	    db->get_freqs(term, &sub_tf, &sub_cf);
 	    stats->termfreqs.insert(make_pair(term, TermFreqs(sub_tf, 0, sub_cf)));
 	}
-#endif
     }
 
     if (weighted) {
 	Xapian::Weight * wt = wt_factory->clone();
 	if (!lazy_weight) {
 	    wt->init_(*stats, qlen, term, wqf, factor);
-//	    stats->set_max_part(term, wt->get_maxpart());
+	    stats->set_max_part(term, wt->get_maxpart());
 	} else {
 	    // Delay initialising the actual weight object, so that we can
 	    // gather stats for the terms lazily expanded from a wildcard

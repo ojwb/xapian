@@ -9,6 +9,7 @@ namespace Xapian {
       public:
 	typedef std::map<Xapian::valueno, std::string> document_values;
 	document_values values;
+	std::string get_value(Xapian::valueno) { return std::string(); }
     };
 };
 

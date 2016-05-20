@@ -20,7 +20,6 @@
  * USA
  */
 
-#if 0
 #include <config.h>
 
 #include "const_database_wrapper.h"
@@ -344,4 +343,3 @@ ConstDatabaseWrapper::write_changesets_to_fd(int, const std::string &, bool,
 {
     nonconst_access();
 }
-#endif

@@ -20,7 +20,7 @@
  */
 
 
-#if 0 //ndef XAPIAN_INCLUDED_MSETCMP_H
+#ifndef XAPIAN_INCLUDED_MSETCMP_H
 #define XAPIAN_INCLUDED_MSETCMP_H
 
 #include "api/omenquireinternal.h"
@@ -30,7 +30,9 @@ typedef bool (* mset_cmp)(const Xapian::Internal::MSetItem &,
 			  const Xapian::Internal::MSetItem &);
 
 /// Select the appropriate msetcmp function.
+#if 0
 mset_cmp get_msetcmp_function(Xapian::Enquire::Internal::sort_setting sort_by, bool sort_forward, bool sort_value_forward);
+#endif
 
 /// MSetItem comparison functor.
 class MSetCmp {
