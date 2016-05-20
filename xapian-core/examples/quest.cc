@@ -374,7 +374,6 @@ try {
     Xapian::Enquire enquire(db);
     enquire.set_query(query);
 
-#if 0
     switch (weight) {
 	case WEIGHT_BB2:
 	    enquire.set_weighting_scheme(Xapian::BB2Weight());
@@ -419,7 +418,6 @@ try {
 	string data = doc.get_data();
 	cout << *i << ": [" << i.get_weight() << "]\n" << data << "\n";
     }
-#endif
     cout << flush;
 } catch (const Xapian::QueryParserError & e) {
     cout << "Couldn't parse query: " << e.get_msg() << endl;

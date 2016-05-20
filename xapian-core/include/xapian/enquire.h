@@ -45,8 +45,10 @@ class Enquire {
     Enquire() { }
     Enquire(const Xapian::Database&) { }
     void set_query(const Xapian::Query&) { }
+    MSet get_mset(Xapian::doccount, Xapian::doccount, Xapian::doccount) { return MSet(); }
     MSet get_mset(Xapian::doccount, Xapian::doccount, const Xapian::RSet* = NULL) { return MSet(); }
     ESet get_eset(Xapian::doccount, const Xapian::RSet&) { return ESet(); }
+    void set_weighting_scheme(const Xapian::Weight&) { }
 };
 }
 #endif
