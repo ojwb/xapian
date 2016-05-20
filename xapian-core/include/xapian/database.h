@@ -19,7 +19,8 @@ class XAPIAN_VISIBILITY_DEFAULT Database {
   public:
     class Internal;
     Database() { }
-    explicit Database(const std::string&) { }
+    Database(const std::string& path, int flags = 0);
+    Database(int fd, int flags = 0);
     explicit Database(Internal*) { }
     void add_database(const Database&) { }
     Xapian::doccount get_doccount() const { return 0; }
@@ -49,7 +50,7 @@ class XAPIAN_VISIBILITY_DEFAULT Database {
 };
 struct XAPIAN_VISIBILITY_DEFAULT WritableDatabase : public Database {
     WritableDatabase() { }
-    WritableDatabase(const std::string&, unsigned) { }
+    WritableDatabase(const std::string&, int flags, int blocksize = 0);
     void add_spelling(const std::string&, Xapian::termcount = 1) { }
     void add_document(const Xapian::Document&) { }
     void replace_document(Xapian::docid, const Xapian::Document&) { }

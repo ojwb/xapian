@@ -20,7 +20,6 @@
  * USA
  */
 
-#if 0
 #include <config.h>
 
 #include "xapian/dbfactory.h"
@@ -96,7 +95,6 @@ namespace Xapian {
 static void
 open_stub(Database &db, const string &file)
 {
-    (void)db;
     // A stub database is a text file with one or more lines of this format:
     // <dbtype> <serialised db object>
     //
@@ -124,14 +122,14 @@ open_stub(Database &db, const string &file)
 
 	if (type == "auto") {
 	    resolve_relative_path(line, file);
-	    //db.add_database(Database(line));
+	    db.add_database(Database(line));
 	    continue;
 	}
 
 #ifdef XAPIAN_HAS_CHERT_BACKEND
 	if (type == "chert") {
 	    resolve_relative_path(line, file);
-	    //db.add_database(Database(new ChertDatabase(line)));
+	    db.add_database(Database(new ChertDatabase(line)));
 	    continue;
 	}
 #endif
@@ -139,7 +137,7 @@ open_stub(Database &db, const string &file)
 #ifdef XAPIAN_HAS_GLASS_BACKEND
 	if (type == "glass") {
 	    resolve_relative_path(line, file);
-	    //db.add_database(Database(new GlassDatabase(line)));
+	    db.add_database(Database(new GlassDatabase(line)));
 	    continue;
 	}
 #endif
@@ -298,9 +296,11 @@ open_stub(WritableDatabase &db, const string &file, int flags)
 	throw DatabaseOpeningError(file + ':' + str(line_no) + ": Bad line");
     }
 
+#if 0
     if (db.internal.empty()) {
 	throw DatabaseOpeningError(file + ": No databases listed");
     }
+#endif
 }
 
 Database::Database(const string &path, int flags)
@@ -514,4 +514,3 @@ WritableDatabase::WritableDatabase(const std::string &path, int flags, int block
 }
 
 }
-#endif
