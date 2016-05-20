@@ -92,10 +92,8 @@ MultiValueList::MultiValueList(const vector<intrusive_ptr<Xapian::Database::Inte
 	unsigned db_idx = 0;
 	vector<intrusive_ptr<Xapian::Database::Internal> >::const_iterator i;
 	for (i = dbs.begin(); i != dbs.end(); ++i) {
-#if 0
 	    ValueList * vl = (*i)->open_value_list(slot);
 	    valuelists.push_back(new SubValueList(vl, db_idx));
-#endif
 	    ++db_idx;
 	}
     } catch (...) {

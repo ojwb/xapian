@@ -1,6 +1,7 @@
 #ifndef XAPIAN_INCLUDED_DATABASE_H
 #define XAPIAN_INCLUDED_DATABASE_H
 #include <string>
+#include <vector>
 
 #include <xapian/document.h>
 #include <xapian/intrusive_ptr.h>
@@ -18,13 +19,22 @@ class XAPIAN_VISIBILITY_DEFAULT Database {
 		  int block_size, Xapian::Compactor* compactor) const;
   public:
     class Internal;
-    Database() { }
-    Database(const std::string& path, int flags = 0);
-    Database(int fd, int flags = 0);
-    explicit Database(Internal*) { }
+    std::vector<Xapian::Internal::intrusive_ptr<Internal> > internal;
+    Database();
+    Database(const Database& o);
+    Database& operator=(const Database& o);
+    ~Database();
+    explicit Database(Internal*);
+    explicit Database(const std::string& path, int flags = 0);
+    explicit Database(int fd, int flags = 0);
     void add_database(const Database&) { }
     Xapian::doccount get_doccount() const { return 0; }
     double get_avlength() const { return 0; }
+    Xapian::termcount get_doclength(Xapian::docid) const { return 0; }
+    Xapian::termcount get_doclength_lower_bound() const { return 0; }
+    Xapian::termcount get_doclength_upper_bound() const { return 0; }
+    Xapian::termcount get_wdf_upper_bound(const std::string&) const { return 0; }
+    Xapian::termcount get_unique_terms(Xapian::docid) const { return 0; }
     Xapian::termcount get_collection_freq(const std::string&) const { return 0; }
     Xapian::doccount get_termfreq(const std::string&) const { return 0; }
     bool term_exists(const std::string&) const { return false; }
@@ -48,6 +58,7 @@ class XAPIAN_VISIBILITY_DEFAULT Database {
     std::string get_metadata(const std::string&) const { return std::string(); }
     void compact(const std::string&, unsigned, int, const Xapian::Compactor&) const { }
 };
+
 struct XAPIAN_VISIBILITY_DEFAULT WritableDatabase : public Database {
     WritableDatabase() { }
     WritableDatabase(const std::string&, int flags, int blocksize = 0);

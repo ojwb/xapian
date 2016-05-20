@@ -159,8 +159,7 @@ backend_mismatch(const Xapian::Database & db, int backend1,
 		 const string &dbpath2, int backend2)
 {
     string dbpath1;
-    // db.internal[0]->get_backend_info(&dbpath1);
-    (void)db;
+    db.internal[0]->get_backend_info(&dbpath1);
     string msg = "All databases must be the same type ('";
     msg += dbpath1;
     msg += "' is ";
@@ -204,8 +203,6 @@ Database::compact_(const string * output_ptr, int fd, unsigned flags,
     }
 
     int backend = BACKEND_UNKNOWN;
-    (void)backend_mismatch;
-#if 0
     for (const auto& it : internal) {
 	string srcdir;
 	int type = it->get_backend_info(&srcdir);
@@ -225,7 +222,6 @@ Database::compact_(const string * output_ptr, int fd, unsigned flags,
 		throw Xapian::DatabaseError("Only chert and glass databases can be compacted");
 	}
     }
-#endif
 
     Xapian::docid tot_off = 0;
     Xapian::docid last_docid = 0;
@@ -233,7 +229,6 @@ Database::compact_(const string * output_ptr, int fd, unsigned flags,
     vector<Xapian::docid> offset;
     vector<pair<Xapian::docid, Xapian::docid> > used_ranges;
     vector<Xapian::Database::Internal *> internals;
-#if 0
     offset.reserve(internal.size());
     used_ranges.reserve(internal.size());
     internals.reserve(internal.size());
@@ -283,12 +278,10 @@ Database::compact_(const string * output_ptr, int fd, unsigned flags,
 	    last_docid = db->get_lastdocid();
 	used_ranges.push_back(make_pair(first, last));
     }
-#endif
 
     if (renumber)
 	last_docid = tot_off;
 
-#if 0
     if (!renumber && internal.size() > 1) {
 	// We want to process the sources in ascending order of first
 	// docid.  So we create a vector "order" with ascending integers
@@ -345,7 +338,6 @@ Database::compact_(const string * output_ptr, int fd, unsigned flags,
 	swap(internals, internals_);
 	swap(used_ranges, used_ranges_);
     }
-#endif
 
     string stub_file;
     if (compact_to_stub) {

@@ -296,12 +296,26 @@ open_stub(WritableDatabase &db, const string &file, int flags)
 	throw DatabaseOpeningError(file + ':' + str(line_no) + ": Bad line");
     }
 
-#if 0
     if (db.internal.empty()) {
 	throw DatabaseOpeningError(file + ": No databases listed");
     }
-#endif
 }
+
+Database::Database() { }
+
+Database::Database(const Database& o) : internal(o.internal) { }
+
+Database&
+Database::operator=(const Database& o)
+{
+    internal = o.internal;
+    return *this;
+}
+
+Database::~Database() { }
+
+Database::Database(Internal* internal_)
+    : internal(1, internal_) { }
 
 Database::Database(const string &path, int flags)
 {

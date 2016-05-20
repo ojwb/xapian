@@ -19,6 +19,9 @@ class Database::Internal : public Xapian::Internal::intrusive_base {
     totlen_t get_total_length() const { return 0; }
     Xapian::doclength get_avlength() const { return 0; }
     Xapian::termcount get_doclength(Xapian::docid) const { return 0; }
+    Xapian::termcount get_doclength_lower_bound() const { return 0; }
+    Xapian::termcount get_doclength_upper_bound() const { return 0; }
+    Xapian::termcount get_wdf_upper_bound(const std::string&) const { return 0; }
     Xapian::termcount get_unique_terms(Xapian::docid) const { return 0; }
     void get_freqs(const std::string&,
 		   Xapian::doccount* tf,
@@ -26,7 +29,6 @@ class Database::Internal : public Xapian::Internal::intrusive_base {
     Xapian::doccount get_value_freq(Xapian::valueno) const { return 0; }
     std::string get_value_lower_bound(Xapian::valueno) const { return 0; }
     std::string get_value_upper_bound(Xapian::valueno) const { return std::string(); }
-    Xapian::termcount get_doclength_lower_bound() const { return 0; }
     bool term_exists(const std::string&) const { return false; }
     bool has_positions() const { return false; }
     LeafPostList * open_post_list(const std::string&) const { return 0; }
@@ -48,6 +50,7 @@ class Database::Internal : public Xapian::Internal::intrusive_base {
     std::string get_uuid() const { return std::string(); }
     void invalidate_doc_object(Xapian::Document::Internal*) const { }
     int get_backend_info(std::string* path) const { return !path; }
+    void get_used_docid_range(Xapian::docid& first, Xapian::docid& last) { first = last = 0; }
 };
 
 }
