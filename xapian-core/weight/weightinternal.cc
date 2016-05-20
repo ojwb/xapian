@@ -49,7 +49,6 @@ TermFreqs::get_description() const {
     return desc;
 }
 
-#if 0
 namespace Xapian {
 
 Weight::Internal &
@@ -82,7 +81,7 @@ Weight::Internal::accumulate_stats(const Xapian::Database::Internal &subdb,
 #endif
     total_length += subdb.get_total_length();
     collection_size += subdb.get_doccount();
-    rset_size += rset.size();
+    //rset_size += rset.size();
 
     total_term_count += subdb.get_doccount() * subdb.get_total_length();
     Xapian::TermIterator t;
@@ -97,7 +96,8 @@ Weight::Internal::accumulate_stats(const Xapian::Database::Internal &subdb,
 	tf.collfreq += sub_cf;
     }
 
-    const set<Xapian::docid> & items(rset.internal->get_items());
+    const set<Xapian::docid> & items = set<Xapian::docid>(); // (rset.internal->get_items());
+    (void)rset;
     set<Xapian::docid>::const_iterator d;
     for (d = items.begin(); d != items.end(); ++d) {
 	Xapian::docid did = *d;
@@ -151,4 +151,3 @@ Weight::Internal::get_description() const
 }
 
 }
-#endif

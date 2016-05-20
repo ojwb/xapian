@@ -92,7 +92,7 @@ class ConstDatabaseWrapper : public Xapian::Database::Internal {
     string get_revision_info() const;
     string get_uuid() const;
     void invalidate_doc_object(Xapian::Document::Internal * obj) const;
-    int get_backend_info(std::string * path) const; // { return realdb->get_backend_info(path); }
+    int get_backend_info(std::string * path) const { return realdb->get_backend_info(path); }
 
     // Non-const methods: these raise Xapian::InvalidOperationError
     void add_spelling(const string & word, Xapian::termcount freqinc) const;

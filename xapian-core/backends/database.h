@@ -21,8 +21,8 @@ class Database::Internal : public Xapian::Internal::intrusive_base {
     Xapian::termcount get_doclength(Xapian::docid) const { return 0; }
     Xapian::termcount get_unique_terms(Xapian::docid) const { return 0; }
     void get_freqs(const std::string&,
-		   Xapian::doccount*,
-		   Xapian::termcount*) const { }
+		   Xapian::doccount* tf,
+		   Xapian::termcount* cf) const { *tf = *cf = 0; }
     Xapian::doccount get_value_freq(Xapian::valueno) const { return 0; }
     std::string get_value_lower_bound(Xapian::valueno) const { return 0; }
     std::string get_value_upper_bound(Xapian::valueno) const { return std::string(); }
@@ -47,6 +47,7 @@ class Database::Internal : public Xapian::Internal::intrusive_base {
     std::string get_revision_info() const { return std::string(); }
     std::string get_uuid() const { return std::string(); }
     void invalidate_doc_object(Xapian::Document::Internal*) const { }
+    int get_backend_info(std::string* path) const { return !path; }
 };
 
 }

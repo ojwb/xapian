@@ -167,7 +167,7 @@ LocalSubMatch::prepare_match(bool nowait,
     LOGCALL(MATCH, bool, "LocalSubMatch::prepare_match", nowait | total_stats);
     (void)nowait;
     Assert(db);
-    (void)total_stats; //    total_stats.accumulate_stats(*db, rset);
+    total_stats.accumulate_stats(*db, rset);
     RETURN(true);
 }
 
