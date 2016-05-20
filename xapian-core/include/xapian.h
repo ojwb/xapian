@@ -77,6 +77,7 @@
 #include <xapian/postingsource.h>
 #include <xapian/query.h>
 #include <xapian/queryparser.h>
+#include <xapian/rset.h>
 #include <xapian/valuesetmatchdecider.h>
 #include <xapian/weight.h>
 

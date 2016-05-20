@@ -2,10 +2,13 @@
 #define XAPIAN_INCLUDED_ENQUIRE_H
 
 #include <xapian/database.h>
+#include <xapian/intrusive_ptr.h>
 #include <xapian/mset.h>
 #include <xapian/query.h>
 
 namespace Xapian {
+
+class RSet;
 
 class ESetIterator {
   public:
@@ -27,13 +30,6 @@ class ESet {
     ESetIterator end() const { return ESetIterator(); }
 };
 
-class RSet {
-  public:
-    struct Internal { };
-    void add_document(Xapian::docid) { }
-    bool empty() const { return true; }
-};
-
 class Enquire {
   public:
     class Internal {
@@ -50,5 +46,7 @@ class Enquire {
     ESet get_eset(Xapian::doccount, const Xapian::RSet&) { return ESet(); }
     void set_weighting_scheme(const Xapian::Weight&) { }
 };
+
 }
+
 #endif

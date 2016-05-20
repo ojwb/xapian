@@ -26,7 +26,7 @@
 #include "xapian/enquire.h"
 
 #include "omassert.h"
-#include "api/omenquireinternal.h"
+#include "api/rsetinternal.h"
 #include "str.h"
 #include "api/termlist.h"
 
@@ -81,7 +81,7 @@ Weight::Internal::accumulate_stats(const Xapian::Database::Internal &subdb,
 #endif
     total_length += subdb.get_total_length();
     collection_size += subdb.get_doccount();
-    //rset_size += rset.size();
+    rset_size += rset.size();
 
     total_term_count += subdb.get_doccount() * subdb.get_total_length();
     Xapian::TermIterator t;
@@ -96,8 +96,7 @@ Weight::Internal::accumulate_stats(const Xapian::Database::Internal &subdb,
 	tf.collfreq += sub_cf;
     }
 
-    const set<Xapian::docid> & items = set<Xapian::docid>(); // (rset.internal->get_items());
-    (void)rset;
+    const set<Xapian::docid> & items(rset.internal->get_items());
     set<Xapian::docid>::const_iterator d;
     for (d = items.begin(); d != items.end(); ++d) {
 	Xapian::docid did = *d;

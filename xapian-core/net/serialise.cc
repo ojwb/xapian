@@ -27,6 +27,7 @@
 
 #include "omassert.h"
 #include "api/omenquireinternal.h"
+#include "api/rsetinternal.h"
 #include "length.h"
 #include "serialise.h"
 #include "serialise-double.h"
@@ -208,8 +209,6 @@ string
 serialise_rset(const Xapian::RSet &rset)
 {
     string result;
-    (void)rset;
-#if 0
     const set<Xapian::docid> & items = rset.internal->get_items();
     set<Xapian::docid>::const_iterator i;
     Xapian::docid lastdid = 0;
@@ -218,7 +217,6 @@ serialise_rset(const Xapian::RSet &rset)
 	result += encode_length(did - lastdid - 1);
 	lastdid = did;
     }
-#endif
     return result;
 }
 
