@@ -77,7 +77,7 @@ class MultiAndPostList : public PostList {
 	if (res) {
 	    delete plist[n];
 	    plist[n] = res;
-	    // matcher->recalc_maxweight();
+	    matcher->recalc_maxweight();
 	}
     }
 
@@ -87,7 +87,7 @@ class MultiAndPostList : public PostList {
 	if (res) {
 	    delete plist[n];
 	    plist[n] = res;
-	    // matcher->recalc_maxweight();
+	    matcher->recalc_maxweight();
 	}
     }
 
@@ -98,7 +98,7 @@ class MultiAndPostList : public PostList {
 	if (res) {
 	    delete plist[n];
 	    plist[n] = res;
-	    // matcher->recalc_maxweight();
+	    matcher->recalc_maxweight();
 	}
     }
 

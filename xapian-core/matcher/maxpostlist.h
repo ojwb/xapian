@@ -61,7 +61,7 @@ class MaxPostList : public PostList {
 	for (size_t j = i; j < n_kids; ++j) {
 	    plist[j] = plist[j + 1];
 	}
-	//matcher->recalc_maxweight();
+	matcher->recalc_maxweight();
     }
 
   public:
