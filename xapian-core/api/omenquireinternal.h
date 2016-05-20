@@ -52,6 +52,7 @@ class MSet::Internal : public Xapian::Internal::intrusive_base {
     Xapian::Weight::Internal* stats;
     std::vector<Xapian::Internal::MSetItem> items;
     Xapian::doccount firstitem;
+    Xapian::Enquire::Internal* enquire;
 
     Internal(Xapian::doccount firstitem_,
 	     Xapian::doccount matches_upper_bound_,
@@ -75,6 +76,14 @@ class MSet::Internal : public Xapian::Internal::intrusive_base {
 	  percent_factor(percent_factor_),
 	  items(items_),
 	  firstitem(firstitem_) { }
+
+    std::string snippet(const std::string& text,
+			size_t length,
+			const Xapian::Stem& stemmer,
+			unsigned flags,
+			const std::string& hi_start,
+			const std::string& hi_end,
+			const std::string& omit) const;
 
     std::string get_description() const { return std::string(); }
 };

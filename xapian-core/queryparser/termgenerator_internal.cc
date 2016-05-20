@@ -33,6 +33,7 @@
 #include "stringutils.h"
 
 #include <algorithm>
+#include <cmath>
 #include <deque>
 #include <limits>
 #include <list>
@@ -294,7 +295,6 @@ TermGenerator::Internal::index_text(Utf8Iterator itor, termcount wdf_inc,
 	});
 }
 
-#if 0
 struct Sniplet {
     double relevance;
 
@@ -419,15 +419,12 @@ SnipPipe::pump(double r, size_t t, size_t h, unsigned flags)
 	best_sum = sum;
 	best_begin = begin;
 	best_end = t;
-    (void)flags;
-#if 0
     } else if ((flags & Xapian::MSet::SNIPPET_EXHAUSTIVE) == 0) {
 	if (best_sum > 0 && best_end < begin) {
 	    // We found something, and we aren't still looking near it.
 	    // FIXME: Benchmark this and adjust if necessary.
 	    return false;
 	}
-#endif
     }
     return true;
 }
@@ -827,6 +824,5 @@ relevance_done:
 
     return result;
 }
-#endif
 
 }
