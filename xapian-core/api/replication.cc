@@ -19,7 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-#if 0
 #include <config.h>
 
 #include "replication.h"
@@ -652,4 +651,3 @@ DatabaseReplica::Internal::apply_next_changeset(ReplicationInfo * info,
     throw Xapian::FeatureUnavailableError("Replication requires remote backend to be enabled");
 #endif
 }
-#endif

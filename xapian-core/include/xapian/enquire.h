@@ -21,7 +21,7 @@ inline bool operator!=(const ESetIterator&,const ESetIterator&) { return false; 
 
 class ESet {
   public:
-    struct Internal { };
+    class Internal;
     ESet() { }
     ESetIterator begin() const { return ESetIterator(); }
     ESetIterator end() const { return ESetIterator(); }

@@ -46,21 +46,19 @@ template<class CLASS> struct delete_ptr {
 MultiAllTermsList::MultiAllTermsList(const vector<intrusive_ptr<Xapian::Database::Internal> > & dbs,
 				     const string & prefix)
 {
-    (void)dbs; (void)prefix;
-#if 0
+    (void)prefix;
     // The 0 and 1 cases should be handled by our caller.
     AssertRel(dbs.size(), >=, 2);
     termlists.reserve(dbs.size());
     try {
 	vector<intrusive_ptr<Xapian::Database::Internal> >::const_iterator i;
 	for (i = dbs.begin(); i != dbs.end(); ++i) {
-	    termlists.push_back((*i)->open_allterms(prefix));
+//	    termlists.push_back((*i)->open_allterms(prefix));
 	}
     } catch (...) {
 	for_each(termlists.begin(), termlists.end(), delete_ptr<TermList>());
 	throw;
     }
-#endif
 }
 
 MultiAllTermsList::~MultiAllTermsList()

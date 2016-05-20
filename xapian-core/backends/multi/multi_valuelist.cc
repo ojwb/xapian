@@ -85,7 +85,6 @@ MultiValueList::MultiValueList(const vector<intrusive_ptr<Xapian::Database::Inte
 			       Xapian::valueno slot_)
     : current_docid(0), slot(slot_), multiplier(dbs.size())
 {
-#if 0
     // The 0 and 1 cases should be handled by our caller.
     AssertRel(multiplier, >=, 2);
     valuelists.reserve(multiplier);
@@ -93,15 +92,16 @@ MultiValueList::MultiValueList(const vector<intrusive_ptr<Xapian::Database::Inte
 	unsigned db_idx = 0;
 	vector<intrusive_ptr<Xapian::Database::Internal> >::const_iterator i;
 	for (i = dbs.begin(); i != dbs.end(); ++i) {
+#if 0
 	    ValueList * vl = (*i)->open_value_list(slot);
 	    valuelists.push_back(new SubValueList(vl, db_idx));
+#endif
 	    ++db_idx;
 	}
     } catch (...) {
 	for_each(valuelists.begin(), valuelists.end(), delete_ptr<SubValueList>());
 	throw;
     }
-#endif
 }
 
 MultiValueList::~MultiValueList()

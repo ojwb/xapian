@@ -20,7 +20,6 @@
  * USA
  */
 
-#if 0
 #include <config.h>
 
 #include "xapian/geospatial.h"
@@ -165,4 +164,3 @@ GreatCircleMetric::unserialise(const string & s) const
 
     return new GreatCircleMetric(new_radius);
 }
-#endif

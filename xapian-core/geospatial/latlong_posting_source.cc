@@ -21,7 +21,6 @@
  * USA
  */
 
-#if 0
 #include <config.h>
 
 #include "xapian/geospatial.h"
@@ -278,4 +277,3 @@ LatLongDistancePostingSource::get_description() const
     result += ")";
     return result;
 }
-#endif

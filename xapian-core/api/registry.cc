@@ -161,7 +161,6 @@ Registry::Internal::add_defaults()
     weighting_scheme = new Xapian::LMWeight;
     wtschemes[weighting_scheme->name()] = weighting_scheme;
 
-#if 0
     Xapian::PostingSource * source;
     source = new Xapian::ValueWeightPostingSource(0);
     postingsources[source->name()] = source;
@@ -175,17 +174,14 @@ Registry::Internal::add_defaults()
 	Xapian::LatLongCoords(),
 	Xapian::GreatCircleMetric());
     postingsources[source->name()] = source;
-#endif
 
     Xapian::MatchSpy * spy;
     spy = new Xapian::ValueCountMatchSpy();
     matchspies[spy->name()] = spy;
 
-#if 0
     Xapian::LatLongMetric * metric;
     metric = new Xapian::GreatCircleMetric();
     lat_long_metrics[metric->name()] = metric;
-#endif
 }
 
 void
@@ -218,12 +214,10 @@ Registry::Internal::clear_match_spies()
 void
 Registry::Internal::clear_lat_long_metrics()
 {
-#if 0
     map<string, Xapian::LatLongMetric *>::const_iterator i;
     for (i = lat_long_metrics.begin(); i != lat_long_metrics.end(); ++i) {
 	delete i->second;
     }
-#endif
 }
 
 Registry::Registry(const Registry & other)
@@ -302,8 +296,7 @@ void
 Registry::register_lat_long_metric(const Xapian::LatLongMetric &metric)
 {
     LOGCALL_VOID(API, "Xapian::Registry::register_lat_long_metric", metric.name());
-    (void)metric;
-    // register_object(internal->lat_long_metrics, metric);
+    register_object(internal->lat_long_metrics, metric);
 }
 
 const Xapian::LatLongMetric *

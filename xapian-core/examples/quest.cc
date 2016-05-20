@@ -244,9 +244,7 @@ try {
 
     bool have_database = false;
 
-#if 0
     Xapian::Database db;
-#endif
     Xapian::QueryParser parser;
     unsigned flags = parser.FLAG_DEFAULT|parser.FLAG_SPELLING_CORRECTION;
     int weight = -1;
@@ -358,9 +356,7 @@ try {
 	exit(1);
     }
 
-#if 0
     parser.set_database(db);
-#endif
     parser.set_stemmer(stemmer);
     parser.set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
     parser.set_stopper(&mystopper);
@@ -377,10 +373,10 @@ try {
 	exit(0);
     }
 
-#if 0
     Xapian::Enquire enquire(db);
     enquire.set_query(query);
 
+#if 0
     switch (weight) {
 	case WEIGHT_BB2:
 	    enquire.set_weighting_scheme(Xapian::BB2Weight());

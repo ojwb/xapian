@@ -95,18 +95,14 @@ LeafPostList::get_termfreq_est_using_stats(
 	const Xapian::Weight::Internal & stats) const
 {
     LOGCALL(MATCH, TermFreqs, "LeafPostList::get_termfreq_est_using_stats", stats);
-#if 0
     if (term.empty()) {
-#endif
 	RETURN(TermFreqs(stats.collection_size,
 			 stats.rset_size,
 			 stats.total_term_count));
-#if 0
     }
     map<string, TermFreqs>::const_iterator i = stats.termfreqs.find(term);
     Assert(i != stats.termfreqs.end());
     RETURN(i->second);
-#endif
 }
 
 Xapian::termcount

@@ -20,7 +20,6 @@
  * USA
  */
 
-#if 0
 #include <config.h>
 
 #include "xapian/geospatial.h"
@@ -137,4 +136,3 @@ LatLongCoords::get_description() const
     res += ")";
     return res;
 }
-#endif

@@ -120,18 +120,18 @@ Compactor::add_source(const string & srcdir)
     internal->srcdirs_compat.push_back(srcdir);
 }
 
-#if 0
 void
 Compactor::compact()
 {
+#if 0
     Xapian::Database src;
     for (auto srcdir : internal->srcdirs_compat) {
 	src.add_database(Xapian::Database(srcdir));
     }
     src.compact(internal->destdir_compat, internal->flags,
 		internal->block_size, *this);
-}
 #endif
+}
 
 void
 Compactor::set_status(const string & table, const string & status)

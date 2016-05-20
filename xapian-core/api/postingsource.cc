@@ -52,12 +52,10 @@ PostingSource::~PostingSource() { }
 void
 PostingSource::set_maxweight(double max_weight)
 {
-#if 0
     if (usual(matcher_)) {
 	MultiMatch * multimatch = static_cast<MultiMatch*>(matcher_);
 	multimatch->recalc_maxweight();
     }
-#endif
     max_weight_ = max_weight;
 }
 

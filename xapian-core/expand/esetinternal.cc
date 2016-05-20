@@ -19,7 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-#if 0
 #include <config.h>
 
 #include "esetinternal.h"
@@ -74,13 +73,13 @@ build_termlist_tree(const Xapian::Database &db, const RSet & rset)
 {
     Assert(!rset.empty());
 
-    const set<Xapian::docid> & docids = rset.internal->get_items();
+    const set<Xapian::docid> & docids = set<Xapian::docid>(); // = rset.internal->get_items();
 
     vector<TermList*> termlists;
     termlists.reserve(docids.size());
 
     try {
-	const size_t multiplier = db.internal.size();
+	const size_t multiplier = 1; // db.internal.size();
 	set<Xapian::docid>::const_iterator i;
 	for (i = docids.begin(); i != docids.end(); ++i) {
 	    Xapian::docid realdid = (*i - 1) / multiplier + 1;
@@ -89,7 +88,8 @@ build_termlist_tree(const Xapian::Database &db, const RSet & rset)
 	    // Push NULL first to avoid leaking the new TermList if push_back()
 	    // throws.
 	    termlists.push_back(0);
-	    termlists.back() = db.internal[dbnumber]->open_term_list(realdid);
+	    (void)db; (void)realdid; (void)dbnumber;
+//	    termlists.back() = db.internal[dbnumber]->open_term_list(realdid);
 	}
 
 	Assert(!termlists.empty());
@@ -226,4 +226,3 @@ ESet::Internal::get_description() const
 }
 
 }
-#endif
