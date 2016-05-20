@@ -36,6 +36,10 @@ class RSet {
 
 class Enquire {
   public:
+    class Internal {
+      public:
+	enum sort_setting { REL = 0, VAL = 1, VAL_REL = 2, REL_VAL = 3 };
+    };
     Enquire() { }
     Enquire(const Xapian::Database&) { }
     void set_query(const Xapian::Query&) { }

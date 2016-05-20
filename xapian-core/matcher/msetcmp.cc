@@ -19,7 +19,6 @@
  * USA
  */
 
-#if 0
 #include <config.h>
 #include "msetcmp.h"
 
@@ -131,4 +130,3 @@ mset_cmp get_msetcmp_function(Xapian::Enquire::Internal::sort_setting sort_by, b
     if (sort_by == Xapian::Enquire::Internal::REL) sort_value_forward = false;
     return mset_cmp_table[sort_by * 4 + sort_forward * 2 + sort_value_forward];
 }
-#endif
