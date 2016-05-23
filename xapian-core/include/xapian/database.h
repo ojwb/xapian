@@ -62,6 +62,8 @@ class XAPIAN_VISIBILITY_DEFAULT Database {
     std::string get_metadata(const std::string&) const { return std::string(); }
     void compact(const std::string&, unsigned, int, const Xapian::Compactor&) const { }
     Xapian::docid get_lastdocid() const { return 0; }
+    std::string get_uuid() const { return std::string(); }
+    bool has_positions() const { return false; }
 };
 
 struct XAPIAN_VISIBILITY_DEFAULT WritableDatabase : public Database {
