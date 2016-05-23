@@ -9,9 +9,11 @@
 namespace Xapian {
 
 class RSet::Internal : public Xapian::Internal::intrusive_base {
-  public:
+    friend class RSet;
+
     std::set<Xapian::docid> items;
 
+  public:
     const std::set<Xapian::docid>& get_items() const { return items; }
 };
 

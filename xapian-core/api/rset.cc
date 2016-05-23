@@ -18,4 +18,17 @@ RSet::operator=(const RSet& o)
     return *this;
 }
 
+void
+RSet::add_document(Xapian::docid did)
+{
+    internal->items.insert(did);
+
+}
+
+Xapian::doccount
+RSet::size() const
+{
+    return internal->items.size();
+}
+
 }
