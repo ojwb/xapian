@@ -2,6 +2,7 @@
 #define XAPIAN_INCLUDED_ENQUIRE_H
 
 #include <xapian/database.h>
+#include <xapian/eset.h>
 #include <xapian/intrusive_ptr.h>
 #include <xapian/mset.h>
 #include <xapian/query.h>
@@ -12,26 +13,6 @@ namespace Xapian {
 class RSet;
 
 class ExpandDecider;
-
-class ESetIterator {
-  public:
-    ESetIterator() { }
-    double get_weight() const { return 0.0; }
-    void operator++() { }
-    void operator++(int) { }
-    std::string operator*() { return std::string(); }
-};
-
-inline bool operator==(const ESetIterator&,const ESetIterator&) { return true; }
-inline bool operator!=(const ESetIterator&,const ESetIterator&) { return false; }
-
-class ESet {
-  public:
-    class Internal;
-    ESet() { }
-    ESetIterator begin() const { return ESetIterator(); }
-    ESetIterator end() const { return ESetIterator(); }
-};
 
 class Enquire {
   public:
