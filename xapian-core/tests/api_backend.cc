@@ -1401,3 +1401,31 @@ DEFINE_TESTCASE(embedded1, singlefile) {
 
     return true;
 }
+
+/// Regression test for bug fixed in 1.3.7.
+DEFINE_TESTCASE(exactxor1, backend) {
+    Xapian::Database db = get_database("apitest_simpledata");
+    Xapian::Enquire enq(db);
+
+    const char * words[4] = { "blank", "test", "paragraph", "banana" };
+    Xapian::Query q(Xapian::Query::OP_XOR, words, words + 4);
+    enq.set_query(q);
+    enq.set_weighting_scheme(Xapian::BoolWeight());
+    Xapian::MSet mset = enq.get_mset(0, 0);
+    // A reversed conditional gave us 5 in this case.
+    TEST_EQUAL(mset.get_matches_upper_bound(), 6);
+    // Test improved lower bound in 1.3.7 (earlier versions gave 0).
+    TEST_EQUAL(mset.get_matches_lower_bound(), 2);
+
+    const char * words2[4] = { "queri", "test", "paragraph", "word" };
+    Xapian::Query q2(Xapian::Query::OP_XOR, words2, words2 + 4);
+    enq.set_query(q2);
+    enq.set_weighting_scheme(Xapian::BoolWeight());
+    mset = enq.get_mset(0, 0);
+    // A reversed conditional gave us 6 in this case.
+    TEST_EQUAL(mset.get_matches_upper_bound(), 5);
+    // Test improved lower bound in 1.3.7 (earlier versions gave 0).
+    TEST_EQUAL(mset.get_matches_lower_bound(), 1);
+
+    return true;
+}

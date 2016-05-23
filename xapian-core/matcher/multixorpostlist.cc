@@ -1,7 +1,7 @@
 /** @file multixorpostlist.cc
  * @brief N-way XOR postlist
  */
-/* Copyright (C) 2007,2009,2010,2011,2012 Olly Betts
+/* Copyright (C) 2007,2009,2010,2011,2012,2016 Olly Betts
  * Copyright (C) 2009 Lemur Consulting Ltd
  *
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,8 @@
 #include "multimatch.h"
 #include "omassert.h"
 
+#include <algorithm>
+
 using namespace std;
 
 MultiXorPostList::~MultiXorPostList()
@@ -42,13 +44,50 @@ MultiXorPostList::~MultiXorPostList()
 Xapian::doccount
 MultiXorPostList::get_termfreq_min() const
 {
-    // The number of matching documents is minimised when we have the maximum
-    // even overlap between the sub-postlists, but that's rather tricky to
-    // calculate in general, so just return 0 for now.
-    //
-    // FIXME: we can certainly work out a better bound in at least some cases
-    // (e.g. when tf_min(X) > sum(i!=X){ tf_max(i) } for some sub-pl X).
-    return 0;
+    Xapian::doccount result = 0;
+    Xapian::doccount max = plist[0]->get_termfreq_max();
+    Xapian::doccount sum = max;
+    bool all_exact = (max == plist[0]->get_termfreq_min());
+    unsigned overflow = 0;
+    for (size_t i = 1; i < n_kids; ++i) {
+	Xapian::doccount tf_max = plist[i]->get_termfreq_max();
+	if (tf_max > max) max = tf_max;
+
+	Xapian::doccount old_sum = sum;
+	sum += tf_max;
+	// Track how many times we overflow the type.
+	if (sum < old_sum)
+	    ++overflow;
+	if (all_exact)
+	    all_exact = (tf_max == plist[i]->get_termfreq_min());
+    }
+
+    // If tf_min(i) > sum(j!=i)(tf_max(j)) then all the other subqueries
+    // can't cancel out subquery i.  If we overflowed more than once,
+    // then the sum on the right is greater than the maximum possible
+    // tf, so there's no point checking.
+    if (overflow <= 1) {
+	for (size_t i = 0; i < n_kids; ++i) {
+	    Xapian::doccount tf_min = plist[i]->get_termfreq_min();
+	    Xapian::doccount tf_max = plist[i]->get_termfreq_max();
+
+	    Xapian::doccount all_the_rest = sum - tf_max;
+	    // If no overflow, or we un-overflowed again...
+	    if (overflow == 0 || all_the_rest > sum) {
+		if (tf_min > all_the_rest) {
+		    result = std::max(result, tf_min - all_the_rest);
+		}
+	    }
+	}
+    }
+
+    if (all_exact && result == 0) {
+	// If SUM odd, then the XOR can't be 0, so min XOR is 1 if we didn't
+	// already calculate a minimum.
+	result = sum & 1;
+    }
+
+    return result;
 }
 
 Xapian::doccount
@@ -74,7 +113,7 @@ MultiXorPostList::get_termfreq_max() const
 	// If the sub-postlist tfs are all exact, then if the sum of them has
 	// a different odd/even-ness to db_size then max tf of the XOR can't
 	// achieve db_size.
-	return db_size - ((result & 1) == (db_size & 1));
+	return db_size - ((result & 1) != (db_size & 1));
     }
     return result;
 }
