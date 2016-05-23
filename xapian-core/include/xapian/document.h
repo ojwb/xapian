@@ -20,6 +20,7 @@ class XAPIAN_VISIBILITY_DEFAULT Document {
     ~Document();
     void add_posting(const std::string&, Xapian::termpos, Xapian::termcount) { }
     void add_term(const std::string&, Xapian::termcount) { }
+    void add_boolean_term(const std::string& term) { add_term(term, 0); }
     void add_value(Xapian::valueno, const std::string&) { }
     std::string get_value(Xapian::valueno) const { return std::string(); }
     Xapian::termcount termlist_count() const { return 0; }

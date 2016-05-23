@@ -20,6 +20,13 @@ MSet::operator=(const MSet & o)
 
 MSet::~MSet() { }
 
+int
+MSet::convert_to_percent(double wt) const
+{
+    (void)wt;
+    return 100;
+}
+
 Xapian::doccount
 MSet::size() const
 {
@@ -41,6 +48,20 @@ MSet::get_matches_estimated() const
 Xapian::doccount
 MSet::get_matches_upper_bound() const
 {
+    return 0;
+}
+
+Xapian::doccount
+MSet::get_termfreq(const std::string & term) const
+{
+    (void)term;
+    return 0;
+}
+
+double
+MSet::get_termweight(const std::string & term) const
+{
+    (void)term;
     return 0;
 }
 
@@ -80,6 +101,23 @@ MSet::get_uncollapsed_matches_upper_bound() const
     return 0;
 }
 
+std::string
+MSet::snippet(const std::string & text,
+	      size_t length,
+	      const Xapian::Stem & stemmer,
+	      unsigned flags,
+	      const std::string & hi_start,
+	      const std::string & hi_end,
+	      const std::string & omit) const
+{
+    (void)length;
+    (void)stemmer;
+    (void)flags;
+    (void)hi_start;
+    (void)hi_end;
+    (void)omit;
+    return text;
+}
 
 Xapian::Document
 MSetIterator::get_document() const
@@ -95,6 +133,18 @@ MSetIterator::operator*() const
 
 double
 MSetIterator::get_weight() const
+{
+    return 0;
+}
+
+std::string
+MSetIterator::get_collapse_key() const
+{
+    return std::string();
+}
+
+Xapian::doccount
+MSetIterator::get_collapse_count() const
 {
     return 0;
 }
