@@ -27,7 +27,6 @@ lib_src +=\
 	api/emptypostlist.cc\
 	api/error.cc\
 	api/errorhandler.cc\
-	api/eset.cc\
 	api/expanddecider.cc\
 	api/keymaker.cc\
 	api/leafpostlist.cc\

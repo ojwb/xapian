@@ -276,6 +276,53 @@ class XAPIAN_VISIBILITY_DEFAULT MSetIterator {
 	return retval;
     }
 
+    /** @private @internal MSetIterator is what the C++ STL calls an
+     *  random_access_iterator.
+     *
+     *  The following typedefs allow std::iterator_traits<> to work so that
+     *  this iterator can be used with the STL.
+     *
+     *  These are deliberately hidden from the Doxygen-generated docs, as the
+     *  machinery here isn't interesting to API users.  They just need to know
+     *  that Xapian iterator classes are compatible with the STL.
+     */
+    // @{
+    /// @private
+    typedef std::random_access_iterator_tag iterator_category;
+    /// @private
+    typedef std::string value_type;
+    /// @private
+    typedef Xapian::termcount_diff difference_type;
+    /// @private
+    typedef std::string * pointer;
+    /// @private
+    typedef std::string & reference;
+    // @}
+
+    /// Move the iterator forwards by n positions.
+    MSetIterator & operator+=(difference_type n) {
+	off_from_end -= n;
+	return *this;
+    }
+
+    /// Move the iterator back by n positions.
+    MSetIterator & operator-=(difference_type n) {
+	off_from_end += n;
+	return *this;
+    }
+
+    MSetIterator operator+(difference_type n) const {
+	return MSetIterator(mset, off_from_end - n);
+    }
+
+    MSetIterator operator-(difference_type n) const {
+	return MSetIterator(mset, off_from_end + n);
+    }
+
+    difference_type operator-(const MSetIterator& o) const {
+	return difference_type(o.off_from_end) - difference_type(off_from_end);
+    }
+
     Xapian::doccount get_rank() const {
 	return mset.get_firstitem() + (mset.size() - off_from_end);
     }
@@ -305,8 +352,6 @@ XAPIAN_NOTHROW(operator==(const MSetIterator &a, const MSetIterator &b));
 inline bool
 operator==(const MSetIterator &a, const MSetIterator &b) XAPIAN_NOEXCEPT
 {
-    // Use a pointer comparison - this ensures both that (a == a) and correct
-    // handling of end iterators (which we ensure have NULL internals).
     return a.off_from_end == b.off_from_end;
 }
 
@@ -318,6 +363,52 @@ inline bool
 operator!=(const MSetIterator &a, const MSetIterator &b) XAPIAN_NOEXCEPT
 {
     return !(a == b);
+}
+
+bool
+XAPIAN_NOTHROW(operator<(const MSetIterator &a, const MSetIterator &b));
+
+/// Inequality test for MSetIterator objects.
+inline bool
+operator<(const MSetIterator &a, const MSetIterator &b) XAPIAN_NOEXCEPT
+{
+    return a.off_from_end > b.off_from_end;
+}
+
+inline bool
+XAPIAN_NOTHROW(operator>(const MSetIterator &a, const MSetIterator &b));
+
+/// Inequality test for MSetIterator objects.
+inline bool
+operator>(const MSetIterator &a, const MSetIterator &b) XAPIAN_NOEXCEPT
+{
+    return b < a;
+}
+
+inline bool
+XAPIAN_NOTHROW(operator>=(const MSetIterator &a, const MSetIterator &b));
+
+/// Inequality test for MSetIterator objects.
+inline bool
+operator>=(const MSetIterator &a, const MSetIterator &b) XAPIAN_NOEXCEPT
+{
+    return !(a < b);
+}
+
+inline bool
+XAPIAN_NOTHROW(operator<=(const MSetIterator &a, const MSetIterator &b));
+
+/// Inequality test for MSetIterator objects.
+inline bool
+operator<=(const MSetIterator &a, const MSetIterator &b) XAPIAN_NOEXCEPT
+{
+    return !(b < a);
+}
+
+inline MSetIterator
+operator+(MSetIterator::difference_type n, const MSetIterator& it)
+{
+    return it + n;
 }
 
 // Inlined methods of MSet which need MSetIterator to have been defined:
@@ -360,6 +451,7 @@ inline int
 MSet::convert_to_percent(const MSetIterator & it) const {
     return convert_to_percent(it.get_weight());
 }
+
 }
 
-#endif // XAPIAN_INCLUDED_POSTINGITERATOR_H
+#endif // XAPIAN_INCLUDED_MSET_H
