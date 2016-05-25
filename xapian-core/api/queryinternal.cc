@@ -240,7 +240,7 @@ OrContext::postlist(QueryOptimiser* qopt)
 	pop_heap(pls.begin(), pls.end(), ComparePostListTermFreqAscending());
 	pls.pop_back();
 	PostList * pl;
-	(void)qopt; pl = r; // new OrPostList(pls.front(), r, qopt->matcher, qopt->db_size);
+	pl = new OrPostList(pls.front(), r, qopt->matcher, qopt->db_size);
 
 	if (pls.size() == 1) {
 	    pls.clear();
@@ -1512,8 +1512,6 @@ PostingIterator::Internal *
 QueryAndNot::postlist(QueryOptimiser * qopt, double factor) const
 {
     LOGCALL(QUERY, PostingIterator::Internal *, "QueryAndNot::postlist", qopt | factor);
-    (void)qopt; (void)factor; return NULL;
-#if 0
     // FIXME: Combine and-like side with and-like stuff above.
     AutoPtr<PostList> l(subqueries[0].internal->postlist(qopt, factor));
     OrContext ctx(subqueries.size() - 1);
@@ -1521,7 +1519,6 @@ QueryAndNot::postlist(QueryOptimiser * qopt, double factor) const
     AutoPtr<PostList> r(ctx.postlist(qopt));
     RETURN(new AndNotPostList(l.release(), r.release(),
 			      qopt->matcher, qopt->db_size));
-#endif
 }
 
 PostingIterator::Internal *
@@ -1548,8 +1545,6 @@ PostingIterator::Internal *
 QueryAndMaybe::postlist(QueryOptimiser * qopt, double factor) const
 {
     LOGCALL(QUERY, PostingIterator::Internal *, "QueryAndMaybe::postlist", qopt | factor);
-    (void)qopt; (void)factor; return NULL;
-#if 0
     // FIXME: Combine and-like side with and-like stuff above.
     AutoPtr<PostList> l(subqueries[0].internal->postlist(qopt, factor));
     OrContext ctx(subqueries.size() - 1);
@@ -1557,7 +1552,6 @@ QueryAndMaybe::postlist(QueryOptimiser * qopt, double factor) const
     AutoPtr<PostList> r(ctx.postlist(qopt));
     RETURN(new AndMaybePostList(l.release(), r.release(),
 				qopt->matcher, qopt->db_size));
-#endif
 }
 
 PostingIterator::Internal *
