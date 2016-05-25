@@ -269,8 +269,7 @@ OrContext::postlist_max(QueryOptimiser* qopt)
     sort(pls.begin(), pls.end(), ComparePostListTermFreqAscending());
 
     PostList * pl;
-    (void)qopt; pl = NULL;
-    //pl = new MaxPostList(pls.begin(), pls.end(), qopt->matcher, qopt->db_size);
+    pl = new MaxPostList(pls.begin(), pls.end(), qopt->matcher, qopt->db_size);
 
     pls.clear();
     return pl;
