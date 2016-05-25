@@ -1,5 +1,7 @@
 #ifndef XAPIAN_INCLUDED_DATABASE_H
 #define XAPIAN_INCLUDED_DATABASE_H
+
+#include <iosfwd>
 #include <string>
 #include <vector>
 
@@ -12,6 +14,7 @@
 #include <xapian/visibility.h>
 
 namespace Xapian {
+
 class Compactor;
 
 class XAPIAN_VISIBILITY_DEFAULT Database {
@@ -64,6 +67,7 @@ class XAPIAN_VISIBILITY_DEFAULT Database {
     Xapian::docid get_lastdocid() const { return 0; }
     std::string get_uuid() const { return std::string(); }
     bool has_positions() const { return false; }
+    static size_t check(const std::string&, int, std::ostream*) { return 0; }
 };
 
 struct XAPIAN_VISIBILITY_DEFAULT WritableDatabase : public Database {
@@ -79,5 +83,7 @@ struct XAPIAN_VISIBILITY_DEFAULT WritableDatabase : public Database {
     void set_metadata(const std::string&, const std::string&) { }
     void commit() { }
 };
+
 }
+
 #endif
