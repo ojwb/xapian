@@ -212,7 +212,7 @@ LocalSubMatch::get_postlist(MultiMatch * matcher,
 	// There's a term-independent weight contribution, so we combine the
 	// postlist tree with an ExtraWeightPostList which adds in this
 	// contribution.
-	(void)matcher; //	pl = new ExtraWeightPostList(pl, extra_wt.release(), matcher);
+	pl = new ExtraWeightPostList(pl, extra_wt.release(), matcher);
     }
 
     RETURN(pl);
