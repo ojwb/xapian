@@ -7,6 +7,7 @@
 
 #include <xapian/document.h>
 #include <xapian/intrusive_ptr.h>
+#include <xapian/positioniterator.h>
 #include <xapian/postingiterator.h>
 #include <xapian/termiterator.h>
 #include <xapian/types.h>
@@ -46,6 +47,8 @@ class XAPIAN_VISIBILITY_DEFAULT Database {
     TermIterator allterms_end(const std::string& = std::string()) const { return TermIterator(); }
     TermIterator metadata_keys_begin(const std::string& = std::string()) const { return TermIterator(); }
     TermIterator metadata_keys_end(const std::string& = std::string()) const { return TermIterator(); }
+    PositionIterator positionlist_begin(Xapian::docid, const std::string&) const { return PositionIterator(); }
+    PositionIterator positionlist_end(Xapian::docid, const std::string&) const { return PositionIterator(); }
     PostingIterator postlist_begin(const std::string&) const { return PostingIterator(); }
     PostingIterator postlist_end(const std::string&) const { return PostingIterator(); }
     TermIterator spellings_begin() const { return TermIterator(); }
@@ -67,6 +70,10 @@ class XAPIAN_VISIBILITY_DEFAULT Database {
     Xapian::docid get_lastdocid() const { return 0; }
     std::string get_uuid() const { return std::string(); }
     bool has_positions() const { return false; }
+    bool reopen() { return false; }
+    void close() { }
+    void keep_alive() { }
+    std::string get_description() const { return "Database()"; }
     static size_t check(const std::string&, int, std::ostream*) { return 0; }
 };
 
@@ -74,14 +81,19 @@ struct XAPIAN_VISIBILITY_DEFAULT WritableDatabase : public Database {
     WritableDatabase() { }
     WritableDatabase(const std::string&, int flags, int blocksize = 0);
     void add_spelling(const std::string&, Xapian::termcount = 1) { }
+    void remove_spelling(const std::string&, Xapian::termcount = 1) { }
     Xapian::docid add_document(const Xapian::Document&) { return 1; }
     void replace_document(Xapian::docid, const Xapian::Document&) { }
     Xapian::docid replace_document(const std::string&, const Xapian::Document&) { return 1; }
     void delete_document(Xapian::docid) { }
     void delete_document(const std::string&) { }
     void add_synonym(const std::string&, const std::string&) { }
+    void remove_synonym(const std::string&, const std::string&) { }
+    void clear_synonyms(const std::string&) { }
     void set_metadata(const std::string&, const std::string&) { }
     void commit() { }
+    void begin_transaction();
+    void commit_transaction();
 };
 
 }

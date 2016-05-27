@@ -18,8 +18,8 @@ class XAPIAN_VISIBILITY_DEFAULT Document {
     Document(const Document& o);
     Document& operator=(const Document& o);
     ~Document();
-    void add_posting(const std::string&, Xapian::termpos, Xapian::termcount) { }
-    void add_term(const std::string&, Xapian::termcount) { }
+    void add_posting(const std::string&, Xapian::termpos, Xapian::termcount = 1) { }
+    void add_term(const std::string&, Xapian::termcount = 1) { }
     void add_boolean_term(const std::string& term) { add_term(term, 0); }
     void add_value(Xapian::valueno, const std::string&) { }
     std::string get_value(Xapian::valueno) const { return std::string(); }
@@ -31,6 +31,8 @@ class XAPIAN_VISIBILITY_DEFAULT Document {
     Xapian::ValueIterator values_end() const { return ValueIterator(); }
     std::string get_data() const { return std::string(); }
     void set_data(const std::string&) { }
+    std::string serialise() const { return std::string(); }
+    static Xapian::Document unserialise(const std::string&) { return Document(); }
     std::string get_description() const { return "Document()"; }
 };
 

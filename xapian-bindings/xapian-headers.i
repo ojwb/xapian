@@ -300,6 +300,8 @@ RANDOM_ACCESS_ITERATOR_METHODS(Xapian, ESetIterator, std::string, get_term)
 
 STANDARD_IGNORES(Xapian, RSet)
 
+%include <xapian/rset.h>
+
 STANDARD_IGNORES(Xapian, Enquire)
 
 SUBCLASSABLE(Xapian, MatchDecider)

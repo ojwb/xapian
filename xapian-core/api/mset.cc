@@ -20,6 +20,13 @@ MSet::operator=(const MSet & o)
 
 MSet::~MSet() { }
 
+void
+MSet::fetch_(Xapian::doccount first, Xapian::doccount last) const
+{
+    (void)first;
+    (void)last;
+}
+
 int
 MSet::convert_to_percent(double wt) const
 {
@@ -119,6 +126,13 @@ MSet::snippet(const std::string & text,
     return text;
 }
 
+std::string
+MSet::get_description() const
+{
+    return "MSet()";
+}
+
+
 Xapian::Document
 MSetIterator::get_document() const
 {
@@ -147,6 +161,12 @@ Xapian::doccount
 MSetIterator::get_collapse_count() const
 {
     return 0;
+}
+
+std::string
+MSetIterator::get_description() const
+{
+    return "MSet()";
 }
 
 }
