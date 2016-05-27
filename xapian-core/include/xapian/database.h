@@ -19,8 +19,13 @@ namespace Xapian {
 class Compactor;
 
 class XAPIAN_VISIBILITY_DEFAULT Database {
-    void compact_(const std::string* output_ptr, int fd, unsigned flags,
-		  int block_size, Xapian::Compactor* compactor) const;
+    /// Internal helper behind public compact() methods.
+    void compact_(const std::string * output_ptr,
+		  int fd,
+		  unsigned flags,
+		  int block_size,
+		  Xapian::Compactor * compactor) const;
+
   public:
     class Internal;
     std::vector<Xapian::Internal::intrusive_ptr<Internal> > internal;
@@ -66,7 +71,17 @@ class XAPIAN_VISIBILITY_DEFAULT Database {
     std::string get_value_upper_bound(Xapian::valueno) const { return std::string(); }
     Xapian::Document get_document(Xapian::docid) const { return Xapian::Document(); }
     std::string get_metadata(const std::string&) const { return std::string(); }
-    void compact(const std::string&, unsigned, int, const Xapian::Compactor&) const { }
+    void compact(const std::string& output,
+		 unsigned flags,
+		 int block_size,
+		 Xapian::Compactor& compactor) const {
+	compact_(&output, 0, flags, block_size, &compactor);
+    }
+    void compact(const std::string& output,
+		 unsigned flags = 0,
+		 int block_size = 0) const {
+	compact_(&output, 0, flags, block_size, NULL);
+    }
     Xapian::docid get_lastdocid() const { return 0; }
     std::string get_uuid() const { return std::string(); }
     bool has_positions() const { return false; }
@@ -92,8 +107,9 @@ struct XAPIAN_VISIBILITY_DEFAULT WritableDatabase : public Database {
     void clear_synonyms(const std::string&) { }
     void set_metadata(const std::string&, const std::string&) { }
     void commit() { }
-    void begin_transaction();
-    void commit_transaction();
+    void flush() { commit(); }
+    void begin_transaction(bool = true) { }
+    void commit_transaction() { }
 };
 
 }
