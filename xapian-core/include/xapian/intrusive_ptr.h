@@ -5,7 +5,7 @@
 //  Based on Boost's intrusive_ptr.hpp
 //
 //  Copyright (c) 2001, 2002 Peter Dimov
-//  Copyright (c) 2011,2013,2014,2015,2016 Olly Betts
+//  Copyright (c) 2011,2013,2014,2015 Olly Betts
 //
 // Distributed under the Boost Software License, Version 1.0.
 //
@@ -39,6 +39,8 @@
 #if !defined XAPIAN_IN_XAPIAN_H && !defined XAPIAN_LIB_BUILD
 # error "Never use <xapian/intrusive_ptr.h> directly; include <xapian.h> instead."
 #endif
+
+#include <xapian/visibility.h>
 
 namespace Xapian {
 namespace Internal {
@@ -100,7 +102,7 @@ public:
         if( px != 0 ) ++px->_refs;
     }
 
-    intrusive_ptr(intrusive_ptr const & rhs): px( this == &rhs ? 0 : rhs.px )
+    intrusive_ptr(intrusive_ptr const & rhs): px( rhs.px )
     {
         if( px != 0 ) ++px->_refs;
     }
@@ -180,7 +182,7 @@ template<class T, class U> inline bool operator!=(T * a, intrusive_ptr<U> const 
 }
 
 /// Base class for objects managed by opt_intrusive_ptr.
-class opt_intrusive_base {
+class XAPIAN_VISIBILITY_DEFAULT opt_intrusive_base {
   public:
     opt_intrusive_base(const opt_intrusive_base&) : _refs(0) { }
 
@@ -265,8 +267,7 @@ public:
     }
 
     opt_intrusive_ptr(opt_intrusive_ptr const & rhs)
-    : px( this == &rhs ? 0 : rhs.px ),
-      counting( this == &rhs ? false : rhs.counting )
+    : px( rhs.px ), counting( rhs.counting )
     {
 	if( counting ) ++px->_refs;
     }
