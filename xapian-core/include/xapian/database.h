@@ -47,7 +47,7 @@ class XAPIAN_VISIBILITY_DEFAULT Database {
     Xapian::termcount get_collection_freq(const std::string&) const { return 0; }
     Xapian::doccount get_termfreq(const std::string&) const { return 0; }
     bool term_exists(const std::string&) const { return false; }
-    std::string get_spelling_suggestion(const std::string&) const { return std::string(); }
+    std::string get_spelling_suggestion(const std::string&, int = 0) const { return std::string(); }
     TermIterator allterms_begin(const std::string& = std::string()) const { return TermIterator(); }
     TermIterator allterms_end(const std::string& = std::string()) const { return TermIterator(); }
     TermIterator metadata_keys_begin(const std::string& = std::string()) const { return TermIterator(); }
@@ -82,6 +82,18 @@ class XAPIAN_VISIBILITY_DEFAULT Database {
 		 int block_size = 0) const {
 	compact_(&output, 0, flags, block_size, NULL);
     }
+    void compact(int fd,
+		 unsigned flags,
+		 int block_size,
+		 Xapian::Compactor& compactor) const {
+	compact_(NULL, fd, flags, block_size, &compactor);
+    }
+
+    void compact(int fd,
+		 unsigned flags = 0,
+		 int block_size = 0) {
+	compact_(NULL, fd, flags, block_size, NULL);
+    }
     Xapian::docid get_lastdocid() const { return 0; }
     std::string get_uuid() const { return std::string(); }
     bool has_positions() const { return false; }
@@ -89,7 +101,8 @@ class XAPIAN_VISIBILITY_DEFAULT Database {
     void close() { }
     void keep_alive() { }
     std::string get_description() const { return "Database()"; }
-    static size_t check(const std::string&, int, std::ostream*) { return 0; }
+    static size_t check(const std::string&, int = 0, std::ostream* = 0) { return 0; }
+    static size_t check(int, int = 0, std::ostream* = 0) { return 0; }
 };
 
 struct XAPIAN_VISIBILITY_DEFAULT WritableDatabase : public Database {
@@ -110,6 +123,7 @@ struct XAPIAN_VISIBILITY_DEFAULT WritableDatabase : public Database {
     void flush() { commit(); }
     void begin_transaction(bool = true) { }
     void commit_transaction() { }
+    void cancel_transaction() { }
 };
 
 }
