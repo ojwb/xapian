@@ -245,6 +245,10 @@ EOF
 
 print HDR <<'EOF';
 
+inline void stub() {
+    throw Xapian::FeatureUnavailableError("stub");
+}
+
 }
 
 #endif /* XAPIAN_INCLUDED_ERROR_H */

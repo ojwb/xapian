@@ -4,6 +4,7 @@
 
 #include "omenquireinternal.h"
 #include <xapian/document.h>
+#include <xapian/error.h>
 
 namespace Xapian {
 
@@ -62,6 +63,8 @@ Xapian::doccount
 MSet::get_termfreq(const std::string & term) const
 {
     (void)term;
+    if (rare(!internal.get()))
+	throw Xapian::InvalidOperationError("MSet object doesn't contain search results");
     return 0;
 }
 
@@ -69,6 +72,8 @@ double
 MSet::get_termweight(const std::string & term) const
 {
     (void)term;
+    if (rare(!internal.get()))
+	throw Xapian::InvalidOperationError("MSet object doesn't contain search results");
     return 0;
 }
 

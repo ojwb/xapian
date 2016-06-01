@@ -510,6 +510,11 @@ test_driver::runtest(const test_desc *test)
 		    out << col_yellow << " C++ FAILED TO CATCH " << errclass << col_reset;
 		    return SKIP;
 		}
+		if (errclass == "FeatureUnavailableError" &&
+		    err.get_msg() == "stub") {
+		    out << col_yellow << " stubbed out" << col_reset;
+		    return SKIP;
+		}
 		out << " " << col_red << err.get_description() << col_reset;
 		write_and_clear_tout();
 		return FAIL;

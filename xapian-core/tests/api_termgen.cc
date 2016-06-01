@@ -769,6 +769,10 @@ DEFINE_TESTCASE(termgen1, !backend) {
 		termgen.index_text(p->text, weight, prefix);
 	    }
 	    output = format_doc_termlist(doc);
+	} catch (const Xapian::FeatureUnavailableError &e) {
+	    if (e.get_msg() == "stub")
+		continue;
+	    output = e.get_description();
 	} catch (const Xapian::Error &e) {
 	    output = e.get_description();
 	} catch (...) {

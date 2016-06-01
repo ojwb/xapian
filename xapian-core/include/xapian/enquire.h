@@ -2,6 +2,7 @@
 #define XAPIAN_INCLUDED_ENQUIRE_H
 
 #include <xapian/database.h>
+#include <xapian/error.h>
 #include <xapian/eset.h>
 #include <xapian/intrusive_ptr.h>
 #include <xapian/mset.h>
@@ -37,7 +38,7 @@ class Enquire {
 	USE_EXACT_TERMFREQ
     };
     Enquire() { }
-    Enquire(const Xapian::Database&) { }
+    Enquire(const Xapian::Database&) { stub(); }
     void set_query(const Xapian::Query&, Xapian::termcount = 0) { }
     Query get_query() const { return Query(); }
     MSet get_mset(Xapian::doccount, Xapian::doccount, Xapian::doccount, const Xapian::RSet* = NULL, const Xapian::MatchDecider* = NULL) { return MSet(); }

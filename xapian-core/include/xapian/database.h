@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <xapian/document.h>
+#include <xapian/error.h>
 #include <xapian/intrusive_ptr.h>
 #include <xapian/positioniterator.h>
 #include <xapian/postingiterator.h>
@@ -52,7 +53,7 @@ class XAPIAN_VISIBILITY_DEFAULT Database {
     TermIterator allterms_end(const std::string& = std::string()) const { return TermIterator(); }
     TermIterator metadata_keys_begin(const std::string& = std::string()) const { return TermIterator(); }
     TermIterator metadata_keys_end(const std::string& = std::string()) const { return TermIterator(); }
-    PositionIterator positionlist_begin(Xapian::docid, const std::string&) const { return PositionIterator(); }
+    PositionIterator positionlist_begin(Xapian::docid, const std::string&) const { stub(); return PositionIterator(); }
     PositionIterator positionlist_end(Xapian::docid, const std::string&) const { return PositionIterator(); }
     PostingIterator postlist_begin(const std::string&) const { return PostingIterator(); }
     PostingIterator postlist_end(const std::string&) const { return PostingIterator(); }
@@ -62,7 +63,7 @@ class XAPIAN_VISIBILITY_DEFAULT Database {
     TermIterator synonyms_end(const std::string&) const { return TermIterator(); }
     TermIterator synonym_keys_begin(const std::string& = std::string()) const { return TermIterator(); }
     TermIterator synonym_keys_end(const std::string& = std::string()) const { return TermIterator(); }
-    TermIterator termlist_begin(Xapian::docid) const { return TermIterator(); }
+    TermIterator termlist_begin(Xapian::docid) const { stub(); return TermIterator(); }
     TermIterator termlist_end(Xapian::docid) const { return TermIterator(); }
     ValueIterator valuestream_begin(Xapian::valueno) const { return ValueIterator(); }
     ValueIterator valuestream_end(Xapian::valueno) const { return ValueIterator(); }

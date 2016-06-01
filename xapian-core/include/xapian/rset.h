@@ -20,7 +20,7 @@ class XAPIAN_VISIBILITY_DEFAULT RSet {
     void add_document(Xapian::docid did);
     Xapian::doccount size() const;
     bool empty() const { return size() == 0; }
-    std::string get_description() const { return "RSet()"; }
+    std::string get_description() const;
 };
 
 }
