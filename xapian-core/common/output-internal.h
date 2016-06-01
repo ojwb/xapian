@@ -1,7 +1,11 @@
-/* htmlparse.h: simple HTML parser for omega indexer
- *
+/** @file output-internal.h
+ * @brief Functions for output of strings describing internal Xapian objects.
+ */
+/*
  * Copyright 1999,2000,2001 BrightStation PLC
- * Copyright 2002,2006,2008,2009,2011,2016 Olly Betts
+ * Copyright 2002 Ananova Ltd
+ * Copyright 2002,2003,2004,2007,2009,2011,2012 Olly Betts
+ * Copyright 2007 Lemur Consulting Ltd
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -19,30 +23,17 @@
  * USA
  */
 
-#ifndef OMEGA_INCLUDED_HTMLPARSE_H
-#define OMEGA_INCLUDED_HTMLPARSE_H
+#ifndef XAPIAN_INCLUDED_OUTPUT_INTERNAL_H
+#define XAPIAN_INCLUDED_OUTPUT_INTERNAL_H
 
-#include <string>
-#include <map>
+#include "output.h"
 
-using std::string;
-using std::map;
+#include "api/replication.h"
+XAPIAN_OUTPUT_FUNCTION(Xapian::DatabaseMaster)
+XAPIAN_OUTPUT_FUNCTION(Xapian::DatabaseReplica)
 
-class HtmlParser {
-	map<string, string> parameters;
-    protected:
-	void decode_entities(string &s);
-	bool in_script;
-	string charset;
+#include "weight/weightinternal.h"
+XAPIAN_OUTPUT_FUNCTION(TermFreqs)
+XAPIAN_OUTPUT_FUNCTION(Xapian::Weight::Internal)
 
-	bool get_parameter(const string & param, string & value) const;
-    public:
-	virtual void process_text(const string &/*text*/) { }
-	virtual bool opening_tag(const string &/*tag*/) { return true; }
-	virtual bool closing_tag(const string &/*tag*/) { return true; }
-	virtual void parse(const string &text);
-	HtmlParser() { }
-	virtual ~HtmlParser() { }
-};
-
-#endif // OMEGA_INCLUDED_HTMLPARSE_H
+#endif /* XAPIAN_INCLUDED_OUTPUT_INTERNAL_H */

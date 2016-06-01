@@ -26,6 +26,8 @@
 
 #include <xapian.h>
 
+#include "keyword.h"
+#include "namedents.h"
 #include "stringutils.h"
 #include "utf8convert.h"
 
@@ -45,8 +47,6 @@ lowercase_string(string &str)
 	*i = C_tolower(*i);
     }
 }
-
-map<string, unsigned int> HtmlParser::named_ents;
 
 inline static bool
 p_nottag(char c)
@@ -76,25 +76,10 @@ HtmlParser::get_parameter(const string & param, string & value) const
     return true;
 }
 
-HtmlParser::HtmlParser()
-{
-    static const struct ent { const char *n; unsigned int v; } ents[] = {
-#include "namedentities.h"
-	{ NULL, 0 }
-    };
-    if (named_ents.empty()) {
-	const struct ent *i = ents;
-	while (i->n) {
-	    named_ents[string(i->n)] = i->v;
-	    ++i;
-	}
-    }
-}
-
 // UTF-8 encoded entity is always <= the entity itself in length, even if the
 // trailing ';' is missing - for numeric (decimal and hex) entities:
 //
-// <=		UTF-8 	&#<..>	&#x<..>
+// <=		UTF-8	&#<..>	&#x<..>
 // U+007F	1	5	5
 // U+07FF	2	6	6
 // U+FFFF	3	7	7
@@ -132,10 +117,8 @@ HtmlParser::decode_entities(string &s)
 	    }
 	} else {
 	    end = find_if(p, s.end(), C_isnotalnum);
-	    string code(p, end);
-	    map<string, unsigned int>::const_iterator i;
-	    i = named_ents.find(code);
-	    if (i != named_ents.end()) val = i->second;
+	    int k = keyword2(tab, s.data() + (p - s.begin()), end - p);
+	    if (k >= 0) val = named_ent_codepoint[k];
 	}
 	if (end != s.end() && *end == ';') ++end;
 	if (val) {
@@ -208,7 +191,7 @@ HtmlParser::parse(const string &body)
 		if (enc == string::npos || enc == decl.size()) break;
 
 		if (decl[enc] != '=') break;
-		
+
 		enc = decl.find_first_not_of(" \t\r\n", enc + 1);
 		if (enc == string::npos || enc == decl.size()) break;
 
