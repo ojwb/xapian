@@ -211,3 +211,13 @@ BUILT_SOURCES += docs/index.html
 	-case "$@" in */*) d=`echo "$@"|sed 's,/[^/]*$$,,'`; $(MKDIR_P) "$$d" ;; esac
 	$(RST2HTML) --exit-status=warning $< $@
 endif
+
+built/xapianlib.aar: built/xapian.jar libxapian_jni.la
+	rm -rf aar-tmp
+	$(MKDIR_P) aar-tmp/jni aar-tmp/res
+	cp built/xapian.jar aar-tmp/classes.jar
+	$(MAKE) install DESTDIR=`pwd`/aar-tmp/destdir
+	mv aar-tmp/destdir/$(jnidir) aar-tmp/jni/$(host_alias)
+	rm -rf aar-tmp/destdir
+	cd aar-tmp && jar -cf ../built/xapianlib.aar *
+	rm -rf aar-tmp

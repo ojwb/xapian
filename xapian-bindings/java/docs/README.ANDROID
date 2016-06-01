@@ -1,0 +1,85 @@
+Instructions for cross compiling for android
+============================================
+This file is aimed to help developers get started with cross compiling xapian for android.
+
+
+Prerequisites
+=============
+1)
+You will need to download android ndk from https://developer.android.com/ndk/downloads/index.html
+for your respective development platform. Extract it and now using the make-standalone-toolchain.sh
+in the ndk make a customized toolchain from the command line by doing the following:
+
+export NDK=<path_to_ndk>
+$NDK/build/tools/make-standalone-toolchain.sh --toolchain=<target-arch> --platform=<target-android-api> --install-dir=<path_to_ndk_standalone_toolchain>
+
+<target-arch> is the architecture your standalone toolchain is going to target. eg. for ARM-based architecture can
+use arm-linux-androideabi-4.9. For more info refer https://developer.android.com/ndk/guides/standalone_toolchain.html
+
+<target-android-api> is the target Android platform/API level. eg android-16
+
+<path_to_ndk_standalone_toolchain> is the path where your standalone toolchain will be installed.
+
+2)
+For testing purpose you will need adb installed.
+
+Cross compiling Xapian
+======================
+Now cross compile xapian for android as follows:
+
+## Untar, and rename xapian-core-1.4.x to xapian-core, etc
+export TOOLCHAIN=<path_to_ndk_standalone_toolchain>
+export PATH=$PATH:$TOOLCHAIN/bin
+export OUTPUT_DIR=<path_to_xapian>/xapian-bindings/java/built
+cd <path_to_xapian>/xapian-core
+./configure --prefix=$OUTPUT_DIR --host=<host>  LDFLAGS='-fPIE -pie' --disable-shared --with-pic
+make
+make install
+
+<host>=arm-linux-androideabi
+
+The above configure will build xapian statically with position independent code.
+
+Generating the bindings for android
+===================================
+Now generate the bindings for android as follows:
+
+cd <path_to_xapian>/xapian-bindings
+./configure --with-java --host=<host> LDFLAGS="-fPIE -pie" --disable-shared --with-pic XAPIAN_CONFIG="$OUTPUT_DIR/bin/xapian-config" JAVAC='javac -source 1.7 -target 1.7 -bootclasspath <path_to_jvm>/<your_jdk>/jre/lib/rt.jar'
+
+# The '-source' and '-target' options are required for android compatibility if you have java 1.8 or above.
+# <path_to_jvm> is the jvm installation path e.g. /usr/lib on Ubuntu
+
+cd java
+make built/xapianlib.aar
+
+This will create built/xapianlib.aar which contains everything you need to use Xapian from Java on Android devices.
+
+Testing Xapian on android
+=========================
+1)Now to test your cross compiled build (libxapian.a) do the following:
+
+cd <path_to_xapian>/xapian-core/tests
+make apitest
+
+This will generate apitest file in tests folder. You will need to push apitest file, testdata folder and runtest script to your android device or emulator.
+
+To push a file to your android device use the following command:
+
+adb push <path_of_file> <dst_on_device>
+
+<dst_on_device> is the destination where you have the read-write-execute permission. eg. /data/local/tmp
+
+After pushing all the files to the device, you can run test as follows:
+
+adb shell
+cd <dst_on_device>
+sh runtest ./apitest
+
+2)Now to test your bindings, set the location of android sdk and android ndk in example/local.properties file and copy the xapianlib.aar in example/app/libs folder. To build the example and install the app on device or emulator run the following:
+
+cd example
+./gradlew build
+./gradlew installDebug
+
+It will install the .apk on the device or emulator. The app runs the SmokeTest and the results can be seen in the logs. The app also has SimpleIndex and SimpleSearch example.
