@@ -74,8 +74,10 @@ class MSet::Internal : public Xapian::Internal::intrusive_base {
 	  max_possible(max_possible_),
 	  max_attained(max_attained_),
 	  percent_factor(percent_factor_),
+	  stats(0),
 	  items(items_),
-	  firstitem(firstitem_) { }
+	  firstitem(firstitem_),
+	  enquire(0) { }
 
     std::string snippet(const std::string& text,
 			size_t length,
