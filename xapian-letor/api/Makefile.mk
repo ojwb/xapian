@@ -9,5 +9,4 @@ lib_src +=\
 	api/featurelist.cc\
 	api/featurevector.cc\
 	api/letor.cc\
-	api/letor_internal.cc\
-	common/str.cc
+	api/letor_internal.cc
