@@ -143,6 +143,7 @@ class XAPIAN_VISIBILITY_DEFAULT ListNETRanker: public Ranker {
     /** Method to re-rank a std::vector<Xapian::FeatureVector> by using the model.
      * @param fvv vector<FeatureVector> that will be re-ranked
      * @exception LetorInternalError will be thrown if model file is not compatible.
+     */
     std::vector<Xapian::FeatureVector> rank(const std::vector<Xapian::FeatureVector> & fvv);
 
 };
