@@ -25,6 +25,8 @@
 #include "letor_internal.h"
 #include "xapian-letor/featurevector.h"
 
+#include "str.h"
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -124,7 +126,7 @@ int
 Letor::Internal::getlabel(const Document & doc, const std::string & qid) const
 {
     int label = -1;
-    string id = std::to_string(doc.get_docid());
+    string id = str(doc.get_docid());
     map<string, map<string, int> >::const_iterator outerit;
     map<string, int>::const_iterator innerit;
 
