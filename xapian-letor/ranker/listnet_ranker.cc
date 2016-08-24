@@ -34,7 +34,6 @@ Proceedings of the 24th international conference on Machine learning. ACM, 2007.
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
-#include <iostream>
 #include <limits>
 #include <sstream>
 #include <vector>
@@ -96,7 +95,7 @@ initializeProbability(vector<FeatureVector> feature_vectors, vector<double> & ne
 // Equation (6) in paper Cao et al. "Learning to rank: from pairwise approach to listwise approach."
 static vector<double>
 calculateGradient(vector<FeatureVector> feature_vectors, prob_distrib_vector prob) {
-    LOGCALL_STATIC_VOID(API, "calculateGradient", feature_vectors | prob_distrib_vector);
+    LOGCALL_STATIC_VOID(API, "calculateGradient", feature_vectors | prob);
 
     vector<double> gradient(feature_vectors[0].get_fcount(),0);
     int list_length = feature_vectors.size();
@@ -137,8 +136,6 @@ updateParameters(vector<double> & new_parameters, vector<double> gradient, doubl
 void
 ListNETRanker::train_model() {
     LOGCALL_VOID(API, "ListNETRanker::train_model", NO_ARGS);
-
-    std::cout << "ListNET model begin to train..." << endl;
 
     // get the training data
     std::vector<Xapian::FeatureVector> fvv = get_traindata();
@@ -189,8 +186,6 @@ ListNETRanker::save_model_to_file(const char* output_filename) {
 
     parameters_file << oss.str();
     parameters_file.close();
-
-    cout<< "ListNET model saved to \"" << output_filename << "\"" << endl;
 }
 
 void
@@ -216,8 +211,6 @@ ListNETRanker::load_model_from_file(const char* model_filename) {
 
     loaded_parameters.pop_back();
     parameters = loaded_parameters;
-
-    cout<< "ListNET model loaded from: \"" << model_filename << "\""  << endl;
 }
 
 std::vector<FeatureVector>
@@ -226,8 +219,6 @@ ListNETRanker::rank(const std::vector<FeatureVector> & fvv) {
 
     std::vector<FeatureVector> testfvv = fvv;
     int testfvvsize = testfvv.size();
-
-    cout << "Performing ranking using ListNET model..." << endl;
 
     int parameters_size = parameters.size();
 
