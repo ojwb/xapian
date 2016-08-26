@@ -730,6 +730,7 @@ MSet::Internal::snippet(const string & text,
 		// Check wildcards.
 		// FIXME: Sort wildcards, shortest pattern first or something?
 		for (auto&& pattern : wildcards) {
+		    // FIXME: Need to match wildcard patterns here...
 		    if (startswith(term, pattern)) {
 			// FIXME: What relevance to use?
 			relevance = max_tw + min_tw;

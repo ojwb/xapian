@@ -50,9 +50,11 @@
 #include "debuglog.h"
 #include "omassert.h"
 #include "str.h"
+#include "stringutils.h"
 #include "unicode/description_append.h"
 
 #include <algorithm>
+#include <cstring>
 #include <functional>
 #include <list>
 #include <string>
@@ -940,6 +942,49 @@ QueryValueGE::get_description() const
     return desc;
 }
 
+static bool
+test_wildcard(const string& candidate, size_t o, size_t p,
+	      const string& pat, size_t i, size_t j)
+{
+    // cout << " ? [" << o << ", " << p << ", [" << pat << "], " << i << ", " << j << endl;
+    for ( ; i != j; ++i) {
+	if (pat[i] == '*') {
+	   if (++i == j) {
+	       // '*' at end of variable part is easy!
+	       return true;
+	   }
+	   for (size_t test_o = o; test_o <= p; ++test_o) {
+	       if (test_wildcard(candidate, test_o, p, pat, i, j))
+		   return true;
+	   }
+	   return false;
+	}
+	if (o == p) return false;
+	if (pat[i] == '?') {
+	    ++o;
+	    continue;
+	}
+#if 0
+	if (pat[i] == '{') {
+	    // alternatives
+	    cout << "'{...,...}' not yet supported" << endl;
+	    exit(1);
+	}
+	if (pat[i] == '\\') {
+	    // Escaped character.
+	    ++i;
+	    if (i == pat.size()) {
+		cout << "'\\' at end..." << endl;
+		exit(1);
+	    }
+	}
+#endif
+	if (pat[i] != candidate[o]) return false;
+	++o;
+    }
+    return (o == p);
+}
+
 PostingIterator::Internal *
 QueryWildcard::postlist(QueryOptimiser * qopt, double factor) const
 {
@@ -953,8 +998,95 @@ QueryWildcard::postlist(QueryOptimiser * qopt, double factor) const
     } else if (op != Query::OP_SYNONYM) {
 	or_factor = factor;
     }
+
+    size_t head = 0, tail = 0, min_len = 0;
+    bool variable_len = false;
+    string prefix, suffix;
+    for (size_t i = 0; i != pattern.size(); ++i) {
+	if (strchr("*?"/*"{\\"*/, pattern[i]) == NULL) {
+	    prefix += pattern[i];
+	    head = i + 1;
+	    continue;
+	}
+
+#if 0
+	if (pattern[i] == '\\') {
+	    // Escaped character.
+	    ++i;
+	    if (i == pattern.size()) {
+		cout << "'\\' at end..." << endl;
+		exit(1);
+	    }
+	    prefix += pattern[i];
+	    continue;
+	}
+#endif
+
+	min_len = prefix.size();
+
+	tail = i;
+	while (i != pattern.size()) {
+	    switch (pattern[i]) {
+#if 0
+		case '\\':
+		    // Escaped character.
+		    ++i;
+		    if (i == pattern.size()) {
+			cout << "'\\' at end..." << endl;
+			exit(1);
+		    }
+		    /* FALLTHRU */
+#endif
+		default:
+		    suffix += pattern[i];
+		    ++min_len;
+		    break;
+
+#if 0
+		case '{':
+		    // alternatives
+		    cout << "'{...,...}' not yet supported" << endl;
+		    exit(1);
+#endif
+
+		case '*':
+		    // Matches zero or more characters.
+		    variable_len = true;
+		    tail = i + 1;
+		    suffix.clear();
+		    break;
+
+		case '?':
+		    // Matches exactly one character.
+		    tail = i + 1;
+		    suffix.clear();
+		    ++min_len;
+		    break;
+	    }
+
+	    ++i;
+	}
+
+#if 0
+	cout << "PREFIX=[" << prefix << "]\n";
+	cout << "PATTERN=[" << pattern.substr(head, tail - head) << "]\n";
+	cout << "SUFFIX=[" << suffix << "]\n";
+	cout << "MINLEN=[" << min_len << "]\n";
+	if (!variable_len) cout << "MAXLEN=[" << min_len << "]\n";
+#endif
+	break;
+    }
+
+    if (head == pattern.size()) {
+	// Exact match only.
+	if (!qopt->db.term_exists(prefix)) {
+	    RETURN(new EmptyPostList);
+	}
+	RETURN(qopt->open_post_list(prefix, 1, or_factor));
+    }
+
     OrContext ctx(0);
-    AutoPtr<TermList> t(qopt->db.open_allterms(pattern));
+    AutoPtr<TermList> t(qopt->db.open_allterms(prefix));
     Xapian::termcount expansions_left = max_expansion;
     // If there's no expansion limit, set expansions_left to the maximum
     // value Xapian::termcount can hold.
@@ -964,19 +1096,30 @@ QueryWildcard::postlist(QueryOptimiser * qopt, double factor) const
 	t->next();
 	if (t->at_end())
 	    break;
+
+	const string & term = t->get_termname();
+	if (term.size() < min_len) continue;
+	if (!variable_len && term.size() > min_len) continue;
+	if (!endswith(term, suffix)) continue;
+
+	if (!test_wildcard(term, prefix.size(),
+			   term.size() - suffix.size(),
+			   pattern, head, tail)) {
+	    continue;
+	}
+
 	if (max_type < Xapian::Query::WILDCARD_LIMIT_MOST_FREQUENT) {
 	    if (expansions_left-- == 0) {
 		if (max_type == Xapian::Query::WILDCARD_LIMIT_FIRST)
 		    break;
 		string msg("Wildcard ");
 		msg += pattern;
-		msg += "* expands to more than ";
+		msg += " expands to more than ";
 		msg += str(max_expansion);
 		msg += " terms";
 		throw Xapian::WildcardError(msg);
 	    }
 	}
-	const string & term = t->get_termname();
 	ctx.add_postlist(qopt->open_lazy_post_list(term, 1, or_factor));
     }
 

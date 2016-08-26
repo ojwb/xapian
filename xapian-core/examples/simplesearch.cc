@@ -75,7 +75,7 @@ try {
     qp.set_stemmer(stemmer);
     qp.set_database(db);
     qp.set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
-    Xapian::Query query = qp.parse_query(query_string);
+    Xapian::Query query(query.OP_WILDCARD, query_string);
     cout << "Parsed query is: " << query.get_description() << endl;
 
     // Find the top 10 results for the query.
@@ -87,8 +87,13 @@ try {
     cout << "Matches 1-" << matches.size() << ":\n" << endl;
 
     for (Xapian::MSetIterator i = matches.begin(); i != matches.end(); ++i) {
-	cout << i.get_rank() + 1 << ": " << i.get_weight() << " docid=" << *i
-	     << " [" << i.get_document().get_data() << "]\n\n";
+	cout << i.get_rank() + 1 << ": " << i.get_weight() << " docid=" << *i;
+#if 0
+	for (Xapian::TermIterator t = enquire.get_matching_terms_begin(*i); t != enquire.get_matching_terms_end(*i); ++t) {
+	    cout << " " << *t;
+	}
+#endif
+	cout << endl;
     }
 } catch (const Xapian::Error &e) {
     cout << e.get_description() << endl;
