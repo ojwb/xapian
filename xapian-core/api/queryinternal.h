@@ -397,6 +397,8 @@ class QueryWildcard : public Query::Internal {
 
     int max_type;
 
+    int flags;
+
     Query::op combiner;
 
     Xapian::Query::op get_op() const;
@@ -404,11 +406,12 @@ class QueryWildcard : public Query::Internal {
   public:
     QueryWildcard(const std::string &pattern_,
 		  Xapian::termcount max_expansion_,
-		  int max_type_,
+		  int flags_,
 		  Query::op combiner_)
 	: pattern(pattern_),
 	  max_expansion(max_expansion_),
-	  max_type(max_type_),
+	  max_type(flags_ & Query::WILDCARD_LIMIT_MASK_),
+	  flags(flags_ & ~Query::WILDCARD_LIMIT_MASK_),
 	  combiner(combiner_)
     { }
 

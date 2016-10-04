@@ -125,13 +125,13 @@ class XAPIAN_VISIBILITY_DEFAULT Query {
 	 *  Xapian::WildcardError will be thrown when the query is actually
 	 *  run.
 	 */
-	WILDCARD_LIMIT_ERROR,
+	WILDCARD_LIMIT_ERROR = 0x0,
 	/** Stop expanding when OP_WILDCARD reaches its expansion limit.
 	 *
 	 *  This makes the wildcard expand to only the first N terms (sorted
 	 *  by byte order).
 	 */
-	WILDCARD_LIMIT_FIRST,
+	WILDCARD_LIMIT_FIRST = 0x1,
 	/** Limit OP_WILDCARD expansion to the most frequent terms.
 	 *
 	 *  If OP_WILDCARD would expand to more than its expansion limit, the
@@ -141,7 +141,19 @@ class XAPIAN_VISIBILITY_DEFAULT Query {
 	 *  to evaluate than the full expansion, using only the most frequent
 	 *  terms tends to give better results too.
 	 */
-	WILDCARD_LIMIT_MOST_FREQUENT
+	WILDCARD_LIMIT_MOST_FREQUENT = 0x2,
+
+	WILDCARD_LIMIT_MASK_ = 0x03,
+
+	/** Support * which matches 0 or more characters. */
+	WILDCARD_PATTERN_MULTI = 0x10,
+	/** Support ? which matches a single character. */
+	WILDCARD_PATTERN_SINGLE = 0x20,
+	/** Enable all supported glob-like features. */
+	WILDCARD_PATTERN_GLOB = WILDCARD_PATTERN_MULTI|WILDCARD_PATTERN_SINGLE
+	// FIXME: Way to disable left-truncation?  Or see how efficient a
+	// full check actually is?  Way to limit search of left character to
+	// only match terms starting with non capital letter?
     };
 
     /// Default constructor.
@@ -210,7 +222,7 @@ class XAPIAN_VISIBILITY_DEFAULT Query {
      *			exactly this string.
      *	@param max_expansion	The maximum number of terms to expand to
      *				(default: 0, which means no limit)
-     *	@param max_type	How to enforce max_expansion - one of
+     *	@param flags	How to enforce max_expansion - one of
      *			@a WILDCARD_LIMIT_ERROR (the default),
      *			@a WILDCARD_LIMIT_FIRST or
      *			@a WILDCARD_LIMIT_MOST_FREQUENT.
@@ -219,13 +231,14 @@ class XAPIAN_VISIBILITY_DEFAULT Query {
      *			so the total number of terms may be higher than the
      *			limit.  This is arguably a bug, and may change in
      *			future versions.
+     *			FIXME: Also can bitwise or in WILDCARD_PATTERN_*
      *	@param combiner The @a op_ to combine the terms with - one of
      *			@a OP_SYNONYM (the default), @a OP_OR or @a OP_MAX.
      */
     Query(op op_,
 	  const std::string & pattern,
 	  Xapian::termcount max_expansion = 0,
-	  int max_type = WILDCARD_LIMIT_ERROR,
+	  int flags = WILDCARD_LIMIT_ERROR,
 	  op combiner = OP_SYNONYM);
 
     template<typename I>
