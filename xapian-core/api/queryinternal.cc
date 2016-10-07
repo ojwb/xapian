@@ -1118,6 +1118,8 @@ default_case:
     if (!variable_len) cout << "MAXLEN=[" << min_len << "]\n";
 #endif
 
+    bool skip_ucase = prefix.empty();
+
     OrContext ctx(0);
     AutoPtr<TermList> t(qopt->db.open_allterms(prefix));
     Xapian::termcount expansions_left = max_expansion;
@@ -1131,6 +1133,16 @@ default_case:
 	    break;
 
 	const string & term = t->get_termname();
+	if (skip_ucase && term[0] >= 'A') {
+	    // If there's a leading wildcard then skip terms that start with
+	    // A-Z, as we don't want the expansion to include prefixed terms.
+	    skip_ucase = false;
+	    if (term[0] <= 'Z') {
+		static_assert('Z' + 1 == '[');
+		t->skip_to("[");
+		continue;
+	    }
+	}
 	if (term.size() < min_len) continue;
 	if (!variable_len && term.size() > min_len) continue;
 	if (!endswith(term, suffix)) continue;
