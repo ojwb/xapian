@@ -721,6 +721,8 @@ QueryParser::Internal::parse_term(Utf8Iterator &it, const Utf8Iterator &end,
 
     if (term.empty()) {
 	unsigned prevch = *it;
+	if ((flags & FLAG_WILDCARD) && (prevch == '*' || prevch == '?'))
+	    has_wildcards = true;
 	Unicode::append_utf8(term, prevch);
 	while (++it != end) {
 	    if (cjk_ngram && CJK::codepoint_is_cjk(*it)) break;
@@ -911,6 +913,7 @@ just_had_operator_needing_term:
 
 	if (!is_wordchar(*it)) {
 	    unsigned prev = newprev;
+	    Utf8Iterator p = it;
 	    unsigned ch = *it++;
 	    newprev = ch;
 	    // Drop out of IN_GROUP mode.
@@ -1028,6 +1031,12 @@ just_had_operator_needing_term:
 		    goto just_had_operator_needing_term;
 		}
 		break;
+	      case '*': case '?':
+		if (flags & FLAG_WILDCARD) {
+		    it = p;
+		    goto leading_wildcard;
+		}
+		break;
 	    }
 	    // Skip any other characters.
 	    continue;
@@ -1035,6 +1044,7 @@ just_had_operator_needing_term:
 
 	Assert(is_wordchar(*it));
 
+leading_wildcard:
 	size_t term_start_index = it.raw() - qs.data();
 
 	newprev = 'A'; // Any letter will do...
