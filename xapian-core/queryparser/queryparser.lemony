@@ -735,6 +735,7 @@ QueryParser::Internal::parse_term(Utf8Iterator &it, const Utf8Iterator &end,
 		// apostrophes to ASCII apostrophe.
 		Utf8Iterator p = it;
 		++p;
+		// FIXME: wildcards?
 		if (p == end || !is_wordchar(*p)) break;
 		unsigned nextch = *p;
 		if (is_digit(prevch) && is_digit(nextch)) {
