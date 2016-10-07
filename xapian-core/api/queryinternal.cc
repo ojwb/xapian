@@ -961,33 +961,34 @@ QueryWildcard::QueryWildcard(const std::string &pattern_,
     }
 
     char special[5];
-    char* p = special;
-    if (flags & Query::WILDCARD_PATTERN_MULTI)
-	*p++ = '*';
-    if (flags & Query::WILDCARD_PATTERN_SINGLE)
-	*p++ = '?';
-    if (flags & 0)
-	*p++ = '{';
-    if (flags & 0)
-	*p++ = '\\';
-    *p = '\0';
-    size_t i;
-    for (i = 0; i != pattern.size(); ++i) {
+    {
+	char* p = special;
+	if (flags & Query::WILDCARD_PATTERN_MULTI)
+	    *p++ = '*';
+	if (flags & Query::WILDCARD_PATTERN_SINGLE)
+	    *p++ = '?';
+	if (flags & 0)
+	    *p++ = '{';
+	if (flags & 0)
+	    *p++ = '\\';
+	*p = '\0';
+    }
+    size_t i = 0;
+    while (i != pattern.size()) {
 	if (strchr(special, pattern[i]) != NULL) {
 	    // Handle characters with special meaning.
-	    if ((flags & 0) && pattern[i] == '\\') {
-		// Escaped character.
-		++i;
-		if (i == pattern.size()) {
-		    throw Xapian::WildcardError("'\\' at end of pattern");
-		}
-		prefix += pattern[i];
-		continue;
+	    if (!((flags & 0) && pattern[i] == '\\')) {
+		break;
 	    }
-	    break;
+	    // Escaped character.
+	    ++i;
+	    if (i == pattern.size()) {
+		throw Xapian::WildcardError("'\\' at end of pattern");
+	    }
 	}
 	prefix += pattern[i];
-	head = i + 1;
+	++i;
+	head = i;
     }
 
     min_len = prefix.size();
