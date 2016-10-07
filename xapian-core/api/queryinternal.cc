@@ -59,6 +59,7 @@
 #include <list>
 #include <string>
 #include <vector>
+#include <iostream>
 
 using namespace std;
 
@@ -942,44 +943,167 @@ QueryValueGE::get_description() const
     return desc;
 }
 
-static bool
-test_wildcard(const string& candidate, size_t o, size_t p,
-	      const string& pat, size_t i, size_t j, int flags)
+QueryWildcard::QueryWildcard(const std::string &pattern_,
+			     Xapian::termcount max_expansion_,
+			     int flags_,
+			     Query::op combiner_)
+    : pattern(pattern_),
+      max_expansion(max_expansion_),
+      max_type(flags_ & Query::WILDCARD_LIMIT_MASK_),
+      flags(flags_ & ~Query::WILDCARD_LIMIT_MASK_),
+      combiner(combiner_)
 {
-    // cout << " ? [" << o << ", " << p << ", [" << pat << "], " << i << ", " << j << endl;
-    for ( ; i != j; ++i) {
-	if ((flags & Query::WILDCARD_PATTERN_MULTI) && pat[i] == '*') {
-	   if (++i == j) {
+    if (flags == 0) {
+	tail = min_len = pattern.size();
+	variable_len = true;
+	prefix = pattern;
+	return;
+    }
+
+    char special[5];
+    char* p = special;
+    if (flags & Query::WILDCARD_PATTERN_MULTI)
+	*p++ = '*';
+    if (flags & Query::WILDCARD_PATTERN_SINGLE)
+	*p++ = '?';
+    if (flags & 0)
+	*p++ = '{';
+    if (flags & 0)
+	*p++ = '\\';
+    *p = '\0';
+    size_t i;
+    for (i = 0; i != pattern.size(); ++i) {
+	if (strchr(special, pattern[i]) != NULL) {
+	    // Handle characters with special meaning.
+	    if ((flags & 0) && pattern[i] == '\\') {
+		// Escaped character.
+		++i;
+		if (i == pattern.size()) {
+		    throw Xapian::WildcardError("'\\' at end of pattern");
+		}
+		prefix += pattern[i];
+		continue;
+	    }
+	    break;
+	}
+	prefix += pattern[i];
+	head = i + 1;
+    }
+
+    min_len = prefix.size();
+
+    tail = i;
+    while (i != pattern.size()) {
+	switch (pattern[i]) {
+	    case '\\':
+		if (!(flags & 0))
+		    goto default_case;
+		// Escaped character.
+		++i;
+		if (i == pattern.size()) {
+		    throw Xapian::WildcardError("'\\' at end of pattern");
+		}
+		/* FALLTHRU */
+
+	    default:
+default_case:
+		suffix += pattern[i];
+		++min_len;
+		break;
+
+	    case '{':
+		if (!(flags & 0))
+		    goto default_case;
+		// Alternatives
+		throw Xapian::UnimplementedError("'{...,...}' not yet supported");
+
+	    case '*':
+		if (!(flags & Query::WILDCARD_PATTERN_MULTI))
+		    goto default_case;
+		// Matches zero or more characters.
+		variable_len = true;
+		tail = i + 1;
+		if (!suffix.empty()) {
+		    check_pattern = true;
+		    suffix.clear();
+		}
+		break;
+
+	    case '?':
+		if (!(flags & Query::WILDCARD_PATTERN_SINGLE))
+		    goto default_case;
+		// Matches exactly one character.
+		tail = i + 1;
+		if (!suffix.empty()) {
+		    check_pattern = true;
+		    suffix.clear();
+		}
+		++min_len;
+		break;
+	}
+
+	++i;
+    }
+
+#if 0
+    cout << "PREFIX=[" << prefix << "]\n";
+    cout << "PATTERN=[" << pattern.substr(head, tail - head) << "] - CHECK = " << check_pattern << endl;
+    cout << "SUFFIX=[" << suffix << "]\n";
+    cout << "MINLEN=[" << min_len << "]\n";
+    if (!variable_len) cout << "MAXLEN=[" << min_len << "]\n";
+#endif
+}
+
+bool
+QueryWildcard::test_wildcard_(const string& candidate, size_t o, size_t p,
+			      size_t i) const
+{
+    // cout << " ? [" << o << ", " << p << ", [" << pattern << "], " << i << ", " << tail << endl;
+    for ( ; i != tail; ++i) {
+	if ((flags & Query::WILDCARD_PATTERN_MULTI) && pattern[i] == '*') {
+	   if (++i == tail) {
 	       // '*' at end of variable part is easy!
 	       return true;
 	   }
 	   for (size_t test_o = o; test_o <= p; ++test_o) {
-	       if (test_wildcard(candidate, test_o, p, pat, i, j, flags))
+	       if (test_wildcard_(candidate, test_o, p, i))
 		   return true;
 	   }
 	   return false;
 	}
 	if (o == p) return false;
-	if ((flags & Query::WILDCARD_PATTERN_SINGLE) && pat[i] == '?') {
+	if ((flags & Query::WILDCARD_PATTERN_SINGLE) && pattern[i] == '?') {
 	    ++o;
 	    continue;
 	}
 
-	if ((flags & 0) && pat[i] == '{') {
-	    throw Xapian::UnimplementedError("'{...,...}' not yet supported");
+	if ((flags & 0) && pattern[i] == '{') {
+	    Assert(false);
 	}
 
-	if ((flags & 0) && pat[i] == '\\') {
+	if ((flags & 0) && pattern[i] == '\\') {
 	    // Escaped character.
 	    ++i;
-	    if (i == pat.size()) {
-		throw Xapian::WildcardError("'\\' at end of pattern");
-	    }
+	    Assert(i != pattern.size());
 	}
-	if (pat[i] != candidate[o]) return false;
+	if (pattern[i] != candidate[o]) return false;
 	++o;
     }
     return (o == p);
+}
+
+bool
+QueryWildcard::test_prefix_known(const string& candidate) const
+{
+    if (candidate.size() < min_len) return false;
+    if (!variable_len && candidate.size() > min_len) return false;
+    if (!endswith(candidate, suffix)) return false;
+
+    if (!check_pattern) return true;
+
+    return test_wildcard_(candidate, prefix.size(),
+			  candidate.size() - suffix.size(),
+			  head);
 }
 
 PostingIterator::Internal *
@@ -996,127 +1120,13 @@ QueryWildcard::postlist(QueryOptimiser * qopt, double factor) const
 	or_factor = factor;
     }
 
-    size_t head = 0, tail = 0, min_len = 0;
-    bool variable_len = false;
-    // If there's just a single contiguous group of wildcards (or the
-    // degenerate case of a single wildcard) then the length checks and
-    // head/tail checks are sufficient.  This covers a lot of common
-    // cases, so special-case it.
-    bool check_pattern = false;
-    string prefix, suffix;
-    if (flags == 0) {
-	tail = min_len = pattern.size();
-	variable_len = true;
-	prefix = pattern;
-    } else {
-	char special[5];
-	char* p = special;
-	if (flags & Query::WILDCARD_PATTERN_MULTI)
-	    *p++ = '*';
-	if (flags & Query::WILDCARD_PATTERN_SINGLE)
-	    *p++ = '?';
-	if (flags & 0)
-	    *p++ = '{';
-	if (flags & 0)
-	    *p++ = '\\';
-	*p = '\0';
-	for (size_t i = 0; i != pattern.size(); ++i) {
-	    if (strchr(special, pattern[i]) == NULL) {
-		prefix += pattern[i];
-		head = i + 1;
-		continue;
-	    }
-
-	    if ((flags & 0) && pattern[i] == '\\') {
-		// Escaped character.
-		++i;
-		if (i == pattern.size()) {
-		    throw Xapian::WildcardError("'\\' at end of pattern");
-		}
-		prefix += pattern[i];
-		continue;
-	    }
-
-	    min_len = prefix.size();
-
-	    tail = i;
-	    while (i != pattern.size()) {
-		switch (pattern[i]) {
-		    case '\\':
-			if (!(flags & 0))
-			    goto default_case;
-			// Escaped character.
-			++i;
-			if (i == pattern.size()) {
-			    throw Xapian::WildcardError("'\\' at end of pattern");
-			}
-			/* FALLTHRU */
-
-		    default:
-default_case:
-			suffix += pattern[i];
-			++min_len;
-			break;
-
-		    case '{':
-			if (!(flags & 0))
-			    goto default_case;
-			// Alternatives
-			throw Xapian::UnimplementedError("'{...,...}' not yet supported");
-
-		    case '*':
-			if (!(flags & Query::WILDCARD_PATTERN_MULTI))
-			    goto default_case;
-			// Matches zero or more characters.
-			variable_len = true;
-			tail = i + 1;
-			if (!suffix.empty()) {
-			    check_pattern = true;
-			    suffix.clear();
-			}
-			break;
-
-		    case '?':
-			if (!(flags & Query::WILDCARD_PATTERN_SINGLE))
-			    goto default_case;
-			// Matches exactly one character.
-			tail = i + 1;
-			if (!suffix.empty()) {
-			    check_pattern = true;
-			    suffix.clear();
-			}
-			++min_len;
-			break;
-		}
-
-		++i;
-	    }
-	    break;
+    if (flags && head == pattern.size()) {
+	// Exact match only.
+	if (!qopt->db.term_exists(prefix)) {
+	    RETURN(new EmptyPostList);
 	}
-
-	if (head == pattern.size()) {
-#if 0
-	    cout << "PREFIX=[" << prefix << "]\n";
-	    cout << "PATTERN=[" << pattern.substr(head, tail - head) << "] - CHECK = " << check_pattern << endl;
-	    cout << "SUFFIX=[" << suffix << "]\n";
-	    cout << "MINLEN=[" << min_len << "]\n";
-	    if (!variable_len) cout << "MAXLEN=[" << min_len << "]\n";
-#endif
-	    // Exact match only.
-	    if (!qopt->db.term_exists(prefix)) {
-		RETURN(new EmptyPostList);
-	    }
-	    RETURN(qopt->open_post_list(prefix, 1, or_factor));
-	}
+	RETURN(qopt->open_post_list(prefix, 1, or_factor));
     }
-
-#if 0
-    cout << "PREFIX=[" << prefix << "]\n";
-    cout << "PATTERN=[" << pattern.substr(head, tail - head) << "] - CHECK = " << check_pattern << endl;
-    cout << "SUFFIX=[" << suffix << "]\n";
-    cout << "MINLEN=[" << min_len << "]\n";
-    if (!variable_len) cout << "MAXLEN=[" << min_len << "]\n";
-#endif
 
     bool skip_ucase = prefix.empty();
 
@@ -1143,18 +1153,10 @@ default_case:
 		continue;
 	    }
 	}
-	if (term.size() < min_len) continue;
-	if (!variable_len && term.size() > min_len) continue;
-	if (!endswith(term, suffix)) continue;
 
-	if (check_pattern) {
-	    if (!test_wildcard(term, prefix.size(),
-			       term.size() - suffix.size(),
-			       pattern, head, tail, flags)) {
-		continue;
-	    }
-	}
+	if (!test_prefix_known(term)) continue;
 
+	cout << "<" << term << "> from <" << pattern << ">" << endl;
 	if (max_type < Xapian::Query::WILDCARD_LIMIT_MOST_FREQUENT) {
 	    if (expansions_left-- == 0) {
 		if (max_type == Xapian::Query::WILDCARD_LIMIT_FIRST)

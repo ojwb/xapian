@@ -23,6 +23,7 @@
 
 #include "postlist.h"
 #include "queryvector.h"
+#include "stringutils.h"
 #include "xapian/intrusive_ptr.h"
 #include "xapian/query.h"
 
@@ -401,23 +402,38 @@ class QueryWildcard : public Query::Internal {
 
     Query::op combiner;
 
+    size_t head = 0, tail = 0, min_len = 0;
+
+    bool variable_len = false;
+
+    // If there's just a single contiguous group of wildcards (or the
+    // degenerate case of a single wildcard) then the length checks and
+    // head/tail checks are sufficient.  This covers a lot of common
+    // cases, so special-case it.
+    bool check_pattern = false;
+
+    string prefix, suffix;
+
     Xapian::Query::op get_op() const;
+
+    bool test_wildcard_(const std::string& candidate, size_t o, size_t p,
+			size_t i) const;
 
   public:
     QueryWildcard(const std::string &pattern_,
 		  Xapian::termcount max_expansion_,
 		  int flags_,
-		  Query::op combiner_)
-	: pattern(pattern_),
-	  max_expansion(max_expansion_),
-	  max_type(flags_ & Query::WILDCARD_LIMIT_MASK_),
-	  flags(flags_ & ~Query::WILDCARD_LIMIT_MASK_),
-	  combiner(combiner_)
-    { }
+		  Query::op combiner_);
+
+    /// Perform wildcard test on candidate known to match prefix.
+    bool test_prefix_known(const std::string& candidate) const;
+
+    /// Perform full wildcard test on candidate.
+    bool test(const std::string& candidate) const {
+	return startswith(candidate, prefix) && test_prefix_known(candidate);
+    }
 
     Xapian::Query::op get_type() const XAPIAN_NOEXCEPT XAPIAN_PURE_FUNCTION;
-
-    const std::string & get_pattern() const { return pattern; }
 
     PostingIterator::Internal * postlist(QueryOptimiser * qopt, double factor) const;
 
