@@ -926,15 +926,15 @@ DEFINE_TESTCASE(qp_flag_wildcard1, writable) {
     Xapian::QueryParser qp;
     qp.set_database(db);
     Xapian::Query qobj = qp.parse_query("ab*", Xapian::QueryParser::FLAG_WILDCARD);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((SYNONYM WILDCARD OR ab))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((SYNONYM WILDCARD OR ab*))");
     qobj = qp.parse_query("muscle*", Xapian::QueryParser::FLAG_WILDCARD);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((SYNONYM WILDCARD OR muscle))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((SYNONYM WILDCARD OR muscle*))");
     qobj = qp.parse_query("meat*", Xapian::QueryParser::FLAG_WILDCARD);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((SYNONYM WILDCARD OR meat))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((SYNONYM WILDCARD OR meat*))");
     qobj = qp.parse_query("musc*", Xapian::QueryParser::FLAG_WILDCARD);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((SYNONYM WILDCARD OR musc))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((SYNONYM WILDCARD OR musc*))");
     qobj = qp.parse_query("mutt*", Xapian::QueryParser::FLAG_WILDCARD);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((SYNONYM WILDCARD OR mutt))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((SYNONYM WILDCARD OR mutt*))");
     // Regression test (we weren't lowercasing terms before checking if they
     // were in the database or not):
     qobj = qp.parse_query("mUTTON++");
@@ -943,70 +943,70 @@ DEFINE_TESTCASE(qp_flag_wildcard1, writable) {
     unsigned flags = Xapian::QueryParser::FLAG_WILDCARD |
 		     Xapian::QueryParser::FLAG_LOVEHATE;
     qobj = qp.parse_query("+mai* main", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR mai) AND_MAYBE main@2))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR mai*) AND_MAYBE main@2))");
     // Regression test (if we had a +term which was a wildcard and wasn't
     // present, the query could still match documents).
     qobj = qp.parse_query("foo* main", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR foo) OR main@2))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR foo*) OR main@2))");
     qobj = qp.parse_query("main foo*", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((main@1 OR (SYNONYM WILDCARD OR foo)))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((main@1 OR (SYNONYM WILDCARD OR foo*)))");
     qobj = qp.parse_query("+foo* main", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR foo) AND_MAYBE main@2))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR foo*) AND_MAYBE main@2))");
     qobj = qp.parse_query("main +foo*", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR foo) AND_MAYBE main@1))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR foo*) AND_MAYBE main@1))");
     qobj = qp.parse_query("foo* +main", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((main@2 AND_MAYBE (SYNONYM WILDCARD OR foo)))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((main@2 AND_MAYBE (SYNONYM WILDCARD OR foo*)))");
     qobj = qp.parse_query("+main foo*", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((main@1 AND_MAYBE (SYNONYM WILDCARD OR foo)))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((main@1 AND_MAYBE (SYNONYM WILDCARD OR foo*)))");
     qobj = qp.parse_query("+foo* +main", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR foo) AND main@2))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR foo*) AND main@2))");
     qobj = qp.parse_query("+main +foo*", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((main@1 AND (SYNONYM WILDCARD OR foo)))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((main@1 AND (SYNONYM WILDCARD OR foo*)))");
     qobj = qp.parse_query("foo* mai", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR foo) OR mai@2))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR foo*) OR mai@2))");
     qobj = qp.parse_query("mai foo*", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((mai@1 OR (SYNONYM WILDCARD OR foo)))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((mai@1 OR (SYNONYM WILDCARD OR foo*)))");
     qobj = qp.parse_query("+foo* mai", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR foo) AND_MAYBE mai@2))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR foo*) AND_MAYBE mai@2))");
     qobj = qp.parse_query("mai +foo*", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR foo) AND_MAYBE mai@1))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR foo*) AND_MAYBE mai@1))");
     qobj = qp.parse_query("foo* +mai", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((mai@2 AND_MAYBE (SYNONYM WILDCARD OR foo)))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((mai@2 AND_MAYBE (SYNONYM WILDCARD OR foo*)))");
     qobj = qp.parse_query("+mai foo*", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((mai@1 AND_MAYBE (SYNONYM WILDCARD OR foo)))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((mai@1 AND_MAYBE (SYNONYM WILDCARD OR foo*)))");
     qobj = qp.parse_query("+foo* +mai", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR foo) AND mai@2))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR foo*) AND mai@2))");
     qobj = qp.parse_query("+mai +foo*", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((mai@1 AND (SYNONYM WILDCARD OR foo)))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((mai@1 AND (SYNONYM WILDCARD OR foo*)))");
     qobj = qp.parse_query("-foo* main", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((main@2 AND_NOT (SYNONYM WILDCARD OR foo)))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((main@2 AND_NOT (SYNONYM WILDCARD OR foo*)))");
     qobj = qp.parse_query("main -foo*", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((main@1 AND_NOT (SYNONYM WILDCARD OR foo)))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((main@1 AND_NOT (SYNONYM WILDCARD OR foo*)))");
     qobj = qp.parse_query("main -foo* -bar", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((main@1 AND_NOT ((SYNONYM WILDCARD OR foo) OR bar@3)))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((main@1 AND_NOT ((SYNONYM WILDCARD OR foo*) OR bar@3)))");
     qobj = qp.parse_query("main -bar -foo*", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((main@1 AND_NOT (bar@2 OR (SYNONYM WILDCARD OR foo))))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((main@1 AND_NOT (bar@2 OR (SYNONYM WILDCARD OR foo*))))");
     // Check with OP_AND too.
     qp.set_default_op(Xapian::Query::OP_AND);
     qobj = qp.parse_query("foo* main", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR foo) AND main@2))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR foo*) AND main@2))");
     qobj = qp.parse_query("main foo*", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((main@1 AND (SYNONYM WILDCARD OR foo)))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((main@1 AND (SYNONYM WILDCARD OR foo*)))");
     qp.set_default_op(Xapian::Query::OP_AND);
     qobj = qp.parse_query("+foo* main", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR foo) AND main@2))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR foo*) AND main@2))");
     qobj = qp.parse_query("main +foo*", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((main@1 AND (SYNONYM WILDCARD OR foo)))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((main@1 AND (SYNONYM WILDCARD OR foo*)))");
     qobj = qp.parse_query("-foo* main", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((main@2 AND_NOT (SYNONYM WILDCARD OR foo)))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((main@2 AND_NOT (SYNONYM WILDCARD OR foo*)))");
     qobj = qp.parse_query("main -foo*", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((main@1 AND_NOT (SYNONYM WILDCARD OR foo)))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((main@1 AND_NOT (SYNONYM WILDCARD OR foo*)))");
     // Check empty wildcard followed by negation.
     qobj = qp.parse_query("foo* -main", Xapian::QueryParser::FLAG_LOVEHATE|Xapian::QueryParser::FLAG_WILDCARD);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR foo) AND_NOT main@2))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR foo*) AND_NOT main@2))");
     // Regression test for bug#484 fixed in 1.2.1 and 1.0.21.
     qobj = qp.parse_query("abc muscl* main", flags);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((abc@1 AND (SYNONYM WILDCARD OR muscl)) AND main@3))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((abc@1 AND (SYNONYM WILDCARD OR muscl*)) AND main@3))");
     return true;
 }
 
@@ -1023,9 +1023,9 @@ DEFINE_TESTCASE(qp_flag_wildcard2, writable) {
     qp.add_prefix("author", "A");
     Xapian::Query qobj;
     qobj = qp.parse_query("author:h*", Xapian::QueryParser::FLAG_WILDCARD);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((SYNONYM WILDCARD OR Ah))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query((SYNONYM WILDCARD OR Ah*))");
     qobj = qp.parse_query("author:h* test", Xapian::QueryParser::FLAG_WILDCARD);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR Ah) OR test@2))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR Ah*) OR test@2))");
     return true;
 }
 
@@ -1136,7 +1136,7 @@ DEFINE_TESTCASE(qp_flag_partial1, writable) {
     qobj = qp.parse_query("abc musc", Xapian::QueryParser::FLAG_PARTIAL);
     TEST_STRINGS_EQUAL(qobj.get_description(), "Query((Zabc@1 OR ((SYNONYM WILDCARD OR musc) OR Zmusc@2)))");
     qobj = qp.parse_query("a* mutt", Xapian::QueryParser::FLAG_PARTIAL | Xapian::QueryParser::FLAG_WILDCARD);
-    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR a) OR ((SYNONYM WILDCARD OR mutt) OR Zmutt@2)))");
+    TEST_STRINGS_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR a*) OR ((SYNONYM WILDCARD OR mutt) OR Zmutt@2)))");
 
     // Check behaviour with stemmed terms, and stem strategy STEM_SOME.
     qobj = qp.parse_query("o", Xapian::QueryParser::FLAG_PARTIAL);
@@ -2831,26 +2831,26 @@ DEFINE_TESTCASE(qp_phrase1, !backend) {
 
 static const test test_stopword_group_or_queries[] = {
     { "this is a test", "test@4" },
-    { "test*", "(SYNONYM WILDCARD OR test)" },
-    { "a test*", "(SYNONYM WILDCARD OR test)" },
-    { "is a test*", "(SYNONYM WILDCARD OR test)" },
-    { "this is a test*", "(SYNONYM WILDCARD OR test)" },
-    { "this is a us* test*", "((SYNONYM WILDCARD OR us) OR (SYNONYM WILDCARD OR test))" },
-    { "this is a user test*", "(user@4 OR (SYNONYM WILDCARD OR test))" },
+    { "test*", "(SYNONYM WILDCARD OR test*)" },
+    { "a test*", "(SYNONYM WILDCARD OR test*)" },
+    { "is a test*", "(SYNONYM WILDCARD OR test*)" },
+    { "this is a test*", "(SYNONYM WILDCARD OR test*)" },
+    { "this is a us* test*", "((SYNONYM WILDCARD OR us*) OR (SYNONYM WILDCARD OR test*))" },
+    { "this is a user test*", "(user@4 OR (SYNONYM WILDCARD OR test*))" },
     { NULL, NULL }
 };
 
 static const test test_stopword_group_and_queries[] = {
     { "this is a test", "test@4" },
-    { "test*", "(SYNONYM WILDCARD OR test)" },
-    { "a test*", "(SYNONYM WILDCARD OR test)" },
+    { "test*", "(SYNONYM WILDCARD OR test*)" },
+    { "a test*", "(SYNONYM WILDCARD OR test*)" },
     // Two stopwords + one wildcard failed in 1.0.16
-    { "is a test*", "(SYNONYM WILDCARD OR test)" },
+    { "is a test*", "(SYNONYM WILDCARD OR test*)" },
     // Three stopwords + one wildcard failed in 1.0.16
-    { "this is a test*", "(SYNONYM WILDCARD OR test)" },
+    { "this is a test*", "(SYNONYM WILDCARD OR test*)" },
     // Three stopwords + two wildcards failed in 1.0.16
-    { "this is a us* test*", "((SYNONYM WILDCARD OR us) AND (SYNONYM WILDCARD OR test))" },
-    { "this is a user test*", "(user@4 AND (SYNONYM WILDCARD OR test))" },
+    { "this is a us* test*", "((SYNONYM WILDCARD OR us*) AND (SYNONYM WILDCARD OR test*))" },
+    { "this is a user test*", "(user@4 AND (SYNONYM WILDCARD OR test*))" },
     { NULL, NULL }
 };
 

@@ -452,7 +452,8 @@ Term::as_wildcarded_query(State * state_) const
 	string root = *piter;
 	root += name;
 	// Combine with OP_OR, and apply OP_SYNONYM afterwards.
-	subqs.push_back(Query(Query::OP_WILDCARD, root, max, max_type,
+	subqs.push_back(Query(Query::OP_WILDCARD, root, max,
+			      max_type | Query::WILDCARD_PATTERN_GLOB,
 			      Query::OP_OR));
     }
     Query * q = new Query(Query::OP_SYNONYM, subqs.begin(), subqs.end());
@@ -686,8 +687,9 @@ QueryParser::Internal::add_boolean_prefix(const string &field,
 
 string
 QueryParser::Internal::parse_term(Utf8Iterator &it, const Utf8Iterator &end,
-				  bool cjk_ngram, bool & is_cjk_term,
-				  bool &was_acronym)
+				  bool cjk_ngram, unsigned flags,
+				  bool & is_cjk_term, bool &was_acronym,
+				  bool & has_wildcards)
 {
     string term;
     // Look for initials separated by '.' (e.g. P.T.O., U.N.C.L.E).
@@ -723,7 +725,9 @@ QueryParser::Internal::parse_term(Utf8Iterator &it, const Utf8Iterator &end,
 	while (++it != end) {
 	    if (cjk_ngram && CJK::codepoint_is_cjk(*it)) break;
 	    unsigned ch = *it;
-	    if (!is_wordchar(ch)) {
+	    if ((flags & FLAG_WILDCARD) && (ch == '*' || ch == '?')) {
+		has_wildcards = true;
+	    } else if (!is_wordchar(ch)) {
 		// Treat a single embedded '&' or "'" or similar as a word
 		// character (e.g. AT&T, Fred's).  Also, normalise
 		// apostrophes to ASCII apostrophe.
@@ -1144,10 +1148,13 @@ not_prefix:
 phrased_term:
 	bool was_acronym;
 	bool is_cjk_term = false;
-	string term = parse_term(it, end, cjk_ngram, is_cjk_term, was_acronym);
+	bool has_wildcards = false;
+	string term = parse_term(it, end, cjk_ngram, flags,
+				 is_cjk_term, was_acronym, has_wildcards);
 
 	// Boolean operators.
-	if ((mode == DEFAULT || mode == IN_GROUP || mode == IN_GROUP2) &&
+	if (!has_wildcards &&
+	    (mode == DEFAULT || mode == IN_GROUP || mode == IN_GROUP2) &&
 	    (flags & FLAG_BOOLEAN) &&
 	    // Don't want to interpret A.N.D. as an AND operator.
 	    !was_acronym &&
@@ -1232,6 +1239,8 @@ phrased_term:
 		if (!stemmer.internal.get()) {
 		    // No stemmer is set.
 		    stem_term = STEM_NONE;
+		} else if (has_wildcards) {
+		    stem_term = STEM_NONE;
 		} else if (stem_term == STEM_SOME) {
 		    if (!should_stem(unstemmed_term) ||
 			(it != end && is_stem_preventer(*it))) {
@@ -1244,6 +1253,19 @@ phrased_term:
 	    Term * term_obj = new Term(&state, term, field_info,
 				       unstemmed_term, stem_term, term_pos++);
 
+	    // FIXME: is_cjk_term && has_wildcards ?
+	    if (has_wildcards) {
+		if (mode == IN_GROUP || mode == IN_GROUP2) {
+		    // Drop out of IN_GROUP and flag that the group
+		    // can be empty if all members are stopwords.
+		    if (mode == IN_GROUP2)
+			Parse(pParser, EMPTY_GROUP_OK, NULL, &state);
+		    mode = DEFAULT;
+		}
+		Parse(pParser, WILD_TERM, term_obj, &state);
+		continue;
+	    }
+
 	    if (is_cjk_term) {
 		Parse(pParser, CJKTERM, term_obj, &state);
 		if (it == end) break;
@@ -1251,26 +1273,7 @@ phrased_term:
 	    }
 
 	    if (mode == DEFAULT || mode == IN_GROUP || mode == IN_GROUP2) {
-		if (it != end) {
-		    if ((flags & FLAG_WILDCARD) && *it == '*') {
-			Utf8Iterator p(it);
-			++p;
-			if (p == end || !is_wordchar(*p)) {
-			    it = p;
-			    if (mode == IN_GROUP || mode == IN_GROUP2) {
-				// Drop out of IN_GROUP and flag that the group
-				// can be empty if all members are stopwords.
-				if (mode == IN_GROUP2)
-				    Parse(pParser, EMPTY_GROUP_OK, NULL, &state);
-				mode = DEFAULT;
-			    }
-			    // Wildcard at end of term (also known as
-			    // "right truncation").
-			    Parse(pParser, WILD_TERM, term_obj, &state);
-			    continue;
-			}
-		    }
-		} else {
+		if (it == end) {
 		    if (flags & FLAG_PARTIAL) {
 			if (mode == IN_GROUP || mode == IN_GROUP2) {
 			    // Drop out of IN_GROUP and flag that the group
@@ -1803,13 +1806,12 @@ Term::as_positional_cjk_term(Terms * terms) const
 // of all punctuation which does this).
 %destructor PHR_TERM {delete $$;}
 
-// WILD_TERM is like a TERM, but has a trailing wildcard which needs to be
-// expanded.
+// WILD_TERM is like a TERM, but with wildcards which needs to be expanded.
 %destructor WILD_TERM {delete $$;}
 
 // PARTIAL_TERM is like a TERM, but it's at the end of the query string and
-// we're doing "search as you type".  It expands to something like WILD_TERM
-// OR stemmed_form.
+// we're doing "search as you type".  It expands to something like:
+//     WILD_TERM($$+"*") OR stemmed_form
 %destructor PARTIAL_TERM {delete $$;}
 
 // BOOLEAN_FILTER is a query term with a prefix registered using

@@ -120,8 +120,9 @@ class QueryParser::Internal : public Xapian::Internal::intrusive_base {
 			    const string* grouping);
 
     std::string parse_term(Utf8Iterator &it, const Utf8Iterator &end,
-			   bool cjk_ngram, bool &is_cjk_term,
-			   bool &was_acronym);
+			   bool cjk_ngram, unsigned flags,
+			   bool &is_cjk_term, bool &was_acronym,
+			   bool &has_wildcards);
 
   public:
     Internal() : stem_action(STEM_SOME), stopper(NULL),
