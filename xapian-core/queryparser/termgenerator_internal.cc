@@ -575,7 +575,7 @@ static void
 check_query(const Xapian::Query & query,
 	    list<vector<string>> & exact_phrases,
 	    map<string, double> & loose_terms,
-	    list<string> & wildcards,
+	    list<const Xapian::Internal::QueryWildcard*> & wildcards,
 	    size_t & longest_phrase)
 {
     // FIXME: OP_NEAR, non-tight OP_PHRASE, OP_PHRASE with non-term subqueries
@@ -586,9 +586,10 @@ check_query(const Xapian::Query & query,
 	    *static_cast<const Xapian::Internal::QueryTerm *>(query.internal.get());
 	loose_terms.insert(make_pair(qt.get_term(), 0));
     } else if (op == query.OP_WILDCARD) {
-	const Xapian::Internal::QueryWildcard & qw =
-	    *static_cast<const Xapian::Internal::QueryWildcard *>(query.internal.get());
-	wildcards.push_back(qw.get_pattern());
+	using Xapian::Internal::QueryWildcard;
+	const QueryWildcard* qw =
+	    static_cast<const QueryWildcard*>(query.internal.get());
+	wildcards.push_back(qw);
     } else if (op == query.OP_PHRASE) {
 	const Xapian::Internal::QueryPhrase & phrase =
 	    *static_cast<const Xapian::Internal::QueryPhrase *>(query.internal.get());
@@ -667,7 +668,7 @@ MSet::Internal::snippet(const string & text,
 
     list<vector<string>> exact_phrases;
     map<string, double> loose_terms;
-    list<string> wildcards;
+    list<const Xapian::Internal::QueryWildcard*> wildcards;
     size_t longest_phrase = 0;
     check_query(enquire->get_query(), exact_phrases, loose_terms,
 		wildcards, longest_phrase);
@@ -729,9 +730,9 @@ MSet::Internal::snippet(const string & text,
 
 		// Check wildcards.
 		// FIXME: Sort wildcards, shortest pattern first or something?
-		for (auto&& pattern : wildcards) {
+		for (auto&& qw : wildcards) {
 		    // FIXME: Need to match wildcard patterns here...
-		    if (startswith(term, pattern)) {
+		    if (startswith(term, qw->get_pattern())) {
 			// FIXME: What relevance to use?
 			relevance = max_tw + min_tw;
 			highlight = 1;
