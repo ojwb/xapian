@@ -359,7 +359,10 @@ try {
     parser.set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
     parser.set_stopper(&mystopper);
 
-    Xapian::Query query(Xapian::Query::OP_WILDCARD, argv[optind], 0, Xapian::Query::WILDCARD_PATTERN_GLOB);
+    Xapian::Query query = parser.parse_query(argv[optind], flags);
+    const string & correction = parser.get_corrected_query_string();
+    if (!correction.empty())
+	cout << "Did you mean: " << correction << "\n\n";
 
     cout << "Parsed Query: " << query.get_description() << endl;
 
