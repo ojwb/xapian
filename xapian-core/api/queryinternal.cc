@@ -59,7 +59,6 @@
 #include <list>
 #include <string>
 #include <vector>
-#include <iostream>
 
 using namespace std;
 
@@ -1157,7 +1156,6 @@ QueryWildcard::postlist(QueryOptimiser * qopt, double factor) const
 
 	if (!test_prefix_known(term)) continue;
 
-	cout << "<" << term << "> from <" << pattern << ">" << endl;
 	if (max_type < Xapian::Query::WILDCARD_LIMIT_MOST_FREQUENT) {
 	    if (expansions_left-- == 0) {
 		if (max_type == Xapian::Query::WILDCARD_LIMIT_FIRST)
