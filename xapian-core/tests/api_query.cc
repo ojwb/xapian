@@ -382,6 +382,23 @@ DEFINE_TESTCASE(dualprefixwildcard1, backend) {
     return true;
 }
 
+/// Test special case wildcards.
+DEFINE_TESTCASE(specialwildcard1, !backend) {
+    const Xapian::Query::op o = Xapian::Query::OP_WILDCARD;
+
+    // Empty wildcard -> MatchNothing.
+    TEST_EQUAL(Xapian::Query(o, "").get_description(), "Query()");
+
+    // "*", "?*", etc -> MatchAll.
+#define QUERY_ALLDOCUMENTS "Query(<alldocuments>)"
+    TEST_EQUAL(Xapian::Query(o, "*").get_description(), QUERY_ALLDOCUMENTS);
+    TEST_EQUAL(Xapian::Query(o, "**").get_description(), QUERY_ALLDOCUMENTS);
+    TEST_EQUAL(Xapian::Query(o, "?*").get_description(), QUERY_ALLDOCUMENTS);
+    TEST_EQUAL(Xapian::Query(o, "*?").get_description(), QUERY_ALLDOCUMENTS);
+
+    return true;
+}
+
 struct positional_testcase {
     int window;
     const char * terms[4];

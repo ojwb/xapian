@@ -114,6 +114,30 @@ Query::Query(op op_,
 	throw Xapian::InvalidArgumentError("op must be OP_WILDCARD");
     if (rare(combiner != OP_SYNONYM && combiner != OP_MAX && combiner != OP_OR))
 	throw Xapian::InvalidArgumentError("combiner must be OP_SYNONYM or OP_MAX or OP_OR");
+    if (pattern.empty()) {
+	// Empty pattern -> MatchNothing.
+	return;
+    }
+
+    // Check if pattern is all-wildcards and contains at most one '?' - if so
+    // -> MatchAll.
+    bool match_all = false;
+    bool question_marks = false;
+    for (auto&& ch : pattern) {
+	if (ch == '*') {
+	    match_all = true;
+	} else if (ch == '?' && !question_marks) {
+	    question_marks = true;
+	} else {
+	    match_all = false;
+	    break;
+	}
+    }
+    if (match_all) {
+	internal = MatchAll.internal;
+	return;
+    }
+
     internal = new Xapian::Internal::QueryWildcard(pattern,
 						   max_expansion,
 						   flags,
