@@ -1252,6 +1252,51 @@ DEFINE_TESTCASE(wildquery1, backend) {
     return true;
 }
 
+// Tests for extended wildcarded queries.
+DEFINE_TESTCASE(wildquery2, !backend) {
+    Xapian::QueryParser queryparser;
+    unsigned flags = Xapian::QueryParser::FLAG_DEFAULT |
+		     Xapian::QueryParser::FLAG_WILDCARD;
+    queryparser.set_stemmer(Xapian::Stem("english"));
+    queryparser.set_stemming_strategy(Xapian::QueryParser::STEM_ALL);
+
+    Xapian::Query qobj;
+    qobj = queryparser.parse_query("*th", flags);
+    TEST_EQUAL(qobj.get_description(), "Query((SYNONYM WILDCARD OR *th))");
+
+    qobj = queryparser.parse_query("?th", flags);
+    TEST_EQUAL(qobj.get_description(), "Query((SYNONYM WILDCARD OR ?th))");
+
+    qobj = queryparser.parse_query("?th*", flags);
+    TEST_EQUAL(qobj.get_description(), "Query((SYNONYM WILDCARD OR ?th*))");
+
+    qobj = queryparser.parse_query("*th", flags);
+    TEST_EQUAL(qobj.get_description(), "Query((SYNONYM WILDCARD OR *th))");
+
+    qobj = queryparser.parse_query("?th", flags);
+    TEST_EQUAL(qobj.get_description(), "Query((SYNONYM WILDCARD OR ?th))");
+
+    qobj = queryparser.parse_query("foo *?x?", flags);
+    TEST_EQUAL(qobj.get_description(), "Query((foo@1 OR (SYNONYM WILDCARD OR *?x?)))");
+
+    qobj = queryparser.parse_query("* ?", flags);
+    TEST_EQUAL(qobj.get_description(), "Query((<alldocuments> OR (SYNONYM WILDCARD OR ?)))");
+
+    qobj = queryparser.parse_query("** test", flags);
+    TEST_EQUAL(qobj.get_description(), "Query((<alldocuments> OR test@2))");
+
+    qobj = queryparser.parse_query("?? test", flags);
+    TEST_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR ?""?) OR test@2))");
+
+    qobj = queryparser.parse_query("??* test", flags);
+    TEST_EQUAL(qobj.get_description(), "Query(((SYNONYM WILDCARD OR ??*) OR test@2))");
+
+    qobj = queryparser.parse_query("*?* test", flags);
+    TEST_EQUAL(qobj.get_description(), "Query((<alldocuments> OR test@2))");
+
+    return true;
+}
+
 DEFINE_TESTCASE(qp_flag_bool_any_case1, !backend) {
     using Xapian::QueryParser;
     Xapian::QueryParser qp;
