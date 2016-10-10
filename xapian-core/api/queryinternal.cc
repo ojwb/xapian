@@ -1148,7 +1148,7 @@ QueryWildcard::postlist(QueryOptimiser * qopt, double factor) const
 	    // A-Z, as we don't want the expansion to include prefixed terms.
 	    skip_ucase = false;
 	    if (term[0] <= 'Z') {
-		static_assert('Z' + 1 == '[');
+		static_assert('Z' + 1 == '[', "'Z' + 1 == '['");
 		t->skip_to("[");
 		continue;
 	    }
