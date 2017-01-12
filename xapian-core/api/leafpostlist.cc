@@ -111,6 +111,12 @@ LeafPostList::count_matching_subqs() const
     return weight ? 1 : 0;
 }
 
+void
+LeafPostList::gather_position_lists(std::vector<PositionList*>& poslists)
+{
+    poslists.push_back(read_position_list());
+}
+
 LeafPostList *
 LeafPostList::open_nearby_postlist(const std::string &) const
 {

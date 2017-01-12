@@ -1,7 +1,7 @@
 /** @file api_query.cc
  * @brief Query-related tests.
  */
-/* Copyright (C) 2008,2009,2012,2013,2015,2016 Olly Betts
+/* Copyright (C) 2008,2009,2012,2013,2015,2016,2017 Olly Betts
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -460,29 +460,37 @@ DEFINE_TESTCASE(loosenear1, backend) {
     return true;
 }
 
-/// Regression test for bug fixed in 1.3.6 - this would segfault in 1.3.x.
+/// Regression test for bug fixed in 1.3.6 - the first case segfaulted in 1.3.x.
 DEFINE_TESTCASE(complexphrase1, backend) {
     Xapian::Database db = get_database("apitest_simpledata");
     Xapian::Enquire enq(db);
-    TEST_EXCEPTION(Xapian::UnimplementedError,
-	Xapian::Query query(Xapian::Query::OP_PHRASE,
-		Xapian::Query("a") | Xapian::Query("b"),
-		Xapian::Query("i"));
-	enq.set_query(query);
-	(void)enq.get_mset(0, 10););
+    Xapian::Query query(Xapian::Query::OP_PHRASE,
+	    Xapian::Query("a") | Xapian::Query("b"),
+	    Xapian::Query("i"));
+    enq.set_query(query);
+    (void)enq.get_mset(0, 10);
+    Xapian::Query query2(Xapian::Query::OP_PHRASE,
+	    Xapian::Query("a") | Xapian::Query("b"),
+	    Xapian::Query("c"));
+    enq.set_query(query2);
+    (void)enq.get_mset(0, 10);
     return true;
 }
 
-/// Regression test for bug fixed in 1.3.6 - this would segfault in 1.3.x.
+/// Regression test for bug fixed in 1.3.6 - the first case segfaulted in 1.3.x.
 DEFINE_TESTCASE(complexnear1, backend) {
     Xapian::Database db = get_database("apitest_simpledata");
     Xapian::Enquire enq(db);
-    TEST_EXCEPTION(Xapian::UnimplementedError,
-	Xapian::Query query(Xapian::Query::OP_NEAR,
-		Xapian::Query("a") | Xapian::Query("b"),
-		Xapian::Query("i"));
-	enq.set_query(query);
-	(void)enq.get_mset(0, 10););
+    Xapian::Query query(Xapian::Query::OP_NEAR,
+	    Xapian::Query("a") | Xapian::Query("b"),
+	    Xapian::Query("i"));
+    enq.set_query(query);
+    (void)enq.get_mset(0, 10);
+    Xapian::Query query2(Xapian::Query::OP_NEAR,
+	    Xapian::Query("a") | Xapian::Query("b"),
+	    Xapian::Query("c"));
+    enq.set_query(query2);
+    (void)enq.get_mset(0, 10);
     return true;
 }
 
