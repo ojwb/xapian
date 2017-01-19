@@ -280,9 +280,9 @@ MultiAndPostList::count_matching_subqs() const
 }
 
 void
-MultiAndPostList::gather_position_lists(std::vector<PositionList*>& poslists)
+MultiAndPostList::gather_position_lists(OrPositionList* orposlist)
 {
     for (size_t i = 0; i < n_kids; ++i) {
-	plist[i]->gather_position_lists(poslists);
+	plist[i]->gather_position_lists(orposlist);
     }
 }

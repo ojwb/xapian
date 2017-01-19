@@ -29,26 +29,33 @@
 #include <vector>
 
 class OrPositionList : public PositionList {
-  protected:
-    /// The PositionList objects we're merging.
+  private:
+    /// The PositionList sub-objects.
     std::vector<PositionList*> pls;
 
-    /// The current respective positions.
+    /** Current positions of the subobjects.
+     *
+     *  This will be empty when this position list hasn't yet started.
+     */
     std::vector<Xapian::termpos> current;
+
+    /// Current position of this object.
+    Xapian::termpos current_pos;
 
   public:
     OrPositionList() { }
 
     PositionList* gather(PostList* pl) {
 	pls.clear();
-	pl->gather_position_lists(pls);
+	current.clear();
+	pl->gather_position_lists(this);
 	if (pls.size() == 1)
 	    return pls[0];
-	if (pls.size() > 2)
-	    throw Xapian::UnimplementedError("position lists for OR with more than 2 subqueries");
-	current.resize(pls.size());
-	std::fill(current.begin(), current.end(), 0);
 	return this;
+    }
+
+    void add_poslist(PositionList* poslist) {
+	pls.push_back(poslist);
     }
 
     Xapian::termcount get_size() const;

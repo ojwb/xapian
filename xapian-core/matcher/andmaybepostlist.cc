@@ -231,8 +231,8 @@ AndMaybePostList::count_matching_subqs() const
 }
 
 void
-AndMaybePostList::gather_position_lists(std::vector<PositionList*>& poslists)
+AndMaybePostList::gather_position_lists(OrPositionList* orposlist)
 {
-    l->gather_position_lists(poslists);
-    if (lhead == rhead) r->gather_position_lists(poslists);
+    l->gather_position_lists(orposlist);
+    if (lhead == rhead) r->gather_position_lists(orposlist);
 }

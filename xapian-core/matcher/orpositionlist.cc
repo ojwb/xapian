@@ -41,83 +41,75 @@ Xapian::termpos
 OrPositionList::get_position() const
 {
     LOGCALL(EXPAND, Xapian::termpos, "OrPositionList::get_position", NO_ARGS);
-    Xapian::termpos result = Xapian::termpos(-1);
-    for (auto pos : current) result = std::min(result, pos);
-    RETURN(result);
+    RETURN(current_pos);
 }
 
+// PositionList::next() is actually rarely used - ExactPhrasePostList will
+// never call it, while PhrasePostList will only call it once for the first
+// subquery and NearPostList will call it to start subqueries if we're near
+// the start of the document, and also if a candidate match has two subqueries
+// at the same position.
 void
 OrPositionList::next()
 {
     LOGCALL_VOID(EXPAND, "OrPositionList::next", NO_ARGS);
-    // If we've not started yet, both current[0] and current[1] will be 0,
-    // which gets handled by calling next() on both, which is what we want to
-    // do to get started.
-    if (current[0] <= current[1]) {
-	bool equal = (current[0] == current[1]);
-	if (equal && current[0] == Xapian::termpos(-1)) {
-	    // Both either at_end() or on the largest value and will be
-	    // at_end() if we call next().
-	    pls[0] = pls[1] = NULL;
-	    return;
-	}
-
-	pls[0]->next();
-	if (pls[0]->at_end()) {
-	    current[0] = Xapian::termpos(-1);
-	    pls[0] = NULL;
+    bool first = current.empty();
+    if (first) current.resize(pls.size());
+    Xapian::termpos old_pos = current_pos;
+    current_pos = Xapian::termpos(-1);
+    size_t j = 0;
+    for (size_t i = 0; i != pls.size(); ++i) {
+	PositionList* pl = pls[i];
+	Xapian::termpos pos;
+	if (first || current[i] <= old_pos) {
+	    pl->next();
+	    if (pl->at_end()) continue;
+	    pos = pl->get_position();
 	} else {
-	    current[0] = pls[0]->get_position();
+	    pos = current[i];
 	}
-	if (!equal) return;
+	current_pos = min(current_pos, pos);
+	current[j] = pos;
+	if (i != j) pls[j] = pls[i];
+	++j;
     }
-
-    pls[1]->next();
-    if (pls[1]->at_end()) {
-	current[1] = Xapian::termpos(-1);
-	pls[1] = NULL;
-    } else {
-	current[1] = pls[1]->get_position();
-    }
+    pls.resize(j);
 }
 
+// A min-heap seems like an obvious optimisation here, but is only useful when
+// handling clumps of terms - in particular when skip_to() advances all the
+// sublists, the heap doesn't help (but we have the cost of rebuilding it, or N
+// pop+push calls which has a worse complexity than rebuilding).
 void
 OrPositionList::skip_to(Xapian::termpos termpos)
 {
     LOGCALL_VOID(EXPAND, "OrPositionList::skip_to", termpos);
-    // If we've not started yet, both current[0] and current[1] will be 0,
-    // which gets handled by calling next() on both, which is what we want to
-    // do to get started.
-    if (current[0] <= current[1]) {
-	bool equal = (current[0] == current[1]);
-	if (equal && current[0] == Xapian::termpos(-1)) {
-	    // Both either at_end() or on the largest value, so skip_to() is a
-	    // no-op.
-	    return;
-	}
-
-	pls[0]->skip_to(termpos);
-	if (pls[0]->at_end()) {
-	    current[0] = Xapian::termpos(-1);
-	    pls[0] = NULL;
+    bool first = current.empty();
+    if (termpos <= current_pos && !first) return;
+    if (first) current.resize(pls.size());
+    current_pos = Xapian::termpos(-1);
+    size_t j = 0;
+    for (size_t i = 0; i != pls.size(); ++i) {
+	PositionList* pl = pls[i];
+	Xapian::termpos pos;
+	if (first || termpos > current[i]) {
+	    pl->skip_to(termpos);
+	    if (pl->at_end()) continue;
+	    pos = pl->get_position();
 	} else {
-	    current[0] = pls[0]->get_position();
+	    pos = current[i];
 	}
-	if (!equal) return;
+	current_pos = min(current_pos, pos);
+	current[j] = pos;
+	if (i != j) pls[j] = pls[i];
+	++j;
     }
-
-    pls[1]->skip_to(termpos);
-    if (pls[1]->at_end()) {
-	current[1] = Xapian::termpos(-1);
-	pls[1] = NULL;
-    } else {
-	current[1] = pls[1]->get_position();
-    }
+    pls.resize(j);
 }
 
 bool
 OrPositionList::at_end() const
 {
     LOGCALL(EXPAND, bool, "OrPositionList::at_end", NO_ARGS);
-    RETURN(pls[0] == NULL && pls[1] == NULL);
+    RETURN(pls.empty());
 }

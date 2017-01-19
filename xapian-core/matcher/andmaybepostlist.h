@@ -124,7 +124,7 @@ class AndMaybePostList : public BranchPostList {
 
 	Xapian::termcount count_matching_subqs() const;
 
-	void gather_position_lists(std::vector<PositionList*>& poslists);
+	void gather_position_lists(OrPositionList* orposlist);
 };
 
 #endif /* OM_HGUARD_ANDMAYBEPOSTLIST_H */

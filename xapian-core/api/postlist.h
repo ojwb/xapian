@@ -23,7 +23,6 @@
 #define XAPIAN_INCLUDED_POSTLIST_H
 
 #include <string>
-#include <vector>
 
 #include "xapian/intrusive_ptr.h"
 #include <xapian/types.h>
@@ -31,6 +30,8 @@
 
 #include "backends/positionlist.h"
 #include "weight/weightinternal.h"
+
+class OrPositionList;
 
 /// Abstract base class for postlists.
 class Xapian::PostingIterator::Internal : public Xapian::Internal::intrusive_base {
@@ -201,7 +202,7 @@ class Xapian::PostingIterator::Internal : public Xapian::Internal::intrusive_bas
     virtual Xapian::termcount count_matching_subqs() const;
 
     /// Gather PositionList* objects for a subtree.
-    virtual void gather_position_lists(std::vector<PositionList*>& poslists);
+    virtual void gather_position_lists(OrPositionList* orposlist);
 
     /// Return a string description of this object.
     virtual std::string get_description() const = 0;

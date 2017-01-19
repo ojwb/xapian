@@ -85,7 +85,7 @@ PostList::count_matching_subqs() const
 }
 
 void
-PostList::gather_position_lists(std::vector<PositionList*>&)
+PostList::gather_position_lists(OrPositionList*)
 {
     Assert(false);
 }

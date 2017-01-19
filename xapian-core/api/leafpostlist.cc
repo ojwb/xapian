@@ -24,6 +24,7 @@
 #include "xapian/weight.h"
 
 #include "leafpostlist.h"
+#include "matcher/orpositionlist.h"
 #include "omassert.h"
 #include "debuglog.h"
 
@@ -112,9 +113,9 @@ LeafPostList::count_matching_subqs() const
 }
 
 void
-LeafPostList::gather_position_lists(std::vector<PositionList*>& poslists)
+LeafPostList::gather_position_lists(OrPositionList* orposlist)
 {
-    poslists.push_back(read_position_list());
+    orposlist->add_poslist(read_position_list());
 }
 
 LeafPostList *

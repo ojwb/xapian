@@ -450,8 +450,8 @@ OrPostList::count_matching_subqs() const
 }
 
 void
-OrPostList::gather_position_lists(std::vector<PositionList*>& poslists)
+OrPostList::gather_position_lists(OrPositionList* orposlist)
 {
-    if (lhead <= rhead) l->gather_position_lists(poslists);
-    if (lhead >= rhead) r->gather_position_lists(poslists);
+    if (lhead <= rhead) l->gather_position_lists(orposlist);
+    if (lhead >= rhead) r->gather_position_lists(orposlist);
 }
