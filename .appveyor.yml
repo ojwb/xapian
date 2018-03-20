@@ -1,6 +1,8 @@
 skip_tags: true
-# A full clone takes 30 seconds, depth 20 takes 5 seconds.
-clone_depth: 20
+# A full clone takes ~30 seconds, "clone_depth: 20" takes ~5 seconds; Using
+# "shallow_clone: true" downloads the commit as a ZIP file so should be quicker
+# still.
+shallow_clone: true
 environment:
   global:
     AUTOMATED_TESTING: 1
