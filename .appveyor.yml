@@ -10,7 +10,7 @@ environment:
   matrix:
   - TOOLCHAIN: mingw
   - TOOLCHAIN: mingw64
-  - TOOLCHAIN: cygwin
+  # - TOOLCHAIN: cygwin
   - TOOLCHAIN: msvc
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     VCVARS_BAT: "\"C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat\" x64"
@@ -32,6 +32,7 @@ install:
       } else {
         $env:PATH="c:\msys64\usr\bin;$env:PATH"
       }
+  - bash -c 'ls -l c:/mingw-w64 c:/cygwin64/bin 
   - if "%TOOLCHAIN%"=="mingw" bash -c "echo 'c:/mingw /mingw' >> /etc/fstab"
   - if "%TOOLCHAIN%"=="mingw" bash -c 'mingw-get install libz-dev'
   - if "%TOOLCHAIN%"=="mingw64" bash -c 'pacman -Sy --noconfirm zlib-devel'
@@ -49,6 +50,7 @@ build_script:
   - if "%TOOLCHAIN%"=="mingw64" bash -c 'time ./configure --disable-documentation'
   - if "%TOOLCHAIN%"=="cygwin" bash -c 'time ./configure --host=x86_64-pc-cygwin --disable-documentation'
   - if "%TOOLCHAIN%"=="msvc" bash -c 'time ./configure --disable-documentation CC="cl -nologo" CXX="/c/projects/xapian/INST/share/automake-1.15/compile cl -nologo" CXXFLAGS="-EHsc" CPPFLAGS=-I$PWD/zlib AR=lib LDFLAGS=-L$PWD/zlib'
-  - bash -c 'time make -j2' < nul
+  - bash -c 'cat xapian-core/config.log'
+    #  - bash -c 'time make -j2' < nul
 test_script:
   - bash -c 'time make check VERBOSE=1' < nul
