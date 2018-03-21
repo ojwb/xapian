@@ -48,6 +48,6 @@ build_script:
   - if "%TOOLCHAIN%"=="mingw64" bash -c 'time ./configure --host=x86_64-w64-mingw32 --disable-documentation --host=i686-pc-mingw32'
   - if "%TOOLCHAIN%"=="cygwin" bash -c 'time ./configure --host=x86_64-w64-mingw32 --disable-documentation'
   - if "%TOOLCHAIN%"=="msvc" bash -c 'time ./configure --disable-documentation CC="cl -nologo" CXX="/c/projects/xapian/INST/share/automake-1.15/compile cl -nologo" CXXFLAGS="-EHsc" CPPFLAGS=-I$PWD/zlib AR=lib LDFLAGS=-L$PWD/zlib'
-  - bash -c 'time make -j2;cat config.log' < nul
+  - bash -c 'time make -j2;cat xapian-core/config.log' < nul
 test_script:
   - bash -c 'time make check VERBOSE=1' < nul
