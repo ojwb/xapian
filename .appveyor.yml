@@ -32,8 +32,7 @@ install:
       } else {
         $env:PATH="c:\msys64\usr\bin;$env:PATH"
       }
-  - bash -c 'ls -l c:/mingw-w64/x86_64-7.2.0-posix-seh-rt_v5-rev1/mingw64 c:/mingw/bin c:/mingw/mingw32 || :'
-  - bash -c 'cat c:/mingw-w64/x86_64-7.2.0-posix-seh-rt_v5-rev1/mingw-w64.bat'
+  - if "%TOOLCHAIN%"=="mingw64" bash -c 'ls -l c:/mingw-w64/x86_64-7.2.0-posix-seh-rt_v5-rev1/mingw64/bin'
   - bash -c 'env|grep PATH'
   - if "%TOOLCHAIN%"=="mingw" bash -c "echo 'c:/mingw /mingw' >> /etc/fstab"
   - if "%TOOLCHAIN%"=="mingw" bash -c 'mingw-get install libz-dev'
@@ -51,8 +50,7 @@ build_script:
   - if "%TOOLCHAIN%"=="mingw" bash -c 'time ./configure --disable-documentation'
   - if "%TOOLCHAIN%"=="mingw64" bash -c 'time ./configure --host=x86_64-w64-mingw32 --disable-documentation'
   - if "%TOOLCHAIN%"=="cygwin" bash -c 'time ./configure --host=x86_64-pc-cygwin --disable-documentation'
-  - if "%TOOLCHAIN%"=="msvc" bash -c 'time ./configure --disable-documentation CC="cl -nologo" CXX="/c/projects/xapian/INST/share/automake-1.15/compile cl -nologo" CXXFLAGS="-EHsc" CPPFLAGS=-I$PWD/zlib AR=lib LDFLAGS=-L$PWD/zlib || :'
-  - if "%TOOLCHAIN%"=="msvc" bash -c 'cat xapian-core/config.log'
+  - if "%TOOLCHAIN%"=="msvc" bash -c 'time ./configure --disable-documentation CC="cl -nologo" CXX="/c/projects/xapian/INST/share/automake-1.15/compile cl -nologo" CXXFLAGS="-EHsc" CPPFLAGS=-I$PWD/zlib AR=lib LDFLAGS=-L$PWD/zlib; cat xapian-core/config.log'
   - bash -c 'time make -j2' < nul
 test_script:
   - bash -c 'time make check VERBOSE=1' < nul
