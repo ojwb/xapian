@@ -24,7 +24,7 @@ install:
       if ($env:TOOLCHAIN -eq "mingw") {
         $env:PATH="C:\Mingw\bin;C:\Mingw\MSYS\1.0\bin;$env:PATH"
       } elseif ($env:TOOLCHAIN -eq "mingw64") {
-        $env:PATH="C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin;C:\msys64\usr\bin;$env:PATH"
+        $env:PATH="C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw32\bin;C:\msys64\usr\bin;$env:PATH"
       } elseif ($env:TOOLCHAIN -eq "cygwin") {
         $env:PATH="C:\cygwin64\bin;$env:PATH"
       } elseif ($env:TOOLCHAIN -eq "llvm") {
@@ -32,7 +32,7 @@ install:
       } else {
         $env:PATH="c:\msys64\usr\bin;$env:PATH"
       }
-  - bash -c 'ls -l c:/mingw-w64 c:/cygwin64/bin c:/mingw/bin'
+  - bash -c 'ls -l c:/mingw-w64/x86_64-7.2.0-posix-seh-rt_v5-rev1 c:/mingw || true'
   - bash -c 'env|grep PATH'
   - if "%TOOLCHAIN%"=="mingw" bash -c "echo 'c:/mingw /mingw' >> /etc/fstab"
   - if "%TOOLCHAIN%"=="mingw" bash -c 'mingw-get install libz-dev'
@@ -53,4 +53,4 @@ build_script:
   - if "%TOOLCHAIN%"=="msvc" bash -c 'time ./configure --disable-documentation CC="cl -nologo" CXX="/c/projects/xapian/INST/share/automake-1.15/compile cl -nologo" CXXFLAGS="-EHsc" CPPFLAGS=-I$PWD/zlib AR=lib LDFLAGS=-L$PWD/zlib ; cat xapian-core/config.log'
     #  - bash -c 'time make -j2' < nul
 test_script:
-  - bash -c 'time make check VERBOSE=1' < nul
+    #  - bash -c 'time make check VERBOSE=1' < nul
