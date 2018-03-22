@@ -9,7 +9,7 @@ environment:
     AUTOMATED_TESTING: 1
   matrix:
   # 32-bit only: - TOOLCHAIN: mingw
-  - TOOLCHAIN: mingw64
+  # - TOOLCHAIN: mingw64
   # - TOOLCHAIN: cygwin
   - TOOLCHAIN: msvc
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
@@ -50,7 +50,7 @@ build_script:
   - if "%TOOLCHAIN%"=="mingw" bash -c 'time ./configure --disable-documentation'
   - if "%TOOLCHAIN%"=="mingw64" bash -c 'time ./configure --host=x86_64-w64-mingw32 --disable-documentation'
   - if "%TOOLCHAIN%"=="cygwin" bash -c 'time ./configure --host=x86_64-pc-cygwin --disable-documentation'
-  - if "%TOOLCHAIN%"=="msvc" bash -c 'time ./configure --disable-documentation CC="cl -nologo" CXX="/c/projects/xapian/INST/share/automake-1.15/compile cl -nologo" CXXFLAGS="-EHsc" CPPFLAGS=-I$PWD/zlib AR=lib LDFLAGS=-L$PWD/zlib; cat xapian-core/config.log'
+  - if "%TOOLCHAIN%"=="msvc" bash -c 'time ./configure --disable-documentation CC="cl -nologo" CXX="`pwd`/INST/share/automake-1.15/compile cl -nologo" CXXFLAGS="-EHsc" CPPFLAGS=-I$PWD/zlib AR=lib LDFLAGS=-L$PWD/zlib; cat xapian-core/config.log'
   - bash -c 'time make -j2' < nul
 test_script:
   - bash -c 'time make check VERBOSE=1' < nul
