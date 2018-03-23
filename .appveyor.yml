@@ -64,10 +64,6 @@ install:
         $env:PATH="c:\msys64\usr\bin;$env:PATH"
       }
   - ps: >-
-      if ($env:Platform -eq "x64") {
-        $env:CONFIGOPTS+=" --disable-backend-remote"
-      }
-  - ps: >-
       if ($env:TOOLCHAIN -ne "cygwin") {
         $env:CONFIGOPTS+=" --disable-backend-honey"
       }
