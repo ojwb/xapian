@@ -537,6 +537,7 @@ AC_CHECK_SIZEOF([short])
 AC_CHECK_SIZEOF([int])
 AC_CHECK_SIZEOF([long])
 AC_CHECK_SIZEOF([long long])
+AC_CHECK_SIZEOF([void*])
 
 AC_CHECK_HEADERS([sys/types.h])
 
