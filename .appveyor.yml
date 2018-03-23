@@ -5,6 +5,8 @@ skip_tags: true
 # think that would be quicker still, but actually it seems to take ~15 seconds,
 # and then bootstrap fails due to there not being a ".git" directory.
 clone_depth: 20
+# Specify clone_folder so we can hard-code the Unix path equivalent below.
+clone_folder: c:\projects\xapian
 environment:
   global:
     AUTOMATED_TESTING: 1
@@ -84,11 +86,11 @@ install:
   - ps: >-
       if ($env:TOOLCHAIN -eq "msvc") {
         $env:CC="cl -nologo"
-        $env:CXX="$env:APPVEYOR_BUILD_FOLDER/INST/share/automake-1.15/compile cl -nologo"
+        $env:CXX="c:/projects/xapian/INST/share/automake-1.15/compile cl -nologo"
         $env:CXXFLAGS="-EHsc"
-        $env:CPPFLAGS="-I$env:APPVEYOR_BUILD_FOLDER/zlib"
+        $env:CPPFLAGS="-Ic:/projects/xapian/zlib"
         $env:AR="lib"
-        $env:LDFLAGS="-L$env:APPVEYOR_BUILD_FOLDER/zlib"
+        $env:LDFLAGS="-Lc:/projects/xapian/zlib"
       }
 build_script:
   - bash -c 'time ./configure $CONFIGOPTS'
