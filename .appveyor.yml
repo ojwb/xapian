@@ -60,7 +60,12 @@ install:
         $env:PATH="C:\Program Files\LLVM\bin;c:\msys64\usr\bin;$env:PATH"
       } else {
         $env:PATH="c:\msys64\usr\bin;$env:PATH"
-        $env:CONFIGOPTS+=" CC='cl -nologo' CXX='$env:APPVEYOR_BUILD_FOLDER/INST/share/automake-1.15/compile cl -nologo' CXXFLAGS=-EHsc CPPFLAGS='-$env:APPVEYOR_BUILD_FOLDER/zlib' AR=lib LDFLAGS=-L'$env:APPVEYOR_BUILD_FOLDER/zlib'"
+        $env:CC="cl -nologo"
+        $env:CXX="$env:APPVEYOR_BUILD_FOLDER/INST/share/automake-1.15/compile cl -nologo"
+        $env:CXXFLAGS="-EHsc"
+        $env:CPPFLAGS="-I$env:APPVEYOR_BUILD_FOLDER/zlib"
+        $env:AR="lib"
+        $env:LDFLAGS="-L$env:APPVEYOR_BUILD_FOLDER/zlib"
       }
   - ps: >-
       if ($env:Platform -eq "x64") {
