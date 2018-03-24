@@ -71,8 +71,7 @@ install:
   - if "%TOOLCHAIN%"=="mingw" bash -c "echo 'c:/mingw /mingw' >> /etc/fstab"
   - if "%TOOLCHAIN%"=="mingw" bash -c 'mingw-get install libz-dev'
   - if "%TOOLCHAIN%"=="mingw64" bash -c 'pacman -Sy --noconfirm zlib-devel'
-  - if "%TOOLCHAIN%-%Platform%"=="cygwin-x86" C:\cygwin\setup-x86.exe -qnNdO -R C:/cygwin -s http://cygwin.mirror.constant.com -l C:/cygwin/var/cache/setup -P file-devel -P zlib-devel
-  - if "%TOOLCHAIN%-%Platform%"=="cygwin-x64" C:\cygwin64\setup-x86_64.exe -qnNdO -R C:/cygwin64 -s http://cygwin.mirror.constant.com -l C:/cygwin64/var/cache/setup -P file-devel -P zlib-devel
+  - if "%TOOLCHAIN%"=="cygwin-x64" C:\cygwin64\setup-x86_64.exe -qnNdO -R C:/cygwin64 -s http://cygwin.mirror.constant.com -l C:/cygwin64/var/cache/setup -P file-devel -P zlib-devel
   - bash -c 'time ./bootstrap xapian-core'
   - if "%TOOLCHAIN%"=="msvc" call %VCVARS_BAT%
   - if "%TOOLCHAIN%"=="msvc" bash -c 'wget https://zlib.net/zlib-1.2.11.tar.gz && tar -xf zlib-1.2.11.tar.gz && mv zlib-1.2.11 zlib'
@@ -90,17 +89,10 @@ install:
         $env:AR="lib"
         $env:LDFLAGS="-Lc:/projects/xapian/zlib"
       }
-  - ps: >-
-      if ($env:TOOLCHAIN -eq "cygwin") {
-        if ($env:Platform -eq "x86") {
-          $env:CC="gcc -m32"
-          $env:CXX="g++ -m32"
-        }
-      }
 build_script:
   - bash -c 'time ./configure $CONFIGOPTS'
   - bash -c 'time make -j2' < nul
 test_script:
-  - if "%TOOLCHAIN%"!="msvc" bash -c 'time make check VERBOSE=1' < nul
+  - if "%TOOLCHAIN%"=="cygwin" bash -c 'time make check VERBOSE=1' < nul
   - if "%TOOLCHAIN%"=="msvc" bash -c 'time make -C xapian-core/tests apitest.exe' < nul
   - if "%TOOLCHAIN%"=="msvc" bash -c 'time cd xapian-core/tests;./runtest ./apitest.exe -v' < nul
