@@ -20,8 +20,9 @@ environment:
   - TOOLCHAIN: cygwin
     platform: x86
     XAPIAN_MODULES: xapian-applications/omega
-#  - TOOLCHAIN: cygwin
-#    platform: x64
+  - TOOLCHAIN: cygwin
+    platform: x64
+    XAPIAN_MODULES: xapian-applications/omega
 #  - TOOLCHAIN: msvc
 #    platform: x86
 #    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
@@ -34,10 +35,10 @@ environment:
 #    platform: x86
 #    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 #    VCVARS_BAT: "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Auxiliary\\Build\\vcvars32.bat\""
-#  - TOOLCHAIN: msvc
-#    platform: x64
-#    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-#    VCVARS_BAT: "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat\""
+  - TOOLCHAIN: msvc
+    platform: x64
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+    VCVARS_BAT: "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat\""
 install:
   - ps: >-
       $env:CONFIGOPTS="--disable-documentation"
@@ -65,21 +66,22 @@ install:
       } else {
         $env:PATH="c:\msys64\usr\bin;$env:PATH"
       }
+#  - ps: >-
+#      if ($env:TOOLCHAIN -eq "msvc") {
+#        if ($env:Platform -eq "x64") {
+#          $env:CONFIGOPTS+=" --disable-backend-remote"
+#        }
+#      }
   - ps: >-
       if ($env:TOOLCHAIN -ne "cygwin") {
         $env:CONFIGOPTS+=" --disable-backend-honey"
-      }
-  - ps: >-
-      if ($env:TOOLCHAIN -eq "msvc") {
-        if ($env:Platform -eq "x64") {
-          $env:CONFIGOPTS+=" --disable-backend-remote"
-        }
       }
   - if "%TOOLCHAIN%"=="mingw" bash -c "echo 'c:/mingw /mingw' >> /etc/fstab"
   - if "%TOOLCHAIN%"=="mingw" bash -c 'mingw-get install libz-dev'
   - if "%TOOLCHAIN%"=="mingw64" bash -c 'pacman -Sy --noconfirm zlib-devel'
   - if "%TOOLCHAIN%-%Platform%"=="cygwin-x64" C:\cygwin64\setup-x86_64.exe -qnNdO -R C:/cygwin64 -s http://cygwin.mirror.constant.com -l C:/cygwin64/var/cache/setup -P file-devel -P libpcre-devel -P zlib-devel
   - if "%TOOLCHAIN%-%Platform%"=="cygwin-x86" C:\cygwin64\setup-x86_64.exe -qnNdO -R C:/cygwin64 -s http://cygwin.mirror.constant.com -l C:/cygwin64/var/cache/setup -P file-devel -P libpcre-devel -P zlib-devel -P cygwin32-gcc-core -P cygwin32-gcc-g++
+  - if "%TOOLCHAIN%"=="cygwin" bash -c 'ln -s ../../xapian-core/common xapian-applications/omega/common'
   - bash -c 'time ./bootstrap xapian-core %XAPIAN_MODULES%'
   - if "%TOOLCHAIN%"=="msvc" call %VCVARS_BAT%
   - if "%TOOLCHAIN%"=="msvc" bash -c 'wget https://zlib.net/zlib-1.2.11.tar.gz && tar -xf zlib-1.2.11.tar.gz && mv zlib-1.2.11 zlib'
