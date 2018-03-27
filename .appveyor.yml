@@ -17,12 +17,12 @@ environment:
 #    platform: x86
 #  - TOOLCHAIN: mingw64
 #    platform: x64
-  - TOOLCHAIN: cygwin
+  - TOOLCHAIN: cygwin # Fails to run any of the test programs (apitest.exe etc)
     platform: x86
 #    XAPIAN_MODULES: xapian-applications/omega
   - TOOLCHAIN: cygwin
     platform: x64
-    XAPIAN_MODULES: xapian-applications/omega
+    XAPIAN_MODULES: xapian-applications/omega # Missing strptime()
 #  - TOOLCHAIN: msvc
 #    platform: x86
 #    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
