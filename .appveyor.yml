@@ -19,7 +19,7 @@ environment:
 #    platform: x64
   - TOOLCHAIN: cygwin
     platform: x86
-    XAPIAN_MODULES: xapian-applications/omega
+#    XAPIAN_MODULES: xapian-applications/omega
   - TOOLCHAIN: cygwin
     platform: x64
     XAPIAN_MODULES: xapian-applications/omega
@@ -66,12 +66,6 @@ install:
       } else {
         $env:PATH="c:\msys64\usr\bin;$env:PATH"
       }
-#  - ps: >-
-#      if ($env:TOOLCHAIN -eq "msvc") {
-#        if ($env:Platform -eq "x64") {
-#          $env:CONFIGOPTS+=" --disable-backend-remote"
-#        }
-#      }
   - ps: >-
       if ($env:TOOLCHAIN -ne "cygwin") {
         $env:CONFIGOPTS+=" --disable-backend-honey"
@@ -80,7 +74,7 @@ install:
   - if "%TOOLCHAIN%"=="mingw" bash -c 'mingw-get install libz-dev'
   - if "%TOOLCHAIN%"=="mingw64" bash -c 'pacman -Sy --noconfirm zlib-devel'
   - if "%TOOLCHAIN%-%Platform%"=="cygwin-x64" C:\cygwin64\setup-x86_64.exe -qnNdO -R C:/cygwin64 -s http://cygwin.mirror.constant.com -l C:/cygwin64/var/cache/setup -P file-devel -P libpcre-devel -P zlib-devel
-  - if "%TOOLCHAIN%-%Platform%"=="cygwin-x86" C:\cygwin64\setup-x86_64.exe -qnNdO -R C:/cygwin64 -s http://cygwin.mirror.constant.com -l C:/cygwin64/var/cache/setup -P file-devel -P libpcre-devel -P zlib-devel -P cygwin32-gcc-core -P cygwin32-gcc-g++
+  - if "%TOOLCHAIN%-%Platform%"=="cygwin-x86" C:\cygwin64\setup-x86_64.exe -qnNdO -R C:/cygwin64 -s http://cygwin.mirror.constant.com -l C:/cygwin64/var/cache/setup -P cygwin32-zlib -P cygwin34 -P cygwin32-gcc-core -P cygwin32-gcc-g++
   - if "%TOOLCHAIN%"=="cygwin" bash -c 'cp -a xapian-core/common xapian-applications/omega/common'
   - bash -c 'time ./bootstrap xapian-core %XAPIAN_MODULES%'
   - if "%TOOLCHAIN%"=="msvc" call %VCVARS_BAT%
@@ -100,9 +94,7 @@ install:
         $env:LDFLAGS="-Lc:/projects/xapian/zlib"
       }
 build_script:
-  - bash -c 'time ./configure $CONFIGOPTS; cat xapian-core/config.log'
+  - bash -c 'time ./configure $CONFIGOPTS'
   - bash -c 'time make -j2' < nul
 test_script:
-  - if "%TOOLCHAIN%"=="cygwin" bash -c 'time make check VERBOSE=1' < nul
-  - if "%TOOLCHAIN%"=="msvc" bash -c 'time make -C xapian-core/tests apitest.exe' < nul
-  - if "%TOOLCHAIN%"=="msvc" bash -c 'time cd xapian-core/tests;ls -lrt;./runtest ./apitest.exe -v' < nul
+  - bash -c 'time make check VERBOSE=1' < nul
