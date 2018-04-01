@@ -26,17 +26,17 @@ environment:
 #    VCVARS_BAT: "\"C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat\" x86"
 # We get exit code 127 trying to run apitest.exe but no error message.
 # Other test programs which link to libxapian fail too.  unittest.exe OK.
-  - TOOLCHAIN: msvc
-    platform: x64
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
-    VCVARS_BAT: "\"C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat\" x64"
+#  - TOOLCHAIN: msvc
+#    platform: x64
+#    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+#    VCVARS_BAT: "\"C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat\" x64"
 #  - TOOLCHAIN: msvc
 #    platform: x86
 #    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 #    VCVARS_BAT: "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Auxiliary\\Build\\vcvars32.bat\""
 # Fails trying to run apitest.exe etc for unknown reasons.
-  - TOOLCHAIN: cygwin
-    platform: x86
+#  - TOOLCHAIN: cygwin
+#    platform: x86
 #    XAPIAN_MODULES: xapian-applications/omega
   - TOOLCHAIN: msvc
     platform: x64
@@ -72,11 +72,6 @@ install:
   - ps: >-
       if ($env:TOOLCHAIN -ne "cygwin") {
         $env:CONFIGOPTS+=" --disable-backend-honey"
-        if ($env:TOOLCHAIN -eq "msvc") {
-          if ($env:Platform -eq "x64") {
-            $env:CONFIGOPTS+=" --disable-backend-remote"
-          }
-        }
       }
   - if "%TOOLCHAIN%"=="mingw" bash -c "echo 'c:/mingw /mingw' >> /etc/fstab"
   - if "%TOOLCHAIN%"=="mingw" bash -c 'mingw-get install libz-dev'
