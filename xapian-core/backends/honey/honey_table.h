@@ -298,7 +298,6 @@ class SSIndex {
 #elif defined SSINDEX_SKIPLIST
     size_t block = 0;
 #endif
-    size_t n_index = 0;
 #if defined SSINDEX_BINARY_CHOP || defined SSINDEX_SKIPLIST
     std::string last_index_key;
 #endif
@@ -337,11 +336,11 @@ class SSIndex {
 	if (!pointers) {
 	    pointers = new off_t[256]();
 	    first = initial;
-	} else if (initial == last) {
-	    return;
 	}
+	// We should only be called for valid index points.
+	AssertRel(int(initial), !=, last);
 
-	while (++last != initial) {
+	while (++last != int(initial)) {
 	    pointers[last] = ptr;
 	    // FIXME: Perhaps record this differently so that an exact key
 	    // search can return false?
@@ -417,11 +416,11 @@ class SSIndex {
 #else
 # error "SSINDEX type not specified"
 #endif
-
-	++n_index;
     }
 
     off_t write(BufferedFile& fh) {
+	off_t root = fh.get_pos();
+
 #ifdef SSINDEX_ARRAY
 	if (!pointers) {
 	    first = last = 0;
@@ -444,8 +443,38 @@ class SSIndex {
 	delete [] pointers;
 	pointers = NULL;
 #elif defined SSINDEX_BINARY_CHOP
+	if (last_index_key.size() == SSINDEX_BINARY_CHOP_KEY_SIZE) {
+	    // Increment final byte(s) to give a key which is definitely
+	    // at or above any key which this could be truncated from.
+	    size_t i = last_index_key.size();
+	    unsigned char ch;
+	    do {
+		if (i == 0) {
+		    // We can't increment "\xff\xff\xff\xff" to give an upper
+		    // bound - just skip adding one in this case as the table
+		    // will handle it OK and there's not much to be gained by
+		    // adding one as few keys are larger.
+		    goto skip_adding_upper_bound;
+		}
+		--i;
+		ch = static_cast<unsigned char>(last_index_key[i]) + 1;
+		last_index_key[i] = ch;
+	    } while (ch == 0);
+	} else {
+	    // Pad with zeros, which gives an upper bound.
+	    last_index_key.resize(SSINDEX_BINARY_CHOP_KEY_SIZE);
+	}
+
+	{
+	    data += last_index_key;
+	    size_t c = data.size();
+	    data.resize(c + 4);
+	    unaligned_write4(reinterpret_cast<unsigned char*>(&data[c]), root);
+	}
+
+skip_adding_upper_bound:
 	// Fill in bytes 1 to 4 with the number of entries.
-	AssertEq(n_index, (data.size() - 5) / (SSINDEX_BINARY_CHOP_KEY_SIZE + 4));
+	size_t n_index = (data.size() - 5) / (SSINDEX_BINARY_CHOP_KEY_SIZE + 4);
 	data[1] = n_index >> 24;
 	data[2] = n_index >> 16;
 	data[3] = n_index >> 8;
@@ -456,7 +485,6 @@ class SSIndex {
 # error "SSINDEX type not specified"
 #endif
 
-	off_t root = fh.get_pos();
 	fh.write(data.data(), data.size());
 	// FIXME: parent stuff...
 	return root;
@@ -469,8 +497,6 @@ class SSIndex {
 	if (parent_index) s += parent_index->size();
 	return s;
     }
-
-    size_t get_num_entries() const { return n_index; }
 };
 
 class HoneyCursor;

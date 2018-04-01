@@ -50,8 +50,10 @@
 using namespace std;
 
 /// Honey format version (date of change):
-#define HONEY_FORMAT_VERSION DATE_TO_VERSION(2018,3,26)
-// 2018,3,26  1.5.0 use known suffix from spelling B and T keys
+#define HONEY_FORMAT_VERSION DATE_TO_VERSION(2018,3,28)
+// 2018,3,28  1.5.0 don't special case first entry in SSTable
+// 2018,3,27        new key format for value stats, value chunks, doclen chunks
+// 2018,3,26        use known suffix from spelling B and T keys
 // 2018,3,25        use known prefix from spelling B and H keys
 // 2018,3,15        avoid storing flat wdf
 // 2018,3,14        store per term wdf_max
