@@ -625,7 +625,7 @@ else
 fi
 
 # Feature tests for datevalue command scriptindex.
-printf 'DATE : field parsedate=%%Y%%m%%d valuepacked=13\n' > "$TEST_INDEXSCRIPT"
+printf '%s' 'DATE : field parsedate=%Y%m%d valuepacked=13\n' > "$TEST_INDEXSCRIPT"
 rm -rf "$TEST_DB"
 $SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" > /dev/null <<'END'
 DATE=19891204
@@ -634,7 +634,7 @@ printf '$field{DATE,1}|$unpack{$value{13,1}}|$date{$unpack{$value{13,1}}}' > "$T
 testcase '19891204|628732800|1989-12-04' P=text
 
 # Feature tests for datevalue command scriptindex where format contains space.
-printf 'DATE : field parsedate="%%Y%%m%%d %%T" valuepacked=13\n' > "$TEST_INDEXSCRIPT"
+printf '%s' 'DATE : field parsedate="%Y%m%d %T" valuepacked=13\n' > "$TEST_INDEXSCRIPT"
 rm -rf "$TEST_DB"
 $SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" > /dev/null 2>&1 <<'END'
 DATE=20161202 12:04:22.000000
@@ -680,7 +680,7 @@ for badesc in \
     '"\\x1g"' \
     '"\\x1g"' \
     ; do
-    printf "x: split=$badesc" > "$TEST_INDEXSCRIPT"
+    printf '%s' "x: split=$badesc" > "$TEST_INDEXSCRIPT"
     rm -rf "$TEST_DB"
     rc=0
     out=`$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" < /dev/null 2>&1` || rc=$?
