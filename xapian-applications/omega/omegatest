@@ -57,9 +57,12 @@ testcase() {
     [ "$#" != 0 ] || { set x dummy; shift; }
     output=`$FAKETIME ${FAKE_NOW+"$FAKE_NOW"} "$OMEGA" "$@"`
     if [ "$output" != "$expected" ] ; then
-	echo "$OMEGA $@:"
-	printf '%s\n' "  expected: «$expected»"
-	printf '%s\n' "  received: «$output»"
+	echo "$FAKE_NOW "${FAKE_NOW+"$FAKE_NOW"}" $OMEGA $@:"
+	printf '%s\n' "  expected: «$expected»"|cat -vet
+	printf '%s\n' "  received: «$output»"|cat -vet
+	echo
+	printf '%s\n' "  expected: |$expected|"|cat -vet
+	printf '%s\n' "  received: |$output|"|cat -vet
 	failed=`expr $failed + 1`
     fi
 }
