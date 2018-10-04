@@ -668,7 +668,7 @@ rm -rf "$TEST_DB"
 $SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" > /dev/null <<'END'
 esc=test
 END
-printf '%s' '$field{$chr{9}escape$.test\",1}' > "$TEST_TEMPLATE"
+printf '$field{$chr{9}escape$.test\\",1}' > "$TEST_TEMPLATE"
 echo aaa
 testcase 'test' P=
 echo AAA
@@ -680,13 +680,13 @@ echo
 # Ensure the location of the problem is always in the same column so we can
 # test against a fixed error message including line and column.
 for badesc in \
-    '"xx\\' \
-    '"xx\\q"' \
-    '"\\x"' \
-    '"\\x1"' \
-    '"\\xg"' \
-    '"\\x1g"' \
-    '"\\x1g"' \
+    '"xx\' \
+    '"xx\q"' \
+    '"\x"' \
+    '"\x1"' \
+    '"\xg"' \
+    '"\x1g"' \
+    '"\x1g"' \
     ; do
     printf '%s' "x: split=$badesc" > "$TEST_INDEXSCRIPT"
     rm -rf "$TEST_DB"
