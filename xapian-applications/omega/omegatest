@@ -662,7 +662,7 @@ testcase '1|19891204' P=
 echo ZZZ
 
 # Feature tests for escaping in quoted arguments.
-printf '%s' 'esc : field="\\tesca\\x70e,test\\\\\\""\n' > "$TEST_INDEXSCRIPT"
+printf '%s\n' 'esc : field="\tesca\x70e,test\\\""' > "$TEST_INDEXSCRIPT"
 cat -vet "$TEST_INDEXSCRIPT"
 rm -rf "$TEST_DB"
 $SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" > /dev/null <<'END'
