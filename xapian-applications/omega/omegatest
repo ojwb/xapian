@@ -58,8 +58,8 @@ testcase() {
     output=`$FAKETIME ${FAKE_NOW+"$FAKE_NOW"} "$OMEGA" "$@"`
     if [ "$output" != "$expected" ] ; then
 	echo "$OMEGA $@:"
-	printf '%s' "  expected: «$expected»"
-	printf '%s' "  received: «$output»"
+	printf '%s\n' "  expected: «$expected»"
+	printf '%s\n' "  received: «$output»"
 	failed=`expr $failed + 1`
     fi
 }
@@ -654,13 +654,13 @@ printf '$freq{D19891204}|$field{  spaces  ,1}' > "$TEST_TEMPLATE"
 testcase '1|19891204' P=text
 # Use $time to force the match to run.
 printf '$if{$time,$freq{D19891204}}|$field{  spaces  ,1}' > "$TEST_TEMPLATE"
-echo zzz
 testcase '1|19891204' P=
 
 echo ZZZ
 
 # Feature tests for escaping in quoted arguments.
 printf 'esc : field="\\tesca\\x70e,test\\\\\\""\n' > "$TEST_INDEXSCRIPT"
+cat -vet "$TEST_INDEXSCRIPT"
 rm -rf "$TEST_DB"
 $SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" > /dev/null <<'END'
 esc=test
@@ -692,8 +692,7 @@ for badesc in \
 	: # OK
     else
 	echo "scriptindex didn't give expected error for bad escaping"
-	echo "badesc=$badesc"
-	echo "got: $out"
+	printf '%s\n' "badesc=$badesc" "got: $out"
 	failed=`expr $failed + 1`
     fi
 done
