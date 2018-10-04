@@ -58,8 +58,8 @@ testcase() {
     output=`$FAKETIME ${FAKE_NOW+"$FAKE_NOW"} "$OMEGA" "$@"`
     if [ "$output" != "$expected" ] ; then
 	echo "$FAKE_NOW "${FAKE_NOW+"$FAKE_NOW"}" $OMEGA $@:"
-	printf '%s\n' "  expected: «$expected»"|cat -vet
-	printf '%s\n' "  received: «$output»"|cat -vet
+	printf '%s\n' "  expected: «${expected}»"|cat -vet
+	printf '%s\n' "  received: «${output}»"|cat -vet
 	echo
 	printf '%s\n' "  expected: |$expected|"|cat -vet
 	printf '%s\n' "  received: |$output|"|cat -vet
@@ -662,16 +662,21 @@ testcase '1|19891204' P=
 echo ZZZ
 
 # Feature tests for escaping in quoted arguments.
-printf 'esc : field="\\tesca\\x70e,test\\\\\\""\n' > "$TEST_INDEXSCRIPT"
+printf '%s' 'esc : field="\\tesca\\x70e,test\\\\\\""\n' > "$TEST_INDEXSCRIPT"
 cat -vet "$TEST_INDEXSCRIPT"
 rm -rf "$TEST_DB"
 $SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" > /dev/null <<'END'
 esc=test
 END
-printf '$field{$chr{9}escape$.test\",1}' > "$TEST_TEMPLATE"
+printf '%s' '$field{$chr{9}escape$.test\",1}' > "$TEST_TEMPLATE"
 echo aaa
 testcase 'test' P=
 echo AAA
+echo
+echo '==='
+../../xapian-core/bin/xapian-delve "$TEST_DB" -r1 -d
+echo '==='
+echo
 # Ensure the location of the problem is always in the same column so we can
 # test against a fixed error message including line and column.
 for badesc in \
