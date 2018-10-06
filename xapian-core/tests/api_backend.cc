@@ -1688,3 +1688,20 @@ DEFINE_TESTCASE(nodocs1, transactions && !remote) {
 
     return true;
 }
+
+DEFINE_TESTCASE(kronuz1, glass || chert) {
+    {
+	Xapian::WritableDatabase db = get_named_writable_database("kronuz1");
+	Xapian::Document document;
+	document.add_value(0, "broken");
+	db.replace_document(16384, document);
+	db.commit();
+    }
+
+    size_t check_errors =
+	Xapian::Database::check(get_named_writable_database_path("kronuz1"),
+				Xapian::DBCHECK_SHOW_STATS, &tout);
+    TEST_EQUAL(check_errors, 0);
+
+    return true;
+}
