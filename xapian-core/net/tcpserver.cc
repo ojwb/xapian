@@ -30,6 +30,7 @@
 #include "safenetdb.h"
 #include "safesyssocket.h"
 
+#include "errno_to_string.h"
 #include "remoteconnection.h"
 #include "resolver.h"
 #include "socket_utils.h"
@@ -95,6 +96,7 @@ TcpServer::get_listening_socket(const std::string & host, int port,
 {
     int socketfd = -1;
     int bind_errno = 0;
+    string bind_error;
     for (auto&& r : Resolver(host, port, AI_PASSIVE)) {
 	int socktype = r.ai_socktype | SOCK_CLOEXEC;
 	int fd = socket(r.ai_family, socktype, r.ai_protocol);
@@ -184,27 +186,41 @@ TcpServer::get_listening_socket(const std::string & host, int port,
 	// Note down the error code for the first address we try, which seems
 	// likely to be more helpful than the last in the case where they
 	// differ.
-	if (bind_errno == 0)
-	    bind_errno = socket_errno();
+	int eno = socket_errno();
+	if (bind_errno == 0) {
+	    bind_errno = eno;
+	}
+	{
+	    char host_buf[PRETTY_IP6_LEN];
+	    int port_x = pretty_ip6(&r.ai_addr, host_buf);
+	    if (!bind_error.empty()) bind_error += '\n';
+	    bind_error += host_buf;
+	    bind_error += ':';
+	    bind_error += str(port_x);
+	    bind_error += ' ';
+	    errno_to_string(eno, bind_error);
+	}
 
 	CLOSESOCKET(fd);
     }
 
     if (socketfd == -1) {
 	if (bind_errno == EADDRINUSE) {
+	    cerr << "bind_error:\n" << bind_error << endl;
 	    cerr << host << ':' << port << " already in use" << endl;
 	    // 69 is EX_UNAVAILABLE.  Scripts can use this to detect if the
 	    // server failed to bind to the requested port.
 	    exit(69); // FIXME: calling exit() here isn't ideal...
 	}
 	if (bind_errno == EACCES) {
+	    cerr << "bind_error:\n" << bind_error << endl;
 	    cerr << "Can't bind to privileged port " << port << endl;
 	    // 77 is EX_NOPERM.  Scripts can use this to detect if
 	    // xapian-tcpsrv failed to bind to the requested port.
 	    exit(77); // FIXME: calling exit() here isn't ideal...
 	}
 	CLOSESOCKET(socketfd);
-	throw Xapian::NetworkError("bind failed", bind_errno);
+	throw Xapian::NetworkError("bind failed:\n" + bind_error, bind_errno);
     }
 
     if (listen(socketfd, 5) < 0) {
