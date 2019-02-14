@@ -23,6 +23,7 @@
 
 #include "flint_lock.h"
 
+#include <iostream>
 #ifndef __WIN32__
 #include <cerrno>
 
@@ -50,6 +51,8 @@
 #endif
 
 #include "xapian/error.h"
+
+#include "filetests.h"
 
 using namespace std;
 
@@ -169,6 +172,7 @@ retry:
     // apparently doesn't work over NFS - perhaps that's OK, but we should at
     // least check the failure mode.
     Assert(fd == -1);
+    cout << "Opening lock fd: exists = " << file_exists(filename) << endl;
     int lockfd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0666);
     if (lockfd < 0) {
 	// Couldn't open lockfile.

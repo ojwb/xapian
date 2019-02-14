@@ -23,6 +23,9 @@
 
 #include "glass_version.h"
 
+#include <iostream>
+#include "filetests.h"
+
 #include "debuglog.h"
 #include "fd.h"
 #include "glass_defs.h"
@@ -295,7 +298,7 @@ GlassVersion::write(glass_revision_number_t new_rev, int flags)
 	else
 	    tmpfile += "/v.tmp";
 
-#ifdef __EMSCRIPTEN__
+#if 0 //def __EMSCRIPTEN__
 	// Emscripten crashes if trying to truncate a non-existant file. Skip
 	// using O_TRUNC and instead truncate when the file is opened.
 	fd = posixy_open(tmpfile.c_str(),
@@ -304,9 +307,11 @@ GlassVersion::write(glass_revision_number_t new_rev, int flags)
 	if (fd >= 0)
 	    ftruncate(fd, 0);
 #else
+	cout << "Opening tmp version file '" << tmpfile << "': exists = " << file_exists(tmpfile) << endl;
 	fd = posixy_open(tmpfile.c_str(),
 			 O_CREAT|O_TRUNC|O_WRONLY|O_BINARY,
 			 0666);
+	cout << "posixy_open() returned " << fd << " errno = " << strerror(errno) << endl;
 #endif
 
 	if (rare(fd < 0))
