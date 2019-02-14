@@ -7,7 +7,7 @@ Instructions below was tested on ubuntu 16.04, after doing a regular platform bu
 
 Build xapian (from `xapian-core` folder):
 ```
-emconfigure ./configure CPPFLAGS='-DFLINTLOCK_USE_FLOCK' CXXFLAGS='-Oz -s USE_ZLIB=1' --disable-backend-honey --disable-backend-inmemory --disable-shared --disable-backend-remote
+emconfigure ./configure CPPFLAGS='-DFLINTLOCK_USE_FLOCK' CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti' --disable-backend-honey --disable-backend-inmemory --disable-shared --disable-backend-remote
 emmake make
 ```
 
@@ -18,7 +18,7 @@ Change directory to the emscripten folder
 Test compiling a webassembly binary (from source `xapianjstest.cc`):
 
 ``
-XAPIAN=.. && em++ -Oz -s USE_ZLIB=1 -std=c++11 -s WASM=1 -I$XAPIAN/include -I$XAPIAN -I$XAPIAN/common xapianjstest.cc $XAPIAN/.libs/libxapian-1.5.a -o xapianjstest.js
+XAPIAN=.. && em++ -Oz -s USE_ZLIB=1 -std=c++11 -s WASM=1 -I$XAPIAN/include xapianjstest.cc $XAPIAN/.libs/libxapian-1.5.a -o xapianjstest.js
 ``
 
 and then you can run it using nodejs:
