@@ -684,6 +684,12 @@ for module in ${@:-xapian-core xapian-applications/omega swig xapian-bindings} ;
       # Pick omega_common_commit_hash or letor_common_commit_hash:
       var=`echo "$d"|sed 's!.*[-/]!!g'`_common_commit_hash
       hash=`eval echo \\\$"$var"`
+      if (cd "$path" && git reflog "$rev" -- 2> /dev/null) ; then
+	: # Already have that commit
+      else
+	# Probably a shallow clone, so explicitly fetch the revision.
+	(cd "$path" && git fetch origin "$rev")
+      fi
       handle_git_external "$d/.common.git" "$hash" "$xapian_common_clone_url"
       ln -sf .common.git/xapian-core/common "$d/common"
     fi
