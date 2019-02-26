@@ -353,11 +353,10 @@ handle_git_external() {
     url=$3
     if [ ! -d "$path" ] ; then
       git clone --no-checkout -- "$url" "$path"
-    fi
-    if (cd "$path" && git reflog "$rev" -- 2>/dev/null) ; then
+    elif (cd "$path" && git reflog "$rev" -- 2>/dev/null) ; then
       : # Already have that revision locally
     else
-      (cd "$path" && git fetch origin "$rev")
+      (cd "$path" && git fetch)
     fi
     (cd "$path" && git checkout "$rev")
   fi
@@ -683,18 +682,16 @@ for module in ${@:-xapian-core xapian-applications/omega swig xapian-bindings} ;
     # If someone's created a directory for common, leave it be.
     if [ -h "$d/common" ] || [ ! -d "$d/common" ] ; then
       # Pick omega_common_commit_hash or letor_common_commit_hash:
-      set -x
       var=`echo "$d"|sed 's!.*[-/]!!g'`_common_commit_hash
       hash=`eval echo \\\$"$var"`
       if git reflog "$rev" -- 2> /dev/null ; then
 	: # Already have that commit
       else
-	# Probably a shallow clone, so explicitly fetch the revision.
-	git fetch origin "$rev"
+	# Probably a shallow clone lacking the commit we want.
+	git fetch --unshallow
       fi
       handle_git_external "$d/.common.git" "$hash" "$xapian_common_clone_url"
       ln -sf .common.git/xapian-core/common "$d/common"
-      set +x
     fi
     ;;
   esac
