@@ -23,6 +23,57 @@ matrix:
         - mkdir -p /tmp/xapian-libsvm-fixed-include
         - ln -sF "`ls -1d /usr/local/Cellar/libsvm/3.*/include|tail -n 1`" /tmp/xapian-libsvm-fixed-include/libsvm
       env: PYTHON2=/usr/local/bin/python2 CXXFLAGS=-Wno-error=reserved-user-defined-literal CPPFLAGS=-I/tmp/xapian-libsvm-fixed-include PKG_CONFIG_PATH=/usr/local/opt/icu4c/lib/pkgconfig confargs='--prefix=/Users/travis/XapianInstall --with-libiconv-prefix=/usr/local/opt/libiconv' installcore='make -C xapian-core install'
+    - os: osx
+      osx_image: xcode9.2
+      before_install:
+        - brew update
+        # "brew install" unhelpfully errors out if any package listed is
+        # already installed and up-to-date, but travis change what's installed
+        # by default from time to time so it's brittle to just filter out those
+        # installed by default from the list we need.  Instead we ignore the
+        # exit status from "brew install", then check later that
+        # "brew list --versions" says all the packages requested are installed.
+        - brew install $HOMEBREW_PACKAGES || true
+        - brew list --versions $HOMEBREW_PACKAGES
+        - pip2 install sphinx docutils
+        - pip3 install sphinx
+        - mkdir -p /tmp/xapian-libsvm-fixed-include
+        - ln -sF "`ls -1d /usr/local/Cellar/libsvm/3.*/include|tail -n 1`" /tmp/xapian-libsvm-fixed-include/libsvm
+      env: PYTHON2=/usr/local/bin/python2 CXXFLAGS=-Wno-error=reserved-user-defined-literal CPPFLAGS=-I/tmp/xapian-libsvm-fixed-include PKG_CONFIG_PATH=/usr/local/opt/icu4c/lib/pkgconfig confargs='--prefix=/Users/travis/XapianInstall --with-libiconv-prefix=/usr/local/opt/libiconv' installcore='make -C xapian-core install'
+    - os: osx
+      osx_image: xcode9
+      before_install:
+        - brew update
+        # "brew install" unhelpfully errors out if any package listed is
+        # already installed and up-to-date, but travis change what's installed
+        # by default from time to time so it's brittle to just filter out those
+        # installed by default from the list we need.  Instead we ignore the
+        # exit status from "brew install", then check later that
+        # "brew list --versions" says all the packages requested are installed.
+        - brew install $HOMEBREW_PACKAGES || true
+        - brew list --versions $HOMEBREW_PACKAGES
+        - pip2 install sphinx docutils
+        - pip3 install sphinx
+        - mkdir -p /tmp/xapian-libsvm-fixed-include
+        - ln -sF "`ls -1d /usr/local/Cellar/libsvm/3.*/include|tail -n 1`" /tmp/xapian-libsvm-fixed-include/libsvm
+      env: PYTHON2=/usr/local/bin/python2 CXXFLAGS=-Wno-error=reserved-user-defined-literal CPPFLAGS=-I/tmp/xapian-libsvm-fixed-include PKG_CONFIG_PATH=/usr/local/opt/icu4c/lib/pkgconfig confargs='--prefix=/Users/travis/XapianInstall --with-libiconv-prefix=/usr/local/opt/libiconv' installcore='make -C xapian-core install'
+    - os: osx
+      osx_image: xcode6.4
+      before_install:
+        - brew update
+        # "brew install" unhelpfully errors out if any package listed is
+        # already installed and up-to-date, but travis change what's installed
+        # by default from time to time so it's brittle to just filter out those
+        # installed by default from the list we need.  Instead we ignore the
+        # exit status from "brew install", then check later that
+        # "brew list --versions" says all the packages requested are installed.
+        - brew install $HOMEBREW_PACKAGES || true
+        - brew list --versions $HOMEBREW_PACKAGES
+        - pip2 install sphinx docutils
+        - pip3 install sphinx
+        - mkdir -p /tmp/xapian-libsvm-fixed-include
+        - ln -sF "`ls -1d /usr/local/Cellar/libsvm/3.*/include|tail -n 1`" /tmp/xapian-libsvm-fixed-include/libsvm
+      env: PYTHON2=/usr/local/bin/python2 CXXFLAGS=-Wno-error=reserved-user-defined-literal CPPFLAGS=-I/tmp/xapian-libsvm-fixed-include PKG_CONFIG_PATH=/usr/local/opt/icu4c/lib/pkgconfig confargs='--prefix=/Users/travis/XapianInstall --with-libiconv-prefix=/usr/local/opt/libiconv' installcore='make -C xapian-core install'
 
 
 before_script:
