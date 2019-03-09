@@ -55,7 +55,7 @@ matrix:
             - pkg-config
       # We also have to disable an error, because (older?)
       # perl header files don't play nicely with clang.
-      env: USE_CC=clang USE_CXX='clang++ -stdlib=libc++' CXXFLAGS='-O2 -g -Wno-error=reserved-user-defined-literal'
+      env: USE_CC=clang USE_CXX='clang++ -stdlib=libc++' CXXFLAGS='-O2 -g -Wold-style-cast -Wno-error=reserved-user-defined-literal'
     - compiler: gcc
       os: linux
       # Test with trusty as it has GCC 4.8 which is the oldest GCC we currently
