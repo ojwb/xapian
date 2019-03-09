@@ -56,7 +56,7 @@ CollTfCollLenFeature::get_values() const
     double coll_len;
     auto coll_len_iterator = collection_length.find("title");
     if (coll_len_iterator != collection_length.end())
-	coll_len = (double)coll_len_iterator->second;
+	coll_len = double(coll_len_iterator->second);
     else
 	coll_len = 0;
 
@@ -66,7 +66,7 @@ CollTfCollLenFeature::get_values() const
 	    auto coll_tf_iterator = collection_termfreq.find(*qt);
 	    if (coll_tf_iterator != collection_termfreq.end()) {
 		value += log10(1 + (coll_len /
-				    (double)(1 + coll_tf_iterator->second)));
+				    double(1 + coll_tf_iterator->second)));
 	    } else {
 		value += log10(1 + coll_len);
 	    }
@@ -76,7 +76,7 @@ CollTfCollLenFeature::get_values() const
     value = 0;
     coll_len_iterator = collection_length.find("body");
     if (coll_len_iterator != collection_length.end())
-	coll_len = (double)coll_len_iterator->second;
+	coll_len = double(coll_len_iterator->second);
     else
 	coll_len = 0;
 
@@ -86,7 +86,7 @@ CollTfCollLenFeature::get_values() const
 	    auto coll_tf_iterator = collection_termfreq.find(*qt);
 	    if (coll_tf_iterator != collection_termfreq.end()) {
 		value += log10(1 + (coll_len /
-				    (double)(1 + coll_tf_iterator->second)));
+				    double(1 + coll_tf_iterator->second)));
 	    } else {
 		value += log10(1 + coll_len);
 	    }
@@ -96,7 +96,7 @@ CollTfCollLenFeature::get_values() const
     value = 0;
     coll_len_iterator = collection_length.find("body");
     if (coll_len_iterator != collection_length.end())
-	coll_len = (double)coll_len_iterator->second;
+	coll_len = double(coll_len_iterator->second);
     else
 	coll_len = 0;
 
@@ -105,7 +105,7 @@ CollTfCollLenFeature::get_values() const
 	auto coll_tf_iterator = collection_termfreq.find(*qt);
 	if (coll_tf_iterator != collection_termfreq.end()) {
 	    value += log10(1 + (coll_len /
-				 (double)(1 + coll_tf_iterator->second)));
+				double(1 + coll_tf_iterator->second)));
 	} else {
 	    value += log10(1 + coll_len);
 	}

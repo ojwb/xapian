@@ -57,12 +57,12 @@ TfDoclenCollTfCollLenFeature::get_values() const
     double doc_len;
     auto coll_len_iterator = collection_length.find("title");
     if (coll_len_iterator != collection_length.end())
-	coll_len = (double)coll_len_iterator->second;
+	coll_len = double(coll_len_iterator->second);
     else
 	coll_len = 0;
     auto doc_len_iterator = doc_length.find("title");
     if (doc_len_iterator != doc_length.end())
-	doc_len = (double)doc_len_iterator->second;
+	doc_len = double(doc_len_iterator->second);
     else
 	doc_len = 0;
 
@@ -74,11 +74,11 @@ TfDoclenCollTfCollLenFeature::get_values() const
 	    auto tf_iterator = termfreq.find(*qt);
 	    auto coll_tf_iterator = collection_termfreq.find(*qt);
 	    if (tf_iterator != termfreq.end())
-		tf = (double)tf_iterator->second;
+		tf = double(tf_iterator->second);
 	    else
 		tf = 0;
 	    if (coll_tf_iterator != collection_termfreq.end())
-		coll_tf = (double)coll_tf_iterator->second;
+		coll_tf = double(coll_tf_iterator->second);
 	    else
 		coll_tf = 0;
 	    value += log10(1 + ((tf * coll_len) / (1 + (doc_len * coll_tf))));
@@ -88,12 +88,12 @@ TfDoclenCollTfCollLenFeature::get_values() const
     value = 0;
     coll_len_iterator = collection_length.find("body");
     if (coll_len_iterator != collection_length.end())
-	coll_len = (double)coll_len_iterator->second;
+	coll_len = double(coll_len_iterator->second);
     else
 	coll_len = 0;
     doc_len_iterator = doc_length.find("body");
     if (doc_len_iterator != doc_length.end())
-	doc_len = (double)doc_len_iterator->second;
+	doc_len = double(doc_len_iterator->second);
     else
 	doc_len = 0;
 
@@ -105,11 +105,11 @@ TfDoclenCollTfCollLenFeature::get_values() const
 	    auto tf_iterator = termfreq.find(*qt);
 	    auto coll_tf_iterator = collection_termfreq.find(*qt);
 	    if (tf_iterator != termfreq.end())
-		tf = (double)tf_iterator->second;
+		tf = double(tf_iterator->second);
 	    else
 		tf = 0;
 	    if (coll_tf_iterator != collection_termfreq.end())
-		coll_tf = (double)coll_tf_iterator->second;
+		coll_tf = double(coll_tf_iterator->second);
 	    else
 		coll_tf = 0;
 	    value += log10(1 + ((tf * coll_len) / (1 + (doc_len * coll_tf))));
@@ -119,12 +119,12 @@ TfDoclenCollTfCollLenFeature::get_values() const
     value = 0;
     coll_len_iterator = collection_length.find("whole");
     if (coll_len_iterator != collection_length.end())
-	coll_len = (double)coll_len_iterator->second;
+	coll_len = double(coll_len_iterator->second);
     else
 	coll_len = 0;
     doc_len_iterator = doc_length.find("whole");
     if (doc_len_iterator != doc_length.end())
-	doc_len = (double)doc_len_iterator->second;
+	doc_len = double(doc_len_iterator->second);
     else
 	doc_len = 0;
 
@@ -135,11 +135,11 @@ TfDoclenCollTfCollLenFeature::get_values() const
 	auto tf_iterator = termfreq.find(*qt);
 	auto coll_tf_iterator = collection_termfreq.find(*qt);
 	if (tf_iterator != termfreq.end())
-	    tf = (double)tf_iterator->second;
+	    tf = double(tf_iterator->second);
 	else
 	    tf = 0;
 	if (coll_tf_iterator != collection_termfreq.end())
-	    coll_tf = (double)coll_tf_iterator->second;
+	    coll_tf = double(coll_tf_iterator->second);
 	else
 	    coll_tf = 0;
 	value += log10(1 + ((tf * coll_len) / (1 + (doc_len * coll_tf))));

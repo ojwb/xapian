@@ -87,7 +87,7 @@ FeatureList::Internal::compute_inverse_doc_freq()
 	 qt != featurelist_query.get_terms_end(); ++qt) {
 	Xapian::doccount df = featurelist_db.get_termfreq(*qt);
 	if (df != 0)
-	    idf[*qt] = log10((double)totaldocs / (double)(1 + df));
+	    idf[*qt] = log10(double(totaldocs) / (1.0 + df));
     }
     std::swap(inverse_doc_freq, idf);
 }

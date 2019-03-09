@@ -71,7 +71,7 @@ CPUTimer::get_current_cputime() const
     if (times(&b) == clock_t(-1)) {
 	FAIL_TEST("Couldn't measure CPU: " << errno_to_string(errno));
     }
-    t = (double)(b.tms_utime + b.tms_stime);
+    t = double(b.tms_utime + b.tms_stime);
 # ifdef HAVE_SYSCONF
     t /= sysconf(_SC_CLK_TCK);
 # else

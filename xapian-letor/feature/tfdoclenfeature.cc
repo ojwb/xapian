@@ -56,7 +56,7 @@ TfDoclenFeature::get_values() const
     double doc_len;
     auto doc_len_iterator = doc_length.find("title");
     if (doc_len_iterator != doc_length.end())
-	doc_len = (double)doc_len_iterator->second;
+	doc_len = double(doc_len_iterator->second);
     else
 	doc_len = 0;
 
@@ -66,7 +66,7 @@ TfDoclenFeature::get_values() const
 	    auto tf_iterator = termfreq.find(*qt);
 	    double tf;
 	    if (tf_iterator != termfreq.end())
-		tf = (double)tf_iterator->second;
+		tf = double(tf_iterator->second);
 	    else
 		tf = 0;
 	    value += log10(1 + (tf / (1 + doc_len)));
@@ -76,7 +76,7 @@ TfDoclenFeature::get_values() const
     value = 0;
     doc_len_iterator = doc_length.find("body");
     if (doc_len_iterator != doc_length.end())
-	doc_len = (double)doc_len_iterator->second;
+	doc_len = double(doc_len_iterator->second);
     else
 	doc_len = 0;
 
@@ -86,7 +86,7 @@ TfDoclenFeature::get_values() const
 	    auto tf_iterator = termfreq.find(*qt);
 	    double tf;
 	    if (tf_iterator != termfreq.end())
-		tf = (double)tf_iterator->second;
+		tf = double(tf_iterator->second);
 	    else
 		tf = 0;
 	    value += log10(1 + (tf / (1 + doc_len)));
@@ -96,7 +96,7 @@ TfDoclenFeature::get_values() const
     value = 0;
     doc_len_iterator = doc_length.find("whole");
     if (doc_len_iterator != doc_length.end())
-	doc_len = (double)doc_len_iterator->second;
+	doc_len = double(doc_len_iterator->second);
     else
 	doc_len = 0;
 
@@ -105,7 +105,7 @@ TfDoclenFeature::get_values() const
 	auto tf_iterator = termfreq.find(*qt);
 	double tf;
 	if (tf_iterator != termfreq.end())
-	    tf = (double)tf_iterator->second;
+	    tf = double(tf_iterator->second);
 	else
 	    tf = 0;
 	value += log10(1 + (tf / (1 + doc_len)));
