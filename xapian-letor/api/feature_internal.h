@@ -103,8 +103,7 @@ class Feature::Internal : public Xapian::Internal::intrusive_base {
     /** Sets the termfrequency that is going to be used for
      *  Feature building.
      */
-    void set_termfreq(const std::map<std::string,
-				     Xapian::termcount>& tf) {
+    void set_termfreq(std::map<std::string, Xapian::termcount>&& tf) {
 	termfreq = tf;
     }
 

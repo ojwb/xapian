@@ -61,9 +61,6 @@ class FeatureList::Internal : public Xapian::Internal::intrusive_base {
     /// Xapian::Document using which features will be calculated.
     Document featurelist_doc;
 
-    /// Frequency of the Query Terms in the specified documents.
-    std::map<std::string, Xapian::termcount> termfreq;
-
     /// Inverse Document Frequency of Query terms in the database.
     std::map<std::string, double> inverse_doc_freq;
 
@@ -84,10 +81,11 @@ class FeatureList::Internal : public Xapian::Internal::intrusive_base {
      *  specified documents.
      *
      *  This method is a helper method and statistics gathered through
-     *  this method are used in feature value calculation. This information
-     *  is stored in termfreq.
+     *  this method are used in feature value calculations.
+     *
+     *  @return A map from query terms to their term frequencies.
      */
-    void compute_termfreq();
+    std::map<std::string, Xapian::termcount> compute_termfreq() const;
 
     /** This method calculates the inverse document frequency(idf) of query
      *  terms in the database.
