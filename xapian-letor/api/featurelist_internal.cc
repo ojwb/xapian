@@ -168,7 +168,7 @@ FeatureList::Internal::populate_feature_internal(Feature::Internal*
 						 internal_feature)
 {
     if (stats_needed & TERM_FREQUENCY) {
-	internal_feature->set_termfreq(std::move(compute_termfreq()));
+	internal_feature->set_termfreq(compute_termfreq());
     }
     if (stats_needed & INVERSE_DOCUMENT_FREQUENCY) {
 	compute_inverse_doc_freq();
