@@ -182,6 +182,9 @@ $(stamp):
 	$(RUN_SWIG) $(SWIG_WERROR) -I'$(srcdir)' $(SWIG_FLAGS) -c++ \
 	    -java -module Xapian -package org.xapian -outdir org/xapian \
 	    -o xapian_wrap.cc '$(srcdir)/'java.i
+	: # Fix up stuff that we can't get SWIG to generate as we want.
+	$(PERL) -ni -e '/\bXapianJNI\.delete_/ or s/([^.])\b(swigCPtr[,\)])/$$1swigWrap.$$2/g; print unless /^ *\(\);$$/' org/xapian/*.java
+	$(PERL) -pi -e 'if (/^public class /) { print; while (<>) { last if /^  public static / }}' org/xapian/Remote.java org/xapian/Version.java
 	: # Check that exactly the sources we expected were generated.
 	$(PERL) -e 'print "$$_\n" for sort @ARGV' org/xapian/*.java > org/xapian/list
 	$(PERL) -e 'print "$$_\n" for sort @ARGV' $(XAPIAN_SWIG_JAVA_SRCS)|diff -c - org/xapian/list
