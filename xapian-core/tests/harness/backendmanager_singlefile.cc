@@ -64,7 +64,7 @@ BackendManagerSingleFile::do_get_database_path(const vector<string> & files)
 						 Xapian::DBCOMPACT_SINGLE_FILE |
 						 Xapian::DBCOMPACT_NO_RENUMBER);
 	if (rename(tmp_path.c_str(), db_path.c_str()) < 0) {
-	    throw Xapian::DatabaseError("rename failed", errno);
+	    throw Xapian::DatabaseError("rename case 3 " + tmp_path + " to " + db_path + " failed", errno);
 	}
     }
 
