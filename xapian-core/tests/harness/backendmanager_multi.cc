@@ -32,6 +32,7 @@
 
 #include <cerrno>
 #include <cstdio> // For rename().
+#include <cstdlib>
 #include <cstring>
 
 using namespace std;
