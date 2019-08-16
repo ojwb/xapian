@@ -156,8 +156,19 @@ BackendManagerMulti::createdb_multi(const string& name,
     FileIndexer(get_datadir(), files).index_to(dbs);
     dbs.close();
 
+retry:
     if (rename(tmpfile.c_str(), db_path.c_str()) < 0) {
-	throw Xapian::DatabaseError("rename case 2 " + tmpfile + " to " + db_path + " failed", errno);
+	int eno = errno;
+	printf(" Failed to rename '%s' to '%s' with error %s\n",
+	       tmpfile.c_str(),
+	       db_path.c_str(),
+	       strerror(eno));
+	if (system(("ls -lrt " + cachedir).c_str())) { }
+	if (eno == EACCES) {
+	    sleep(1);
+	    goto retry;
+	}
+	throw Xapian::DatabaseError("rename case 2 " + tmpfile + " to " + db_path + " failed", eno);
     }
 
     last_wdb_path = db_path;
