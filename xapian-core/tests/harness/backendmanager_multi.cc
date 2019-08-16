@@ -32,7 +32,6 @@
 
 #include <cerrno>
 #include <cstdio> // For rename().
-#include <cstdlib>
 #include <cstring>
 
 using namespace std;
@@ -159,17 +158,19 @@ BackendManagerMulti::createdb_multi(const string& name,
 
 retry:
     if (rename(tmpfile.c_str(), db_path.c_str()) < 0) {
-	int eno = errno;
-	printf(" Failed to rename '%s' to '%s' with error %s\n",
-	       tmpfile.c_str(),
-	       db_path.c_str(),
-	       strerror(eno));
-	if (system(("ls -lrt " + cachedir).c_str())) { }
-	if (eno == EACCES) {
+	if (errno == EACCES) {
+	    // At least when run under appveyor, sometimes this rename fails
+	    // with EACCES.  The destination file doesn't exist (and from
+	    // debugging it shouldn't), which suggests that tmpfile is still
+	    // open, but it shouldn't be, and a sleep+retry makes it work.
+	    // Perhaps some AV is kicking in and opening newly created files
+	    // to inspect them or something?
+	    //
+	    // FIXME: It would be good to get to the bottom of this!
 	    sleep(1);
 	    goto retry;
 	}
-	throw Xapian::DatabaseError("rename case 2 " + tmpfile + " to " + db_path + " failed", eno);
+	throw Xapian::DatabaseError("rename failed", errno);
     }
 
     last_wdb_path = db_path;
