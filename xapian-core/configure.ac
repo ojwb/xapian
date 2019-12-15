@@ -1422,6 +1422,8 @@ AH_BOTTOM(
 # pragma warning(disable:4003)
 /* A "performance" warning for converting int to bool. */
 # pragma warning(disable:4800)
+/* POSIX get to deprecate POSIX things, not MS. */
+# pragma warning(disable:4996)
 
 /* Tell MSVC we want M_PI, etc defined. */
 # define _USE_MATH_DEFINES
