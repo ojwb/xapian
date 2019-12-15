@@ -698,7 +698,7 @@ class XAPIAN_VISIBILITY_DEFAULT Query {
     void init(Query::op op_, Xapian::termcount window,
 	      const I & begin, const I & end, std::random_access_iterator_tag)
     {
-	init(op_, end - begin, window);
+	init(op_, size_t(end - begin), window);
     }
 
     template<typename I>

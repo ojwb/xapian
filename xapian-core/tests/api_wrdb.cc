@@ -1519,21 +1519,20 @@ DEFINE_TESTCASE(longpositionlist1, writable) {
 DEFINE_TESTCASE(consistency2, writable) {
     Xapian::WritableDatabase db = get_writable_database();
     char buf[2] = "X";
-    int i = 0;
 
     // Add 5 documents indexed by "test" with wdf 1.
-    for (i = 0; i < 5; ++i) {
+    for (char ch = '0'; ch < '5'; ++ch) {
 	Xapian::Document doc;
-	*buf = '0' + i;
+	*buf = ch;
 	doc.add_value(0, buf);
 	doc.add_term("test");
 	db.add_document(doc);
     }
 
     // Add 5 documents indexed by "test" with wdf 2.
-    for (i = 0; i < 5; ++i) {
+    for (char ch = '0'; ch < '5'; ++ch) {
 	Xapian::Document doc;
-	*buf = '0' + i;
+	*buf = ch;
 	doc.add_value(0, buf);
 	doc.add_term("test", 2);
 	db.add_document(doc);
@@ -1560,7 +1559,7 @@ DEFINE_TESTCASE(consistency2, writable) {
 
     TEST_EQUAL(*mset1[0], *mset2a[0]);
     TEST_EQUAL(*mset1[1], *mset2b[0]);
-    for (i = 0; i < 8; ++i) {
+    for (Xapian::doccount i = 0; i < 8; ++i) {
 	TEST_EQUAL(*mset1[i + 2], *mset2c[i]);
     }
 
@@ -1853,7 +1852,7 @@ DEFINE_TESTCASE(cursordelbug1, writable && path) {
 	doc.add_term("XAdef");
 	doc.add_term("XRghi");
 	doc.add_term("XYabc");
-	size_t c = copies[i];
+	int c = copies[i];
 	while (c--) db.add_document(doc);
     }
 
