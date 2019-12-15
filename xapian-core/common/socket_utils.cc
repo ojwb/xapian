@@ -73,7 +73,7 @@ set_socket_timeouts(int fd, double timeout)
 	// Just to be different, it's a DWORD counting in milliseconds.
 	DWORD t;
 	if (usual(timeout < numeric_limits<DWORD>::max() / 1000))
-	    t = timeout * 1000;
+	    t = static_cast<DWORD>(timeout * 1000);
 	else
 	    t = numeric_limits<DWORD>::max();
 # endif
