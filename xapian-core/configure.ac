@@ -1328,9 +1328,9 @@ if test yes = "$GXX"; then
     fi
   fi
 elif test yes = "$msvc"; then
-  dnl -W1 is commandline default, -W3 IDE default, -W4 highest numbered level.
+  dnl -W1 is command-line default, -W3 IDE default, -W4 highest numbered level.
   dnl Also -WX is like GCC -Werror.
-  AM_CXXFLAGS="$AM_CXXFLAGS -Wall"
+  AM_CXXFLAGS="$AM_CXXFLAGS -W3"
 else
   dnl Not GCC, nor a compiler masquerading as GCC, nor MSVC.
   case /$CXX in
