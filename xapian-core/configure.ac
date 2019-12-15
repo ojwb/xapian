@@ -1327,8 +1327,12 @@ if test yes = "$GXX"; then
       AC_MSG_RESULT([no])
     fi
   fi
+elif test yes = "$msvc"; then
+  dnl -W1 is commandline default, -W3 IDE default, -W4 highest numbered level.
+  dnl Also -WX is like GCC -Werror.
+  AM_CXXFLAGS="$AM_CXXFLAGS -Wall"
 else
-  dnl Not GCC, nor a compiler masquerading as GCC.
+  dnl Not GCC, nor a compiler masquerading as GCC, nor MSVC.
   case /$CXX in
   */aCC)
     dnl +w turns on more warnings.
