@@ -88,10 +88,10 @@ FileIndexer::index_to(Xapian::WritableDatabase & db)
 	    doc.add_value(i, para.substr(i, 1));
 	}
 	// Value 11 is useful for tests of sorting
-	doc.add_value(11, Xapian::sortable_serialise(para.size()));
+	doc.add_value(11, Xapian::sortable_serialise(double(para.size())));
 
 	// Value 12 is useful for tests of collapsing
-	doc.add_value(12, Xapian::sortable_serialise(para.size() % 5));
+	doc.add_value(12, Xapian::sortable_serialise(double(para.size() % 5)));
 
 	// Value 13 contains the first 3 letters of the paragraph
 	doc.add_value(13, para.substr(0, 3));
