@@ -199,6 +199,9 @@ static const test test_or_queries[] = {
     { "category:\"(unterminated)", "0 * XCAT(unterminated)" },
     // Feature tests for curly double quotes:
     { "“curly quotes”", "(curly@1 PHRASE 2 quotes@2)" },
+    // Test "" inside quoted phrase doesn't end the phrase (for consistency
+    // with "" being an escape " in a quoted boolean term.
+    { "subject:\"foo\"\"bar\"", "(XTfoo@1 PHRASE 2 XTbar@2)" },
     // Feature tests for implicitly closing brackets:
     { "(foo", "Zfoo@1" },
     { "(foo XOR bar", "(Zfoo@1 XOR Zbar@2)" },
@@ -747,6 +750,9 @@ DEFINE_TESTCASE(queryparser1, !backend) {
     queryparser.set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
     queryparser.add_prefix("author", "A");
     queryparser.add_prefix("writer", "A");
+    // Check that a redundant add_prefix() doesn't result in redundant terms in
+    // the Query object.
+    queryparser.add_prefix("author", "A");
     queryparser.add_prefix("title", "XT");
     queryparser.add_prefix("subject", "XT");
     queryparser.add_prefix("authortitle", "A");
@@ -754,6 +760,9 @@ DEFINE_TESTCASE(queryparser1, !backend) {
     queryparser.add_boolean_prefix("site", "H");
     queryparser.add_boolean_prefix("site2", "J");
     queryparser.add_boolean_prefix("multisite", "H");
+    queryparser.add_boolean_prefix("multisite", "J");
+    // Check that a redundant add_boolean_prefix() doesn't result in redundant
+    // terms in the Query object.
     queryparser.add_boolean_prefix("multisite", "J");
     queryparser.add_boolean_prefix("category", "XCAT", false);
     queryparser.add_boolean_prefix("dogegory", "XDOG", false);
@@ -1676,8 +1685,8 @@ DEFINE_TESTCASE(qp_stopper1, !backend) {
 }
 
 static const test test_pure_not_queries[] = {
-    { "NOT windows", "(<alldocuments> AND_NOT Zwindow@1)" },
-    { "a AND (NOT b)", "(Za@1 AND (<alldocuments> AND_NOT Zb@2))" },
+    { "NOT windows", "(0 * <alldocuments> AND_NOT Zwindow@1)" },
+    { "a AND (NOT b)", "(Za@1 AND (0 * <alldocuments> AND_NOT Zb@2))" },
     { "AND NOT windows", "Syntax: <expression> AND NOT <expression>" },
     { "gordian NOT", "Syntax: <expression> NOT <expression>" },
     { "gordian AND NOT", "Syntax: <expression> AND NOT <expression>" },
@@ -1806,6 +1815,7 @@ static const test test_value_range2_queries[] = {
     { "1999.03.12..", "VALUE_GE 1 19990312" },
     { "12/03/99..12/04/01", "VALUE_RANGE 1 19990312 20010412" },
     { "03-12-99..04-14-01", "VALUE_RANGE 1 19990312 20010414" },
+    { "1/2/3..2/3/4", "VALUE_RANGE 1 20030201 20040302" },
     { "(test:a..test:b hello)", "(hello@1 FILTER VALUE_RANGE 3 test:a test:b)" },
     { "12..42kg 5..6kg 1..12", "0 * (VALUE_RANGE 2 \\xa0 \\xae AND (VALUE_RANGE 5 \\xae \\xb5@ OR VALUE_RANGE 5 \\xa9 \\xaa))" },
     // Check that a VRP which fails to match doesn't remove a prefix or suffix.

@@ -62,6 +62,10 @@ class QueryTerm : public Query::Internal {
 
     PostList* postlist(QueryOptimiser * qopt, double factor) const;
 
+    bool postlist_sub_and_like(AndContext& ctx,
+			       QueryOptimiser* qopt,
+			       double factor) const;
+
     termcount get_length() const XAPIAN_NOEXCEPT XAPIAN_PURE_FUNCTION {
 	return wqf;
     }
@@ -97,6 +101,10 @@ class QueryScaleWeight : public Query::Internal {
     QueryScaleWeight(double factor, const Query & subquery_);
 
     PostList* postlist(QueryOptimiser *qopt, double factor) const;
+
+    bool postlist_sub_and_like(AndContext& ctx,
+			       QueryOptimiser* qopt,
+			       double factor) const;
 
     termcount get_length() const XAPIAN_NOEXCEPT XAPIAN_PURE_FUNCTION {
 	return subquery.internal->get_length();
@@ -184,10 +192,20 @@ class QueryBranch : public Query::Internal {
 
     void serialise_(std::string & result, Xapian::termcount parameter = 0) const;
 
-    void do_bool_or_like(BoolOrContext& ctx, QueryOptimiser* qopt) const;
+    void do_bool_or_like(BoolOrContext& ctx,
+			 QueryOptimiser* qopt,
+			 size_t first = 0) const;
 
-    void do_or_like(OrContext& ctx, QueryOptimiser * qopt, double factor,
-		    Xapian::termcount elite_set_size = 0, size_t first = 0) const;
+    /** Process OR-like subqueries.
+     *
+     *  @param keep_zero_weight  By default zero-weight subqueries are kept,
+     *				 but in some situations (such as on the right
+     *				 side of OP_AND_MAYBE when not under
+     *				 OP_SYNONYM) they can be ignored.
+     */
+    void do_or_like(OrContext& ctx, QueryOptimiser* qopt, double factor,
+		    Xapian::termcount elite_set_size = 0, size_t first = 0,
+		    bool keep_zero_weight = true) const;
 
     PostList* do_synonym(QueryOptimiser * qopt, double factor) const;
 
@@ -257,7 +275,11 @@ class QueryOr : public QueryOrLike {
 
     PostList* postlist(QueryOptimiser * qopt, double factor) const;
 
-    void postlist_sub_or_like(OrContext& ctx, QueryOptimiser * qopt, double factor) const;
+    void postlist_sub_or_like(OrContext& ctx, QueryOptimiser* qopt,
+			      double factor, bool keep_zero_weight) const;
+
+    void postlist_sub_bool_or_like(BoolOrContext& ctx,
+				   QueryOptimiser* qopt) const;
 
     std::string get_description() const;
 };
@@ -269,6 +291,10 @@ class QueryAndNot : public QueryBranch {
     explicit QueryAndNot(size_t n_subqueries) : QueryBranch(n_subqueries) { }
 
     PostList* postlist(QueryOptimiser * qopt, double factor) const;
+
+    bool postlist_sub_and_like(AndContext& ctx,
+			       QueryOptimiser* qopt,
+			       double factor) const;
 
     void add_subquery(const Xapian::Query & subquery);
 
@@ -297,6 +323,10 @@ class QueryAndMaybe : public QueryBranch {
     explicit QueryAndMaybe(size_t n_subqueries) : QueryBranch(n_subqueries) { }
 
     PostList* postlist(QueryOptimiser * qopt, double factor) const;
+
+    bool postlist_sub_and_like(AndContext& ctx,
+			       QueryOptimiser* qopt,
+			       double factor) const;
 
     void add_subquery(const Xapian::Query & subquery);
 
@@ -382,7 +412,8 @@ class QueryEliteSet : public QueryOrLike {
 
     PostList* postlist(QueryOptimiser * qopt, double factor) const;
 
-    void postlist_sub_or_like(OrContext& ctx, QueryOptimiser * qopt, double factor) const;
+    void postlist_sub_or_like(OrContext& ctx, QueryOptimiser* qopt,
+			      double factor, bool keep_zero_weight) const;
 
     std::string get_description() const;
 };

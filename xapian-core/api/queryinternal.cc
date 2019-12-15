@@ -553,6 +553,17 @@ class AndContext : public Context<PostList*> {
 
     list<PosFilter> pos_filters;
 
+    unique_ptr<BoolOrContext> not_ctx;
+
+    unique_ptr<OrContext> maybe_ctx;
+
+    /** True if this AndContext has seen a no-op MatchAll.
+     *
+     *  If it has and it ends up empty then the resulting postlist should be
+     *  MatchAll not MatchNothing.
+     */
+    bool match_all = false;
+
   public:
     AndContext(QueryOptimiser* qopt_, size_t reserve)
 	: Context(qopt_, reserve) { }
@@ -560,15 +571,32 @@ class AndContext : public Context<PostList*> {
     bool add_postlist(PostList* pl) {
 	if (!pl) {
 	    shrink(0);
+	    match_all = false;
 	    return false;
 	}
 	pls.emplace_back(pl);
 	return true;
     }
 
+    void set_match_all() { match_all = true; }
+
     void add_pos_filter(Query::op op_,
 			size_t n_subqs,
 			Xapian::termcount window);
+
+    BoolOrContext& get_not_ctx(size_t reserve) {
+	if (!not_ctx) {
+	    not_ctx.reset(new BoolOrContext(qopt, reserve));
+	}
+	return *not_ctx;
+    }
+
+    OrContext& get_maybe_ctx(size_t reserve) {
+	if (!maybe_ctx) {
+	    maybe_ctx.reset(new OrContext(qopt, reserve));
+	}
+	return *maybe_ctx;
+    }
 
     PostList * postlist();
 };
@@ -611,11 +639,28 @@ PostList *
 AndContext::postlist()
 {
     if (pls.empty()) {
+	if (match_all) {
+	    return qopt->open_post_list(string(), 0, 0.0);
+	}
 	return NULL;
     }
 
-    unique_ptr<PostList> pl(new MultiAndPostList(pls.begin(), pls.end(),
-						 qopt->matcher, qopt->db_size));
+    auto matcher = qopt->matcher;
+    auto db_size = qopt->db_size;
+
+    unique_ptr<PostList> pl;
+    if (pls.size() == 1) {
+	pl.reset(pls[0]);
+    } else {
+	pl.reset(new MultiAndPostList(pls.begin(), pls.end(),
+				      matcher, db_size));
+    }
+
+    if (not_ctx && !not_ctx->empty()) {
+	PostList* rhs = not_ctx->postlist();
+	pl.reset(new AndNotPostList(pl.release(), rhs, matcher, db_size));
+	not_ctx.reset();
+    }
 
     // Sort the positional filters to try to apply them in an efficient order.
     // FIXME: We need to figure out what that is!  Try applying lowest cf/tf
@@ -625,11 +670,18 @@ AndContext::postlist()
     list<PosFilter>::const_iterator i;
     for (i = pos_filters.begin(); i != pos_filters.end(); ++i) {
 	const PosFilter & filter = *i;
-	pl.reset(filter.postlist(pl.release(), pls, qopt->matcher));
+	pl.reset(filter.postlist(pl.release(), pls, matcher));
     }
 
     // Empty pls so our destructor doesn't delete them all!
     pls.clear();
+
+    if (maybe_ctx && !maybe_ctx->empty()) {
+	PostList* rhs = maybe_ctx->postlist();
+	pl.reset(new AndMaybePostList(pl.release(), rhs, matcher, db_size));
+	maybe_ctx.reset();
+    }
+
     return pl.release();
 }
 
@@ -929,10 +981,22 @@ Query::Internal::postlist_sub_and_like(AndContext& ctx,
 
 void
 Query::Internal::postlist_sub_or_like(OrContext& ctx,
-				      QueryOptimiser * qopt,
-				      double factor) const
+				      QueryOptimiser* qopt,
+				      double factor,
+				      bool keep_zero_weight) const
 {
-    ctx.add_postlist(postlist(qopt, factor));
+    Xapian::termcount save_total_subqs = qopt->get_total_subqs();
+    unique_ptr<PostList> pl(postlist(qopt, factor));
+    if (!keep_zero_weight && pl->recalc_maxweight() == 0.0) {
+	// This subquery can't contribute any weight, so can be discarded.
+	//
+	// Restore the value of total_subqs so that percentages don't get
+	// messed up if we increased total_subqs in the call to postlist()
+	// above.
+	qopt->set_total_subqs(save_total_subqs);
+	return;
+    }
+    ctx.add_postlist(pl.release());
 }
 
 void
@@ -1051,6 +1115,19 @@ QueryTerm::postlist(QueryOptimiser * qopt, double factor) const
     RETURN(qopt->open_post_list(term, wqf, factor));
 }
 
+bool
+QueryTerm::postlist_sub_and_like(AndContext& ctx,
+				 QueryOptimiser* qopt,
+				 double factor) const
+{
+    if (term.empty() && !qopt->need_positions && factor == 0.0) {
+	// No-op MatchAll.
+	ctx.set_match_all();
+	return true;
+    }
+    return ctx.add_postlist(postlist(qopt, factor));
+}
+
 PostList*
 QueryPostingSource::postlist(QueryOptimiser * qopt, double factor) const
 {
@@ -1073,6 +1150,15 @@ QueryScaleWeight::postlist(QueryOptimiser * qopt, double factor) const
 {
     LOGCALL(QUERY, PostList*, "QueryScaleWeight::postlist", qopt | factor);
     RETURN(subquery.internal->postlist(qopt, factor * scale_factor));
+}
+
+bool
+QueryScaleWeight::postlist_sub_and_like(AndContext& ctx,
+					QueryOptimiser* qopt,
+					double factor) const
+{
+    return subquery.internal->postlist_sub_and_like(ctx, qopt,
+						    factor * scale_factor);
 }
 
 void
@@ -1761,9 +1847,11 @@ QueryBranch::gather_terms(void * void_terms) const
 }
 
 void
-QueryBranch::do_bool_or_like(BoolOrContext& ctx, QueryOptimiser* qopt) const
+QueryBranch::do_bool_or_like(BoolOrContext& ctx,
+			     QueryOptimiser* qopt,
+			     size_t first) const
 {
-    LOGCALL_VOID(MATCH, "QueryBranch::do_bool_or_like", ctx | qopt);
+    LOGCALL_VOID(MATCH, "QueryBranch::do_bool_or_like", ctx | qopt | first);
 
     // FIXME: we could optimise by merging OP_ELITE_SET and OP_OR like we do
     // for AND-like operations.
@@ -1772,18 +1860,20 @@ QueryBranch::do_bool_or_like(BoolOrContext& ctx, QueryOptimiser* qopt) const
     // QuerySynonym::done() if the single subquery is a term or MatchAll.
     Assert(subqueries.size() >= 2 || get_op() == Query::OP_SYNONYM);
 
-    for (auto q : subqueries) {
+    QueryVector::const_iterator q;
+    for (q = subqueries.begin() + first; q != subqueries.end(); ++q) {
 	// MatchNothing subqueries should have been removed by done().
-	Assert(q.internal.get());
-	q.internal->postlist_sub_bool_or_like(ctx, qopt);
+	Assert((*q).internal.get());
+	(*q).internal->postlist_sub_bool_or_like(ctx, qopt);
     }
 }
 
 void
 QueryBranch::do_or_like(OrContext& ctx, QueryOptimiser * qopt, double factor,
-			Xapian::termcount elite_set_size, size_t first) const
+			Xapian::termcount elite_set_size, size_t first,
+			bool keep_zero_weight) const
 {
-    LOGCALL_VOID(MATCH, "QueryBranch::do_or_like", ctx | qopt | factor | elite_set_size);
+    LOGCALL_VOID(MATCH, "QueryBranch::do_or_like", ctx | qopt | factor | elite_set_size | first | keep_zero_weight);
 
     // FIXME: we could optimise by merging OP_ELITE_SET and OP_OR like we do
     // for AND-like operations.
@@ -1797,7 +1887,8 @@ QueryBranch::do_or_like(OrContext& ctx, QueryOptimiser * qopt, double factor,
     for (q = subqueries.begin() + first; q != subqueries.end(); ++q) {
 	// MatchNothing subqueries should have been removed by done().
 	Assert((*q).internal.get());
-	(*q).internal->postlist_sub_or_like(ctx, qopt, factor);
+	(*q).internal->postlist_sub_or_like(ctx, qopt, factor,
+					    keep_zero_weight);
     }
 
     size_t out_of = ctx.size() - size_before;
@@ -1897,14 +1988,15 @@ PostList *
 QueryBranch::do_max(QueryOptimiser * qopt, double factor) const
 {
     LOGCALL(MATCH, PostList *, "QueryBranch::do_max", qopt | factor);
-    OrContext ctx(qopt, subqueries.size());
-    do_or_like(ctx, qopt, factor);
     if (factor == 0.0) {
-	// If we have a factor of 0, we don't care about the weights, so
-	// we're just like a normal OR query.
+	// Without the weights we're just like a normal OR query.
+	BoolOrContext ctx(qopt, subqueries.size());
+	do_bool_or_like(ctx, qopt);
 	RETURN(ctx.postlist());
     }
 
+    OrContext ctx(qopt, subqueries.size());
+    do_or_like(ctx, qopt, factor);
     // We currently assume wqf is 1 for calculating the OP_MAX's weight
     // since conceptually the OP_MAX is one "virtual" term.  If we were
     // to combine multiple occurrences of the same OP_MAX expansion into
@@ -2190,34 +2282,53 @@ PostList*
 QueryOr::postlist(QueryOptimiser * qopt, double factor) const
 {
     LOGCALL(QUERY, PostList*, "QueryOr::postlist", qopt | factor);
+    if (factor == 0.0) {
+	BoolOrContext ctx(qopt, subqueries.size());
+	do_bool_or_like(ctx, qopt);
+	RETURN(ctx.postlist());
+    }
     OrContext ctx(qopt, subqueries.size());
     do_or_like(ctx, qopt, factor);
     RETURN(ctx.postlist());
 }
 
 void
-QueryOr::postlist_sub_or_like(OrContext& ctx, QueryOptimiser * qopt, double factor) const
+QueryOr::postlist_sub_or_like(OrContext& ctx, QueryOptimiser* qopt,
+			      double factor, bool keep_zero_weight) const
 {
-    do_or_like(ctx, qopt, factor);
+    do_or_like(ctx, qopt, factor, 0, 0, keep_zero_weight);
+}
+
+void
+QueryOr::postlist_sub_bool_or_like(BoolOrContext& ctx,
+				   QueryOptimiser* qopt) const
+{
+    do_bool_or_like(ctx, qopt);
 }
 
 PostList*
 QueryAndNot::postlist(QueryOptimiser * qopt, double factor) const
 {
     LOGCALL(QUERY, PostList*, "QueryAndNot::postlist", qopt | factor);
-    // FIXME: Combine and-like side with and-like stuff above.
-    unique_ptr<PostList> l(subqueries[0].internal->postlist(qopt, factor));
-    if (!l.get()) {
+    AndContext ctx(qopt, 1);
+    if (!QueryAndNot::postlist_sub_and_like(ctx, qopt, factor)) {
 	RETURN(NULL);
     }
-    OrContext ctx(qopt, subqueries.size() - 1);
-    do_or_like(ctx, qopt, 0.0, 0, 1);
-    unique_ptr<PostList> r(ctx.postlist());
-    if (!r.get()) {
-	RETURN(l.release());
-    }
-    RETURN(new AndNotPostList(l.release(), r.release(),
-			      qopt->matcher, qopt->db_size));
+    RETURN(ctx.postlist());
+}
+
+bool
+QueryAndNot::postlist_sub_and_like(AndContext& ctx,
+				   QueryOptimiser* qopt,
+				   double factor) const
+{
+    // This invariant should be established by QueryAndNot::done() with
+    // assistance from QueryAndNot::add_subquery().
+    Assert(subqueries[0].internal.get());
+    if (!subqueries[0].internal->postlist_sub_and_like(ctx, qopt, factor))
+	return false;
+    do_bool_or_like(ctx.get_not_ctx(subqueries.size() - 1), qopt, 1);
+    return true;
 }
 
 PostList*
@@ -2244,23 +2355,31 @@ PostList*
 QueryAndMaybe::postlist(QueryOptimiser * qopt, double factor) const
 {
     LOGCALL(QUERY, PostList*, "QueryAndMaybe::postlist", qopt | factor);
-    // FIXME: Combine and-like side with and-like stuff above.
-    unique_ptr<PostList> l(subqueries[0].internal->postlist(qopt, factor));
-    if (!l.get()) {
+    AndContext ctx(qopt, 1);
+    if (!QueryAndMaybe::postlist_sub_and_like(ctx, qopt, factor)) {
 	RETURN(NULL);
     }
-    if (factor == 0.0) {
-	// An unweighted OP_AND_MAYBE can be replaced with its left branch.
-	RETURN(l.release());
+    RETURN(ctx.postlist());
+}
+
+bool
+QueryAndMaybe::postlist_sub_and_like(AndContext& ctx,
+				     QueryOptimiser* qopt,
+				     double factor) const
+{
+    // This invariant should be established by QueryAndMaybe::done() with
+    // assistance from QueryAndMaybe::add_subquery().
+    Assert(subqueries[0].internal.get());
+    if (!subqueries[0].internal->postlist_sub_and_like(ctx, qopt, factor))
+	return false;
+    // We only need to consider the right branch or branches if we're weighted
+    // - an unweighted OP_AND_MAYBE can be replaced with its left branch.
+    if (factor != 0.0) {
+	// Only keep zero-weight subqueries if we need their wdf for synonyms.
+	OrContext& maybe_ctx = ctx.get_maybe_ctx(subqueries.size() - 1);
+	do_or_like(maybe_ctx, qopt, factor, 0, 1, qopt->need_wdf_for_synonym());
     }
-    OrContext ctx(qopt, subqueries.size() - 1);
-    do_or_like(ctx, qopt, factor, 0, 1);
-    unique_ptr<PostList> r(ctx.postlist());
-    if (!r.get()) {
-	RETURN(l.release());
-    }
-    RETURN(new AndMaybePostList(l.release(), r.release(),
-				qopt->matcher, qopt->db_size));
+    return true;
 }
 
 PostList*
@@ -2321,10 +2440,10 @@ QueryWindowed::postlist_windowed(Query::op op, AndContext& ctx, QueryOptimiser *
     for (i = subqueries.begin(); i != subqueries.end(); ++i) {
 	// MatchNothing subqueries should have been removed by done().
 	Assert((*i).internal.get());
-	bool is_term = ((*i).internal->get_type() == Query::LEAF_TERM);
 	PostList* pl = (*i).internal->postlist(qopt, factor);
-	if (pl && !is_term)
+	if (pl && (*i).internal->get_type() != Query::LEAF_TERM) {
 	    pl = new OrPosPostList(pl);
+	}
 	result = ctx.add_postlist(pl);
 	if (!result) {
 	    if (factor == 0.0) break;
@@ -2373,9 +2492,10 @@ QueryEliteSet::postlist(QueryOptimiser * qopt, double factor) const
 }
 
 void
-QueryEliteSet::postlist_sub_or_like(OrContext& ctx, QueryOptimiser * qopt, double factor) const
+QueryEliteSet::postlist_sub_or_like(OrContext& ctx, QueryOptimiser* qopt,
+				    double factor, bool keep_zero_weight) const
 {
-    do_or_like(ctx, qopt, factor, set_size);
+    do_or_like(ctx, qopt, factor, set_size, 0, keep_zero_weight);
 }
 
 PostList*

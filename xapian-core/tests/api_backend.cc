@@ -397,11 +397,99 @@ DEFINE_TESTCASE(testlock1, glass) {
     return true;
 }
 
-/// Test that locked() returns false for backends which don't support update.
-/// Regression test for bug fixed in 1.4.6.
-DEFINE_TESTCASE(testlock2, backend && !writable && !multi) {
+/** Test that locked() returns false for backends which don't support update.
+ *
+ *  Regression test for bug fixed in 1.4.6.
+ */
+DEFINE_TESTCASE(testlock2, backend && !writable) {
     Xapian::Database db = get_database("apitest_simpledata");
     TEST(!db.locked());
+    db.close();
+    TEST(!db.locked());
+    return true;
+}
+
+/** Test locked() on inmemory Database objects.
+ *
+ *  An inmemory Database is always actually a WritableDatabase viewed as a
+ *  Database, so it should always report being locked for writing, unless
+ *  close() has been called.
+ *
+ *  Regression test for bug fixed in 1.4.14 - earlier versions always returned
+ *  false for an inmemory Database here.
+ *
+ *  Regression test for bug fixed in 1.4.15 - false should be returned after
+ *  close() has been called.
+ */
+DEFINE_TESTCASE(testlock3, inmemory) {
+    Xapian::Database db = get_database("apitest_simpledata");
+    TEST(db.locked());
+    db.close();
+    TEST(!db.locked());
+    return true;
+}
+
+/// Feature tests for Database::lock() and unlock().
+DEFINE_TESTCASE(testlock4, glass) {
+    Xapian::Database rdb;
+    TEST(!rdb.locked());
+
+    {
+	Xapian::WritableDatabase db = get_named_writable_database("testlock4");
+	TEST(db.locked());
+	Xapian::Database db_as_database = db;
+	TEST(db_as_database.locked());
+	TEST(!rdb.locked());
+
+	{
+	    rdb = get_writable_database_as_database();
+	    // Test lock() fails (already open to write as db).
+	    TEST_EXCEPTION(Xapian::DatabaseLockError,
+			   auto wdb = rdb.lock());
+	}
+
+	rdb = db.unlock();
+	try {
+	    TEST(!rdb.locked());
+	    // unlock() should have closed the underlying WritableDatabase so
+	    // locked() should either report that it isn't locked, or throw
+	    // Xapian::DatabaseClosedError.
+	    try {
+		TEST(!db.locked());
+	    } catch (const Xapian::DatabaseClosedError&) {
+	    }
+	    try {
+		TEST(!db_as_database.locked());
+	    } catch (const Xapian::DatabaseClosedError&) {
+	    }
+	} catch (const Xapian::FeatureUnavailableError&) {
+	    SKIP_TEST("Database::locked() not supported on this platform");
+	}
+
+	db.close();
+	TEST(!db.locked());
+	TEST(!db_as_database.locked());
+	TEST(!rdb.locked());
+	TEST_EXCEPTION(Xapian::DatabaseClosedError,
+		       db.lock());
+	TEST_EXCEPTION(Xapian::DatabaseClosedError,
+		       db.unlock());
+	TEST_EXCEPTION(Xapian::DatabaseClosedError,
+		       db_as_database.lock());
+	TEST_EXCEPTION(Xapian::DatabaseClosedError,
+		       db_as_database.unlock());
+
+	{
+	    auto wdb = rdb.lock();
+	    TEST(rdb.locked());
+	}
+
+	rdb.close();
+	TEST_EXCEPTION(Xapian::DatabaseClosedError,
+		       rdb.lock());
+	TEST_EXCEPTION(Xapian::DatabaseClosedError,
+		       rdb.unlock());
+    }
     return true;
 }
 
@@ -1548,6 +1636,15 @@ DEFINE_TESTCASE(getrevision1, glass) {
     return true;
 }
 
+/// Check get_revision() on an empty database reports 0.  (Since 1.5.0)
+DEFINE_TESTCASE(getrevision2, glass) {
+    Xapian::Database db;
+    TEST_EQUAL(db.get_revision(), 0);
+    Xapian::Database wdb;
+    TEST_EQUAL(wdb.get_revision(), 0);
+    return true;
+}
+
 /// Feature test for DOC_ASSUME_VALID.
 DEFINE_TESTCASE(getdocumentlazy1, backend) {
     Xapian::Database db = get_database("apitest_simpledata");
@@ -1654,24 +1751,6 @@ DEFINE_TESTCASE(nopositionbug1, generated) {
     return true;
 }
 
-/// Check estimate is rounded to suitable number of S.F. - new in 1.4.3.
-DEFINE_TESTCASE(estimaterounding1, backend) {
-    Xapian::Database db = get_database("etext");
-    Xapian::Enquire enquire(db);
-    enquire.set_query(Xapian::Query("the") | Xapian::Query("road"));
-    Xapian::MSet mset = enquire.get_mset(0, 10);
-    // MSet::get_description() includes bounds and raw estimate.
-    tout << mset.get_description() << endl;
-    // Bounds are 411-439, raw estimate is 419.
-    TEST_EQUAL(mset.get_matches_estimated() % 10, 0);
-    enquire.set_query(Xapian::Query("king") | Xapian::Query("prussia"));
-    mset = enquire.get_mset(0, 10);
-    tout << mset.get_description() << endl;
-    // Bounds are 111-138, raw estimate is 133.
-    TEST_EQUAL(mset.get_matches_estimated() % 10, 0);
-    return true;
-}
-
 /** Check that a TermIterator returns the correct termfreqs.
  *
  *  Prior to 1.5.0, the termfreq was approximated in the multidatabase case.
@@ -1774,5 +1853,28 @@ DEFINE_TESTCASE(multidb1, backend) {
     TEST_EQUAL(db.size(), db2.size() * 2);
     db.add_database(Xapian::Database());
     TEST_EQUAL(db.size(), db2.size() * 2);
+    return true;
+}
+
+// Regression test for bug in unreleased versions before 1.5.0.
+DEFINE_TESTCASE(matchall3, backend) {
+    Xapian::Database db = get_database("apitest_simpledata");
+    Xapian::Enquire enq(db);
+    Xapian::Query qw(Xapian::Query::OP_WILDCARD, "nosuch");
+    enq.set_query(0 * (Xapian::Query::MatchAll & qw));
+    TEST_EQUAL(enq.get_mset(0, 10).size(), 0);
+    enq.set_query(0 * (qw & Xapian::Query::MatchAll));
+    TEST_EQUAL(enq.get_mset(0, 10).size(), 0);
+    return true;
+}
+
+DEFINE_TESTCASE(reconstruct1, backend) {
+    Xapian::Database db = get_database("apitest_simpledata");
+    TEST_STRINGS_EQUAL(db.reconstruct_text(6),
+		       "and yet anoth this one doe mention banana split "
+		       "though so cant be that bad");
+    TEST_STRINGS_EQUAL(db.reconstruct_text(1, 14), "this is a test");
+    TEST_STRINGS_EQUAL(db.reconstruct_text(1, 10, "S"), "");
+    TEST_STRINGS_EQUAL(db.reconstruct_text(6, 0, "", 1, 3), "and yet anoth");
     return true;
 }

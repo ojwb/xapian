@@ -45,7 +45,7 @@ print HDR <<'EOF';
 #define XAPIAN_INCLUDED_ERROR_H
 
 #if !defined XAPIAN_IN_XAPIAN_H && !defined XAPIAN_LIB_BUILD
-# error "Never use <xapian/error.h> directly; include <xapian.h> instead."
+# error Never use <xapian/error.h> directly; include <xapian.h> instead.
 #endif
 
 #include <string>
@@ -116,6 +116,13 @@ class XAPIAN_VISIBILITY_DEFAULT Error {
 	  my_errno(errno_) { }
 
   public:
+    /** Default copy constructor.
+     *
+     *  We explicitly specify this to avoid warnings from GCC 9 (from
+     *  -Wdeprecated-copy which is enabled by -Wextra).
+     */
+    Error(const Error&) = default;
+
     /// The type of this error (e.g. "DocNotFoundError".)
     const char * XAPIAN_NOTHROW(get_type() const) {
 	return type + 1;

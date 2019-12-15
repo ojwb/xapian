@@ -50,7 +50,7 @@ namespace Xapian {
 static inline bool
 U_isupper(unsigned ch)
 {
-    return (ch < 128 && C_isupper(static_cast<unsigned char>(ch)));
+    return ch < 128 && C_isupper(static_cast<unsigned char>(ch));
 }
 
 static inline unsigned
@@ -321,8 +321,8 @@ TermGenerator::Internal::index_text(Utf8Iterator itor, termcount wdf_inc,
 	    if ((this->flags & FLAG_SPELLING) && prefix.empty())
 		db.add_spelling(term);
 
-	    if (strategy == TermGenerator::STEM_NONE ||
-		!stemmer.internal.get()) return true;
+	    if (strategy == TermGenerator::STEM_NONE || stemmer.is_none())
+		return true;
 
 	    if (strategy == TermGenerator::STEM_SOME ||
 		strategy == TermGenerator::STEM_SOME_FULL_POS) {
@@ -344,7 +344,7 @@ TermGenerator::Internal::index_text(Utf8Iterator itor, termcount wdf_inc,
 	    }
 	    stemmed_term += prefix;
 	    stemmed_term += stem;
-	    if (strategy != TermGenerator::STEM_SOME && with_positions) {
+	    if (strategy != TermGenerator::STEM_SOME && positional) {
 		if (strategy != TermGenerator::STEM_SOME_FULL_POS) ++cur_pos;
 		doc.add_posting(stemmed_term, cur_pos, wdf_inc);
 	    } else {

@@ -1137,3 +1137,56 @@ DEFINE_TESTCASE(boolorbug1, backend) {
 
     return true;
 }
+
+// Regression test for bug introduced in 1.4.13 and fixed in 1.4.14.
+DEFINE_TESTCASE(hoistnotbug1, backend) {
+    Xapian::Database db(get_database("etext"));
+    using Xapian::Query;
+    Query q(Query::OP_PHRASE, Query("the"), Query("king"));
+    q &= ~Query("worldtornado");
+    q &= Query("a");
+    Xapian::Enquire enq(db);
+    enq.set_query(q);
+
+    // This reliably fails before the fix in an assertion build, and may crash
+    // in other builds.
+    Xapian::MSet mset = enq.get_mset(0, 10, db.get_doccount());
+    TEST_EQUAL(mset.get_matches_estimated(), 42);
+
+    return true;
+}
+
+// Regression test for segfault optimising query on git master before 1.5.0.
+DEFINE_TESTCASE(emptynot1, backend) {
+    Xapian::Database db(get_database("apitest_simpledata"));
+    Xapian::Enquire enq(db);
+    enq.set_weighting_scheme(Xapian::BoolWeight());
+    Xapian::Query query = Xapian::Query("document") & Xapian::Query("api");
+    // This range won't match anything, so collapses to MatchNothing as we
+    // optimise the query.
+    query = Xapian::Query(query.OP_AND_NOT,
+			  query,
+			  Xapian::Query(Xapian::Query::OP_VALUE_GE, 1234, "x"));
+    enq.set_query(query);
+    Xapian::MSet mset = enq.get_mset(0, 10);
+    TEST_EQUAL(mset.size(), 1);
+    return true;
+}
+
+// Similar case to emptynot1 but for OP_AND_MAYBE.  This case wasn't failing,
+// so this isn't a regression test, but we do want to ensure it works.
+DEFINE_TESTCASE(emptymaybe1, backend) {
+    Xapian::Database db(get_database("apitest_simpledata"));
+    Xapian::Enquire enq(db);
+    enq.set_weighting_scheme(Xapian::BoolWeight());
+    Xapian::Query query = Xapian::Query("document") & Xapian::Query("api");
+    // This range won't match anything, so collapses to MatchNothing as we
+    // optimise the query.
+    query = Xapian::Query(query.OP_AND_MAYBE,
+			  query,
+			  Xapian::Query(Xapian::Query::OP_VALUE_GE, 1234, "x"));
+    enq.set_query(query);
+    Xapian::MSet mset = enq.get_mset(0, 10);
+    TEST_EQUAL(mset.size(), 1);
+    return true;
+}

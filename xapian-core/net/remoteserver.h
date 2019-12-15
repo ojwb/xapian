@@ -206,6 +206,10 @@ class XAPIAN_VISIBILITY_DEFAULT RemoteServer : private RemoteConnection {
     XAPIAN_VISIBILITY_INTERNAL
     void msg_uniqueterms(const std::string & message);
 
+    // reconstruct document text
+    XAPIAN_VISIBILITY_INTERNAL
+    void msg_reconstructtext(const std::string& message);
+
   public:
     /** Construct a RemoteServer.
      *
@@ -234,9 +238,6 @@ class XAPIAN_VISIBILITY_DEFAULT RemoteServer : private RemoteConnection {
      *  non-Xapian exception is thrown.
      */
     void run();
-
-    /// Get the registry used for (un)serialisation.
-    const Xapian::Registry & get_registry() const { return reg; }
 
     /// Set the registry used for (un)serialisation.
     void set_registry(const Xapian::Registry & reg_) { reg = reg_; }

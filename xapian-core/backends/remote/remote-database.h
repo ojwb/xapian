@@ -209,6 +209,7 @@ class RemoteDatabase : public Xapian::Database::Internal {
     void send_global_stats(Xapian::doccount first,
 			   Xapian::doccount maxitems,
 			   Xapian::doccount check_at_least,
+			   const Xapian::KeyMaker* sorter,
 			   const Xapian::Weight::Internal &stats) const;
 
     /// Get the MSet from the remote server.
@@ -301,6 +302,12 @@ class RemoteDatabase : public Xapian::Database::Internal {
     }
 
     bool locked() const;
+
+    std::string reconstruct_text(Xapian::docid did,
+				 size_t length,
+				 const std::string& prefix,
+				 Xapian::termpos start_pos,
+				 Xapian::termpos end_pos) const;
 
     std::string get_description() const;
 };

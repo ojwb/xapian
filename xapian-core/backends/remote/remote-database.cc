@@ -67,6 +67,13 @@ is_intermediate_reply(int reply_code)
 
 [[noreturn]]
 static void
+throw_invalid_operation(const char* message)
+{
+    throw Xapian::InvalidOperationError(message);
+}
+
+[[noreturn]]
+static void
 throw_handshake_failed(const string & context)
 {
     throw Xapian::NetworkError("Handshake failed - is this a Xapian server?",
@@ -349,6 +356,8 @@ RemoteDatabase::update_stats(message_type msg_code, const string & body) const
 	    errmsg += "s ";
 	    errmsg += str(protocol_major);
 	    errmsg += ".0 to ";
+	} else {
+	    errmsg += ' ';
 	}
 	errmsg += str(protocol_major);
 	errmsg += '.';
@@ -688,12 +697,23 @@ void
 RemoteDatabase::send_global_stats(Xapian::doccount first,
 				  Xapian::doccount maxitems,
 				  Xapian::doccount check_at_least,
+				  const Xapian::KeyMaker* sorter,
 				  const Xapian::Weight::Internal &stats) const
 {
     string message;
     pack_uint(message, first);
     pack_uint(message, maxitems);
     pack_uint(message, check_at_least);
+    if (!sorter) {
+	pack_string_empty(message);
+    } else {
+	const string& name = sorter->name();
+	if (name.empty()) {
+	    throw_invalid_operation("sorter reported empty name");
+	}
+	pack_string(message, name);
+	pack_string(message, sorter->serialise());
+    }
     message += serialise_stats(stats);
     send_message(MSG_GETMSET, message);
 }
@@ -884,6 +904,25 @@ bool
 RemoteDatabase::locked() const
 {
     throw Xapian::UnimplementedError("Database::locked() not implemented for remote backend");
+}
+
+string
+RemoteDatabase::reconstruct_text(Xapian::docid did,
+				 size_t length,
+				 const string& prefix,
+				 Xapian::termpos start_pos,
+				 Xapian::termpos end_pos) const
+{
+    string message;
+    pack_uint(message, did);
+    pack_uint(message, length);
+    pack_uint(message, start_pos);
+    pack_uint(message, end_pos);
+    message += prefix;
+    send_message(MSG_RECONSTRUCTTEXT, message);
+
+    get_message(message, REPLY_RECONSTRUCTTEXT);
+    return message;
 }
 
 string
