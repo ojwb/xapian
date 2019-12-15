@@ -103,8 +103,8 @@ static void do_write(int fd, const char * p, size_t n)
 }
 
 // Make a truncated copy of a file.
-static off_t
-truncated_copy(const string & srcpath, const string & destpath, off_t tocopy)
+static size_t
+truncated_copy(const string & srcpath, const string & destpath, size_t tocopy)
 {
     FD fdin(open(srcpath.c_str(), O_RDONLY | O_BINARY));
     if (fdin == -1) {
@@ -449,26 +449,25 @@ replicate_with_brokenness(Xapian::DatabaseMaster & master,
 
     // Try applying truncated changesets of various different lengths.
     string brokenchangesetpath = tempdir + "/changeset_broken";
-    off_t filesize = get_file_size(changesetpath);
-    off_t len = 10;
-    off_t copylen;
+    size_t filesize = get_file_size(changesetpath);
+    size_t len = 10;
     while (len < filesize) {
-	copylen = truncated_copy(changesetpath, brokenchangesetpath, len);
+	auto copylen = truncated_copy(changesetpath, brokenchangesetpath, len);
 	TEST_EQUAL(copylen, len);
-	tout << "Trying replication with a changeset truncated to " << len <<
-		" bytes, from " << filesize << " bytes\n";
+	tout << "Trying replication with a changeset truncated to " << len
+	     <<	" bytes, from " << filesize << " bytes\n";
 	TEST_EXCEPTION(Xapian::NetworkError,
 		       apply_changeset(brokenchangesetpath, replica,
 				       expected_changesets, expected_fullcopies,
 				       expected_changed));
-	if (len < 30 || len >= filesize - 10) {
+	if (len < 30 || len + 10 >= filesize) {
 	    // For lengths near the beginning and end, increment size by 1
 	    ++len;
 	} else {
 	    // Don't bother incrementing by small amounts in the middle of
 	    // the changeset.
 	    len += 1000;
-	    if (len >= filesize - 10) {
+	    if (len + 10 >= filesize) {
 		len = filesize - 10;
 	    }
 	}
