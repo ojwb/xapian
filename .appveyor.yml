@@ -11,12 +11,12 @@ environment:
   global:
     AUTOMATED_TESTING: 1
   matrix:
-#  - TOOLCHAIN: mingw
-#    platform: x86
-#  - TOOLCHAIN: mingw64
-#    platform: x86
-#  - TOOLCHAIN: mingw64
-#    platform: x64
+  - TOOLCHAIN: mingw
+    platform: x86
+  - TOOLCHAIN: mingw64
+    platform: x86
+  - TOOLCHAIN: mingw64
+    platform: x64
 # Fails trying to run apitest.exe etc for unknown reasons.
 #  - TOOLCHAIN: cygwin
 #    platform: x86

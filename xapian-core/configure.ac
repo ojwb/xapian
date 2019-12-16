@@ -1478,7 +1478,8 @@ AH_BOTTOM(
 	fstat
 # endif
 
-# ifdef _MSC_VER
+// Looking at mingw headers, I don't see struct __stat64...
+# if 1 //def _MSC_VER
 #  define stat _stat64
 #  define fstat(FD, BUF) _fstat64(FD, BUF)
 # else
