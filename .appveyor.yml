@@ -11,8 +11,8 @@ environment:
   global:
     AUTOMATED_TESTING: 1
   matrix:
-  - TOOLCHAIN: mingw
-    platform: x86
+#  - TOOLCHAIN: mingw
+#    platform: x86
 #  - TOOLCHAIN: mingw64
 #    platform: x86
 #  - TOOLCHAIN: mingw64
