@@ -1455,12 +1455,6 @@ AH_BOTTOM(
 // use #define to replace both in one go.  We also want to use _fstat64()
 // instead of fstat() but in this case we can use a function-like macro.
 //
-// Mingw has _stat64() but unhelpfully for our purposes, it has an extra
-// underscore prefix on the struct name ("struct __stat64") so there we
-// target _stati64 instead.  This has 64-bit file size but the time_t size
-// is switchable.  We don't really care about file timestamps in the
-// library, so this should be fine.
-//
 // This hack is a problem is we ever want a method called "stat", or one called
 // fstat which takes 2 parameters, but we can probably live with these
 // limitations.
@@ -1473,19 +1467,22 @@ AH_BOTTOM(
 	stat
 # endif
 
+# ifdef _MSC_VER
+#  define stat _stat64
+# else
+// Mingw32 has _stat64() but unhelpfully for our purposes, the struct is
+// called __stat64 (with an extra underscore).  We hack around this by
+// forwarding calls to __stat64 to _stat64.
+#  define __stat64(PATH, STATBUF) _stat64((PATH), (STATBUF))
+#  define stat __stat64
+# endif
+
 # ifdef fstat
 #  undef \
 	fstat
 # endif
 
-// Looking at mingw headers, I don't see struct __stat64...
-# if 1 //def _MSC_VER
-#  define stat _stat64
-#  define fstat(FD, BUF) _fstat64(FD, BUF)
-# else
-#  define stat _stati64
-#  define fstat(FD, BUF) _fstati64(FD, BUF)
-# endif
+# define fstat(FD, BUF) _fstat64(FD, BUF)
 
 # ifdef lseek
 #  undef \
