@@ -410,7 +410,7 @@ OrPostList::get_termfreq_est_using_stats(
     if (stats.total_length != 0) {
 	estimate_or_assuming_indep(l_freqs.collfreq,
 				   r_freqs.collfreq,
-				   stats.total_length,
+				   double(stats.total_length),
 				   collfreqest);
     }
 

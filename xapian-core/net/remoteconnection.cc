@@ -54,7 +54,7 @@
 
 using namespace std;
 
-#define CHUNKSIZE 4096
+static constexpr size_t CHUNKSIZE = 4096;
 
 [[noreturn]]
 static void
@@ -580,7 +580,7 @@ RemoteConnection::get_message_chunked(double end_time)
     // handle partial reads.
     uint_least64_t len = static_cast<unsigned char>(buffer[1]);
     if (len < 128) {
-	chunked_data_left = off_t(len);
+	chunked_data_left = size_t(len);
 	char type = buffer[0];
 	buffer.erase(0, 2);
 	RETURN(type);
@@ -596,7 +596,7 @@ RemoteConnection::get_message_chunked(double end_time)
     if (!unpack_uint(&p, p_end, &len)) {
 	RETURN(-1);
     }
-    chunked_data_left = off_t(len);
+    chunked_data_left = size_t(len);
     // Check that the value of len fits in an off_t without loss.
     if (rare(uint_least64_t(chunked_data_left) != len)) {
 	throw_network_error_insane_message_length();
@@ -618,13 +618,13 @@ RemoteConnection::get_message_chunk(string &result, size_t at_least,
     if (at_least <= result.size()) RETURN(true);
     at_least -= result.size();
 
-    bool read_enough = (off_t(at_least) <= chunked_data_left);
-    if (!read_enough) at_least = size_t(chunked_data_left);
+    bool read_enough = (at_least <= chunked_data_left);
+    if (!read_enough) at_least = chunked_data_left;
 
     if (!read_at_least(at_least, end_time))
 	RETURN(-1);
 
-    size_t retlen = min(off_t(buffer.size()), chunked_data_left);
+    size_t retlen = min(buffer.size(), chunked_data_left);
     result.append(buffer, 0, retlen);
     buffer.erase(0, retlen);
     chunked_data_left -= retlen;
@@ -661,7 +661,7 @@ RemoteConnection::receive_file(const string &file, double end_time)
 
     int type = get_message_chunked(end_time);
     do {
-	off_t min_read = min(chunked_data_left, off_t(CHUNKSIZE));
+	size_t min_read = min(chunked_data_left, CHUNKSIZE);
 	if (!read_at_least(min_read, end_time))
 	    RETURN(-1);
 	write_all(fd, buffer.data(), min_read);

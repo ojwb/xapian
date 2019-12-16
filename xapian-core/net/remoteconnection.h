@@ -191,7 +191,7 @@ class RemoteConnection {
     std::string buffer;
 
     /// Remaining bytes of message data still to come over fdin for a chunked read.
-    off_t chunked_data_left;
+    size_t chunked_data_left;
 
     /** Read until there are at least min_len bytes in buffer.
      *

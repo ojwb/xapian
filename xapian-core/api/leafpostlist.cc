@@ -80,7 +80,8 @@ LeafPostList::get_termfreq_est_using_stats(
 	// total_length may be too large to represent - if so use the largest
 	// value we can represent.
 	Xapian::totallength max_cf{numeric_limits<Xapian::termcount>::max()};
-	Xapian::termcount cf(min(stats.total_length, max_cf));
+	auto cf(static_cast<Xapian::termcount>(min(stats.total_length,
+						   max_cf)));
 	RETURN(TermFreqs(stats.collection_size, stats.rset_size, cf));
     }
     map<string, TermFreqs>::const_iterator i = stats.termfreqs.find(term);

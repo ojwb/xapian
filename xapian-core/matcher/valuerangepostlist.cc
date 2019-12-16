@@ -29,6 +29,9 @@
 #include "str.h"
 #include "unicode/description_append.h"
 
+#include <algorithm>
+#include <limits>
+
 using namespace std;
 
 ValueRangePostList::~ValueRangePostList()
@@ -136,9 +139,15 @@ ValueRangePostList::get_termfreq_est_using_stats(
     LOGCALL(MATCH, TermFreqs, "ValueRangePostList::get_termfreq_est_using_stats", stats);
     // FIXME: It's hard to estimate well - perhaps consider the values of
     // begin and end like above?
+
+    // total_length may be too large to represent - if so use the largest
+    // value we can represent.
+    Xapian::totallength max_cf{numeric_limits<Xapian::termcount>::max()};
+    auto cf(static_cast<Xapian::termcount>(min(stats.total_length / 2,
+                                               max_cf)));
     RETURN(TermFreqs(stats.collection_size / 2,
 		     stats.rset_size / 2,
-		     stats.total_length / 2));
+		     cf));
 }
 
 Xapian::doccount

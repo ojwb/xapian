@@ -449,7 +449,7 @@ replicate_with_brokenness(Xapian::DatabaseMaster & master,
 
     // Try applying truncated changesets of various different lengths.
     string brokenchangesetpath = tempdir + "/changeset_broken";
-    size_t filesize = get_file_size(changesetpath);
+    size_t filesize = size_t(get_file_size(changesetpath));
     size_t len = 10;
     while (len < filesize) {
 	auto copylen = truncated_copy(changesetpath, brokenchangesetpath, len);

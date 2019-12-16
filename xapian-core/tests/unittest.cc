@@ -834,9 +834,16 @@ inline static void parseunsigned_helper() {
     TEST(!parse_unsigned("-1", val));
     TEST(!parse_unsigned("abc", val));
     TEST(!parse_unsigned("0a", val));
+#ifdef _MSC_VER
+# pragma warning(push)
+# pragma warning(disable:4307)
+#endif
     // Only test if we can construct a value one larger easily.
     if (max_val + 1ull != 0)
 	TEST(!parse_unsigned(str(max_val + 1ull).c_str(), val));
+#ifdef _MSC_VER
+# pragma warning(pop)
+#endif
 }
 
 static bool test_parseunsigned1()
@@ -876,7 +883,14 @@ inline static void parsesigned_helper() {
     unsigned long long one_too_large = max_val + 1ull;
     TEST(!parse_signed(str(one_too_large).c_str(), val));
 
+#ifdef _MSC_VER
+# pragma warning(push)
+# pragma warning(disable:4308)
+#endif
     unsigned long long one_too_small_negated = 1ull - min_val;
+#ifdef _MSC_VER
+# pragma warning(pop)
+#endif
     TEST(!parse_signed(("-" + str(one_too_small_negated)).c_str(), val));
 }
 
