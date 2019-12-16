@@ -503,7 +503,8 @@ InMemoryDatabase::get_doclength_upper_bound() const
 {
     // Not a very tight bound in general, but InMemory isn't really built for
     // performance.
-    return min(get_total_length(), Xapian::totallength(Xapian::termcount(-1)));
+    return Xapian::termcount(min(get_total_length(),
+				 Xapian::totallength(Xapian::termcount(-1))));
 }
 
 Xapian::termcount

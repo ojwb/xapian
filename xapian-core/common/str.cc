@@ -64,7 +64,14 @@ tostring(T value)
     typedef typename std::make_unsigned<T>::type unsigned_type;
     unsigned_type val(value);
     if (negative) {
+#ifdef _MSC_VER
+# pragma warning(push)
+# pragma warning(disable:4146)
+#endif
 	val = -val;
+#ifdef _MSC_VER
+# pragma warning(pop)
+#endif
     }
 
     char buf[(sizeof(unsigned_type) * 5 + 1) / 2 + 1];

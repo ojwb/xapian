@@ -480,7 +480,7 @@ int SnowballStemImplementation::len_utf8(const symbol * v) {
     int len = 0;
     while (size--) {
         symbol b = *v++;
-        if (static_cast<signed char>(b) >= static_cast<signed char>(0xc0))
+        if (static_cast<signed char>(b) >= static_cast<signed char>('\xc0'))
             ++len;
     }
     return len;

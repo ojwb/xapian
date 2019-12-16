@@ -47,7 +47,14 @@ bool parse_signed(const char* p, T& res)
     if (*p == '-' && parse_unsigned(++p, temp) &&
 	// casting the min signed value to unsigned gives us its absolute value.
 	temp <= unsigned_type(std::numeric_limits<T>::min())) {
+#ifdef _MSC_VER
+# pragma warning(push)
+# pragma warning(disable:4146)
+#endif
 	res = -temp;
+#ifdef _MSC_VER
+# pragma warning(pop)
+#endif
 	return true;
     } else if (parse_unsigned(p, temp) &&
 	       temp <= unsigned_type(std::numeric_limits<T>::max())) {

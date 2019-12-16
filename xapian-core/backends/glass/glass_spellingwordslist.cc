@@ -31,6 +31,11 @@
 #include "pack.h"
 #include "stringutils.h"
 
+#include <algorithm>
+#include <limits>
+
+using namespace std;
+
 GlassSpellingWordsList::~GlassSpellingWordsList()
 {
     LOGCALL_DTOR(DB, "GlassSpellingWordsList");
@@ -42,7 +47,9 @@ GlassSpellingWordsList::get_approx_size() const
 {
     // This is an over-estimate, but we only use this value to build a balanced
     // or-tree, and it'll do a decent enough job for that.
-    return database->spelling_table.get_entry_count();
+    glass_tablesize_t max_size{numeric_limits<Xapian::termcount>::max()};
+    return Xapian::termcount(min(database->spelling_table.get_entry_count(),
+				 max_size));
 }
 
 string

@@ -167,7 +167,7 @@ class BufferedFile {
     void set_pos(off_t pos_) {
 	if (!read_only) flush();
 	if (false && pos_ >= pos) { // FIXME: need to take buf_end into account
-	    skip(pos_ - pos);
+	    skip(size_t(pos_ - pos));
 	} else {
 	    // FIXME: salvage some of the buffer if we can?
 	    buf_end = 0;

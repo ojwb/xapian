@@ -27,7 +27,7 @@
 using namespace std;
 
 static inline bool bad_cont(unsigned char ch) {
-    return static_cast<signed char>(ch) >= static_cast<signed char>(0xc0);
+    return static_cast<signed char>(ch) >= static_cast<signed char>('\xc0');
 }
 
 namespace Xapian {

@@ -23,6 +23,7 @@
 #include "andnotpostlist.h"
 
 #include <algorithm>
+#include <limits>
 
 using namespace std;
 
@@ -82,7 +83,9 @@ AndNotPostList::get_termfreq_est_using_stats(const Xapian::Weight::Internal & st
     freqest = (freqest * freqs.termfreq) / stats.collection_size;
 
     if (stats.total_length != 0) {
-	freqs.collfreq = stats.total_length - freqs.collfreq;
+	Xapian::totallength max_cf{numeric_limits<Xapian::termcount>::max()};
+	auto cf = stats.total_length - freqs.collfreq;
+	freqs.collfreq = Xapian::termcount(min(cf, max_cf));
 	collfreqest = (collfreqest * freqs.collfreq) / stats.total_length;
     }
 
