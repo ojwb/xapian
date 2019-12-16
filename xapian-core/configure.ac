@@ -1504,6 +1504,27 @@ AH_BOTTOM(
 typedef long long off_t_redefinition_typedef;
 # define off_t off_t_redefinition_typedef
 
+#ifdef _WIN64
+/* MSVCRT read() and write() take an unsigned instead of a size_t for the last
+ * parameter, so we use wrappers which clamp the value in the unlikely case
+ * where it exceeds the range of unsigned.  This will then appear like a short
+ * read/write to the caller, which already needs to handle that case.
+ */
+namespace {
+inline ssize_t
+read(int fd, void* buf, size_t count) {
+    unsigned c = (count > unsigned(-1) ? unsigned(-1) : unsigned(count));
+    return _read(fd, buf, c);
+}
+
+inline ssize_t
+write(int fd, const void* buf, size_t count) {
+    unsigned c = (count > unsigned(-1) ? unsigned(-1) : unsigned(count));
+    return _write(fd, buf, c);
+}
+}
+#endif
+
 #endif
 
 /* MSVC defines _WIN32 but not __WIN32__. */
