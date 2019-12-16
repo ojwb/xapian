@@ -1423,7 +1423,7 @@ AH_BOTTOM(
 /* A "performance" warning for converting int to bool. */
 # pragma warning(disable:4800)
 /* POSIX get to deprecate POSIX things, not MS. */
-# pragma warning(disable:4996)
+# define _CRT_NONSTDC_NO_WARNINGS
 
 /* Tell MSVC we want M_PI, etc defined. */
 # define _USE_MATH_DEFINES
