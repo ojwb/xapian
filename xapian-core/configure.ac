@@ -1507,7 +1507,6 @@ typedef long long off_t_redefinition_typedef;
  * where it exceeds the range of unsigned.  This will then appear like a short
  * read/write to the caller, which already needs to handle that case.
  */
-namespace {
 inline ssize_t
 read(int fd, void* buf, size_t count) {
     unsigned c = (count > unsigned(-1) ? unsigned(-1) : unsigned(count));
@@ -1518,7 +1517,6 @@ inline ssize_t
 write(int fd, const void* buf, size_t count) {
     unsigned c = (count > unsigned(-1) ? unsigned(-1) : unsigned(count));
     return _write(fd, buf, c);
-}
 }
 #endif
 
