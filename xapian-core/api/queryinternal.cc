@@ -2051,7 +2051,7 @@ QueryWindowed::done()
 {
     // If window size not specified, default it.
     if (window == 0)
-	window = subqueries.size();
+	window = Xapian::termcount(subqueries.size());
     return QueryAndLike::done();
 }
 

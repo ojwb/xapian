@@ -177,7 +177,7 @@ Xapian::doccount
 MSet::size() const
 {
     Assert(internal.get());
-    return internal->items.size();
+    return Xapian::doccount(internal->items.size());
 }
 
 std::string
@@ -221,7 +221,7 @@ MSet::Internal::fetch(Xapian::doccount first_, Xapian::doccount last) const
 	return;
     }
     if (last > items.size() - 1) {
-	last = items.size() - 1;
+	last = Xapian::doccount(items.size() - 1);
     }
     if (first_ <= last) {
 	Xapian::doccount n = last - first_;

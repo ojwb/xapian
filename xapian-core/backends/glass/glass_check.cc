@@ -184,7 +184,7 @@ GlassTableCheck::block_check(Glass::Cursor * C_, int j, int opts,
     if (j == 0) {
 	for (c = DIR_START; c < dir_end; c += D2) {
 	    LeafItem item(p, c);
-	    int o = item.get_address() - p;
+	    int o = int(item.get_address() - p);
 	    if (o > int(block_size))
 		failure("item starts outside block", n, c);
 	    if (o - dir_end < int(max_free))
@@ -201,7 +201,7 @@ GlassTableCheck::block_check(Glass::Cursor * C_, int j, int opts,
     } else {
 	for (c = DIR_START; c < dir_end; c += D2) {
 	    BItem item(p, c);
-	    int o = item.get_address() - p;
+	    int o = int(item.get_address() - p);
 	    if (o > int(block_size))
 		failure("item starts outside block", n, c);
 	    if (o - dir_end < int(max_free))

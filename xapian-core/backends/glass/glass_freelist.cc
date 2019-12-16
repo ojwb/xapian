@@ -326,7 +326,7 @@ GlassFreeListChecker::count_set_bits(uint4 * p_first_bad_blk) const
 	    c += __builtin_popcountll(elt);
 #elif HAVE_DECL___POPCNT64
 	} else if (sizeof(elt_type) == sizeof(unsigned long long)) {
-	    c += __popcnt64(elt);
+	    c += uint4(__popcnt64(elt));
 #endif
 	} else {
 	    do {

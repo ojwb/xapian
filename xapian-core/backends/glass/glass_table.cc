@@ -1339,13 +1339,13 @@ GlassTable::add(const string &key, string tag, bool already_compressed)
 	}
     }
 
-    // There are m items to add.
-    int m = (tag_size - first_L + L - 1) / L + 1;
+    size_t items_required = (tag_size - first_L + L - 1) / L + 1;
     /* FIXME: sort out this error higher up and turn this into
      * an assert.
      */
-    if (m >= BYTE_PAIR_RANGE)
+    if (items_required >= BYTE_PAIR_RANGE)
 	throw Xapian::UnimplementedError("Can't handle insanely large tags");
+    int m = int(items_required);
 
     size_t o = 0;                     // Offset into the tag
     size_t residue = tag_size;        // Bytes of the tag remaining to add in

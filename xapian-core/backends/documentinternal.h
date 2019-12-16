@@ -427,7 +427,7 @@ class Document::Internal : public Xapian::Internal::intrusive_base {
     /// Count the value slots used in this document.
     Xapian::valueno values_count() const {
 	ensure_values_fetched();
-	return values->size();
+	return Xapian::valueno(values->size());
     }
 
     Xapian::ValueIterator values_begin() const;

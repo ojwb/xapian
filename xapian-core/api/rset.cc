@@ -48,7 +48,7 @@ RSet::~RSet() {}
 Xapian::doccount
 RSet::size() const
 {
-    return internal.get() ? internal->docs.size() : 0;
+    return internal.get() ? Xapian::doccount(internal->docs.size()) : 0;
 }
 
 void

@@ -224,12 +224,12 @@ EditDistanceCalculator::calc(const unsigned* ptr, int len,
 	// when the second sequence is len + max_distance long.  Any second
 	// sequence which is longer must be more than max_distance edits
 	// away.
-	int maxdist = target.size() + max_distance;
+	int maxdist = int(target.size()) + max_distance;
 	int max_cols = maxdist * 2;
 	int max_rows = maxdist * 2 + 1;
 	array = new int[max_rows * max_cols];
     }
 
-    return seqcmp_editdist<unsigned>(ptr, len, &target[0], target.size(),
+    return seqcmp_editdist<unsigned>(ptr, len, &target[0], int(target.size()),
 				     array, max_distance);
 }

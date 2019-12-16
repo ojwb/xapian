@@ -37,7 +37,7 @@ inline Xapian::docid
 shard_docid(Xapian::docid did, std::size_t n_shards) {
     Assert(did != 0);
     Assert(n_shards != 0);
-    return (did - 1) / n_shards + 1;
+    return Xapian::docid((did - 1) / n_shards + 1);
 }
 
 /** Convert docid in the multi-db to shard number.
@@ -66,7 +66,7 @@ inline Xapian::docid
 unshard(Xapian::docid shard_did, std::size_t shard, std::size_t n_shards) {
     Assert(shard_did != 0);
     AssertRel(shard,<,n_shards);
-    return (shard_did - 1) * n_shards + shard + 1;
+    return Xapian::docid((shard_did - 1) * n_shards + shard + 1);
 }
 
 #endif // XAPIAN_INCLUDED_MULTI_H
