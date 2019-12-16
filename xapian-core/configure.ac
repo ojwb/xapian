@@ -1450,34 +1450,37 @@ AH_BOTTOM(
 /* zlib.h uses off_t so we need to include it before we redefine off_t. */
 # include <zlib.h>
 
-// MSVC needs to call _stat64() instead of stat() and the struct which holds
-// the information is "struct _stat64" instead of "struct stat" so we just
-// use #define to replace both in one go.  We also want to use _fstat64()
-// instead of fstat() but in this case we can use a function-like macro.
-//
-// This hack is a problem is we ever want a method called "stat", or one called
-// fstat which takes 2 parameters, but we can probably live with these
-// limitations.
-//
-// We need to break the #undef lines to stop config.status from commenting
-// them out.
+// The default stat() and fstat() use 32-bit filesizes and time_t, so we need
+// to arrange to use 64-bit variants instead.
 
 # ifdef stat
+// Break #undef lines to stop config.status from commenting them out.
 #  undef \
 	stat
 # endif
 
+// This hack is a problem is we ever want a method called "stat".
 # ifdef _MSC_VER
+// MSVC needs to call _stat64() instead of stat() and the struct which holds
+// the information is `struct _stat64` instead of `struct stat` so we just
+// use #define to replace both in one go.
 #  define stat _stat64
 # else
 // Mingw32 has _stat64() but unhelpfully for our purposes, the struct is
 // called __stat64 (with an extra underscore).  We hack around this by
-// forwarding calls to __stat64 to _stat64.
-#  define __stat64(PATH, STATBUF) _stat64((PATH), (STATBUF))
+// defining stat to __stat64 which sorts out the struct, and then using
+// a second macro to forward function-like uses of __stat64() to
+// _stat64().
 #  define stat __stat64
+#  define __stat64(PATH, STATBUF) _stat64((PATH), (STATBUF))
 # endif
 
+// We also want to use _fstat64() instead of fstat() but in this case we can
+// use a function-like macro, so we could have a method called fstat so long
+// as it didn't take two parameters.
+
 # ifdef fstat
+// Break #undef lines to stop config.status from commenting them out.
 #  undef \
 	fstat
 # endif
@@ -1485,11 +1488,13 @@ AH_BOTTOM(
 # define fstat(FD, BUF) _fstat64(FD, BUF)
 
 # ifdef lseek
+// Break #undef lines to stop config.status from commenting them out.
 #  undef \
 	lseek
 # endif
 
 # ifdef off_t
+// Break #undef lines to stop config.status from commenting them out.
 #  undef \
 	off_t
 # endif
