@@ -64,7 +64,7 @@ inline int socket_(int domain, int type, int protocol) {
 # endif
 # define socket(D,T,P) socket_(D,T,P)
 
-inline int accept_(int sockfd, struct sockaddr* addr, int* addrlen);
+inline int accept_(int sockfd, struct sockaddr* addr, SOCKLEN_T* addrlen) {
     // Winsock2's accept() returns the unsigned type SOCKET, which is a 32-bit
     // type for WIN32 and a 64-bit type for WIN64.
     //
