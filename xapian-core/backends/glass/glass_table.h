@@ -257,7 +257,8 @@ class LeafItem_wr : public LeafItem_base<uint8_t *> {
 	*p |= I_FIRST_BIT;
     }
     // FIXME passing cd here is icky
-    void set_tag(int cd, const char *start, int len, bool compressed, int i, int m) {
+    void set_tag(unsigned cd, const char *start, unsigned len, bool compressed,
+		 int i, int m) {
 	std::memmove(p + cd, start, len);
 	set_size(cd + len);
 	if (compressed) *p |= I_COMPRESSED_BIT;

@@ -1305,17 +1305,17 @@ GlassTable::add(const string &key, string tag, bool already_compressed)
     }
 
     // sort of matching kt.append_chunk(), but setting the chunk
-    const size_t cd = kt.key().length() + K1 + I2 + X2;  // offset to the tag data
-    const size_t L = max_item_size - cd; // largest amount of tag data for any chunk
-    size_t first_L = L + X2;             // - amount for tag1 (we don't store X there)
+    const unsigned cd = kt.key().length() + K1 + I2 + X2;  // offset to the tag data
+    const unsigned L = max_item_size - cd; // largest amount of tag data for any chunk
+    unsigned first_L = L + X2;             // - amount for tag1 (we don't store X there)
     bool found = find(C);
     if (tag_size <= first_L) {
 	// The whole tag clearly fits in one item, so no need to make this
 	// complicated.
-	first_L = tag_size;
+	first_L = unsigned(tag_size);
     } else if (!found) {
 	const uint8_t * p = C[0].get_p();
-	size_t n = TOTAL_FREE(p) % (max_item_size + D2);
+	unsigned n = TOTAL_FREE(p) % (max_item_size + D2);
 	if (n > D2 + cd) {
 	    n -= (D2 + cd);
 	    // if n >= last then fully filling this block won't produce
@@ -1330,7 +1330,7 @@ GlassTable::add(const string &key, string tag, bool already_compressed)
 	    // seems to save about 0.2% in total database size over always
 	    // splitting the tag.  It'll also give be slightly faster retrieval
 	    // as we can avoid reading an extra block occasionally.
-	    size_t last = (tag_size - X2) % L;
+	    unsigned last = (tag_size - X2) % L;
 	    if (n >= last || (full_compaction && n >= key.size() + 34)) {
 		// first_L < max_item_size + D2 - D2 - cd
 		// Total size of first item = cd + first_L < max_item_size
@@ -1353,11 +1353,11 @@ GlassTable::add(const string &key, string tag, bool already_compressed)
     bool components_to_del = false;   // Are there components to delete?
     int i;
     for (i = 1; i <= m; ++i) {
-	size_t l = (i == m ? residue : (i == 1 ? first_L : L));
-	size_t this_cd = (i == 1 ? cd - X2 : cd);
+	unsigned l = (i == m ? unsigned(residue) : (i == 1 ? first_L : L));
+	unsigned this_cd = (i == 1 ? cd - X2 : cd);
 	Assert(this_cd + l <= block_size);
 	Assert(o + l <= tag_size);
-	kt.set_tag(this_cd, tag_data + o, int(l), compressed, i, m);
+	kt.set_tag(this_cd, tag_data + o, l, compressed, i, m);
 
 	o += l;
 	residue -= l;
