@@ -173,7 +173,7 @@ TcpServer::get_listening_socket(const std::string & host, int port,
 	    throw Xapian::NetworkError("setsockopt failed", saved_errno);
 	}
 
-	if (::bind(fd, r.ai_addr, r.ai_addrlen) == 0) {
+	if (::bind(fd, r.ai_addr, int(r.ai_addrlen)) == 0) {
 	    socketfd = fd;
 	    break;
 	}

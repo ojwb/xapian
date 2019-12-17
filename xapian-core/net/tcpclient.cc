@@ -109,7 +109,7 @@ TcpClient::open_socket(const std::string & hostname, int port,
 	    }
 	}
 
-	int retval = connect(fd, r.ai_addr, r.ai_addrlen);
+	int retval = connect(fd, r.ai_addr, int(r.ai_addrlen));
 	if (retval == 0) {
 	    socketfd = fd;
 	    break;
