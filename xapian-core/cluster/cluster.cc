@@ -145,7 +145,7 @@ DocumentSet::size() const
 doccount
 DocumentSet::Internal::size() const
 {
-    return documents.size();
+    return doccount(documents.size());
 }
 
 void
@@ -197,7 +197,7 @@ class PointTermIterator : public TermIterator::Internal {
   public:
     PointTermIterator(const unordered_map<string, double> &termlist)
 	: i(termlist.begin()), end(termlist.end()),
-	  size(termlist.size()), started(false)
+	  size(termcount(termlist.size())), started(false)
     {}
     termcount get_approx_size() const { return size; }
     termcount get_wdf() const { throw UnimplementedError("PointIterator doesn't support get_wdf()"); }
@@ -286,7 +286,7 @@ termcount
 PointType::termlist_size() const
 {
     LOGCALL(API, termcount, "PointType::termlist_size", NO_ARGS);
-    return weights.size();
+    return termcount(weights.size());
 }
 
 Document
@@ -440,7 +440,7 @@ ClusterSet::~ClusterSet()
 doccount
 ClusterSet::Internal::size() const
 {
-    return clusters.size();
+    return doccount(clusters.size());
 }
 
 doccount
@@ -538,7 +538,7 @@ Cluster::size() const
 doccount
 Cluster::Internal::size() const
 {
-    return (cluster_docs.size());
+    return doccount(cluster_docs.size());
 }
 
 void

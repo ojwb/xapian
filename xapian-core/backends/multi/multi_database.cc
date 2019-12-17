@@ -36,7 +36,7 @@ using namespace std;
 MultiDatabase::size_type
 MultiDatabase::size() const
 {
-    return shards.size();
+    return size_type(shards.size());
 }
 
 bool
@@ -63,7 +63,7 @@ PostList*
 MultiDatabase::open_post_list(const string& term) const
 {
     PostList** postlists = new PostList*[shards.size()];
-    size_t count = 0;
+    Xapian::doccount count = 0;
     try {
 	for (auto&& shard : shards) {
 	    postlists[count] = shard->open_post_list(term);
@@ -95,7 +95,7 @@ MultiDatabase::open_term_list(Xapian::docid did) const
 TermList*
 MultiDatabase::open_term_list_direct(Xapian::docid did) const
 {
-    Xapian::doccount n_shards = shards.size();
+    auto n_shards = Xapian::doccount(shards.size());
     auto shard = shards[shard_number(did, n_shards)];
     Xapian::docid shard_did = shard_docid(did, n_shards);
     return shard->open_term_list(shard_did);
@@ -134,7 +134,7 @@ MultiDatabase::has_positions() const
 PositionList*
 MultiDatabase::open_position_list(Xapian::docid did, const string& term) const
 {
-    auto n_shards = shards.size();
+    auto n_shards = Xapian::doccount(shards.size());
     auto shard = shards[shard_number(did, n_shards)];
     auto shard_did = shard_docid(did, n_shards);
     return shard->open_position_list(shard_did, term);
@@ -157,7 +157,7 @@ Xapian::docid
 MultiDatabase::get_lastdocid() const
 {
     Xapian::docid result = 0;
-    Xapian::doccount n_shards = shards.size();
+    auto n_shards = Xapian::doccount(shards.size());
     for (Xapian::doccount shard = 0; shard != n_shards; ++shard) {
 	Xapian::docid shard_lastdocid = shards[shard]->get_lastdocid();
 	if (shard_lastdocid == 0) {
@@ -333,7 +333,7 @@ MultiDatabase::get_doclength(Xapian::docid did) const
 {
     Assert(did != 0);
 
-    auto n_shards = shards.size();
+    auto n_shards = Xapian::doccount(shards.size());
     auto shard = shards[shard_number(did, n_shards)];
     auto shard_did = shard_docid(did, n_shards);
     return shard->get_doclength(shard_did);
@@ -344,7 +344,7 @@ MultiDatabase::get_unique_terms(Xapian::docid did) const
 {
     Assert(did != 0);
 
-    auto n_shards = shards.size();
+    auto n_shards = Xapian::doccount(shards.size());
     auto shard = shards[shard_number(did, n_shards)];
     auto shard_did = shard_docid(did, n_shards);
     return shard->get_unique_terms(shard_did);
@@ -355,7 +355,7 @@ MultiDatabase::open_document(Xapian::docid did, bool lazy) const
 {
     Assert(did != 0);
 
-    auto n_shards = shards.size();
+    auto n_shards = Xapian::doccount(shards.size());
     auto shard = shards[shard_number(did, n_shards)];
     auto shard_did = shard_docid(did, n_shards);
     return shard->open_document(shard_did, lazy);
@@ -596,7 +596,7 @@ MultiDatabase::add_document(const Xapian::Document& doc)
 				    "before you can add more documents");
     }
 
-    auto n_shards = shards.size();
+    auto n_shards = Xapian::doccount(shards.size());
     auto shard = shards[shard_number(did, n_shards)];
     shard->replace_document(shard_docid(did, n_shards), doc);
     return did;
@@ -605,7 +605,7 @@ MultiDatabase::add_document(const Xapian::Document& doc)
 void
 MultiDatabase::delete_document(Xapian::docid did)
 {
-    auto n_shards = shards.size();
+    auto n_shards = Xapian::doccount(shards.size());
     auto shard = shards[shard_number(did, n_shards)];
     shard->delete_document(shard_docid(did, n_shards));
 }
@@ -621,7 +621,7 @@ MultiDatabase::delete_document(const string& term)
 void
 MultiDatabase::replace_document(Xapian::docid did, const Xapian::Document& doc)
 {
-    auto n_shards = shards.size();
+    auto n_shards = Xapian::doccount(shards.size());
     auto shard = shards[shard_number(did, n_shards)];
     shard->replace_document(shard_docid(did, n_shards), doc);
 }
@@ -629,7 +629,7 @@ MultiDatabase::replace_document(Xapian::docid did, const Xapian::Document& doc)
 Xapian::docid
 MultiDatabase::replace_document(const string& term, const Xapian::Document& doc)
 {
-    auto n_shards = shards.size();
+    auto n_shards = Xapian::doccount(shards.size());
     unique_ptr<PostList> pl(open_post_list(term));
     pl->next();
     // If no unique_term in the database, this is just an add_document().
@@ -665,7 +665,7 @@ MultiDatabase::request_document(Xapian::docid did) const
 {
     Assert(did != 0);
 
-    auto n_shards = shards.size();
+    auto n_shards = Xapian::doccount(shards.size());
     auto shard = shards[shard_number(did, n_shards)];
     auto shard_did = shard_docid(did, n_shards);
     shard->request_document(shard_did);
@@ -729,7 +729,7 @@ MultiDatabase::reconstruct_text(Xapian::docid did,
 {
     Assert(did != 0);
 
-    auto n_shards = shards.size();
+    auto n_shards = Xapian::doccount(shards.size());
     auto shard = shards[shard_number(did, n_shards)];
     auto shard_did = shard_docid(did, n_shards);
     return shard->reconstruct_text(shard_did, length, prefix,

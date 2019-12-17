@@ -832,7 +832,7 @@ class GlassTable {
     int changed_c;
 
     /// maximum size of an item (key-tag pair)
-    size_t max_item_size;
+    unsigned max_item_size;
 
     /// Set to true the first time the B-tree is modified.
     mutable bool Btree_modified;
