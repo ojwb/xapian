@@ -149,7 +149,7 @@ static void show_usage() {
 "  -f, --flags=FLAG1[,FLAG2]...      specify QueryParser flags.  Valid flags:";
 #define INDENT \
 "                                    "
-    int pos = 256;
+    size_t pos = 256;
     for (const qp_flag * i = flag_tab; i - flag_tab < n_flag_tab; ++i) {
 	size_t len = strlen(i->s);
 	if (pos < 256) cout << ',';
