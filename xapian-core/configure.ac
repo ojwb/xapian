@@ -1424,6 +1424,7 @@ AH_BOTTOM(
 # pragma warning(disable:4800)
 /* POSIX get to deprecate POSIX things, not MS. */
 # define _CRT_NONSTDC_NO_WARNINGS
+# define _CRT_SECURE_NO_WARNINGS
 
 /* Tell MSVC we want M_PI, etc defined. */
 # define _USE_MATH_DEFINES
@@ -1511,9 +1512,18 @@ typedef long long off_t_redefinition_typedef;
  * parameter, so we use wrappers which clamp the value in the unlikely case
  * where it exceeds the range of unsigned.  This will then appear like a short
  * read/write to the caller, which already needs to handle that case.
+ *
+ * We need to define overloads for char* to avoid ambiguous overload messages
+ * in that case.
  */
 inline ssize_t
 read(int fd, void* buf, size_t count) {
+    unsigned c = (count > unsigned(-1) ? unsigned(-1) : unsigned(count));
+    return _read(fd, buf, c);
+}
+
+inline ssize_t
+read(int fd, char* buf, size_t count) {
     unsigned c = (count > unsigned(-1) ? unsigned(-1) : unsigned(count));
     return _read(fd, buf, c);
 }
@@ -1523,6 +1533,13 @@ write(int fd, const void* buf, size_t count) {
     unsigned c = (count > unsigned(-1) ? unsigned(-1) : unsigned(count));
     return _write(fd, buf, c);
 }
+
+inline ssize_t
+write(int fd, const char* buf, size_t count) {
+    unsigned c = (count > unsigned(-1) ? unsigned(-1) : unsigned(count));
+    return _write(fd, buf, c);
+}
+
 // In a few places we rely on including config.h multiple times, and defining
 // these inline functions more than once would give a compiler error.
 # define XAPIAN_WIN64_READ_WRITE_HACK
