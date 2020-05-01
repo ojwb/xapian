@@ -21,21 +21,27 @@
 #ifndef XAPIAN_INCLUDED_MULTI_DATABASE_H
 #define XAPIAN_INCLUDED_MULTI_DATABASE_H
 
-#include "api/postlist.h"
 #include "api/termlist.h"
 #include "backends/databaseinternal.h"
 #include "backends/valuelist.h"
 
+class LeafPostList;
 class Matcher;
 class ValueStreamDocument;
 
 namespace Xapian {
 struct ReplicationInfo;
+namespace Internal {
+class PostList;
 }
+}
+
+using Xapian::Internal::PostList;
 
 /// Sharded database backend.
 class MultiDatabase : public Xapian::Database::Internal {
     friend class Matcher;
+    friend class PostListTree;
     friend class ValueStreamDocument;
     friend class Xapian::Database;
 

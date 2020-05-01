@@ -29,8 +29,8 @@
 #include "xapian/unicode.h"
 
 #include "api/editdistance.h"
+#include "backends/postlist.h"
 #include "heap.h"
-#include "leafpostlist.h"
 #include "matcher/andmaybepostlist.h"
 #include "matcher/andnotpostlist.h"
 #include "matcher/boolorpostlist.h"
@@ -209,17 +209,8 @@ class Context {
 	if (new_size >= pls.size())
 	    return;
 
-	const PostList * hint_pl = qopt->get_hint_postlist();
 	for (auto&& i = pls.begin() + new_size; i != pls.end(); ++i) {
-	    const PostList * pl = as_postlist(*i);
-	    if (rare(pl == hint_pl && hint_pl)) {
-		// We were about to delete qopt's hint - instead tell qopt to
-		// take ownership.
-		qopt->take_hint_ownership();
-		hint_pl = NULL;
-	    } else {
-		delete pl;
-	    }
+	    qopt->destroy_postlist(as_postlist(*i));
 	}
 	pls.resize(new_size);
     }
@@ -690,7 +681,7 @@ AndContext::postlist()
 Query::Internal::~Internal() { }
 
 size_t
-Query::Internal::get_num_subqueries() const XAPIAN_NOEXCEPT
+Query::Internal::get_num_subqueries() const noexcept
 {
     return 0;
 }
@@ -719,7 +710,7 @@ Query::Internal::gather_terms(void *) const
 }
 
 Xapian::termcount
-Query::Internal::get_length() const XAPIAN_NOEXCEPT
+Query::Internal::get_length() const noexcept
 {
     return 0;
 }
@@ -994,6 +985,7 @@ Query::Internal::postlist_sub_or_like(OrContext& ctx,
 	// messed up if we increased total_subqs in the call to postlist()
 	// above.
 	qopt->set_total_subqs(save_total_subqs);
+	qopt->destroy_postlist(pl.release());
 	return;
     }
     ctx.add_postlist(pl.release());
@@ -1017,7 +1009,7 @@ Query::Internal::postlist_sub_xor(XorContext& ctx,
 namespace Internal {
 
 Query::op
-QueryTerm::get_type() const XAPIAN_NOEXCEPT
+QueryTerm::get_type() const noexcept
 {
     return term.empty() ? Query::LEAF_MATCH_ALL : Query::LEAF_TERM;
 }
@@ -1057,7 +1049,7 @@ QueryPostingSource::QueryPostingSource(PostingSource * source_)
 }
 
 Query::op
-QueryPostingSource::get_type() const XAPIAN_NOEXCEPT
+QueryPostingSource::get_type() const noexcept
 {
     return Query::LEAF_POSTING_SOURCE;
 }
@@ -1079,13 +1071,13 @@ QueryScaleWeight::QueryScaleWeight(double factor, const Query & subquery_)
 }
 
 Query::op
-QueryScaleWeight::get_type() const XAPIAN_NOEXCEPT
+QueryScaleWeight::get_type() const noexcept
 {
     return Query::OP_SCALE_WEIGHT;
 }
 
 size_t
-QueryScaleWeight::get_num_subqueries() const XAPIAN_NOEXCEPT
+QueryScaleWeight::get_num_subqueries() const noexcept
 {
     return 1;
 }
@@ -1223,7 +1215,7 @@ QueryValueRange::serialise(string & result) const
 }
 
 Query::op
-QueryValueRange::get_type() const XAPIAN_NOEXCEPT
+QueryValueRange::get_type() const noexcept
 {
     return Query::OP_VALUE_RANGE;
 }
@@ -1288,7 +1280,7 @@ QueryValueLE::serialise(string & result) const
 }
 
 Query::op
-QueryValueLE::get_type() const XAPIAN_NOEXCEPT
+QueryValueLE::get_type() const noexcept
 {
     return Query::OP_VALUE_LE;
 }
@@ -1322,7 +1314,7 @@ QueryValueGE::postlist(QueryOptimiser *qopt, double factor) const
     if (limit > db.get_value_upper_bound(slot)) {
 	RETURN(NULL);
     }
-    if (limit < lb) {
+    if (limit <= lb) {
 	// The range check isn't needed, but we do still need to consider
 	// which documents have a value set in this slot.  If this value is
 	// set for all documents, we can replace it with the MatchAll
@@ -1348,7 +1340,7 @@ QueryValueGE::serialise(string & result) const
 }
 
 Query::op
-QueryValueGE::get_type() const XAPIAN_NOEXCEPT
+QueryValueGE::get_type() const noexcept
 {
     return Query::OP_VALUE_GE;
 }
@@ -1576,7 +1568,7 @@ QueryWildcard::postlist(QueryOptimiser * qopt, double factor) const
 }
 
 termcount
-QueryWildcard::get_length() const XAPIAN_NOEXCEPT
+QueryWildcard::get_length() const noexcept
 {
     // We currently assume wqf is 1 for calculating the synonym's weight
     // since conceptually the synonym is one "virtual" term.  If we were
@@ -1596,7 +1588,7 @@ QueryWildcard::serialise(string & result) const
 }
 
 Query::op
-QueryWildcard::get_type() const XAPIAN_NOEXCEPT
+QueryWildcard::get_type() const noexcept
 {
     return Query::OP_WILDCARD;
 }
@@ -1688,7 +1680,7 @@ QueryEditDistance::postlist(QueryOptimiser * qopt, double factor) const
 }
 
 termcount
-QueryEditDistance::get_length() const XAPIAN_NOEXCEPT
+QueryEditDistance::get_length() const noexcept
 {
     // We currently assume wqf is 1 for calculating the synonym's weight
     // since conceptually the synonym is one "virtual" term.  If we were
@@ -1710,7 +1702,7 @@ QueryEditDistance::serialise(string & result) const
 }
 
 Query::op
-QueryEditDistance::get_type() const XAPIAN_NOEXCEPT
+QueryEditDistance::get_type() const noexcept
 {
     return Query::OP_EDIT_DISTANCE;
 }
@@ -1744,14 +1736,14 @@ QueryEditDistance::get_description() const
 }
 
 Xapian::termcount
-QueryBranch::get_length() const XAPIAN_NOEXCEPT
+QueryBranch::get_length() const noexcept
 {
     // Sum results from all subqueries.
     Xapian::termcount result = 0;
     QueryVector::const_iterator i;
     for (i = subqueries.begin(); i != subqueries.end(); ++i) {
 	// MatchNothing subqueries should have been removed by done(), but we
-	// can't use Assert in a XAPIAN_NOEXCEPT function.  But we'll get a
+	// can't use Assert in a noexcept function.  But we'll get a
 	// segfault anyway.
 	result += (*i).internal->get_length();
     }
@@ -2005,13 +1997,13 @@ QueryBranch::do_max(QueryOptimiser * qopt, double factor) const
 }
 
 Xapian::Query::op
-QueryBranch::get_type() const XAPIAN_NOEXCEPT
+QueryBranch::get_type() const noexcept
 {
     return get_op();
 }
 
 size_t
-QueryBranch::get_num_subqueries() const XAPIAN_NOEXCEPT
+QueryBranch::get_num_subqueries() const noexcept
 {
     return subqueries.size();
 }
@@ -2386,15 +2378,16 @@ PostList*
 QueryFilter::postlist(QueryOptimiser * qopt, double factor) const
 {
     LOGCALL(QUERY, PostList*, "QueryFilter::postlist", qopt | factor);
-    // FIXME: Combine and-like stuff, like QueryOptimiser.
-    AssertEq(subqueries.size(), 2);
-    PostList * pls[2];
-    unique_ptr<PostList> l(subqueries[0].internal->postlist(qopt, factor));
-    if (!l.get()) RETURN(NULL);
-    pls[1] = subqueries[1].internal->postlist(qopt, 0.0);
-    if (!pls[1]) RETURN(NULL);
-    pls[0] = l.release();
-    RETURN(new MultiAndPostList(pls, pls + 2, qopt->matcher, qopt->db_size));
+    AndContext ctx(qopt, subqueries.size());
+    for (const auto& subq : subqueries) {
+	// MatchNothing subqueries should have been removed by done().
+	Assert(subq.internal.get());
+	if (!subq.internal->postlist_sub_and_like(ctx, qopt, factor))
+	    break;
+	// Second and subsequent subqueries are unweighted.
+	factor = 0.0;
+    }
+    RETURN(ctx.postlist());
 }
 
 bool
@@ -2453,7 +2446,7 @@ QueryWindowed::postlist_windowed(Query::op op, AndContext& ctx, QueryOptimiser *
 		// MatchNothing subqueries should have been removed by done().
 		// FIXME: Can we handle this more gracefully?
 		Assert((*i).internal.get());
-		delete (*i).internal->postlist(qopt, factor);
+		qopt->destroy_postlist((*i).internal->postlist(qopt, factor));
 		++i;
 	    }
 	    break;
@@ -2698,7 +2691,7 @@ QueryMax::get_description() const
 }
 
 Xapian::Query::op
-QueryInvalid::get_type() const XAPIAN_NOEXCEPT
+QueryInvalid::get_type() const noexcept
 {
     return Xapian::Query::OP_INVALID;
 }

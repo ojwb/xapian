@@ -1,7 +1,7 @@
 /** @file remote-database.cc
  *  @brief Remote backend database class
  */
-/* Copyright (C) 2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2017,2018,2019 Olly Betts
+/* Copyright (C) 2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2017,2018,2019,2020 Olly Betts
  * Copyright (C) 2007,2009,2010 Lemur Consulting Ltd
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 #include "net/serialise-error.h"
 #include "pack.h"
 #include "remote_alltermslist.h"
-#include "remote_metadatatermlist.h"
+#include "remote_keylist.h"
 #include "remote_termlist.h"
 #include "serialise-double.h"
 #include "str.h"
@@ -88,7 +88,7 @@ throw_connection_closed_unexpectedly()
 }
 
 RemoteDatabase::RemoteDatabase(int fd, double timeout_,
-			       const string & context_, bool writable,
+			       const string& context_, bool writable,
 			       int flags)
     : Xapian::Database::Internal(writable ?
 				 TRANSACTION_NONE :
@@ -157,7 +157,7 @@ RemoteDatabase::open_metadata_keylist(const std::string& prefix) const
     send_message(MSG_METADATAKEYLIST, prefix);
     string message;
     get_message(message, REPLY_METADATAKEYLIST);
-    return new RemoteMetadataTermList(prefix, std::move(message));
+    return new RemoteKeyList(prefix, std::move(message));
 }
 
 TermList *
@@ -617,12 +617,21 @@ RemoteDatabase::send_message(message_type type, const string &message) const
 void
 RemoteDatabase::do_close()
 {
-    // The dtor hasn't really been called!  FIXME: This works, but means any
-    // exceptions from end_transaction()/commit() are swallowed, which is
-    // not entirely desirable.
-    dtor_called();
-
     if (!is_read_only()) {
+	try {
+	    if (transaction_active()) {
+		end_transaction(false);
+	    } else {
+		commit();
+	    }
+	} catch (...) {
+	    try {
+		link.do_close();
+	    } catch (...) {
+	    }
+	    throw;
+	}
+
 	// If we're writable, send a shutdown message to the server and wait
 	// for it to close its end of the connection so we know that changes
 	// have been written and flushed, and the database write lock released.
@@ -741,22 +750,30 @@ RemoteDatabase::get_mset(const vector<opt_ptr_spy>& matchspies) const
 void
 RemoteDatabase::commit()
 {
+    if (!uncommitted_changes) return;
+
     send_message(MSG_COMMIT, string());
 
     // We need to wait for a response to ensure documents have been committed.
     string message;
     get_message(message, REPLY_DONE);
+
+    uncommitted_changes = false;
 }
 
 void
 RemoteDatabase::cancel()
 {
+    if (!uncommitted_changes) return;
+
     cached_stats_valid = false;
     mru_slot = Xapian::BAD_VALUENO;
 
     send_message(MSG_CANCEL, string());
     string dummy;
     get_message(dummy, REPLY_DONE);
+
+    uncommitted_changes = false;
 }
 
 Xapian::docid
@@ -764,6 +781,7 @@ RemoteDatabase::add_document(const Xapian::Document & doc)
 {
     cached_stats_valid = false;
     mru_slot = Xapian::BAD_VALUENO;
+    uncommitted_changes = true;
 
     send_message(MSG_ADDDOCUMENT, serialise_document(doc));
 
@@ -784,6 +802,7 @@ RemoteDatabase::delete_document(Xapian::docid did)
 {
     cached_stats_valid = false;
     mru_slot = Xapian::BAD_VALUENO;
+    uncommitted_changes = true;
 
     string message;
     pack_uint_last(message, did);
@@ -797,6 +816,7 @@ RemoteDatabase::delete_document(const std::string & unique_term)
 {
     cached_stats_valid = false;
     mru_slot = Xapian::BAD_VALUENO;
+    uncommitted_changes = true;
 
     send_message(MSG_DELETEDOCUMENTTERM, unique_term);
     string dummy;
@@ -809,6 +829,7 @@ RemoteDatabase::replace_document(Xapian::docid did,
 {
     cached_stats_valid = false;
     mru_slot = Xapian::BAD_VALUENO;
+    uncommitted_changes = true;
 
     string message;
     pack_uint(message, did);
@@ -825,6 +846,7 @@ RemoteDatabase::replace_document(const std::string & unique_term,
 {
     cached_stats_valid = false;
     mru_slot = Xapian::BAD_VALUENO;
+    uncommitted_changes = true;
 
     string message;
     pack_string(message, unique_term);
@@ -861,6 +883,8 @@ RemoteDatabase::get_metadata(const string & key) const
 void
 RemoteDatabase::set_metadata(const string & key, const string & value)
 {
+    uncommitted_changes = true;
+
     string message;
     pack_string(message, key);
     message += value;
@@ -873,6 +897,8 @@ void
 RemoteDatabase::add_spelling(const string & word,
 			     Xapian::termcount freqinc) const
 {
+    uncommitted_changes = true;
+
     string message;
     pack_uint(message, freqinc);
     message += word;
@@ -885,6 +911,8 @@ Xapian::termcount
 RemoteDatabase::remove_spelling(const string & word,
 				Xapian::termcount freqdec) const
 {
+    uncommitted_changes = true;
+
     string message;
     pack_uint(message, freqdec);
     message += word;
@@ -898,6 +926,58 @@ RemoteDatabase::remove_spelling(const string & word,
 	throw Xapian::NetworkError("Bad REPLY_REMOVESPELLING", context);
     }
     return result;
+}
+
+TermList*
+RemoteDatabase::open_synonym_termlist(const string& word) const
+{
+    string message;
+    send_message(MSG_SYNONYMTERMLIST, word);
+    get_message(message, REPLY_SYNONYMTERMLIST);
+    return new RemoteKeyList(string(), std::move(message));
+}
+
+TermList*
+RemoteDatabase::open_synonym_keylist(const string& prefix) const
+{
+    string message;
+    send_message(MSG_SYNONYMKEYLIST, prefix);
+    get_message(message, REPLY_SYNONYMKEYLIST);
+    return new RemoteKeyList(string(), std::move(message));
+}
+
+void
+RemoteDatabase::add_synonym(const string& word, const string& synonym) const
+{
+    uncommitted_changes = true;
+
+    string message;
+    pack_string(message, word);
+    message += synonym;
+    send_message(MSG_ADDSYNONYM, message);
+    get_message(message, REPLY_DONE);
+}
+
+void
+RemoteDatabase::remove_synonym(const string& word, const string& synonym) const
+{
+    uncommitted_changes = true;
+
+    string message;
+    pack_string(message, word);
+    message += synonym;
+    send_message(MSG_REMOVESYNONYM, message);
+    get_message(message, REPLY_DONE);
+}
+
+void
+RemoteDatabase::clear_synonyms(const string& word) const
+{
+    uncommitted_changes = true;
+
+    string message;
+    send_message(MSG_CLEARSYNONYMS, word);
+    get_message(message, REPLY_DONE);
 }
 
 bool

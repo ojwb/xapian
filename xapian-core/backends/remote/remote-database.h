@@ -1,7 +1,7 @@
 /** @file remote-database.h
  *  @brief RemoteDatabase is the baseclass for remote database implementations.
  */
-/* Copyright (C) 2006,2007,2009,2010,2011,2014,2015,2017,2019 Olly Betts
+/* Copyright (C) 2006,2007,2009,2010,2011,2014,2015,2017,2019,2020 Olly Betts
  * Copyright (C) 2007,2009,2010 Lemur Consulting Ltd
  *
  * This program is free software; you can redistribute it and/or
@@ -96,6 +96,14 @@ class RemoteDatabase : public Xapian::Database::Internal {
      *  Set to BAD_VALUENO if no value statistics have yet been looked up.
      */
     mutable Xapian::valueno mru_slot;
+
+    /** True if there are (or may be) uncommitted changes.
+     *
+     *  Used to optimise away commit()/cancel() calls.  These can be explicit,
+     *  but also can happen implicitly when the WritableDatabase destructor is
+     *  called.
+     */
+    mutable bool uncommitted_changes = false;
 
     bool update_stats(message_type msg_code = MSG_UPDATE,
 		      const std::string & body = std::string()) const;
@@ -292,6 +300,17 @@ class RemoteDatabase : public Xapian::Database::Internal {
     void set_metadata(const std::string& key, const std::string& value);
 
     void add_spelling(const std::string& word, Xapian::termcount freqinc) const;
+
+    TermList* open_synonym_termlist(const std::string& term) const;
+
+    TermList* open_synonym_keylist(const std::string& prefix) const;
+
+    void add_synonym(const std::string& word, const std::string& synonym) const;
+
+    void remove_synonym(const std::string& word,
+			const std::string& synonym) const;
+
+    void clear_synonyms(const std::string& word) const;
 
     Xapian::termcount remove_spelling(const std::string& word,
 				      Xapian::termcount freqdec) const;
