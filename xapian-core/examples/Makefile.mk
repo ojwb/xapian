@@ -14,7 +14,7 @@ examples_copydatabase_SOURCES = examples/copydatabase.cc
 examples_copydatabase_LDADD = $(ldflags) $(libxapian_la)
 
 examples_quest_SOURCES = examples/quest.cc
-examples_quest_LDADD = $(ldflags) libgetopt.la $(libxapian_la)
+examples_quest_LDADD = $(ldflags) libgetopt.la $(libxapian_la) -lbenchmark
 
 examples_simpleexpand_SOURCES = examples/simpleexpand.cc
 examples_simpleexpand_LDADD = $(ldflags) $(libxapian_la)
