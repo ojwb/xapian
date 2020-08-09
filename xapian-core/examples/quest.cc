@@ -92,4 +92,17 @@ static void BM_check_at_least(benchmark::State& state) {
 }
 BENCHMARK(BM_check_at_least);
 
+static void BM_check_at_least_1_hit(benchmark::State& state) {
+    Xapian::Database db("tests/.glass/db__etext");
+    Xapian::Query query("the");
+    query &= ~Xapian::Query("now");
+    for (auto _ : state) {
+	Xapian::Enquire enquire(db);
+	enquire.set_query(query);
+	Xapian::MSet mset = enquire.get_mset(0, 1, UINT_MAX);
+	(void)mset.get_matches_estimated();
+    }
+}
+BENCHMARK(BM_check_at_least_1_hit);
+
 BENCHMARK_MAIN();
