@@ -24,14 +24,17 @@
 #include "xapian/mset.h"
 #include "api/msetinternal.h"
 
+#include "xapian/cluster.h"
 #include "xapian/error.h"
+#include "xapian/types.h"
 
 #include "debuglog.h"
-#include "diversify/diversifyinternal.h"
 
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <map>
+#include <unordered_map>
 #include <vector>
 
 using namespace Xapian;
@@ -46,6 +49,80 @@ MSet::diversify(Xapian::doccount k,
 {
     internal->diversify(k, r, lambda, b, sigma_sqr);
 }
+
+class Diversify {
+    /// Copies are not allowed
+    Diversify(const Diversify&) = delete;
+
+    /// Assignment is not allowed
+    void operator=(const Diversify&) = delete;
+
+    /// Top-k documents of given mset are diversified
+    Xapian::doccount k;
+
+    /// Number of relevant documents from each cluster used for building topC
+    Xapian::doccount r;
+
+    /// MPT parameters
+    double lambda, b, sigma_sqr;
+
+    /// Store each document from given mset as a point
+    std::unordered_map<Xapian::docid, Xapian::Point> points;
+
+    /// Store the relevance score of each document
+    std::unordered_map<Xapian::docid, double> scores;
+
+    /// Store pairwise cosine similarities of documents of given mset
+    std::map<std::pair<Xapian::docid, Xapian::docid>, double> pairwise_sim;
+
+  public:
+    /// Map docid to MSet index.
+    std::unordered_map<Xapian::docid, Xapian::doccount> mset_index;
+
+    /// Store docids of top k diversified documents
+    std::vector<Xapian::docid> main_dmset;
+
+    /// Constructor for initialising diversification parameters
+    explicit Diversify(Xapian::doccount k_,
+		       Xapian::doccount r_,
+		       double lambda_,
+		       double b_,
+		       double sigma_sqr_)
+	: k(k_), r(r_), lambda(lambda_), b(b_), sigma_sqr(sigma_sqr_) {}
+
+    /** Initialise diversified document set
+     *
+     *  Convert top-k documents of mset into vector of Points, which
+     *  represents the initial diversified document set.
+     *
+     *  @param source	MSet object containing the documents of which
+     *			top-k are to be diversified
+     */
+    void initialise_points(const Xapian::MSet& source);
+
+    /** Compute pairwise similarities
+     *
+     *  Used for pre-computing pairwise cosine similarities of documents
+     *  of given mset, which is used to speed up evaluate_dmset
+     *
+     *  @param cset	Cluster of given relevant documents
+     */
+    void compute_similarities(const Xapian::ClusterSet& cset);
+
+    /** Evaluate a diversified mset
+     *
+     *  Evaluate a diversified mset using MPT algorithm
+     *
+     *  @param dmset	Set of points representing candidate diversifed
+     *			set of documents
+     *  @param cset	Set of clusters of given mset
+     */
+    double evaluate_dmset(const std::vector<Xapian::docid>& dmset,
+			  const Xapian::ClusterSet& cset);
+
+    /// Return diversified document set from given mset
+    Xapian::DocumentSet get_dmset(const Xapian::MSet& mset);
+};
 
 void
 Diversify::initialise_points(const MSet& source)
