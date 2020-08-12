@@ -140,6 +140,12 @@ class MSet::Internal : public Xapian::Internal::intrusive_base {
 			const std::string & hi_end,
 			const std::string & omit) const;
 
+    void diversify(Xapian::doccount k,
+		   Xapian::doccount r,
+		   double lambda,
+		   double b,
+		   double sigma_sqr);
+
     /** Serialise this object.
      *
      *  @return		The serialisation of this object.

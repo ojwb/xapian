@@ -326,6 +326,13 @@ class XAPIAN_VISIBILITY_DEFAULT MSet {
 			const std::string & hi_end = "</b>",
 			const std::string & omit = "...") const;
 
+    /// FIXME: docs
+    void diversify(Xapian::doccount k_,
+		   Xapian::doccount r_,
+		   double lambda_ = 0.5,
+		   double b_ = 5.0,
+		   double sigma_sqr_ = 1e-3);
+
     /** Prefetch hint a range of items.
      *
      *  For a remote database, this may start a pipelined fetch of the

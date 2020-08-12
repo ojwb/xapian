@@ -21,7 +21,9 @@
 
 #include <config.h>
 
-#include "xapian/diversify.h"
+#include "xapian/mset.h"
+#include "api/msetinternal.h"
+
 #include "xapian/error.h"
 
 #include "debuglog.h"
@@ -35,70 +37,49 @@
 using namespace Xapian;
 using namespace std;
 
-Diversify::Diversify(const Diversify&) = default;
-
-Diversify&
-Diversify::operator=(const Diversify&) = default;
-
-Diversify::Diversify(Diversify&&) = default;
-
-Diversify&
-Diversify::operator=(Diversify&&) = default;
-
-Diversify::Diversify(Xapian::doccount k_,
-		     Xapian::doccount r_,
-		     double lambda_,
-		     double b_,
-		     double sigma_sqr_)
-    : internal(new Xapian::Diversify::Internal(k_, r_, lambda_, b_, sigma_sqr_))
+void
+MSet::diversify(Xapian::doccount k,
+		Xapian::doccount r,
+		double lambda,
+		double b,
+		double sigma_sqr)
 {
-    LOGCALL_CTOR(API, "Diversify", k_ | r_ | lambda_ | b_ | sigma_sqr_);
-    if (r_ == 0)
-	throw InvalidArgumentError("Value of r should be greater than zero");
-}
-
-Diversify::~Diversify()
-{
-    LOGCALL_DTOR(API, "Diversify");
-}
-
-string
-Diversify::get_description() const
-{
-    return "Diversify()";
-}
-
-DocumentSet
-Diversify::get_dmset(const MSet& mset)
-{
-    LOGCALL(API, MSet, "Diversify::get_dmset", mset);
-    return internal->get_dmset(mset);
+    internal->diversify(k, r, lambda, b, sigma_sqr);
 }
 
 void
-Diversify::Internal::initialise_points(const MSet& source)
+Diversify::initialise_points(const MSet& source)
 {
-    unsigned int count = 0;
     TermListGroup tlg(source);
+    Xapian::doccount count = 0;
     for (MSetIterator it = source.begin(); it != source.end(); ++it) {
-	points.emplace(*it, Xapian::Point(tlg, it.get_document()));
-	scores[*it] = it.get_weight();
+	Xapian::docid did = *it;
+	mset_index.emplace(did, count);
+	points.emplace(did, Xapian::Point(tlg, it.get_document()));
+	scores[did] = it.get_weight();
 	// Initial top-k diversified documents
-	if (count < k) {
-	    main_dmset.push_back(*it);
-	    ++count;
+	if (++count <= k) {
+	    main_dmset.push_back(did);
 	}
     }
 }
 
-pair<Xapian::docid, unsigned int>
-Diversify::Internal::get_key(Xapian::docid doc_id, unsigned int centroid_id)
+/** Return a key for a pair of documents
+ *
+ *  Returns a key as a pair of given documents ids
+ *
+ *  @param doc_id	Document id of the document
+ *  @param centroid_idx	Index of cluster to which the given centroid
+ *  			belongs to in the cluster set
+ */
+static inline pair<Xapian::docid, unsigned int>
+get_key(Xapian::docid doc_id, unsigned int centroid_id)
 {
     return make_pair(doc_id, centroid_id);
 }
 
 void
-Diversify::Internal::compute_similarities(const Xapian::ClusterSet& cset)
+Diversify::compute_similarities(const Xapian::ClusterSet& cset)
 {
     Xapian::CosineDistance d;
     for (auto p : points) {
@@ -112,31 +93,9 @@ Diversify::Internal::compute_similarities(const Xapian::ClusterSet& cset)
     }
 }
 
-vector<Xapian::docid>
-Diversify::Internal::compute_diff_dmset(const vector<Xapian::docid>& dmset)
-{
-    vector<Xapian::docid> diff_dmset;
-    for (auto point : points) {
-	Xapian::docid point_id = point.first;
-	bool found_point = false;
-	for (auto doc_id : dmset) {
-	    if (point_id == doc_id) {
-		found_point = true;
-		break;
-	    }
-	}
-
-	if (!found_point) {
-	    diff_dmset.push_back(point_id);
-	}
-    }
-
-    return diff_dmset;
-}
-
 double
-Diversify::Internal::evaluate_dmset(const vector<Xapian::docid>& dmset,
-				    const Xapian::ClusterSet& cset)
+Diversify::evaluate_dmset(const vector<Xapian::docid>& dmset,
+			  const Xapian::ClusterSet& cset)
 {
     double score_1 = 0, score_2 = 0;
 
@@ -159,27 +118,31 @@ Diversify::Internal::evaluate_dmset(const vector<Xapian::docid>& dmset,
     return -lambda * score_1 + (1 - lambda) * score_2;
 }
 
-DocumentSet
-Diversify::Internal::get_dmset(const MSet& mset)
+void
+MSet::Internal::diversify(Xapian::doccount k,
+			  Xapian::doccount r,
+			  double lambda,
+			  double b,
+			  double sigma_sqr)
 {
-    // Return original mset if no need to diversify
-    if (k == 0 || mset.size() <= 2) {
-	DocumentSet dmset;
-	for (MSetIterator it = mset.begin(); it != mset.end(); ++it)
-	    dmset.add_document(it.get_document());
-	return dmset;
+    if (r == 0)
+	throw InvalidArgumentError("Value of r should be greater than zero");
+
+    // Leave MSet alone if there's no need to diversify.
+    if (k == 0 || items.size() <= 2) {
+	return;
     }
 
-    unsigned int k_ = k;
-    if (k_ > mset.size())
-	k_ = mset.size();
+    if (k > items.size())
+	k = items.size();
 
-    initialise_points(mset);
+    Diversify diversifier(k, r, lambda, b, sigma_sqr);
+    diversifier.initialise_points(MSet(this));
 
     // Cluster the given mset into k clusters
-    Xapian::LCDClusterer lc(k_);
-    Xapian::ClusterSet cset = lc.cluster(mset);
-    compute_similarities(cset);
+    Xapian::LCDClusterer lc(k);
+    Xapian::ClusterSet cset = lc.cluster(MSet(this));
+    diversifier.compute_similarities(cset);
 
     // topC contains union of top-r relevant documents of each cluster
     vector<Xapian::docid> topc;
@@ -193,13 +156,13 @@ Diversify::Internal::get_dmset(const MSet& mset)
 	}
     }
 
-    vector<Xapian::docid> curr_dmset = main_dmset;
+    vector<Xapian::docid> curr_dmset = diversifier.main_dmset;
 
     while (true) {
 	bool found_better_dmset = false;
-	for (unsigned int i = 0; i < main_dmset.size(); ++i) {
-	    auto curr_doc = main_dmset[i];
-	    double best_score = evaluate_dmset(curr_dmset, cset);
+	for (unsigned int i = 0; i < diversifier.main_dmset.size(); ++i) {
+	    auto curr_doc = diversifier.main_dmset[i];
+	    double best_score = diversifier.evaluate_dmset(curr_dmset, cset);
 	    bool found_better_doc = false;
 
 	    for (unsigned int j = 0; j < topc.size(); ++j) {
@@ -213,7 +176,7 @@ Diversify::Internal::get_dmset(const MSet& mset)
 
 		auto temp_doc = curr_dmset[i];
 		curr_dmset[i] = topc[j];
-		double score = evaluate_dmset(curr_dmset, cset);
+		double score = diversifier.evaluate_dmset(curr_dmset, cset);
 
 		if (score < best_score) {
 		    curr_doc = curr_dmset[i];
@@ -234,17 +197,28 @@ Diversify::Internal::get_dmset(const MSet& mset)
 	if (!found_better_dmset)
 	    break;
 
-	main_dmset = curr_dmset;
+	diversifier.main_dmset = curr_dmset;
     }
 
-    // Merge main_dmset and diff_dmset into final dmset
-    DocumentSet dmset;
-    for (auto doc_id : main_dmset)
-	dmset.add_document(points.at(doc_id).get_document());
+    // Reorder the items in the MSet - those selected as diverse go first.
+    vector<Result> diversified_results;
+    diversified_results.reserve(items.size());
+    for (auto did : diversifier.main_dmset) {
+	Xapian::doccount idx = diversifier.mset_index[did];
+	diversified_results.push_back(std::move(items[idx]));
+	// Make sure such items get their docid zeroed, for the loop below.
+	items[idx] = Result(0, 0.0);
+    }
 
-    vector<Xapian::docid> diff_dmset = compute_diff_dmset(main_dmset);
-    for (auto doc_id : diff_dmset)
-	dmset.add_document(points.at(doc_id).get_document());
+    if (k < items.size()) {
+	// Then the others make up the remainder of the MSet, in the same
+	// relative order as they were originally.
+	for (auto& result : items) {
+	    if (result.get_docid()) {
+		diversified_results.push_back(std::move(result));
+	    }
+	}
+    }
 
-    return dmset;
+    items = std::move(diversified_results);
 }

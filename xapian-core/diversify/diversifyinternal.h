@@ -22,18 +22,19 @@
 #ifndef XAPIAN_INCLUDED_DIVERSIFYINTERNAL_H
 #define XAPIAN_INCLUDED_DIVERSIFYINTERNAL_H
 
-#include <xapian/intrusive_ptr.h>
+#include <xapian/cluster.h>
+#include <xapian/types.h>
 
+#include <map>
+#include <unordered_map>
 #include <vector>
 
-/** Internal class for Diversify
- */
-class Xapian::Diversify::Internal : public Xapian::Internal::intrusive_base {
+class Diversify {
     /// Copies are not allowed
-    Internal(const Internal&) = delete;
+    Diversify(const Diversify&) = delete;
 
     /// Assignment is not allowed
-    void operator=(const Internal&) = delete;
+    void operator=(const Diversify&) = delete;
 
     /// Top-k documents of given mset are diversified
     Xapian::doccount k;
@@ -53,16 +54,19 @@ class Xapian::Diversify::Internal : public Xapian::Internal::intrusive_base {
     /// Store pairwise cosine similarities of documents of given mset
     std::map<std::pair<Xapian::docid, Xapian::docid>, double> pairwise_sim;
 
+  public:
+    /// Map docid to MSet index.
+    std::unordered_map<Xapian::docid, Xapian::doccount> mset_index;
+
     /// Store docids of top k diversified documents
     std::vector<Xapian::docid> main_dmset;
 
-  public:
     /// Constructor for initialising diversification parameters
-    explicit Internal(Xapian::doccount k_,
-		      Xapian::doccount r_,
-		      double lambda_,
-		      double b_,
-		      double sigma_sqr_)
+    explicit Diversify(Xapian::doccount k_,
+		       Xapian::doccount r_,
+		       double lambda_,
+		       double b_,
+		       double sigma_sqr_)
 	: k(k_), r(r_), lambda(lambda_), b(b_), sigma_sqr(sigma_sqr_) {}
 
     /** Initialise diversified document set
@@ -75,17 +79,6 @@ class Xapian::Diversify::Internal : public Xapian::Internal::intrusive_base {
      */
     void initialise_points(const Xapian::MSet& source);
 
-    /** Return a key for a pair of documents
-     *
-     *  Returns a key as a pair of given documents ids
-     *
-     *  @param doc_id	Document id of the document
-     *  @param centroid_idx	Index of cluster to which the given centroid
-     *  			belongs to in the cluster set
-     */
-    std::pair<Xapian::docid, Xapian::docid>
-    get_key(Xapian::docid doc_id, unsigned int centroid_idx);
-
     /** Compute pairwise similarities
      *
      *  Used for pre-computing pairwise cosine similarities of documents
@@ -94,16 +87,6 @@ class Xapian::Diversify::Internal : public Xapian::Internal::intrusive_base {
      *  @param cset	Cluster of given relevant documents
      */
     void compute_similarities(const Xapian::ClusterSet& cset);
-
-    /** Return difference of 'points' and current dmset
-     *
-     *  Return the difference of 'points' and the current diversified
-     *  document match set
-     *
-     *  @param dmset	Document set representing a diversified document set
-     */
-    std::vector<Xapian::docid>
-    compute_diff_dmset(const std::vector<Xapian::docid>& dmset);
 
     /** Evaluate a diversified mset
      *
@@ -117,7 +100,7 @@ class Xapian::Diversify::Internal : public Xapian::Internal::intrusive_base {
 			  const Xapian::ClusterSet& cset);
 
     /// Return diversified document set from given mset
-    Xapian::DocumentSet get_dmset(const MSet& mset);
+    Xapian::DocumentSet get_dmset(const Xapian::MSet& mset);
 };
 
 #endif // XAPIAN_INCLUDED_DIVERSIFYINTERNAL_H

@@ -39,10 +39,9 @@ DEFINE_TESTCASE(diversify1, backend)
     Xapian::MSet matches = enq.get_mset(0, 10);
 
     unsigned int k = 4, r = 2;
-    Xapian::Diversify d(k, r);
-    Xapian::DocumentSet dset = d.get_dmset(matches);
+    matches.diversify(k, r);
 
-    TEST(dset.size() != 0);
+    TEST(matches.size() != 0);
 }
 
 /** LCD cluster Test
