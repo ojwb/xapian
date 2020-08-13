@@ -454,6 +454,13 @@ try {
 	string data = doc.get_data();
 	cout << *i << ": [" << i.get_weight() << "]\n" << data << "\n";
     }
+    mset.diversify(4, 2);
+    cout << "Diversified:\n";
+    for (Xapian::MSetIterator i = mset.begin(); i != mset.end(); ++i) {
+	Xapian::Document doc = i.get_document();
+	string data = doc.get_data();
+	cout << *i << ": [" << i.get_weight() << "]\n" << data << "\n";
+    }
     cout << flush;
 } catch (const Xapian::QueryParserError & e) {
     cout << "Couldn't parse query: " << e.get_msg() << endl;
