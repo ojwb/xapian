@@ -57,14 +57,8 @@ class Diversify {
     /// Assignment is not allowed
     void operator=(const Diversify&) = delete;
 
-    /// Top-k documents of given mset are diversified
-    Xapian::doccount k;
-
-    /// Number of relevant documents from each cluster used for building topC
-    Xapian::doccount r;
-
-    /// MPT parameters
-    double lambda, b, sigma_sqr;
+    /// Numerator used in MPT calculations.
+    double numerator;
 
     /// Store each document from given mset as a point
     std::unordered_map<Xapian::docid, Xapian::Point> points;
@@ -82,23 +76,21 @@ class Diversify {
     /// Store docids of top k diversified documents
     std::vector<Xapian::docid> main_dmset;
 
-    /// Constructor for initialising diversification parameters
-    explicit Diversify(Xapian::doccount k_,
-		       Xapian::doccount r_,
-		       double lambda_,
-		       double b_,
-		       double sigma_sqr_)
-	: k(k_), r(r_), lambda(lambda_), b(b_), sigma_sqr(sigma_sqr_) {}
+    /// Constructor.
+    explicit Diversify(double b, double sigma_sqr)
+	: numerator(2.0 * b * sigma_sqr) {}
 
     /** Initialise diversified document set
      *
      *  Convert top-k documents of mset into vector of Points, which
      *  represents the initial diversified document set.
      *
+     *  @param k	The number of documents to diversify
      *  @param source	MSet object containing the documents of which
      *			top-k are to be diversified
      */
-    void initialise_points(const Xapian::MSet& source);
+    void initialise_points(Xapian::doccount k,
+			   const Xapian::MSet& source);
 
     /** Compute pairwise similarities
      *
@@ -116,16 +108,19 @@ class Diversify {
      *  @param dmset	Set of points representing candidate diversifed
      *			set of documents
      *  @param cset	Set of clusters of given mset
+     *  @param lambda	MPT parameter
      */
     double evaluate_dmset(const std::vector<Xapian::docid>& dmset,
-			  const Xapian::ClusterSet& cset);
+			  const Xapian::ClusterSet& cset,
+			  double lambda);
 
     /// Return diversified document set from given mset
     Xapian::DocumentSet get_dmset(const Xapian::MSet& mset);
 };
 
 void
-Diversify::initialise_points(const MSet& source)
+Diversify::initialise_points(Xapian::doccount k,
+			     const MSet& source)
 {
     TermListGroup tlg(source);
     Xapian::doccount count = 0;
@@ -172,7 +167,8 @@ Diversify::compute_similarities(const Xapian::ClusterSet& cset)
 
 double
 Diversify::evaluate_dmset(const vector<Xapian::docid>& dmset,
-			  const Xapian::ClusterSet& cset)
+			  const Xapian::ClusterSet& cset,
+			  double lambda)
 {
     double score_1 = 0, score_2 = 0;
 
@@ -185,7 +181,7 @@ Diversify::evaluate_dmset(const vector<Xapian::docid>& dmset,
 	for (auto doc_id : dmset) {
 	    auto key = get_key(doc_id, c);
 	    double sim = pairwise_sim[key];
-	    double weight = 2 * b * sigma_sqr / log(1 + pos) * (1 - sim);
+	    double weight = numerator / log(1 + pos) * (1 - sim);
 	    min_dist = min(min_dist, weight);
 	    ++pos;
 	}
@@ -213,8 +209,8 @@ MSet::Internal::diversify(Xapian::doccount k,
     if (k > items.size())
 	k = items.size();
 
-    Diversify diversifier(k, r, lambda, b, sigma_sqr);
-    diversifier.initialise_points(MSet(this));
+    Diversify diversifier(b, sigma_sqr);
+    diversifier.initialise_points(k, MSet(this));
 
     // Cluster the given mset into k clusters
     Xapian::LCDClusterer lc(k);
@@ -239,7 +235,8 @@ MSet::Internal::diversify(Xapian::doccount k,
 	bool found_better_dmset = false;
 	for (unsigned int i = 0; i < diversifier.main_dmset.size(); ++i) {
 	    auto curr_doc = diversifier.main_dmset[i];
-	    double best_score = diversifier.evaluate_dmset(curr_dmset, cset);
+	    double best_score = diversifier.evaluate_dmset(curr_dmset, cset,
+							   lambda);
 	    bool found_better_doc = false;
 
 	    for (unsigned int j = 0; j < topc.size(); ++j) {
@@ -253,7 +250,8 @@ MSet::Internal::diversify(Xapian::doccount k,
 
 		auto temp_doc = curr_dmset[i];
 		curr_dmset[i] = topc[j];
-		double score = diversifier.evaluate_dmset(curr_dmset, cset);
+		double score = diversifier.evaluate_dmset(curr_dmset, cset,
+							  lambda);
 
 		if (score < best_score) {
 		    curr_doc = curr_dmset[i];
