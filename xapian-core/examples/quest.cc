@@ -106,4 +106,46 @@ static void BM_check_at_least_1_hit(benchmark::State& state) {
 }
 BENCHMARK(BM_check_at_least_1_hit);
 
+static void BM_full_mset_bool(benchmark::State& state) {
+    Xapian::Database db("tests/.glass/db__etext");
+    Xapian::Query query("the");
+    query &= ~Xapian::Query("now");
+    query *= 0.0;
+    for (auto _ : state) {
+	Xapian::Enquire enquire(db);
+	enquire.set_query(query);
+	Xapian::MSet mset = enquire.get_mset(0, UINT_MAX);
+	(void)mset.size();
+    }
+}
+BENCHMARK(BM_full_mset_bool);
+
+static void BM_check_at_least_bool(benchmark::State& state) {
+    Xapian::Database db("tests/.glass/db__etext");
+    Xapian::Query query("the");
+    query &= ~Xapian::Query("now");
+    query *= 0.0;
+    for (auto _ : state) {
+	Xapian::Enquire enquire(db);
+	enquire.set_query(query);
+	Xapian::MSet mset = enquire.get_mset(0, 0, UINT_MAX);
+	(void)mset.get_matches_estimated();
+    }
+}
+BENCHMARK(BM_check_at_least_bool);
+
+static void BM_check_at_least_1_hit_bool(benchmark::State& state) {
+    Xapian::Database db("tests/.glass/db__etext");
+    Xapian::Query query("the");
+    query &= ~Xapian::Query("now");
+    query *= 0.0;
+    for (auto _ : state) {
+	Xapian::Enquire enquire(db);
+	enquire.set_query(query);
+	Xapian::MSet mset = enquire.get_mset(0, 1, UINT_MAX);
+	(void)mset.get_matches_estimated();
+    }
+}
+BENCHMARK(BM_check_at_least_1_hit_bool);
+
 BENCHMARK_MAIN();
