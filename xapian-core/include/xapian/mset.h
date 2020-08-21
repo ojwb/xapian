@@ -326,7 +326,32 @@ class XAPIAN_VISIBILITY_DEFAULT MSet {
 			const std::string & hi_end = "</b>",
 			const std::string & omit = "...") const;
 
-    /// FIXME: docs
+    /** Adjust the order of results to try to improve diversity.
+     *
+     *  Performs GLS-MPT and returns documents of which top-k
+     *  are diversified.
+     *
+     *  Class for diversifying an MSet using GLS-MPT as given
+     *  in the paper: Scalable and Efficient Web Search Result
+     *  Diversification Naini et al. 2016
+     *
+     *  FIXME: clean up and finish off these API docs
+     *
+     *  @param  k_	Number of required diversified documents in the
+     *  		diversified document set
+     *  @param  r_	Number of documents from each cluster used for
+     *  		building topC
+     *  @param  lambda_	Trade-off between relevance of top-k diversified
+     *  		document set and its similarity to the rest of the
+     *  		documents in the document match set. Belongs to the
+     *  		range [0,1] with 0 meaning no weighting to
+     *  		relevance of the diversified document set and 1
+     *  		allowing for full weighting to relevance of the
+     *  		diversified document set.
+     *  @param  b_	Parameter for MPT, normally in the range [1,10]
+     *  @param  sigma_sqr_	Parameter for MPT, normally in the range
+     *	  			[1e-6,1]
+     */
     void diversify(Xapian::doccount k_,
 		   Xapian::doccount r_,
 		   double lambda_ = 0.5,
