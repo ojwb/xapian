@@ -96,7 +96,8 @@ TermList*
 MultiDatabase::open_term_list_direct(Xapian::docid did) const
 {
     auto n_shards = Xapian::doccount(shards.size());
-    auto shard = shards[shard_number(did, n_shards)];
+    auto shard_index = shard_number(did, n_shards);
+    auto shard = shards[shard_index];
     Xapian::docid shard_did = shard_docid(did, n_shards);
     TermList* res = shard->open_term_list(shard_did);
     res->shard_index = shard_index;
