@@ -365,8 +365,9 @@ GlassDatabase::set_revision_number(int flags, glass_revision_number_t new_revisi
 	!spelling_table.sync() ||
 	!docdata_table.sync() ||
 	!version_file.sync(tmpfile, new_revision, flags)) {
+	int saved_errno = errno;
 	(void)unlink(tmpfile.c_str());
-	throw Xapian::DatabaseError("Commit failed", errno);
+	throw Xapian::DatabaseError("Commit failed", saved_errno);
     }
 
     changes.commit(new_revision, flags);
@@ -745,6 +746,23 @@ GlassDatabase::get_unique_terms(Xapian::docid did) const
     Assert(did != 0);
     intrusive_ptr<const GlassDatabase> ptrtothis(this);
     RETURN(GlassTermList(ptrtothis, did).get_unique_terms());
+}
+
+Xapian::termcount
+GlassDatabase::get_wdfdocmax(Xapian::docid did) const
+{
+    LOGCALL(DB, Xapian::termcount, "GlassDatabase::get_wdfdocmax", did);
+    Assert(did != 0);
+    intrusive_ptr<const GlassDatabase> ptrtothis(this);
+    GlassTermList termlist(ptrtothis, did);
+    Xapian::termcount max_wdf = 0;
+    termlist.next();
+    while (!termlist.at_end()) {
+	Xapian::termcount current_wdf = termlist.get_wdf();
+	if (current_wdf > max_wdf) max_wdf = current_wdf;
+	termlist.next();
+    }
+    RETURN(max_wdf);
 }
 
 void

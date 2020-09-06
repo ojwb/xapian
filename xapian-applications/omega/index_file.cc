@@ -8,6 +8,7 @@
  * Copyright 2009 Frank J Bruzzaniti
  * Copyright 2012 Mihai Bivol
  * Copyright 2019 Bruno Baruffaldi
+ * Copyright 2020 Parth Kapadia
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -104,7 +105,6 @@ static string site_term, host_term;
 static Failed failed;
 
 map<string, Filter> commands;
-map<string, Worker *> workers;
 
 static void
 mark_as_seen(Xapian::docid did)
@@ -188,6 +188,101 @@ index_add_default_libraries()
     Worker* omindex_gmime = new Worker("omindex_gmime");
     index_library("message/rfc822", omindex_gmime);
     index_library("message/news", omindex_gmime);
+#endif
+#if defined HAVE_LIBARCHIVE
+    Worker* omindex_libarchive = new Worker("omindex_libarchive");
+    index_library("application/vnd.oasis.opendocument.text",
+		  omindex_libarchive);
+    index_library("application/vnd.oasis.opendocument.spreadsheet",
+		  omindex_libarchive);
+    index_library("application/vnd.oasis.opendocument.presentation",
+		  omindex_libarchive);
+    index_library("application/vnd.oasis.opendocument.graphics",
+		  omindex_libarchive);
+    index_library("application/vnd.oasis.opendocument.chart",
+		  omindex_libarchive);
+    index_library("application/vnd.oasis.opendocument.formula",
+		  omindex_libarchive);
+    index_library("application/vnd.oasis.opendocument.database",
+		  omindex_libarchive);
+    index_library("application/vnd.oasis.opendocument.image",
+		  omindex_libarchive);
+    index_library("application/vnd.oasis.opendocument.text-master",
+		  omindex_libarchive);
+    index_library("application/vnd.oasis.opendocument.text-template",
+		  omindex_libarchive);
+    index_library("application/vnd.oasis.opendocument.spreadsheet-template",
+		  omindex_libarchive);
+    index_library("application/vnd.oasis.opendocument.presentation-template",
+		  omindex_libarchive);
+    index_library("application/vnd.oasis.opendocument.graphics-template",
+		  omindex_libarchive);
+    index_library("application/vnd.oasis.opendocument.chart-template",
+		  omindex_libarchive);
+    index_library("application/vnd.oasis.opendocument.formula-template",
+		  omindex_libarchive);
+    index_library("application/vnd.oasis.opendocument.image-template",
+		  omindex_libarchive);
+    index_library("application/vnd.oasis.opendocument.text-web",
+		  omindex_libarchive);
+    index_library("application/vnd.sun.xml.calc",
+		  omindex_libarchive);
+    index_library("application/vnd.sun.xml.calc.template",
+		  omindex_libarchive);
+    index_library("application/vnd.sun.xml.draw",
+		  omindex_libarchive);
+    index_library("application/vnd.sun.xml.draw.template",
+		  omindex_libarchive);
+    index_library("application/vnd.sun.xml.impress",
+		  omindex_libarchive);
+    index_library("application/vnd.sun.xml.impress.template",
+		  omindex_libarchive);
+    index_library("application/vnd.sun.xml.math",
+		  omindex_libarchive);
+    index_library("application/vnd.sun.xml.writer",
+		  omindex_libarchive);
+    index_library("application/vnd.sun.xml.writer.global",
+		  omindex_libarchive);
+    index_library("application/vnd.sun.xml.writer.template",
+		  omindex_libarchive);
+    index_library("application/vnd.openxmlformats-officedocument."
+		  "wordprocessingml.document", omindex_libarchive);
+    index_library("application/vnd.openxmlformats-officedocument."
+		  "wordprocessingml.template", omindex_libarchive);
+    index_library("application/vnd.openxmlformats-officedocument."
+		  "spreadsheetml.sheet", omindex_libarchive);
+    index_library("application/vnd.openxmlformats-officedocument."
+		  "spreadsheetml.template", omindex_libarchive);
+    index_library("application/vnd.openxmlformats-officedocument."
+		  "presentationml.presentation", omindex_libarchive);
+    index_library("application/vnd.openxmlformats-officedocument."
+		  "presentationml.slideshow", omindex_libarchive);
+    index_library("application/vnd.openxmlformats-officedocument."
+		  "presentationml.template", omindex_libarchive);
+#endif
+#if defined HAVE_LIBABW
+    Worker* omindex_libabw = new Worker("omindex_libabw");
+    index_library("application/x-abiword", omindex_libabw);
+    index_library("application/x-abiword-compressed", omindex_libabw);
+#endif
+#if defined HAVE_LIBCDR
+    Worker* omindex_libcdr = new Worker("omindex_libcdr");
+    index_library("image/x-coreldraw", omindex_libcdr);
+#endif
+#if defined HAVE_LIBEXTRACTOR
+    Worker* omindex_libextractor = new Worker("omindex_libextractor");
+    index_library("video/mpeg", omindex_libextractor);
+    index_library("video/x-flv", omindex_libextractor);
+    index_library("video/x-msvideo", omindex_libextractor);
+    index_library("video/x-ms-asf", omindex_libextractor);
+    index_library("video/quicktime", omindex_libextractor);
+    index_library("video/ogg", omindex_libextractor);
+    index_library("audio/flac", omindex_libextractor);
+    index_library("audio/mpeg", omindex_libextractor);
+    index_library("audio/ogg", omindex_libextractor);
+    index_library("audio/x-wav", omindex_libextractor);
+    index_library("audio/x-mod", omindex_libextractor);
+    index_library("audio/x-s3m", omindex_libextractor);
 #endif
 }
 
@@ -665,7 +760,6 @@ index_mimetype(const string & file, const string & urlterm, const string & url,
     time_t created = time_t(-1);
     int pages = -1;
 
-    map<string, Worker *>::const_iterator wrk_it = workers.find(mimetype);
     map<string, Filter>::const_iterator cmd_it = commands.find(mimetype);
     if (cmd_it == commands.end()) {
 	size_t slash = mimetype.find('/');
@@ -682,11 +776,11 @@ index_mimetype(const string & file, const string & urlterm, const string & url,
 	}
     }
     try {
-	if (wrk_it != workers.end()) {
-	    // Just use the worker process to extract the content
-	    Worker* wrk = wrk_it->second;
-	    if (!wrk ||
-		!wrk->extract(file, dump, title, keywords, author, pages)) {
+	if (cmd_it != commands.end() && cmd_it->second.worker) {
+	    // Use a worker process to extract the content.
+	    Worker* wrk = cmd_it->second.worker;
+	    if (!wrk->extract(file, mimetype, dump, title, keywords, author,
+			      pages)) {
 		string msg = wrk->get_error();
 		assert(!msg.empty());
 		skip(urlterm, context, msg, d.get_size(), d.get_mtime());

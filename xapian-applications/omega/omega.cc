@@ -136,6 +136,16 @@ parse_db_params(const pair<IT, IT>& dbs)
 
 int main(int argc, char *argv[])
 try {
+    {
+	// Check for SERVER_PROTOCOL=INCLUDED, which is set when we're being
+	// included in a page via a server-side include directive.  In this
+	// case we suppress sending a Content-Type: header.
+	const char* p = getenv("SERVER_PROTOCOL");
+	if (p && strcmp(p, "INCLUDED") == 0) {
+	    suppress_http_headers = true;
+	}
+    }
+
     read_config_file();
 
     option["flag_default"] = "true";
@@ -655,7 +665,7 @@ try {
 } catch (const Xapian::Error &e) {
     if (!set_content_type && !suppress_http_headers)
 	cout << "Content-Type: text/html\n\n";
-    cout << "Exception: " << html_escape(e.get_msg()) << endl;
+    cout << "Exception: " << html_escape(e.get_description()) << endl;
 } catch (const std::exception &e) {
     if (!set_content_type && !suppress_http_headers)
 	cout << "Content-Type: text/html\n\n";

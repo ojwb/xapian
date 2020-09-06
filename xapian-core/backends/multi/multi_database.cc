@@ -1,7 +1,7 @@
 /** @file multi_database.cc
  * @brief Sharded database backend
  */
-/* Copyright (C) 2017,2019 Olly Betts
+/* Copyright (C) 2017,2019,2020 Olly Betts
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -98,7 +98,9 @@ MultiDatabase::open_term_list_direct(Xapian::docid did) const
     auto n_shards = Xapian::doccount(shards.size());
     auto shard = shards[shard_number(did, n_shards)];
     Xapian::docid shard_did = shard_docid(did, n_shards);
-    return shard->open_term_list(shard_did);
+    TermList* res = shard->open_term_list(shard_did);
+    res->shard_index = shard_index;
+    return res;
 }
 
 TermList*
@@ -348,6 +350,17 @@ MultiDatabase::get_unique_terms(Xapian::docid did) const
     auto shard = shards[shard_number(did, n_shards)];
     auto shard_did = shard_docid(did, n_shards);
     return shard->get_unique_terms(shard_did);
+}
+
+Xapian::termcount
+MultiDatabase::get_wdfdocmax(Xapian::docid did) const
+{
+    Assert(did != 0);
+
+    auto n_shards = shards.size();
+    auto shard = shards[shard_number(did, n_shards)];
+    auto shard_did = shard_docid(did, n_shards);
+    return shard->get_wdfdocmax(shard_did);
 }
 
 Xapian::Document::Internal*

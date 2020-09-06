@@ -27,8 +27,9 @@ set -e
 SERVER_PROTOCOL=INCLUDED
 export SERVER_PROTOCOL
 
-# Suppress leak reports for cached PCRE objects.
-LSAN_OPTIONS=print_suppressions=0,suppressions=lsan.supp
+# Don't complain about memory left allocated on exit - the OS will reclaim
+# all memory at that point.
+LSAN_OPTIONS=leak_check_at_exit=0
 export LSAN_OPTIONS
 
 # Set up an empty database.
@@ -535,6 +536,10 @@ testcase '30|23|12|3|03|2|1|01|0|00' input='2|1|23|12|23|3|30|0|00|0|01|03' opt=
 testcase 'Exception: Unknown $sort option: x' input="b|c|b|1" opt=urx
 testcase 'Exception: Invalid $sort option combination: n#' input="b|c" opt='n#'
 testcase 'Exception: Invalid $sort option combination: #rn' input="b|1" opt='#rn'
+
+# Regression test to test suppression of Content-Type header for early
+# exception.
+testcase 'Exception: HITSPERPAGE parameter must be &gt;= 0' HITSPERPAGE=-1
 
 # Regression test for $sort bug fixed in 1.4.12.
 # Check $sort doesn't ensure_match (or ensure_query).
@@ -1074,7 +1079,7 @@ dummy=
 END
 printf '$field{id,$cgi{id}}|$field{f,$cgi{id}}$error' > "$TEST_TEMPLATE"
 testcase '1|one' id=1
-testcase '|Document 2 not found' id=2
+testcase '|DocNotFoundError: Document 2 not found' id=2
 testcase '3|' id=3
 testcase '4|' id=4
 

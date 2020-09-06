@@ -249,6 +249,9 @@ RemoteServer::run()
 		case MSG_UNIQUETERMS:
 		    msg_uniqueterms(message);
 		    continue;
+		case MSG_WDFDOCMAX:
+		    msg_wdfdocmax(message);
+		    continue;
 		case MSG_POSITIONLISTCOUNT:
 		    msg_positionlistcount(message);
 		    continue;
@@ -653,9 +656,8 @@ RemoteServer::msg_query(const string &message_in)
 	sorter.reset(sorterclass->unserialise(serialised_sorter, reg));
     }
 
-    message.erase(0, message.size() - (p_end - p));
     unique_ptr<Xapian::Weight::Internal> total_stats(new Xapian::Weight::Internal);
-    unserialise_stats(message, *total_stats);
+    unserialise_stats(p, p_end, *total_stats);
     total_stats->set_bounds_from_db(*db);
 
     Xapian::MSet mset = matcher.get_mset(first, maxitems, check_at_least,
@@ -783,6 +785,20 @@ RemoteServer::msg_uniqueterms(const string &message)
     string reply;
     pack_uint_last(reply, db->get_unique_terms(did));
     send_message(REPLY_UNIQUETERMS, reply);
+}
+
+void
+RemoteServer::msg_wdfdocmax(const string& message)
+{
+    const char* p = message.data();
+    const char* p_end = p + message.size();
+    Xapian::docid did;
+    if (!unpack_uint_last(&p, p_end, &did)) {
+	throw Xapian::NetworkError("Bad MSG_WDFDOCMAX");
+    }
+    string reply;
+    pack_uint_last(reply, db->get_wdfdocmax(did));
+    send_message(REPLY_WDFDOCMAX, reply);
 }
 
 void

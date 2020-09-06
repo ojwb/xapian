@@ -122,8 +122,8 @@ static Xapian::Query query;
 Xapian::Query::op default_op = Xapian::Query::OP_AND; // default matching mode
 
 // Maintain an explicit date_filter_set flag - date_filter.empty() will also
-// be true if a date filter is specified which simplies to Query::MatchNothing
-// at construction time.
+// be true if a date filter is specified which simplifies to
+// Query::MatchNothing at construction time.
 static bool date_filter_set = false;
 static Xapian::Query date_filter;
 
@@ -382,7 +382,7 @@ parse_queries(const string& oldp)
 	    qp.set_stemming_strategy(Xapian::QueryParser::STEM_ALL);
 	}
     }
-    qp.set_stopper(new MyStopper());
+    qp.set_stopper((new MyStopper())->release());
     qp.set_default_op(default_op);
     qp.set_database(db);
     // FIXME: provide a custom RP which handles size:10..20K, etc.
@@ -2568,7 +2568,7 @@ eval(const string &fmt, const vector<string> &param)
 	    case CMD_truncate: {
 		unsigned int length;
 		if (!parse_unsigned(args[1].c_str(), length)) {
-		    throw "Length for truncate command must be >= 0 ";
+		    throw "Length for truncate command must be >= 0";
 		}
 		value = generate_sample(args[0],
 					length,
@@ -2669,7 +2669,7 @@ eval(const string &fmt, const vector<string> &param)
     } catch (const Xapian::Error & e) {
 	// FIXME: this means we only see the most recent error in $error
 	// - is that the best approach?
-	error_msg = e.get_msg();
+	error_msg = e.get_description();
     }
 
     res.append(fmt, p, string::npos);
@@ -2769,12 +2769,6 @@ void
 parse_omegascript()
 {
     try {
-	const char * p = getenv("SERVER_PROTOCOL");
-	if (p && strcmp(p, "INCLUDED") == 0) {
-	    // We're being included in another page, so suppress headers.
-	    suppress_http_headers = true;
-	}
-
 	string output = eval_file(fmtname);
 	if (!set_content_type && !suppress_http_headers) {
 	    cout << "Content-Type: text/html" << endl;

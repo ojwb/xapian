@@ -180,17 +180,6 @@ class XAPIAN_VISIBILITY_DEFAULT FreqSource
     }
 };
 
-/** A class for dummy frequency source for construction of termlists
- *  This returns 1 as the term frequency for any term
- */
-class XAPIAN_VISIBILITY_DEFAULT DummyFreqSource : public FreqSource {
-  public:
-    /// Return the value 1 as a dummy term frequency
-    doccount get_termfreq(const std::string &) const;
-
-    doccount get_doccount() const;
-};
-
 /** A class for construction of termlists which store the terms for a
  *  document along with the number of documents it indexes i.e. term
  *  frequency
@@ -326,13 +315,13 @@ class XAPIAN_VISIBILITY_DEFAULT Point : public PointType {
     /** Constructor
      *  Initialise the point with terms and corresponding TF-IDF weights
      *
-     *  @param tlg		TermListGroup object which provides the term
+     *  @param freqsource	FreqSource object which provides the term
      *				frequencies.  It is used for TF-IDF weight
      *				calculations
      *  @param document		The Document object over which the Point object
      *				will be initialised
      */
-    Point(const TermListGroup &tlg, const Document &document);
+    Point(const FreqSource& freqsource, const Document& document);
 
     /// Returns the document corresponding to this Point
     Document get_document() const;
@@ -363,9 +352,6 @@ class XAPIAN_VISIBILITY_DEFAULT Centroid : public PointType {
 
     /// Clear the terms and corresponding values of the centroid
     void clear();
-
-    /// Recalculate the magnitude of the centroid
-    void recalc_magnitude();
 };
 
 /** Class to represents a Cluster which contains Points and Centroid
