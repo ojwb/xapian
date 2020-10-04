@@ -108,7 +108,7 @@ install:
         $env:LDFLAGS="-Lc:/projects/xapian/zlib"
       }
 build_script:
-  - bash -c 'cd xapian-core; g++ -E common/safewindows.h | head; cl -nologo -E common/safewindows.h | head'
+  - bash -c 'cd xapian-core; g++ -E common/safewindows.h; cl -nologo -E common/safewindows.h'
   - bash -c 'time ./configure $CONFIGOPTS'
   - bash -c 'time make -j2' < nul
 test_script:
