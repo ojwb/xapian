@@ -1,7 +1,7 @@
 #!/bin/sh
 # omegatest: Test omega CGI
 #
-# Copyright (C) 2015,2016,2017,2018,2019 Olly Betts
+# Copyright (C) 2015,2016,2017,2018,2019,2020,2021 Olly Betts
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -396,6 +396,18 @@ else
     fi
 fi
 
+# Check clamping of out of range dates:
+printf '%s\n' 'DATE : field valuepacked=0' > "$TEST_INDEXSCRIPT"
+rm -rf "$TEST_DB"
+$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" > /dev/null <<'END'
+DATE=0
+
+DATE=1617069804
+END
+qtestcase 'VALUE_LE 0 V\x84o\xff' START.0=10010101 END.0=20151230
+qtestcase 'VALUE_RANGE 0 V\x83\x1e\x80 \xff\xff\xff\xff' START.0=20151230 END.0=21060301
+qtestcase 'VALUE_LE 0 \xff\xff\xff\xff' START.0=19691230 END.0=21060301
+
 # Test stem_all and stem_strategy.
 printf '$if{$cgi{stem_all},$set{stem_all,$cgi{stem_all}}}$if{$cgi{stem_strategy},$set{stem_strategy,$cgi{stem_strategy}}}$querydescription' > "$TEST_TEMPLATE"
 qtestcase '(capitalised@1 AND tests@2 AND Zstem@3)' P='Capitalised "tests" stemmed'
@@ -485,6 +497,28 @@ printf '$switch{$cgi{x},1,one,2,two,$seterror{errdefault}}$error' > "$TEST_TEMPL
 testcase 'one' x=1
 testcase 'two' x=2
 testcase 'errdefault' x=3
+
+# Feature tests for $include.
+# Test inclusion works and evaluates the included file.
+printf '$set{c,$add{$or{$opt{c},0},1}}$opt{c},$if{$lt{$opt{c},10},$include{'"$TEST_TEMPLATE"'}}X' > "$TEST_TEMPLATE"
+testcase '1,2,3,4,5,6,7,8,9,10,XXXXXXXXXX'
+# Test fallback action when trying to $include a file which doesn't exist or
+# with a prohibited name.
+printf '$include{$cgi{template},foo$set{data,bar}}-$opt{data}' > "$TEST_TEMPLATE"
+testcase 'foo-bar' template=non_existent.template
+testcase 'foo-bar' template=../secret/file
+# Test exception is thrown when there's no fallback action when trying to
+# $include a file which doesn't exist or with a prohibited name.
+printf '$include{$cgi{template}}-$opt{data}' > "$TEST_TEMPLATE"
+testcase "Exception: Couldn't read format template 'non_existent.template' (No such file or directory)" template=non_existent.template
+testcase "Exception: Couldn't read format template '../secret/file' (name contains '..')" template=../secret/file
+
+# Feature tests for $foreach.
+printf '$foreach{$split{.,$cgi{a}},$chr{$add{$_,64}}}' > "$TEST_TEMPLATE"
+testcase 'OMEGA' a=15.13.5.7.1
+# Check that the outer $_ is restored after the inner $foreach.
+printf '$foreach{$split{.,$cgi{a}},$foreach{$split{.,$cgi{$_}},$chr{$add{$_,64}}}$_}' > "$TEST_TEMPLATE"
+testcase 'OMbEGcAd' a=b.c.d b=15.13 c=5.7 d=1
 
 # Feature tests for $map.
 printf '$list{$map{$split{-,$cgi{a}},$list{$map{$split{,$cgi{b}},$_},-}},|}' > "$TEST_TEMPLATE"
@@ -737,6 +771,14 @@ testcase 'b4c216e4da73d1d01277ef46d0514821' text="simple query"
 testcase 'd41d8cd98f00b204e9800998ecf8427e' text=""
 testcase '3302c94d3500c3f695b7e09b7acd420d' text=" test "
 
+# Feature tests for $base64{}
+printf '$base64{$cgi{in}}' > "$TEST_TEMPLATE"
+testcase '' in=""
+testcase 'IQ==' in='!'
+testcase 'T2s=' in='Ok'
+testcase 'aGA+aGA/' in='h`>h`?'
+testcase 'YmFzZTY0IHRlc3Q=' in='base64 test'
+
 # Feature tests for $random{}
 printf '$or{$list{$map{$range{1,100},$set{num,$random{$cgi{x}}}$or{$lt{$opt{num},0},$gt{$opt{num},$cgi{x}}}},},OK}' > "$TEST_TEMPLATE"
 testcase 'OK' x=6
@@ -793,6 +835,44 @@ testcase '...just a <strong>list</strong> of <strong>words</strong>...' P='word 
 printf '$hitlist{$snippet{$field{text},30,,<b>,</b>,}}' > "$TEST_TEMPLATE"
 testcase '<b>words</b> - there is structure to' P='words'
 testcase 'a <b>list of words</b> - there is' P='"list of words"'
+
+# Test MORELIKE CGI parameter.
+printf '%s\n' 'id : boolean=Q' 'text : index field' > "$TEST_INDEXSCRIPT"
+rm -rf "$TEST_DB"
+$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" > /dev/null <<'END'
+id=a1
+text=First document
+
+id=b2
+text=Second article
+
+id=c3
+text=Piece of writing three
+
+id=dummy
+text=Inflating termfreqs since Omega excludes terms with termfreq of one
+=first document second piece of writing three
+END
+printf '$querydescription|$query' > "$TEST_TEMPLATE"
+testcase 'Query((Zfirst@1 OR Zdocument@2))|first document' MORELIKE='Qa1' DEFAULTOP=or
+testcase 'Query((Zfirst@1 OR Zdocument@2))|first OR document' MORELIKE='Qa1'
+testcase 'Query((Zfirst@1 OR Zdocument@2))|first OR document' MORELIKE='Qa1' DEFAULTOP=and
+# Test with docid.
+testcase 'Query((Zfirst@1 OR Zdocument@2))|first document' MORELIKE='1' DEFAULTOP=OR
+testcase 'Query((Zfirst@1 OR Zdocument@2))|first OR document' MORELIKE='1'
+testcase 'Query((Zfirst@1 OR Zdocument@2))|first OR document' MORELIKE='1' DEFAULTOP=phrase
+# "article" is excluded by OmegaExpandDecider because it has termfreq 1.
+testcase 'Query(Zsecond@1)|second' MORELIKE='Qb2' DEFAULTOP=or
+testcase 'Query(Zsecond@1)|second' MORELIKE='Qb2'
+# "of" is excluded because it's a stopword.
+testcase 'Query((Zwrite@1 OR Zthree@2 OR Zpiec@3))|writing OR three OR piece' MORELIKE='Qc3'
+# Test with absent term.
+testcase 'Query()|' MORELIKE='Qx9'
+# Test multiple MORELIKE parameters.  We need to include the dummy document for
+# any terms to get a positive weight and be returned.
+testcase 'Query((Zsecond@1 OR Zfirst@2 OR Zdocument@3))|second OR first OR document' MORELIKE=1 MORELIKE=2 MORELIKE=4
+testcase 'Query((Zsecond@1 OR Zfirst@2 OR Zdocument@3))|second OR first OR document' MORELIKE=Qa1 MORELIKE=2 MORELIKE=4
+testcase 'Query((Zsecond@1 OR Zfirst@2 OR Zdocument@3))|second OR first OR document' MORELIKE=Qa1 MORELIKE=Qb2 MORELIKE=Qdummy
 
 # Feature tests for split command scriptindex.
 printf 'STATUS : field split=| field=SPLITSTATUS\nSTATUS : field=x' > "$TEST_INDEXSCRIPT"
@@ -930,6 +1010,47 @@ echo hex=404 |\
     { echo "scriptindex hextobin didn't give error for odd length hex string";\
       failed=`expr $failed + 1`; }
 testcase '7g|404' DOCIDS='1 2'
+
+# Feature tests for squash and ltrim/rtrim/trim.
+printf 'squash : squash field\nltrim : ltrim field\nrtrim : rtrim field\ntrim : trim field\n' > "$TEST_INDEXSCRIPT"
+rm -rf "$TEST_DB"
+whitespace_test=`printf "\t lots\v\fof\t whitespace\f "`
+$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" > /dev/null <<END
+squash=$whitespace_test
+ltrim=$whitespace_test
+rtrim=$whitespace_test
+trim=$whitespace_test
+
+squash=a b
+ltrim=a b
+rtrim=a b
+trim=a b
+
+squash=xyz
+ltrim=xyz
+rtrim=xyz
+trim=xyz
+END
+printf '$json{$field{$cgi{F},$cgi{ID}}}' > "$TEST_TEMPLATE"
+testcase 'lots of whitespace' F=squash ID=1
+testcase 'lots\u000b\fof\t whitespace\f ' F=ltrim ID=1
+testcase '\t lots\u000b\fof\t whitespace' F=rtrim ID=1
+testcase 'lots\u000b\fof\t whitespace' F=trim ID=1
+for f in squash ltrim rtrim trim ; do
+  testcase 'a b' F=$f ID=2
+  testcase 'xyz' F=$f ID=3
+done
+
+# Feature tests for scriptindex unhtml and unxml actions.
+printf '%s\n' 't : unhtml field=h' 't : unxml field=x' > "$TEST_INDEXSCRIPT"
+rm -rf "$TEST_DB"
+$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" > /dev/null <<'END'
+t=<b>No</b>table
+
+t=<p>foo</p><p>bar</p>
+END
+printf '$list{$map{$split{$cgi{DOCIDS}},$field{h,$_}:$field{x,$_}},|}' > "$TEST_TEMPLATE"
+testcase "`printf 'Notable:No table|foo\rbar:foo bar'`" DOCIDS='1 2'
 
 # Test useless action warnings.
 printf 'foo : index weight=2' > "$TEST_INDEXSCRIPT"
@@ -1128,27 +1249,13 @@ testcase 'false false true true'
 printf '%s' '$jsonobject{foo}' > "$TEST_TEMPLATE"
 testcase '{}'
 printf '%s' '$setmap{foo,Han,Solo}$jsonobject{foo}' > "$TEST_TEMPLATE"
-testcase '{
- "Han": "Solo"
-}'
+testcase '{"Han":"Solo"}'
 printf '%s' '$setmap{foo,key 1,value1,key"2,value\2,key3,value3}$jsonobject{foo}' > "$TEST_TEMPLATE"
-testcase '{
- "key 1": "value1",
- "key\"2": "value\\2",
- "key3": "value3"
-}'
+testcase '{"key 1":"value1","key\"2":"value\\2","key3":"value3"}'
 printf '%s' '$setmap{foo,key 1,1,key"2,$split{1 2},key3,$split{2 3 5}}$jsonobject{foo,,$jsonarray{$_,$add{$_,1}}}' > "$TEST_TEMPLATE"
-testcase '{
- "key 1": [2],
- "key\"2": [2,3],
- "key3": [3,4,6]
-}'
+testcase '{"key 1":[2],"key\"2":[2,3],"key3":[3,4,6]}'
 printf '%s' '$setmap{foo,key 1,,key"2,1,key3,0}$jsonobject{foo,$upper{$_},$jsonarray{$_,$add{$_}}}' > "$TEST_TEMPLATE"
-testcase '{
- "KEY 1": [],
- "KEY\"2": [1],
- "KEY3": [0]
-}'
+testcase '{"KEY 1":[],"KEY\"2":[1],"KEY3":[0]}'
 
 # Feature tests for $stoplist
 printf '%s' '$setmap{prefix,foo,XFOO}[$list{$stoplist,|}]' > "$TEST_TEMPLATE"

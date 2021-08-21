@@ -1,4 +1,4 @@
-/** @file svgparse.h
+/** @file
  * @brief Extract text from an SVG file.
  */
 /* Copyright (C) 2010,2011,2019 Olly Betts
@@ -18,21 +18,21 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-#ifndef OMEGA_INCLUDED_SVGPARSE_H
-#define OMEGA_INCLUDED_SVGPARSE_H
+#ifndef OMEGA_INCLUDED_SVGPARSER_H
+#define OMEGA_INCLUDED_SVGPARSER_H
 
-#include "htmlparse.h"
+#include "xmlparser.h"
 
-class SvgParser : public HtmlParser {
+class SvgParser : public XmlParser {
     enum { OTHER, TEXT, METADATA, TITLE, KEYWORDS, AUTHOR } state = OTHER;
-    string dc_tag;
+    std::string dc_tag;
 
   public:
     SvgParser() { }
-    void process_text(const string &text);
-    bool opening_tag(const string &tag);
-    bool closing_tag(const string &tag);
-    string title, keywords, dump, author;
+    void process_content(const std::string& content);
+    bool opening_tag(const std::string& tag);
+    bool closing_tag(const std::string& tag);
+    std::string title, keywords, dump, author;
 };
 
-#endif // OMEGA_INCLUDED_SVGPARSE_H
+#endif // OMEGA_INCLUDED_SVGPARSER_H

@@ -1,4 +1,4 @@
-/** @file queryparser.h
+/** @file
  * @brief parsing a user query string to build a Xapian::Query object
  */
 /* Copyright (C) 2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018 Olly Betts
@@ -673,6 +673,17 @@ class XAPIAN_VISIBILITY_DEFAULT QueryParser {
 	 *  @since Added in Xapian 1.4.18.
 	 */
 	FLAG_ACCUMULATE = 65536,
+
+	/** Produce a query which doesn't use positional information.
+	 *
+	 *  With this flag enabled, no positional information will be used
+	 *  and any query operations which would use it are replaced by
+	 *  the nearest equivalent which doesn't (so phrase searches, NEAR
+	 *  and ADJ will result in OP_AND).
+	 *
+	 *  @since Added in Xapian 1.4.19.
+	 */
+	FLAG_NO_POSITIONS = 0x20000,
 
 	/** The default flags.
 	 *

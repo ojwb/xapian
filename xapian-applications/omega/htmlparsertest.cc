@@ -1,5 +1,5 @@
-/** @file htmlparsetest.cc
- * @brief test the MyHtmlParser class
+/** @file
+ * @brief test the HtmlParser class
  */
 /* Copyright (C) 2006,2008,2011,2012,2013,2015,2016,2018,2019,2020 Olly Betts
  *
@@ -26,7 +26,7 @@
 #include <iostream>
 #include <string>
 
-#include "myhtmlparse.h"
+#include "htmlparser.h"
 
 using namespace std;
 
@@ -74,6 +74,8 @@ static const testcase tests[] = {
     { "<?xml version=\"1.0\"?><html><head><title>\xc2\xae</title></head><body>\xc2\xa3</body></html>", "\xc2\xa3", "\xc2\xae", "", "" },
     // Check we handle specify a charset for XML.
     { "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><html><head><title>\xc2\xae</title></head><body>\xc2\xa3</body></html>", "\xc3\x82\xc2\xa3", "\xc3\x82\xc2\xae", "", "" },
+    // Check the XML gets case-sensitive handling.
+    { "<?xml version=\"1.0\"?><html><head><TITLE>Not really a title</TITLE><meta Name='keywords' value='not really keywords'/></head><body>test</body></html>", "Not really a titletest", "", "", "" },
     { "<!--UdmComment-->test<!--/UdmComment--><div id='body'>test</div>", "test", "", "", "" },
     { "Foo<![CDATA[ & bar <literal>\"]]> ok", "Foo & bar <literal>\" ok", "", "", "" },
     { "Foo<![CDATA", "Foo", "", "", "" },
@@ -100,6 +102,11 @@ static const testcase tests[] = {
     { "<head><title xml:lang='en-US\" /></head><body><p>Body</p></body>", "Body", "", "", "" },
     { "<head><title/></head><body><p>Body</p></body>", "Body", "", "", "" },
     { "<head><title /></head><body><p>Body</p></body>", "Body", "", "", "" },
+    // Test attribute names are handled case-insensitively in HTML but not XHTML.
+    { "<html><head><MeTa Name=KeywordS CONTENT='testing'></head><body>Body</body></html>", "Body", "", "testing", "" },
+    { "<?xml version=\"1.0\"?><html><head><meta name=keywords content='testing'/></head><body>Body</body></html>", "Body", "", "testing", "" },
+    { "<?xml version=\"1.0\"?><html><head><meta Name=keywords content='testing'/></head><body>Body</body></html>", "Body", "", "", "" },
+    { "<?xml version=\"1.0\"?><html><head><meta name=keywords Content='testing'/></head><body>Body</body></html>", "Body", "", "", "" },
     { 0, 0, 0, 0, 0 }
 };
 
@@ -107,7 +114,7 @@ int
 main()
 {
     for (size_t i = 0; tests[i].html; ++i) {
-	MyHtmlParser p;
+	HtmlParser p;
 	const char* html_begin = tests[i].html;
 	size_t html_len = strlen(html_begin);
 	if (html_len == 0) {
@@ -120,10 +127,10 @@ main()
 	}
 	string html(html_begin, html_len);
 	try {
-	    p.parse_html(html, "iso-8859-1", false);
+	    p.parse(html, "iso-8859-1", false);
 	} catch (const string &newcharset) {
 	    p.reset();
-	    p.parse_html(html, newcharset, true);
+	    p.parse(html, newcharset, true);
 	}
 	if (!p.indexing_allowed) {
 	    cout << "indexing disallowed by meta tag - skipping\n";

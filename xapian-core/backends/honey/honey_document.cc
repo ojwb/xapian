@@ -1,4 +1,4 @@
-/** @file honey_document.cc
+/** @file
  * @brief A document read from a HoneyDatabase.
  */
 /* Copyright 2017 Olly Betts
@@ -24,6 +24,8 @@
 
 #include "honey_docdata.h"
 #include "honey_values.h"
+
+using namespace std;
 
 string
 HoneyDocument::fetch_value(Xapian::valueno slot) const

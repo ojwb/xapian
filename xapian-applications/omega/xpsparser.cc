@@ -1,7 +1,7 @@
-/** @file msxmlparse.cc
- * @brief Parser for Microsoft XML formats (.docx, etc).
+/** @file
+ * @brief Parser for XPS .fpage files.
  */
-/* Copyright (C) 2006,2009,2011,2012,2013 Olly Betts
+/* Copyright (C) 2009,2011 Olly Betts
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,13 +20,17 @@
 
 #include <config.h>
 
-#include "msxmlparse.h"
+#include "xpsparser.h"
+
+using namespace std;
 
 bool
-MSXmlParser::closing_tag(const string &tag)
+XpsParser::opening_tag(const string& tag)
 {
-    // For .docx and .pptx respectively.
-    if (tag == "w:t" || tag == "a:t")
-	pending_space = true;
+    if (tag == "glyphs") {
+	string unicodestring;
+	if (get_attribute("unicodestring", unicodestring))
+	    dump += unicodestring;
+    }
     return true;
 }

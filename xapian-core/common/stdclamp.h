@@ -1,4 +1,4 @@
-/** @file stdclamp.h
+/** @file
  * @brief Defines STD_CLAMP like C++17's std::clamp
  */
 /* Copyright (C) 2017 Olly Betts
@@ -22,6 +22,7 @@
 #define XAPIAN_INCLUDED_STDCLAMP_H
 
 #include <algorithm>
+#include <functional>
 
 #if __cplusplus >= 201703L
 # define STD_CLAMP std::clamp

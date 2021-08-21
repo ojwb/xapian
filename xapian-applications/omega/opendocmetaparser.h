@@ -1,8 +1,7 @@
-/** @file atomparse.h
- * @brief Extract text from an RSS atom file.
+/** @file
+ * @brief Parser for OpenDocument's meta.xml.
  */
-/* Copyright (C) 2010,2011,2012,2019 Olly Betts
- * Copyright (C) 2012 Mihai Bivol
+/* Copyright (C) 2006,2009,2010,2011,2016,2019 Olly Betts
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,23 +18,22 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-#ifndef OMEGA_INCLUDED_ATOMPARSE_H
-#define OMEGA_INCLUDED_ATOMPARSE_H
+#ifndef OMEGA_INCLUDED_OPENDOCMETAPARSER_H
+#define OMEGA_INCLUDED_OPENDOCMETAPARSER_H
 
-#include "htmlparse.h"
+#include "xmlparser.h"
 
-class AtomParser : public HtmlParser {
-    enum { OTHER, TITLE, AUTHOR, KEYWORDS, TEXT } state = OTHER;
-    bool in_entry = false;
-    bool is_ignored = false;
-    string type;
+#include <ctime>
 
+class OpenDocMetaParser : public XmlParser {
+    enum { NONE, KEYWORDS, TITLE, SAMPLE, AUTHOR, TOPIC, CREATED } field = NONE;
   public:
-    AtomParser() { }
-    void process_text(const string& text);
-    bool opening_tag(const string& tag);
-    bool closing_tag(const string& tag);
-    string title, keywords, dump, author;
+    OpenDocMetaParser() { }
+    void process_content(const std::string& content);
+    bool opening_tag(const std::string& tag);
+    bool closing_tag(const std::string& tag);
+    std::string title, keywords, sample, author, topic;
+    time_t created = time_t(-1);
 };
 
-#endif // OMEGA_INCLUDED_ATOMPARSE_H
+#endif // OMEGA_INCLUDED_OPENDOCMETAPARSER_H

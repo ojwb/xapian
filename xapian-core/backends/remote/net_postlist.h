@@ -1,4 +1,4 @@
-/** @file net_postlist.h
+/** @file
  *  @brief Postlists for remote databases
  */
 /* Copyright (C) 2007,2009 Lemur Consulting Ltd
@@ -29,8 +29,6 @@
 #include "omassert.h"
 #include "remote-database.h"
 
-using namespace std;
-
 /** A postlist in a remote database.
  */
 class NetworkPostList : public LeafPostList {
@@ -38,7 +36,7 @@ class NetworkPostList : public LeafPostList {
 
     Xapian::Internal::intrusive_ptr<const RemoteDatabase> db;
 
-    string postings;
+    std::string postings;
     bool started = false;
     const char* pos = NULL;
     const char* pos_end = NULL;
@@ -51,9 +49,9 @@ class NetworkPostList : public LeafPostList {
   public:
     /// Constructor.
     NetworkPostList(Xapian::Internal::intrusive_ptr<const RemoteDatabase> db_,
-		    const string& term_,
+		    const std::string& term_,
 		    Xapian::doccount termfreq_,
-		    string&& postings_)
+		    std::string&& postings_)
 	: LeafPostList(term_),
 	  db(db_), postings(std::move(postings_)), termfreq(termfreq_) { }
 
@@ -81,8 +79,10 @@ class NetworkPostList : public LeafPostList {
     /// Return true if and only if we've moved off the end of the list.
     bool at_end() const;
 
+    Xapian::termcount get_wdf_upper_bound() const;
+
     /// Get a description of the postlist.
-    string get_description() const;
+    std::string get_description() const;
 };
 
 #endif /* XAPIAN_INCLUDED_NET_POSTLIST_H */

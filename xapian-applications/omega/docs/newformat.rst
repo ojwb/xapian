@@ -149,11 +149,11 @@ To add a new filter to omega we have to follow a series of steps:
      string cmd = "foo2utf16 --content";
      append_filename_argument(cmd, file);
      append_filename_argument(cmd, tmpfile);
-     MyHtmlParser p;
+     HtmlParser p;
      try {
        (void)stdout_to_string(cmd);
        dump = file_to_string(tmpfile);
-       p.parse_html(dump, "UTF-16", false);
+       p.parse(dump, "UTF-16", false);
        unlink(tmpfile.c_str());
      } catch (ReadError) {
        skip_cmd_failed(urlterm, context, cmd, d.get_size(), d.get_mtime());
@@ -177,7 +177,7 @@ To add a new filter to omega we have to follow a series of steps:
 
      convert_to_utf8(string, "UTF-16");
 
-   In this case, ``MyHtmlParser`` will convert the text of the file to UTF-8 if necessary.
+   In this case, ``HtmlParser`` will convert the text of the file to UTF-8 if necessary.
 
 If you find a reliable external filter or library and think it might be useful to other people, please let us know about it.
 
@@ -193,4 +193,4 @@ It would be really useful if you are able to supply some sample files with a lic
 
 You can read more about `how to contribute to Xapian <https://xapian-developer-guide.readthedocs.io/en/latest/contributing/index.html>`_.
 
-If you have problems you can ask for help by the `irc channel <https://webchat.freenode.net/?channels=%23xapian>`_ or the `mailing list <https://xapian.org/lists>`_.
+If you have problems you can ask for help on the `IRC channel or mailing list <https://xapian.org/lists>`_.

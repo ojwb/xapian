@@ -1,4 +1,4 @@
-/** @file honey_alldocspostlist.h
+/** @file
  * @brief A PostList which iterates over all documents in a HoneyDatabase.
  */
 /* Copyright (C) 2006,2007,2008,2009,2017,2018 Olly Betts
@@ -169,6 +169,8 @@ class HoneyAllDocsPostList : public LeafPostList {
     PostList* skip_to(Xapian::docid did, double w_min);
 
     PostList* check(Xapian::docid did, double w_min, bool& valid);
+
+    Xapian::termcount get_wdf_upper_bound() const;
 
     std::string get_description() const;
 };

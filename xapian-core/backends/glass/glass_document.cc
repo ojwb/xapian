@@ -1,4 +1,4 @@
-/** @file glass_document.cc
+/** @file
  * @brief A document read from a GlassDatabase.
  */
 /* Copyright 2017 Olly Betts
@@ -24,6 +24,8 @@
 
 #include "glass_docdata.h"
 #include "glass_values.h"
+
+using namespace std;
 
 string
 GlassDocument::fetch_value(Xapian::valueno slot) const

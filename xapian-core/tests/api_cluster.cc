@@ -1,4 +1,4 @@
-/** @file api_cluster.cc
+/** @file
  *  @brief Cluster API tests
  */
 /* Copyright (C) 2016 Richhiey Thomas
@@ -153,7 +153,7 @@ DEFINE_TESTCASE(round_robin1, generated)
     }
 }
 
-DEFINE_TESTCASE(stem_stopper1, backend)
+DEFINE_TESTCASE(stem_stopper1, !backend)
 {
     Xapian::Stem stemmer("english");
     // By default, stemming strategy used is STEM_SOME

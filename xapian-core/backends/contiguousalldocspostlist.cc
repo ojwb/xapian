@@ -1,4 +1,4 @@
-/** @file contiguousalldocspostlist.cc
+/** @file
  * @brief Iterate all document ids when they form a contiguous range.
  */
 /* Copyright (C) 2007,2008,2009,2011,2017 Olly Betts
@@ -90,6 +90,12 @@ bool
 ContiguousAllDocsPostList::at_end() const
 {
     return did == 0;
+}
+
+Xapian::termcount
+ContiguousAllDocsPostList::get_wdf_upper_bound() const
+{
+    return 1;
 }
 
 string

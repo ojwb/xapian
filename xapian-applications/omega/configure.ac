@@ -359,16 +359,19 @@ dnl Check for perl.  Needed for outlookmsg2html script.
 dnl (And in maintainer-mode, also to make man pages from "--help" output, and
 dnl to make the omegascript vim syntax mode.)
 AC_PATH_PROG(PERL, perl, [])
+AC_ARG_VAR([PERL], [Perl interpreter])
 test -z "$PERL" && AC_MSG_ERROR([perl is required])
 
 if test x"$enable_documentation" = xyes; then
   dnl Check for help2man. (Needed to make man pages from "--help" output).
   AC_PATH_PROG(HELP2MAN, help2man, [])
+  AC_ARG_VAR([HELP2MAN], [help2man man page generator])
   test -z "$HELP2MAN" && AC_MSG_ERROR([help2man is required to build documentation])
 
   dnl Check for rst2html. (Needed to make HTML from reStructuredText format)
   dnl Also look for rst2html.py, which archlinux reportedly installs it as.
   AC_PATH_PROGS(RST2HTML, [rst2html rst2html.py], [])
+  AC_ARG_VAR([RST2HTML], [reST to HTML convertor])
   test -z "$RST2HTML" && AC_MSG_ERROR([rst2html is required to build documentation])
 fi
 
@@ -541,16 +544,24 @@ AH_BOTTOM(
 # pragma warning(disable:4800)
 #endif
 
-/* _FORTIFY_SOURCE is only supported by GCC >= 4.1 and glibc >= 2.3.4, but it
- * shouldn't cause a problem to define it where it's not supported and some
- * distros may have backported support, so hardcoding version checks is
- * counter-productive.
+/* Default to enabling _FORTIFY_SOURCE at level 2.  It shouldn't cause a
+ * problem to define it where it's not supported.
  *
  * Check if _FORTIFY_SOURCE is already defined to allow the user to override
  * our choice with "./configure CPPFLAGS=-D_FORTIFY_SOURCE=0" or "...=1".
  */
 #if defined __GNUC__ && !defined _FORTIFY_SOURCE
 # define _FORTIFY_SOURCE 2
+# ifdef __MINGW32__
+/* Both mingw32 and mingw-w64 define __MINGW32__. */
+#  include <stddef.h>
+#  ifdef __MINGW64_VERSION_MAJOR
+/* Enabling _FORTIFY_SOURCE on newer mingw-w64 requires linking with -lssp so
+ * we simply don't automatically enable it there.
+ */
+#   undef _FORTIFY_SOURCE
+#  endif
+# endif
 #endif
 
 /* For GCC >= 3.0 (and Intel's C++ compiler, which also defines __GNUC__),

@@ -1,4 +1,4 @@
-/** @file honey_alldocspostlist.cc
+/** @file
  * @brief A PostList which iterates over all documents in a HoneyDatabase.
  */
 /* Copyright (C) 2006,2007,2008,2009,2018 Olly Betts
@@ -184,6 +184,13 @@ HoneyAllDocsPostList::check(Xapian::docid did, double, bool& valid)
 
     valid = true;
     return NULL;
+}
+
+Xapian::termcount
+HoneyAllDocsPostList::get_wdf_upper_bound() const
+{
+    LOGCALL(DB, Xapian::termcount, "HoneyAllDocsPostList::get_wdf_upper_bound", NO_ARGS);
+    RETURN(1);
 }
 
 string

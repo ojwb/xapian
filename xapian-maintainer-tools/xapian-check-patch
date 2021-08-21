@@ -1,5 +1,5 @@
 #! /usr/bin/perl -w
-# Copyright (c) 2007-2019 Olly Betts
+# Copyright (c) 2007-2020 Olly Betts
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -215,6 +215,9 @@ while (<>) {
 	    if ($fnm =~ m!/testdata/etext\.txt$!) {
 		$check_trailing = 0;
 	    }
+	} elsif ($fnm =~ m!(?:^|/)Makefile!) {
+	    $lang = 'make';
+	    $want_tabs = 1;
 	} elsif ($fnm =~ m!(?:^|/)ChangeLog\b!) {
 	    $lang = 'changelog';
 	    $want_tabs = 1;
@@ -258,19 +261,14 @@ while (<>) {
 	    if ($doxygen_first_line == 1 && m,^\+%include\b\s*\{,) {
 		# If the first line is %include{... check the second.
 		$doxygen_first_line = 2;
-	    } elsif (m!^\+/\*\*\s+\@file\s+(\S+)!) {
-		my $at_file = $1;
-		if ($fnm eq $at_file ||
-		    (length $fnm > length($at_file) && substr($fnm, -length($at_file) - 1, 1) eq '/') &&
-		    substr($fnm, -length $at_file) eq $at_file) {
-		    # @file matches
-		} else {
-		    diagnostic('error', "\@file doesn't match filename");
+	    } elsif (m!^\+/\*\*\s+\@file\s*(.*)!) {
+		if (length($1)) {
+		    diagnostic('error', "Doxygen \@file should not list explicit filename");
 		}
 	    } elsif ($fnm =~ m!\bomega/md5\.h$!) {
 		# Imported file.
 	    } else {
-		diagnostic('error', "\@file missing");
+		diagnostic('error', "Doxygen \@file missing");
 	    }
 	}
 
@@ -540,7 +538,7 @@ QUOTELOOP:  while (1) {
 		}
 	    }
 	}
-	if (m!^\+\s*(case|catch|class|do|for|if|namespace|struct|switch|try|union)\b([^ ]| \s)!) {
+	if (m!^\+\s*(case|class|do|for|if|namespace|struct|switch|try|union)\b([^ ]| \s)!) {
 	    diagnostic('error', "'$1' not followed by exactly one space");
 	}
 	if (m!^\+.*;[^\s\\]!) {
@@ -563,7 +561,7 @@ QUOTELOOP:  while (1) {
 	if (m!^\+.*?\b(else)\b([^ \n]| \s)!) {
 	    diagnostic('error', "'$1' not followed by exactly one space");
 	}
-	if (m!^\+.*?\b(while)\b([^ ]| \s)!) {
+	if (m!^\+.*?\b(catch|while)\b([^ ]| \s)!) {
 	    diagnostic('error', "'$1' not followed by exactly one space");
 	}
 	if (m!^\+.*?(?:}|}\s{2,}|}\t|^[^}]*)\b(catch)\b!) {
@@ -762,7 +760,11 @@ QUOTELOOP:  while (1) {
 		    # ~Foo()
 		    # Foo::~Foo()
 		} else {
-		    diagnostic('error', "Should have exactly one space after '$op'");
+		    # Don't complain about this if it's actually whitespace at
+		    # line end.
+		    if (substr($l, $post[1]) !~ /^\s*$/) {
+			diagnostic('error', "Should have exactly one space after '$op'");
+		    }
 		}
 	    }
 	}
@@ -828,6 +830,9 @@ QUOTELOOP:  while (1) {
 	    diagnostic('error', "Method defined inside a class is implicitly 'inline'");
 	}
 	if ($header) {
+	    if (/^\+using\s+namespace\b/) {
+		diagnostic('error', "Avoid 'using namespace' at top level of header");
+	    }
 	    if (m!^\+\s*#\s*(ifndef|define|endif\s*/[*/])\s+((?:[A-Z]+_INCLUDED)?_?\w+_[Hh]\b)!) {
 		my ($type, $guard) = ($1, $2);
 		my $expected_guard;
@@ -898,11 +903,15 @@ QUOTELOOP:  while (1) {
 	if (/^\+.*;\s*$/) {
 	    diagnostic('error', "';' at end of line of ruby code");
 	}
+    } elsif (defined $lang && $lang eq 'make') {
+	if (/^\+.*[A-Za-z0-9)}]  +\s*$/) {
+	    diagnostic('error', "multiple spaces in Makefile");
+	}
     }
-    if (defined $fnm && $fnm !~ m!xapian-check-patch|ChangeLog|NEWS|stemming/.*/(?:voc2?|output2?)\.txt$!) {
+    if (defined $fnm && $fnm !~ m!xapian-check-patch|ChangeLog|NEWS|stemming/.*/(?:voc2?|output2?)\.txt$|omega/testfiles/|unicode/UnicodeData\.txt!) {
 	if ($fullline =~ /^\+.*?(?:\b|_)(xapain|the the|initialsing|ipv5|outputing|intened|wull|extrac|if it possible|betweem|differen|auxiliar|wat(?:|ed|ing|s)|wth|teh|ned)(?:\b|_)/i ||
 	    # Cases which just need to be the prefix of a word
-	    $fullline =~ /^\+.*?(?:\b|_)((?:deafult|parm|peform|acessor|comptib|seach|seperat|seprat|separater|iteratat|calulat|delimitor|delimeter|charactor|databse|operatoar|implict|differnt|orignal|straterg|unecessar|comamnd|docuemnt|implment|initilias|capatil|reprensent|ommit|openning|openned|appropirate|labrar|returm|interati|termfrequenc|continous|juding|gradinet|clearling|clearled|retreiv|reteriv|filedescriptor|avalil*ab|assessem|contruct|particlar|revelan|releven|relv|intial|eal|specifiy|(?:tera|mega|kilo)?btye|comunic|accumlat|useage|existant)[a-z]*(?:\b|_))/i ||
+	    $fullline =~ /^\+.*?(?:\b|_)((?:deafult|parm|peform|acessor|comptib|seach|seperat|seprat|separater|iteratat|calulat|delimitor|delimeter|charactor|databse|operatoar|implict|differnt|orignal|straterg|unecessar|comamnd|docuemnt|implment|initilias|capatil|reprensent|ommit|openning|openned|appropirate|labrar|returm|interati|termfrequenc|continous|juding|gradinet|clearling|clearled|retreiv|reteriv|filedescriptor|avalil*ab|assessem|contruct|particlar|revelan|releven|relv|intial|eal|specifiy|(?:tera|mega|kilo)?btye|comunic|accumlat|useage|existant|regrex|next(?!step)[eis])[a-z]*(?:\b|_))/i ||
 	    # Case-sensitive cases
 	    $fullline =~ /^\+.*?\b(and and|dont|Dont)\b/) {
 	    diagnostic('error', "Typo '$1'");

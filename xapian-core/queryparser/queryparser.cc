@@ -1,4 +1,4 @@
-/** @file queryparser.cc
+/** @file
  * @brief The non-lemon-generated parts of the QueryParser class.
  */
 /* Copyright (C) 2005,2006,2007,2008,2010,2011,2012,2013,2015,2016 Olly Betts
@@ -181,7 +181,7 @@ QueryParser::parse_query(const string &query_string, unsigned flags,
 
     Query result = internal->parse_query(query_string, flags, default_prefix);
     if (internal->errmsg && strcmp(internal->errmsg, "parse error") == 0) {
-	flags &= FLAG_CJK_NGRAM;
+	flags &= FLAG_CJK_NGRAM | FLAG_NO_POSITIONS;
 	result = internal->parse_query(query_string, flags, default_prefix);
     }
 

@@ -1,11 +1,11 @@
-/** @file query.cc
+/** @file
  * @brief query executor for omega
  */
 /* Copyright 1999,2000,2001 BrightStation PLC
  * Copyright 2001 James Aylett
  * Copyright 2001,2002 Ananova Ltd
  * Copyright 2002 Intercede 1749 Ltd
- * Copyright 2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2013,2014,2015,2016,2017,2018,2019 Olly Betts
+ * Copyright 2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2013,2014,2015,2016,2017,2018,2019,2020 Olly Betts
  * Copyright 2008 Thomas Viehmann
  *
  * This program is free software; you can redistribute it and/or
@@ -109,8 +109,10 @@ vector<SubDB> subdbs;
 static bool query_parsed = false;
 static bool done_query = false;
 static Xapian::docid last = 0;
+static Xapian::docid topdoc = 0;
 
 static Xapian::MSet mset;
+static Xapian::RSet rset;
 
 static map<Xapian::docid, bool> ticked;
 
@@ -131,7 +133,7 @@ static Xapian::QueryParser qp;
 static Xapian::NumberRangeProcessor * size_rp = NULL;
 static Xapian::Stem *stemmer = NULL;
 
-static string eval_file(const string &fmtfile);
+static string eval_file(const string& fmtfile, bool* p_not_found = nullptr);
 
 static set<string> termset;
 
@@ -936,7 +938,7 @@ static int percent;
 static double weight;
 static Xapian::doccount collapsed;
 
-static string print_caption(const string &fmt, const vector<string> &param);
+static string print_caption(const string& fmt, vector<string>& param);
 
 enum tagval {
 CMD_,
@@ -944,6 +946,7 @@ CMD_add,
 CMD_addfilter,
 CMD_allterms,
 CMD_and,
+CMD_base64,
 CMD_cgi,
 CMD_cgilist,
 CMD_cgiparams,
@@ -968,6 +971,7 @@ CMD_filters,
 CMD_filterterms,
 CMD_find,
 CMD_fmt,
+CMD_foreach,
 CMD_freq,
 CMD_ge,
 CMD_gt,
@@ -1089,6 +1093,7 @@ T(add,		   0, N, N, 0), // add a list of numbers
 T(addfilter,	   1, 2, N, 0), // add filter term
 T(allterms,	   0, 1, N, 0), // list of all terms matching document
 T(and,		   1, N, 0, 0), // logical shortcutting and of a list of values
+T(base64,	   1, 1, N, 0), // base64 encode
 T(cgi,		   1, 1, N, 0), // return cgi parameter value
 T(cgilist,	   1, 1, N, 0), // return list of values for cgi parameter
 T(cgiparams,	   0, 0, N, 0), // return list of cgi parameter names
@@ -1114,6 +1119,7 @@ T(filters,	   0, 0, N, 0), // serialisation of current filters
 T(filterterms,	   1, 1, N, 0), // list of terms with a given prefix
 T(find,		   2, 2, N, 0), // find entry in list
 T(fmt,		   0, 0, N, 0), // name of current format
+T(foreach,	   2, 2, 1, 0), // evaluate something for every entry in a list
 T(freq,		   1, 1, N, 0), // frequency of a term
 T(ge,		   2, 2, N, 0), // test >=
 T(gt,		   2, 2, N, 0), // test >
@@ -1128,7 +1134,7 @@ T(htmlstrip,	   1, 1, N, 0), // html strip tags string (s/<[^>]*>?//g)
 T(httpheader,	   2, 2, N, 0), // arbitrary HTTP header
 T(id,		   0, 0, N, 0), // docid of current doc
 T(if,		   1, 3, 1, 0), // conditional
-T(include,	   1, 1, 1, 0), // include another file
+T(include,	   1, 2, 1, 0), // include another file
 T(json,		   1, 1, N, 0), // JSON string escaping
 T(jsonarray,	   1, 2, 1, 0), // Format list as a JSON array
 T(jsonbool,	   1, 1, 1, 0), // Format list as a JSON bool
@@ -1239,8 +1245,32 @@ write_all(int fd, const char * buf, size_t count)
 static mt19937 rng;
 static bool seed_set = false;
 
+static string eval(const string& fmt, vector<string>& param);
+
+/** Implements $foreach{} and $map{}. */
 static string
-eval(const string &fmt, const vector<string> &param)
+foreach(const string& list,
+	const string& pat,
+	vector<string>& param,
+	char sep = '\0')
+{
+    string result;
+    string saved_arg0 = std::move(param[0]);
+    string::size_type i = 0, j;
+    while (true) {
+	j = list.find('\t', i);
+	param[0].assign(list, i, j - i);
+	result += eval(pat, param);
+	if (j == string::npos) break;
+	if (sep) result += sep;
+	i = j + 1;
+    }
+    param[0] = std::move(saved_arg0);
+    return result;
+}
+
+static string
+eval(const string& fmt, vector<string>& param)
 {
     static map<string, const struct func_attrib *> func_map;
     if (func_map.empty()) {
@@ -1397,6 +1427,44 @@ eval(const string &fmt, const vector<string> &param)
 		for (auto&& arg : args) {
 		    if (eval(arg, param).empty()) {
 			value.resize(0);
+			break;
+		    }
+		}
+		break;
+	    }
+	    case CMD_base64: {
+		const static char encode[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"
+					     "ghijklmnopqrstuvwxyz0123456789+/";
+		const char pad = '=';
+		const string& input = args[0];
+		value.reserve((input.size() + 2) / 3 * 4);
+		auto it = input.begin();
+		auto n = input.size() / 3;
+		while (n--) {
+		    uint32_t v = uint8_t(*it++);
+		    v = (v << 8) | uint8_t(*it++);
+		    v = (v << 8) | uint8_t(*it++);
+		    value += encode[v >> 18];
+		    value += encode[(v >> 12) & 63];
+		    value += encode[(v >> 6) & 63];
+		    value += encode[v & 63];
+		}
+		switch (input.size() % 3) {
+		    case 2: {
+			uint32_t v = uint8_t(*it++);
+			v = (v << 8) | uint8_t(*it++);
+			value += encode[v >> 10];
+			value += encode[(v >> 4) & 63];
+			value += encode[(v << 2) & 63];
+			value += pad;
+			break;
+		    }
+		    case 1: {
+			uint32_t v = uint8_t(*it++);
+			value += encode[v >> 2];
+			value += encode[(v << 4) & 63];
+			value += pad;
+			value += pad;
 			break;
 		    }
 		}
@@ -1641,6 +1709,11 @@ eval(const string &fmt, const vector<string> &param)
 	    case CMD_fmt:
 		value = fmtname;
 		break;
+	    case CMD_foreach:
+		if (!args[0].empty()) {
+		    value = foreach(args[0], args[1], param);
+		}
+		break;
 	    case CMD_freq: {
 		const string& term = args[0];
 		Xapian::doccount termfreq = 0;
@@ -1791,9 +1864,18 @@ eval(const string &fmt, const vector<string> &param)
 		else if (args.size() > 2)
 		    value = eval(args[2], param);
 		break;
-	    case CMD_include:
-		value = eval_file(args[0]);
+	    case CMD_include: {
+		if (args.size() == 1) {
+		    value = eval_file(args[0]);
+		} else {
+		    bool fallback = false;
+		    value = eval_file(args[0], &fallback);
+		    if (fallback) {
+			value = eval(args[1], param);
+		    }
+		}
 		break;
+	    }
 	    case CMD_json:
 		value = args[0];
 		json_escape(value);
@@ -2001,17 +2083,7 @@ eval(const string &fmt, const vector<string> &param)
 		break;
 	    case CMD_map:
 		if (!args[0].empty()) {
-		    string l = args[0], pat = args[1];
-		    vector<string> new_args(param);
-		    string::size_type i = 0, j;
-		    while (true) {
-			j = l.find('\t', i);
-			new_args[0] = l.substr(i, j - i);
-			value += eval(pat, new_args);
-			if (j == string::npos) break;
-			value += '\t';
-			i = j + 1;
-		    }
+		    value = foreach(args[0], args[1], param, '\t');
 		}
 		break;
 	    case CMD_match:
@@ -2680,25 +2752,34 @@ eval(const string &fmt, const vector<string> &param)
 }
 
 static string
-eval_file(const string &fmtfile)
+eval_file(const string& fmtfile, bool* p_not_found)
 {
-    string err;
+    // Use -1 to indicate vet_filename() failed.
+    int eno = -1;
     if (vet_filename(fmtfile)) {
 	string file = template_dir + fmtfile;
 	string fmt;
+	errno = 0;
 	if (load_file(file, fmt)) {
 	    vector<string> noargs;
 	    noargs.resize(1);
 	    return eval(fmt, noargs);
 	}
-	err = strerror(errno);
-    } else {
-	err = "name contains '..'";
+	eno = errno;
+    }
+
+    if (p_not_found) {
+	*p_not_found = true;
+	return string();
     }
 
     // FIXME: report why!
     string msg = string("Couldn't read format template '") + fmtfile + '\'';
-    if (!err.empty()) msg += " (" + err + ')';
+    if (eno) {
+	msg += " (";
+	msg += (eno < 0 ? "name contains '..'" : strerror(eno));
+	msg += ')';
+    }
     throw msg;
 }
 
@@ -2757,7 +2838,7 @@ pretty_term(string term)
 }
 
 static string
-print_caption(const string &fmt, const vector<string> &param)
+print_caption(const string& fmt, vector<string>& param)
 {
     q0 = *(mset[hit_no]);
 

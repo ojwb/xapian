@@ -1,4 +1,4 @@
-/** @file documentinternal.h
+/** @file
  * @brief Abstract base class for a document
  */
 /* Copyright 2017,2018,2019 Olly Betts
@@ -30,6 +30,7 @@
 #include "backends/databaseinternal.h"
 #include "overflow.h"
 
+#include <limits>
 #include <map>
 #include <memory>
 #include <string>
@@ -336,7 +337,7 @@ class Document::Internal : public Xapian::Internal::intrusive_base {
 	    Xapian::termcount wdf_delta;
 	    if (mul_overflows(n_removed, wdf_dec, wdf_delta)) {
 		// Decreasing by the maximum value will zero the wdf.
-		wdf_delta = numeric_limits<Xapian::termcount>::max();
+		wdf_delta = std::numeric_limits<Xapian::termcount>::max();
 	    }
 	    if (i->second.decrease_wdf(wdf_delta))
 		--termlist_size;
@@ -348,7 +349,7 @@ class Document::Internal : public Xapian::Internal::intrusive_base {
     void clear_terms() {
 	if (!terms) {
 	    if (database.get()) {
-		terms.reset(new map<string, TermInfo>());
+		terms.reset(new std::map<std::string, TermInfo>());
 		termlist_size = 0;
 	    } else {
 		// We didn't come from a database, so there are no unfetched
@@ -414,7 +415,7 @@ class Document::Internal : public Xapian::Internal::intrusive_base {
     void clear_values() {
 	if (!values) {
 	    if (database.get()) {
-		values.reset(new map<Xapian::valueno, string>());
+		values.reset(new std::map<Xapian::valueno, std::string>());
 	    } else {
 		// We didn't come from a database, so there are no unfetched
 		// values to clear.

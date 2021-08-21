@@ -1,4 +1,4 @@
-/** @file omega.cc
+/** @file
  * @brief Main module for omega (example CGI frontend for Xapian)
  */
 /* Copyright 1999,2000,2001 BrightStation PLC
@@ -58,7 +58,6 @@ const char filter_sep_old = '-';
 
 Xapian::Enquire * enquire;
 Xapian::Database db;
-Xapian::RSet rset;
 
 map<string, string> option;
 
@@ -70,7 +69,6 @@ string dbname;
 string fmtname;
 string filters, old_filters;
 
-Xapian::docid topdoc = 0;
 Xapian::docid hits_per_page = 0;
 Xapian::docid min_hits = 0;
 
@@ -221,27 +219,36 @@ try {
     if (fmtname.empty())
 	fmtname = default_template;
 
-    val = cgi_params.find("MORELIKE");
-    if (enquire && val != cgi_params.end()) {
-	const string & v = val->second;
-	Xapian::docid docid = atol(v.c_str());
-	if (docid == 0) {
-	    // Assume it's MORELIKE=Quid1138 and that Quid1138 is a UID
-	    // from an external source - we just find the correspond docid
-	    Xapian::PostingIterator p = db.postlist_begin(v);
-	    if (p != db.postlist_end(v)) docid = *p;
+    auto ml = cgi_params.equal_range("MORELIKE");
+    if (enquire && ml.first != ml.second) {
+	Xapian::RSet tmprset;
+	for (auto i = ml.first; i != ml.second; ++i) {
+	    const string& v = i->second;
+	    Xapian::docid docid = atol(v.c_str());
+	    if (docid == 0) {
+		// Assume it's MORELIKE=Quid1138 and that Quid1138 is a UID
+		// from an external source - we just find the correspond docid.
+		Xapian::PostingIterator p = db.postlist_begin(v);
+		if (p != db.postlist_end(v)) docid = *p;
+	    }
+	    if (docid != 0) {
+		tmprset.add_document(docid);
+	    }
 	}
 
-	if (docid != 0) {
-	    Xapian::RSet tmprset;
-	    tmprset.add_document(docid);
-
+	if (!tmprset.empty()) {
 	    OmegaExpandDecider decider(db);
 	    set_expansion_scheme(*enquire, option);
 	    Xapian::ESet eset(enquire->get_eset(40, tmprset, &decider));
 	    string morelike_query;
 	    for (auto&& term : eset) {
-		if (!morelike_query.empty()) morelike_query += ' ';
+		if (!morelike_query.empty()) {
+		    if (default_op == Xapian::Query::OP_OR) {
+			morelike_query += ' ';
+		    } else {
+			morelike_query += " OR ";
+		    }
+		}
 		morelike_query += pretty_term(term);
 	    }
 	    add_query_string(string(), morelike_query);

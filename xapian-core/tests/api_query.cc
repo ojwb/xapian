@@ -1,4 +1,4 @@
-/** @file api_query.cc
+/** @file
  * @brief Query-related tests.
  */
 /* Copyright (C) 2008,2009,2012,2013,2015,2016,2017,2018,2019 Olly Betts
@@ -774,6 +774,62 @@ DEFINE_TESTCASE(editdist1, backend) {
     }
 }
 
+static const
+editdist_testcase editdist2_testcases[] = {
+    { u8"\U00010000",	1, 8, 'E', { u8"a\U00010000", 0, 0, 0 } },
+};
+
+/// Test Unicode edit distance calculations.
+DEFINE_TESTCASE(editdist2, generated) {
+    Xapian::Database db = get_database("editdist2",
+				       [](Xapian::WritableDatabase& wdb,
+					  const string&)
+				       {
+					   Xapian::Document doc;
+					   doc.add_term(u8"a\U00010000");
+					   wdb.add_document(doc);
+				       });
+    Xapian::Enquire enq(db);
+    const Xapian::Query::op o = Xapian::Query::OP_EDIT_DISTANCE;
+
+    for (auto&& test : editdist2_testcases) {
+	tout << test.target << endl;
+	auto tend = test.terms + 4;
+	while (tend > test.terms && tend[-1] == NULL) --tend;
+	bool expect_exception = (tend - test.terms == 4 && tend[-1][0] == '\0');
+	Xapian::Query q;
+	int max_type;
+	switch (test.max_type) {
+	    case 'E':
+		max_type = Xapian::Query::WILDCARD_LIMIT_ERROR;
+		break;
+	    case 'F':
+		max_type = Xapian::Query::WILDCARD_LIMIT_FIRST;
+		break;
+	    case 'M':
+		max_type = Xapian::Query::WILDCARD_LIMIT_MOST_FREQUENT;
+		break;
+	    default:
+		FAIL_TEST("Unexpected max_type value");
+	}
+	q = Xapian::Query(o, test.target, test.max_expansion, max_type,
+			  q.OP_SYNONYM, test.edit_distance);
+	enq.set_query(q);
+	tout << q.get_description() << endl;
+	try {
+	    Xapian::MSet mset = enq.get_mset(0, 10);
+	    TEST(!expect_exception);
+	    q = Xapian::Query(q.OP_SYNONYM, test.terms, tend);
+	    enq.set_query(q);
+	    Xapian::MSet mset2 = enq.get_mset(0, 10);
+	    TEST_EQUAL(mset.size(), mset2.size());
+	    TEST(mset_range_is_same(mset, 0, mset2, 0, mset.size()));
+	} catch (const Xapian::WildcardError&) {
+	    TEST(expect_exception);
+	}
+    }
+}
+
 DEFINE_TESTCASE(dualprefixeditdist1, generated) {
     Xapian::Database db = get_database("dualprefixeditdist1",
 				       [](Xapian::WritableDatabase& wdb,
@@ -1028,24 +1084,37 @@ DEFINE_TESTCASE(subdbwithoutpos1, generated) {
     Xapian::Database db(get_database("apitest_simpledata"));
     TEST(db.has_positions());
 
-    Xapian::Query q(Xapian::Query::OP_PHRASE,
-		    Xapian::Query("this"),
-		    Xapian::Query("paragraph"));
+    Xapian::Query q_near(Xapian::Query::OP_NEAR,
+			 Xapian::Query("this"),
+			 Xapian::Query("paragraph"));
+
+    Xapian::Query q_phrase(Xapian::Query::OP_PHRASE,
+			   Xapian::Query("this"),
+			   Xapian::Query("paragraph"));
 
     Xapian::Enquire enq1(db);
-    enq1.set_query(q);
+    enq1.set_query(q_near);
     Xapian::MSet mset1 = enq1.get_mset(0, 10);
+    TEST_EQUAL(mset1.size(), 3);
+
+    enq1.set_query(q_phrase);
+    mset1 = enq1.get_mset(0, 10);
     TEST_EQUAL(mset1.size(), 3);
 
     Xapian::Database db2 =
 	get_database("subdbwithoutpos1", gen_subdbwithoutpos1_db);
     TEST(!db2.has_positions());
 
-    // If a database has no positional info, OP_PHRASE -> OP_AND.
+    // If a database has no positional info, we used to map OP_PHRASE and
+    // OP_NEAR to OP_AND, but since 1.5.0 we no longer do.
     Xapian::Enquire enq2(db2);
-    enq2.set_query(q);
+    enq2.set_query(q_near);
     Xapian::MSet mset2 = enq2.get_mset(0, 10);
-    TEST_EQUAL(mset2.size(), 1);
+    TEST_EQUAL(mset2.size(), 0);
+
+    enq2.set_query(q_phrase);
+    mset2 = enq2.get_mset(0, 10);
+    TEST_EQUAL(mset2.size(), 0);
 
     // If one sub-database in a combined database has no positional info but
     // other sub-databases do, then we shouldn't convert OP_PHRASE to OP_AND
@@ -1054,15 +1123,23 @@ DEFINE_TESTCASE(subdbwithoutpos1, generated) {
     TEST(db.has_positions());
 
     Xapian::Enquire enq3(db);
-    enq3.set_query(q);
+    enq3.set_query(q_near);
     Xapian::MSet mset3 = enq3.get_mset(0, 10);
     TEST_EQUAL(mset3.size(), 3);
     // Regression test for bug introduced in 1.4.3 which led to a division by
     // zero and then (at least on Linux) we got 1% here.
     TEST_EQUAL(mset3[0].get_percent(), 100);
 
+    enq3.set_query(q_phrase);
+    mset3 = enq3.get_mset(0, 10);
+    TEST_EQUAL(mset3.size(), 3);
+    // Regression test for bug introduced in 1.4.3 which led to a division by
+    // zero and then (at least on Linux) we got 1% here.
+    TEST_EQUAL(mset3[0].get_percent(), 100);
+
     // Regression test for https://trac.xapian.org/ticket/752
-    enq3.set_query((Xapian::Query("this") & q) | Xapian::Query("wibble"));
+    auto q = (Xapian::Query("this") & q_phrase) | Xapian::Query("wibble");
+    enq3.set_query(q);
     mset3 = enq3.get_mset(0, 10);
     TEST_EQUAL(mset3.size(), 4);
 }

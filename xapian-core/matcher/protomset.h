@@ -1,4 +1,4 @@
-/** @file protomset.h
+/** @file
  * @brief ProtoMSet class
  */
 /* Copyright (C) 2004,2007,2017,2018,2019,2020 Olly Betts
@@ -92,13 +92,13 @@ class ProtoMSet {
     Xapian::doccount known_matching_docs = 0;
 
     /// The items in the proto-MSet.
-    vector<Result> results;
+    std::vector<Result> results;
 
     /** A heap of offsets into @a results.
      *
      *  Created lazily once we actually need it.
      */
-    vector<Xapian::doccount> min_heap;
+    std::vector<Xapian::doccount> min_heap;
 
     /// First entry wanted in MSet.
     Xapian::doccount first;
@@ -242,7 +242,7 @@ class ProtoMSet {
 	if (!finalising && min_elt != 0 && !collapser) {
 	    // Install the correct element at the tip of the heap, so
 	    // that Heap::make() has less to do.  NB Breaks collapsing.
-	    swap(results[0], results[min_elt]);
+	    std::swap(results[0], results[min_elt]);
 	}
 	return true;
     }

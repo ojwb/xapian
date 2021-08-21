@@ -1,4 +1,4 @@
-/** @file resolver.h
+/** @file
  * @brief Resolve hostnames and ip addresses
  */
 /* Copyright (C) 2017,2018 Olly Betts
@@ -26,8 +26,6 @@
 #include "safesyssocket.h"
 #include "str.h"
 #include "xapian/error.h"
-
-using namespace std;
 
 class Resolver {
     struct addrinfo* result = NULL;

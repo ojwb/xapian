@@ -1,4 +1,4 @@
-/** @file deciderpostlist.cc
+/** @file
  * @brief PostList which applies a MatchDecider
  */
 /* Copyright 2017 Olly Betts
@@ -24,6 +24,8 @@
 
 #include "omassert.h"
 #include <xapian/matchdecider.h>
+
+using namespace std;
 
 bool
 DeciderPostList::test_doc()

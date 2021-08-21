@@ -1,4 +1,4 @@
-/** @file api_wrdb.cc
+/** @file
  * @brief tests which need a writable backend
  */
 /* Copyright 1999,2000,2001 BrightStation PLC
@@ -1330,43 +1330,6 @@ DEFINE_TESTCASE(emptyterm2, writable) {
 	TEST_EQUAL(db.get_doccount(), 0);
 	test_emptyterm2_helper(db);
     }
-}
-
-// Check that PHRASE/NEAR becomes AND if there's no positional info in the
-// database.
-DEFINE_TESTCASE(phraseorneartoand1, writable) {
-    Xapian::WritableDatabase db = get_writable_database();
-
-    for (int n = 1; n <= 20; ++n) {
-	Xapian::Document doc;
-	doc.add_term(str(n));
-	doc.add_term(str(n ^ 9));
-	doc.add_term("all");
-	doc.set_data("pass1");
-	db.add_document(doc);
-    }
-    db.commit();
-
-    Xapian::Enquire enquire(db);
-    Xapian::MSet mymset;
-
-    static const char * const q1[] = { "all", "1" };
-    enquire.set_query(Xapian::Query(Xapian::Query::OP_PHRASE, q1, q1 + 2));
-    mymset = enquire.get_mset(0, 10);
-    TEST_EQUAL(2, mymset.size());
-
-    enquire.set_query(Xapian::Query(Xapian::Query::OP_NEAR, q1, q1 + 2));
-    mymset = enquire.get_mset(0, 10);
-    TEST_EQUAL(2, mymset.size());
-
-    static const char * const q2[] = { "1", "2" };
-    enquire.set_query(Xapian::Query(Xapian::Query::OP_PHRASE, q2, q2 + 2));
-    mymset = enquire.get_mset(0, 10);
-    TEST_EQUAL(0, mymset.size());
-
-    enquire.set_query(Xapian::Query(Xapian::Query::OP_NEAR, q2, q2 + 2));
-    mymset = enquire.get_mset(0, 10);
-    TEST_EQUAL(0, mymset.size());
 }
 
 // Check that a large number of position list entries for a particular term

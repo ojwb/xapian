@@ -1,7 +1,7 @@
-/** @file metaxmlparse.h
- * @brief subclass of HtmlParser for parsing OpenDocument's meta.xml.
+/** @file
+ * @brief Generic parser for XML - just replaces tags with spaces
  */
-/* Copyright (C) 2006,2009,2010,2011,2016,2019 Olly Betts
+/* Copyright (C) 2020 Olly Betts
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,22 +18,17 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-#ifndef OMEGA_INCLUDED_METAXMLPARSE_H
-#define OMEGA_INCLUDED_METAXMLPARSE_H
+#ifndef OMEGA_INCLUDED_GENERICXMLPARSER_H
+#define OMEGA_INCLUDED_GENERICXMLPARSER_H
 
-#include "htmlparse.h"
+#include "xmlparser.h"
 
-#include <ctime>
-
-class MetaXmlParser : public HtmlParser {
-    enum { NONE, KEYWORDS, TITLE, SAMPLE, AUTHOR, TOPIC, CREATED } field = NONE;
+class GenericXmlParser : public XmlParser {
   public:
-    MetaXmlParser() { }
-    void process_text(const string &text);
-    bool opening_tag(const string &tag);
-    bool closing_tag(const string &tag);
-    string title, keywords, sample, author, topic;
-    time_t created = time_t(-1);
+    std::string dump;
+
+    GenericXmlParser() { }
+    void process_content(const std::string& content);
 };
 
-#endif // OMEGA_INCLUDED_METAXMLPARSE_H
+#endif // OMEGA_INCLUDED_GENERICXMLPARSER_H

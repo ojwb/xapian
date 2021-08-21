@@ -1,7 +1,8 @@
-/** @file msxmlparse.h
- * @brief Parser for Microsoft XML formats (.docx, etc).
+/** @file
+ * @brief Extract text from an RSS atom file.
  */
-/* Copyright (C) 2006,2008,2009,2011,2013 Olly Betts
+/* Copyright (C) 2010,2011,2012,2019,2020 Olly Betts
+ * Copyright (C) 2012 Mihai Bivol
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,15 +19,24 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-#ifndef OMEGA_INCLUDED_MSXMLPARSE_H
-#define OMEGA_INCLUDED_MSXMLPARSE_H
+#ifndef OMEGA_INCLUDED_ATOMPARSER_H
+#define OMEGA_INCLUDED_ATOMPARSER_H
 
-#include "xmlparse.h"
+#include "xmlparser.h"
 
-class MSXmlParser : public XmlParser {
+class AtomParser : public XmlParser {
+    enum { INACTIVE, OTHER, AUTHOR } state = INACTIVE;
+    bool in_entry = false;
+    bool html_content;
+    std::string* target = NULL;
+    std::string active_tag;
+
   public:
-    MSXmlParser() : XmlParser() { }
-    bool closing_tag(const string &tag);
+    AtomParser() { }
+    void process_content(const std::string& content);
+    bool opening_tag(const std::string& tag);
+    bool closing_tag(const std::string& tag);
+    std::string title, keywords, dump, author;
 };
 
-#endif // OMEGA_INCLUDED_MSXMLPARSE_H
+#endif // OMEGA_INCLUDED_ATOMPARSER_H

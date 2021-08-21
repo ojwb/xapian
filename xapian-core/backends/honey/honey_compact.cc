@@ -1,4 +1,4 @@
-/** @file honey_compact.cc
+/** @file
  * @brief Compact a honey database, or merge and compact several.
  */
 /* Copyright (C) 2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2018,2019 Olly Betts
@@ -448,7 +448,8 @@ class PostlistCursor<const HoneyTable&> : private HoneyCursor {
     string key, tag;
     Xapian::docid firstdid;
     Xapian::docid chunk_lastdid;
-    Xapian::termcount tf, cf;
+    Xapian::doccount tf;
+    Xapian::termcount cf;
     Xapian::termcount first_wdf;
     Xapian::termcount wdf_max;
     bool have_wdfs;

@@ -1,4 +1,4 @@
-/** @file weightinternal.h
+/** @file
  * @brief Xapian::Weight::Internal class, holding database and term statistics.
  */
 /* Copyright (C) 2007 Lemur Consulting Ltd
@@ -97,9 +97,6 @@ class Weight::Internal {
      *  If not, we can avoid having to serialise max_part.
      */
     bool have_max_part = false;
-
-    /** Database to get the bounds on doclength and wdf from. */
-    Xapian::Database db;
 
     /** The query. */
     Xapian::Query query;
@@ -231,12 +228,6 @@ class Weight::Internal {
 #endif
 	if (rare(collection_size == 0)) return 0;
 	return Xapian::doclength(total_length) / collection_size;
-    }
-
-    /** Set the "bounds" stats from Database @a db. */
-    void set_bounds_from_db(const Xapian::Database &db_) {
-	Assert(!finalised);
-	db = db_;
     }
 
     /// Return a std::string describing this object.

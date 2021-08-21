@@ -16,36 +16,7 @@ AC_CONFIG_HEADERS([config.h])
 
 AC_CONFIG_MACRO_DIRS([m4])
 
-dnl Mac OS X needs MACOSX_DEPLOYMENT_TARGET set to 10.3 (or higher) to
-dnl successfully link the SWIG generated modules.  The link always fails on
-dnl earlier versions of Mac OS X (10.1.4 and 10.2.8 tested), and these versions
-dnl are long obsolete now, so we just ensure that MACOSX_DEPLOYMENT_TARGET is
-dnl set to at least 10.3.
-dnl
-dnl NB we must do this *BEFORE* LT_INIT since that is what checks
-dnl MACOSX_DEPLOYMENT_TARGET.
 AC_CANONICAL_HOST
-OVERRIDE_MACOSX_DEPLOYMENT_TARGET=
-case $host in
-*86*-darwin8*|*-darwin[[91]]*)
-  dnl On 10.5 or later, and 10.4 on x86, the deployment target defaults to the
-  dnl OS version, so we don't need to override on these.
-  ;;
-*-darwin*)
-  case $MACOSX_DEPLOYMENT_TARGET in
-  "")
-    OVERRIDE_MACOSX_DEPLOYMENT_TARGET=10.3 ;;
-  10.[[012]])
-    AC_MSG_WARN([Overriding MACOSX_DEPLOYMENT_TARGET from $MACOSX_DEPLOYMENT_TARGET to 10.3])
-    OVERRIDE_MACOSX_DEPLOYMENT_TARGET=10.3 ;;
-  esac
-  ;;
-esac
-AM_CONDITIONAL(OVERRIDE_MACOSX_DEPLOYMENT_TARGET, test -n "$OVERRIDE_MACOSX_DEPLOYMENT_TARGET")
-AC_SUBST(OVERRIDE_MACOSX_DEPLOYMENT_TARGET)
-if test -n "$OVERRIDE_MACOSX_DEPLOYMENT_TARGET" ; then
-  MACOSX_DEPLOYMENT_TARGET=$OVERRIDE_MACOSX_DEPLOYMENT_TARGET
-fi
 
 dnl Use libtool to manage our libraries, but don't build static libraries as
 dnl the bindings only have a use for dynamic ones.
@@ -171,6 +142,7 @@ if test yes = "$enable_documentation" ; then
   dnl Check for rst2html. (Needed to make HTML from reStructuredText format)
   dnl Also look for rst2html.py, which archlinux reportedly installs it as.
   AC_PATH_PROGS(RST2HTML, [rst2html rst2html.py], [])
+  AC_ARG_VAR([RST2HTML], [reST to HTML convertor])
   test -z "$RST2HTML" && AC_MSG_ERROR([rst2html is required to build documentation (try package python-docutils)])
 fi
 
@@ -227,6 +199,7 @@ if test x$USE_MAINTAINER_MODE = xyes; then
   dnl Need doxygen in maintainer mode to convert C++ doxygen comments to Python
   dnl docstrings.
   AC_PATH_PROG(DOXYGEN, doxygen, [])
+  AC_ARG_VAR([DOXYGEN], [Doxygen documentation system])
   test -z "$DOXYGEN" && AC_MSG_ERROR([doxygen is required to build documentation])
 fi
 
@@ -475,12 +448,12 @@ if test no != "$with_python3" ; then
 	AC_MSG_RESULT([$PYTHON3_SO])
 
 	AC_MSG_CHECKING([for tag for cached compiled scripts])
-	PYTHON3_CACHE_TAG=`$PYTHON3 -c 'import imp;print(imp.get_tag())'`
+	PYTHON3_CACHE_TAG=`$PYTHON3 -c 'import sys;print(sys.implementation.cache_tag)'`
 	AC_SUBST(PYTHON3_CACHE_TAG)
 	AC_MSG_RESULT([$PYTHON3_CACHE_TAG])
 
 	AC_MSG_CHECKING([for extension of cached and optimized python3 bytecode])
-	PYTHON3_CACHE_OPT1_EXT=`$PYTHON3 -c 'import imp,sys;print("%s.pyo"%imp.get_tag()) if sys.version_info.minor<5 else print("{1}{2}".format(*imp.util.cache_from_source("",optimization=1).rpartition(imp.get_tag())))'`
+	PYTHON3_CACHE_OPT1_EXT=`$PYTHON3 -c 'import importlib,importlib.util,sys;print("%s.pyo"%sys.implementation.cache_tag) if sys.version_info.minor<5 else print("{1}{2}".format(*importlib.util.cache_from_source("",optimization=1).rpartition(sys.implementation.cache_tag)))'`
 	AC_SUBST(PYTHON3_CACHE_OPT1_EXT)
 	AC_MSG_RESULT([$PYTHON3_CACHE_OPT1_EXT])
 
@@ -1063,6 +1036,7 @@ if test no != "$with_ruby" ; then
 	if test -n "$RDOC"; then
 	  BINDINGS="$BINDINGS ruby"
 	fi
+	AC_ARG_VAR([RDOC], [Ruby documentation generator])
       else
 	AC_MSG_RESULT([no (install ruby-dev or ruby-devel package or similar)])
 	if test yes = "$with_ruby" ; then
@@ -1077,7 +1051,7 @@ fi
 
 if test no != "$with_perl" ; then
   AC_PATH_PROGS(PERL, ["${PERL-perl}"], [])
-  AC_ARG_VAR(PERL, [perl interpreter])
+  AC_ARG_VAR(PERL, [Perl interpreter])
   if test -n "$PERL" ; then
     if test -z "$PERL_INC" ; then
       PERL_INC=`$PERL -MConfig -e 'print $Config{archlibexp}, "/CORE"'`

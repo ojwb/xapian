@@ -1,7 +1,7 @@
-/** @file xpsxmlparse.h
- * @brief Subclass of HtmlParser for parsing XPS .fpage files.
+/** @file
+ * @brief Extract text from Abiword documents.
  */
-/* Copyright (C) 2009,2011 Olly Betts
+/* Copyright (C) 2020 Olly Betts
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,16 +18,23 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-#ifndef OMEGA_INCLUDED_XPSXMLPARSE_H
-#define OMEGA_INCLUDED_XPSXMLPARSE_H
+#ifndef OMEGA_INCLUDED_ABIWORDPARSER_H
+#define OMEGA_INCLUDED_ABIWORDPARSER_H
 
-#include "htmlparse.h"
+#include "xmlparser.h"
 
-class XpsXmlParser : public HtmlParser {
+class AbiwordParser : public XmlParser {
   public:
-    XpsXmlParser() { }
-    bool opening_tag(const string &tag);
-    string dump;
+    std::string dump;
+
+    AbiwordParser() { }
+
+    void process_content(const std::string& content);
+
+    void parse(const std::string& text) {
+	charset = "utf-8";
+	XmlParser::parse(text);
+    }
 };
 
-#endif // OMEGA_INCLUDED_XPSXMLPARSE_H
+#endif // OMEGA_INCLUDED_ABIWORDPARSER_H

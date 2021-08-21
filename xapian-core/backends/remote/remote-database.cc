@@ -1,4 +1,4 @@
-/** @file remote-database.cc
+/** @file
  *  @brief Remote backend database class
  */
 /* Copyright (C) 2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2017,2018,2019,2020 Olly Betts
@@ -673,8 +673,7 @@ RemoteDatabase::set_query(const Xapian::Query& query,
 			  int percent_threshold, double weight_threshold,
 			  const Xapian::Weight& wtscheme,
 			  const Xapian::RSet &omrset,
-			  const vector<opt_ptr_spy>& matchspies,
-			  bool full_db_has_positions) const
+			  const vector<opt_ptr_spy>& matchspies) const
 {
     string message;
     pack_string(message, query.serialise());
@@ -689,7 +688,8 @@ RemoteDatabase::set_query(const Xapian::Query& query,
 	pack_uint(message, sort_key);
     }
     pack_bool(message, sort_value_forward);
-    pack_bool(message, full_db_has_positions);
+    // FIXME: Dummy value, remove on next protocol bump.
+    pack_bool(message, true);
     message += serialise_double(time_limit);
     message += char(percent_threshold);
     message += serialise_double(weight_threshold);

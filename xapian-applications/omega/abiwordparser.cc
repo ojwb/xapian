@@ -1,7 +1,7 @@
-/** @file opendocparse.h
- * @brief Extract text from XML from an OPENDOC spreadsheet.
+/** @file
+ * @brief Extract text from Abiword documents.
  */
-/* Copyright (C) 2012,2019 Olly Betts
+/* Copyright (C) 2020 Olly Betts
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,25 +18,16 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-#ifndef OMEGA_INCLUDED_OPENDOCPARSE_H
-#define OMEGA_INCLUDED_OPENDOCPARSE_H
+#include <config.h>
 
-#include "htmlparse.h"
+#include "abiwordparser.h"
 
-#include <vector>
+using namespace std;
 
-class OpenDocParser : public HtmlParser {
-    bool indexing = false;
-    bool pending_space = false;
-    std::string master_page_name;
+// FIXME: Implement support for metadata.
 
-  public:
-    std::string dump;
-
-    OpenDocParser() { }
-    bool opening_tag(const std::string &tag);
-    bool closing_tag(const std::string &tag);
-    void process_text(const std::string &text);
-};
-
-#endif // OMEGA_INCLUDED_OPENDOCPARSE_H
+void
+AbiwordParser::process_content(const string& content)
+{
+    dump += content;
+}

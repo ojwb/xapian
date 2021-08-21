@@ -1,4 +1,4 @@
-/** @file omega.h
+/** @file
  * @brief Main header for omega
  */
 /* Copyright 1999,2000,2001 BrightStation PLC
@@ -32,22 +32,19 @@
 #include "configfile.h"
 
 #include <map>
+#include <string>
 
-using namespace std;
-
-extern string dbname;
-extern string fmtname;
-extern string filters;
+extern std::string dbname;
+extern std::string fmtname;
+extern std::string filters;
 
 // What $filters produced in Omega < 1.3.4 - we check this too for backward
 // compatibility.
-extern string old_filters;
+extern std::string old_filters;
 
 extern Xapian::Database db;
 extern Xapian::Enquire * enquire;
-extern Xapian::RSet rset;
 
-extern Xapian::docid topdoc;
 extern Xapian::docid hits_per_page;
 extern Xapian::docid min_hits;
 
@@ -62,9 +59,7 @@ extern Xapian::Enquire::docid_order docid_order;
 extern Xapian::valueno collapse_key;
 extern bool collapse;
 
-extern map<string, string> option;
-
-extern const string default_dbname;
+extern std::map<std::string, std::string> option;
 
 extern bool set_content_type, suppress_http_headers;
 

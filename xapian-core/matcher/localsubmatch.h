@@ -1,4 +1,4 @@
-/** @file localsubmatch.h
+/** @file
  *  @brief SubMatch class for a local database.
  */
 /* Copyright (C) 2006,2007,2009,2010,2011,2013,2014,2015,2016,2017,2018,2019 Olly Betts
@@ -65,21 +65,16 @@ class LocalSubMatch {
     /// 0-based index for the subdatabase.
     Xapian::doccount shard_index;
 
-    /// Do any of the subdatabases have positional information?
-    bool full_db_has_positions;
-
   public:
     /// Constructor.
     LocalSubMatch(const Xapian::Database::Internal* db_,
 		  const Xapian::Query& query_,
 		  Xapian::termcount qlen_,
 		  const Xapian::Weight& wt_factory_,
-		  Xapian::doccount shard_index_,
-		  bool full_db_has_positions_)
+		  Xapian::doccount shard_index_)
 	: total_stats(NULL), query(query_), qlen(qlen_), db(db_),
 	  wt_factory(wt_factory_),
-	  shard_index(shard_index_),
-	  full_db_has_positions(full_db_has_positions_)
+	  shard_index(shard_index_)
     {}
 
     /** Fetch and collate statistics.
@@ -121,7 +116,7 @@ class LocalSubMatch {
 			      Xapian::termcount wqf,
 			      double factor,
 			      bool need_positions,
-			      bool in_synonym,
+			      bool compound_weight,
 			      Xapian::Internal::QueryOptimiser* qopt,
 			      bool lazy_weight);
 

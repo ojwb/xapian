@@ -1,4 +1,4 @@
-/** @file api_queryparser.cc
+/** @file
  * @brief Tests of Xapian::QueryParser
  */
 /* Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2015,2016,2018,2019 Olly Betts
@@ -3138,4 +3138,36 @@ DEFINE_TESTCASE(qp_synonymcrash1, generated && synonyms) {
     enq.set_query(q);
     Xapian::MSet results = enq.get_mset(0, 10);
     TEST_EQUAL(results.size(), 0);
+}
+
+DEFINE_TESTCASE(qp_nopos, !backend) {
+    static const test tests[] = {
+	{ "no pos anyway", "(no@1 OR pos@2 OR anyway@3)" },
+	{ "w ADJ x", "(w@1 AND x@2)" },
+	{ "\"phrase q\" OR A NEAR/4 B", "((phrase@1 AND q@2) OR (a@3 AND b@4))" },
+	// Check FLAG_NO_POSITIONS stays on if we reparse with fewer flags.
+	{ "a-b NEAR x", "((a@1 AND b@2) OR (near@3 OR x@4))" },
+    };
+    Xapian::QueryParser qp;
+    const auto flags = qp.FLAG_DEFAULT | qp.FLAG_NO_POSITIONS;
+    for (const test& p : tests) {
+	string expect, parsed;
+	if (p.expect)
+	    expect = p.expect;
+	else
+	    expect = "parse error";
+	try {
+	    Xapian::Query q = qp.parse_query(p.query, flags);
+	    parsed = q.get_description();
+	    expect = string("Query(") + expect + ')';
+	} catch (const Xapian::QueryParserError& e) {
+	    parsed = e.get_msg();
+	} catch (const Xapian::Error& e) {
+	    parsed = e.get_description();
+	} catch (...) {
+	    parsed = "Unknown exception!";
+	}
+	tout << "Query: " << p.query << '\n';
+	TEST_STRINGS_EQUAL(parsed, expect);
+    }
 }

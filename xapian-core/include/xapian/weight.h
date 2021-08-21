@@ -1,4 +1,4 @@
-/** @file weight.h
+/** @file
  * @brief Weighting scheme API.
  */
 /* Copyright (C) 2004,2007,2008,2009,2010,2011,2012,2015,2016,2017,2019 Olly Betts
@@ -26,6 +26,7 @@
 
 #include <string>
 
+#include <xapian/database.h>
 #include <xapian/registry.h>
 #include <xapian/types.h>
 #include <xapian/visibility.h>
@@ -281,11 +282,17 @@ class XAPIAN_VISIBILITY_DEFAULT Weight {
      *  @param term	  The term for the new object.
      *  @param wqf_	  The within-query-frequency of @a term.
      *  @param factor	  Any scaling factor (e.g. from OP_SCALE_WEIGHT).
+     *  @param postlist   Pointer to a LeafPostList for the term (cast to void*
+     *			  to avoid needing to forward declare class
+     *			  LeafPostList in public API headers) which can be used
+     *			  to get wdf upper bound
      */
     XAPIAN_VISIBILITY_INTERNAL
     void init_(const Internal & stats, Xapian::termcount query_len_,
 	       const std::string & term, Xapian::termcount wqf_,
-	       double factor);
+	       double factor,
+	       const Xapian::Database::Internal* shard,
+	       void* postlist);
 
     /** @private @internal Initialise this object to calculate weights for a
      *  synonym.
@@ -300,7 +307,8 @@ class XAPIAN_VISIBILITY_DEFAULT Weight {
     XAPIAN_VISIBILITY_INTERNAL
     void init_(const Internal & stats, Xapian::termcount query_len_,
 	       double factor, Xapian::doccount termfreq,
-	       Xapian::doccount reltermfreq, Xapian::termcount collection_freq);
+	       Xapian::doccount reltermfreq, Xapian::termcount collection_freq,
+	       const Xapian::Database::Internal* shard);
 
     /** @private @internal Initialise this object to calculate the extra weight
      *  component.
@@ -309,7 +317,8 @@ class XAPIAN_VISIBILITY_DEFAULT Weight {
      *  @param query_len_ Query length.
      */
     XAPIAN_VISIBILITY_INTERNAL
-    void init_(const Internal & stats, Xapian::termcount query_len_);
+    void init_(const Internal & stats, Xapian::termcount query_len_,
+	       const Xapian::Database::Internal* shard);
 
     /** @private @internal Return true if the document length is needed.
      *
@@ -570,7 +579,7 @@ class XAPIAN_VISIBILITY_DEFAULT TfIdfWeight : public Weight {
 
 	/** Square
 	 *
-	 *  idfn=log(N/Termfreq)^2
+	 *  idfn=(log(N/Termfreq))²
 	 */
 	SQUARE = 3,
 
@@ -686,7 +695,7 @@ class XAPIAN_VISIBILITY_DEFAULT TfIdfWeight : public Weight {
      *         which are indexed by the term t.
      *     @li 'p': Prob    idfn=log((N-Termfreq)/Termfreq)
      *     @li 'f': Freq    idfn=1/Termfreq
-     *     @li 's': Squared idfn=log(N/Termfreq)^2
+     *     @li 's': Squared idfn=(log(N/Termfreq))²
      *     @li 'P': Pivoted idfn=log((N+1)/Termfreq)
      *
      * @li The third and the final character indicates the normalization for
@@ -731,7 +740,7 @@ class XAPIAN_VISIBILITY_DEFAULT TfIdfWeight : public Weight {
      *         which are indexed by the term t.
      *     @li 'p': Prob    idfn=log((N-Termfreq)/Termfreq)
      *     @li 'f': Freq    idfn=1/Termfreq
-     *     @li 's': Squared idfn=log(N/Termfreq)^2
+     *     @li 's': Squared idfn=(log(N/Termfreq))²
      *     @li 'P': Pivoted idfn=log((N+1)/Termfreq)
      *
      * @li The third and the final character indicates the normalization for

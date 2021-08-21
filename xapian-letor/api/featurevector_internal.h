@@ -1,4 +1,4 @@
-/** @file featurevector_internal.h
+/** @file
  * @brief Internals of FeatureVector class
  */
 /* Copyright (C) 2012 Parth Gupta
@@ -26,8 +26,6 @@
 #include "xapian-letor/featurevector.h"
 
 #include <vector>
-
-using namespace std;
 
 namespace Xapian {
 

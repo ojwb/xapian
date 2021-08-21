@@ -598,6 +598,7 @@ AC_MSG_RESULT([$INT64_T])
 
 dnl Check for perl (needed to generate some sources and documentation).
 AC_PATH_PROG([PERL], [perl], [])
+AC_ARG_VAR([PERL], [Perl interpreter])
 if test x$USE_MAINTAINER_MODE = xyes; then
   test -z "$PERL" && AC_MSG_ERROR([perl is required in maintainer mode])
 fi
@@ -639,27 +640,32 @@ AM_CONDITIONAL([MAINTAINER_NO_DOCS], [test x"$USE_MAINTAINER_MODE$enable_documen
 if test x"$enable_documentation" = xyes ; then
   dnl Checks for dot.  (Diagrams in the documentation)
   AC_PATH_PROG([DOT], [dot])
+  AC_ARG_VAR([DOT], [dot from graphviz])
   test -z "$DOT" && AC_MSG_ERROR([dot (part of the graphviz package) is required to build documentation])
   DOXYGEN_DOT_PATH=`echo "$DOT" | sed 's!/dot$!!'`
   AC_SUBST([DOXYGEN_DOT_PATH])
 
   dnl Check for doxygen. (Needed to make some more of the documentation)
   AC_PATH_PROG([DOXYGEN], [doxygen], [])
+  AC_ARG_VAR([DOXYGEN], [Doxygen documentation system])
   test -z "$DOXYGEN" && AC_MSG_ERROR([doxygen is required to build documentation])
 
   dnl Check for help2man. (Needed to make man pages from "--help" output).
   AC_PATH_PROG([HELP2MAN], [help2man], [])
+  AC_ARG_VAR([HELP2MAN], [help2man man page generator])
   test -z "$HELP2MAN" && AC_MSG_ERROR([help2man is required to build documentation])
 
   dnl Check for rst2html. (Needed to make HTML from reStructuredText format)
   dnl Also look for rst2html.py, which archlinux reportedly installs it as.
   AC_PATH_PROGS([RST2HTML], [rst2html rst2html.py], [])
+  AC_ARG_VAR([RST2HTML], [reST to HTML convertor])
   test -z "$RST2HTML" && AC_MSG_ERROR([rst2html is required to build documentation (try package python-docutils)])
 
   dnl Check for pngcrush, which we optionally use to reduce the size of the
   dnl PNG files which doxygen generates.  We can get by without it, so don't
   dnl fail here if it's not found.
   AC_PATH_PROG([PNGCRUSH], [pngcrush], [])
+  AC_ARG_VAR([PNGCRUSH], [PNG optimiser])
 fi
 
 dnl Checks for header files.
@@ -686,6 +692,7 @@ esac
 
 if test -n "$use_valgrind_if_non_empty" ; then
   AC_PATH_PROG([VALGRIND], [valgrind], [])
+  AC_ARG_VAR([VALGRIND], [debugging tool (optionally used by test harness)])
   if test -n "$VALGRIND" ; then
     dnl Check that the installed valgrind version works, and supports the
     dnl options we use.  This means we won't try to use valgrind < 3.3.0
@@ -729,6 +736,7 @@ dnl If EATMYDATA is set to an empty value, then skip this check and don't use
 dnl eatmydata.
 if test -n "${EATMYDATA-unset}" ; then
   AC_PATH_PROG([EATMYDATA], [eatmydata], [])
+  AC_ARG_VAR([EATMYDATA], [wrapper to disable fsync (optionally used by test harness)])
 fi
 
 dnl Checks for library functions.
@@ -989,12 +997,12 @@ if test "$enable_backend_remote" = yes ; then
       dnl On Unix, we need fork and socketpair for the remotebackend.
       SAVE_LIBS=$LIBS
       AC_CHECK_FUNCS([fork], [], [
-	AC_MSG_ERROR([fork() required for the remote backend - if an extra library is needed, pass LIBS=-lfoo to configure.  Or --disable-backend-remote to disable it.)])
+	AC_MSG_ERROR([fork() required for the remote backend - if an extra library is needed, pass LIBS=-lfoo to configure.  Or --disable-backend-remote to disable it.])
       ])
       dnl Check if -lsocket is required for socketpair (Solaris needs it).
       dnl And on Haiku it's in -lnetwork.
       AC_SEARCH_LIBS([socketpair], [socket network], [], [
-	AC_MSG_ERROR([socketpair() required for the remote backend - if an extra library is needed, pass LIBS=-lfoo to configure.  Or --disable-backend-remote to disable it.)])
+	AC_MSG_ERROR([socketpair() required for the remote backend - if an extra library is needed, pass LIBS=-lfoo to configure.  Or --disable-backend-remote to disable it.])
       ])
       AC_DEFINE([HAVE_SOCKETPAIR], [1],
 		[Define to 1 if you have the 'socketpair' function.])
@@ -1006,10 +1014,10 @@ if test "$enable_backend_remote" = yes ; then
       dnl standard route for supporting IPv6, and that's pretty much essential
       dnl for platforms to support now.
       AC_SEARCH_LIBS([getaddrinfo], [nsl socket], [], [
-	AC_MSG_ERROR([getaddrinfo() required for the remote backend - if an extra library is needed, pass LIBS=-lfoo to configure.  Or --disable-backend-remote to disable it.)])
+	AC_MSG_ERROR([getaddrinfo() required for the remote backend - if an extra library is needed, pass LIBS=-lfoo to configure.  Or --disable-backend-remote to disable it.])
       ])
       AC_SEARCH_LIBS([inet_ntop], [nsl socket], [], [
-	AC_MSG_ERROR([inet_ntop() required for the remote backend - if an extra library is needed, pass LIBS=-lfoo to configure.  Or --disable-backend-remote to disable it.)])
+	AC_MSG_ERROR([inet_ntop() required for the remote backend - if an extra library is needed, pass LIBS=-lfoo to configure.  Or --disable-backend-remote to disable it.])
       ])
       XAPIAN_LIBS="$XAPIAN_LIBS $LIBS"
       LIBS=$SAVE_LIBS
@@ -1377,6 +1385,10 @@ XAPIAN_TEST_LDFLAGS([-Wl,-Bsymbolic-functions], [XAPIAN_LDFLAGS])
 dnl Roughly equivalent Sun C++ option.
 XAPIAN_TEST_LDFLAGS([-xldscope=symbolic], [XAPIAN_LDFLAGS])
 
+dnl New in GCC 5.  Sort of like -Bsymbolic-functions, but for the compiler
+dnl rather than the linker.
+XAPIAN_TEST_LDFLAGS([-fno-semantic-interposition], [XAPIAN_LDFLAGS])
+
 AC_MSG_CHECKING([whether to use SSE instructions on x86])
 case $host_cpu in
   i*86)
@@ -1565,16 +1577,24 @@ write(int fd, const char* buf, size_t count) {
 # define __WIN64__
 #endif
 
-/* _FORTIFY_SOURCE is only supported by GCC >= 4.1 and glibc >= 2.3.4, but it
- * shouldn't cause a problem to define it where it's not supported and some
- * distros may have backported support, so hardcoding version checks is
- * counter-productive.
+/* Default to enabling _FORTIFY_SOURCE at level 2.  It shouldn't cause a
+ * problem to define it where it's not supported.
  *
  * Check if _FORTIFY_SOURCE is already defined to allow the user to override
  * our choice with "./configure CPPFLAGS=-D_FORTIFY_SOURCE=0" or "...=1".
  */
 #if defined __GNUC__ && !defined _FORTIFY_SOURCE
 # define _FORTIFY_SOURCE 2
+# ifdef __MINGW32__
+/* Both mingw32 and mingw-w64 define __MINGW32__. */
+#  include <stddef.h>
+#  ifdef __MINGW64_VERSION_MAJOR
+/* Enabling _FORTIFY_SOURCE on newer mingw-w64 requires linking with -lssp so
+ * we simply don't automatically enable it there.
+ */
+#   undef _FORTIFY_SOURCE
+#  endif
+# endif
 #endif
 
 /* For compilers which support it (such as GCC, clang, Intel's C++ compiler)

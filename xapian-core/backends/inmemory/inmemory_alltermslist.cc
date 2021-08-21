@@ -1,4 +1,4 @@
-/** @file inmemory_alltermslist.cc
+/** @file
  * @brief Iterate all terms in an inmemory db
  */
 /* Copyright 1999,2000,2001 BrightStation PLC
@@ -24,6 +24,8 @@
 #include "inmemory_alltermslist.h"
 
 #include "stringutils.h"
+
+using namespace std;
 
 Xapian::termcount
 InMemoryAllTermsList::get_approx_size() const

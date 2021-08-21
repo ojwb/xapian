@@ -1,4 +1,4 @@
-/** @file queryoptimiser.h
+/** @file
  * @brief Details passed around while building PostList tree from Query tree
  */
 /* Copyright (C) 2007,2008,2009,2010,2011,2013,2014,2015,2016,2018 Olly Betts
@@ -56,9 +56,7 @@ class QueryOptimiser {
   public:
     bool need_positions;
 
-    bool in_synonym;
-
-    bool full_db_has_positions;
+    bool compound_weight;
 
     Xapian::doccount shard_index;
 
@@ -71,12 +69,10 @@ class QueryOptimiser {
     QueryOptimiser(const Xapian::Database::Internal & db_,
 		   LocalSubMatch & localsubmatch_,
 		   PostListTree * matcher_,
-		   Xapian::doccount shard_index_,
-		   bool full_db_has_positions_)
+		   Xapian::doccount shard_index_)
 	: localsubmatch(localsubmatch_), total_subqs(0),
 	  hint(0), hint_owned(false),
-	  need_positions(false), in_synonym(false),
-	  full_db_has_positions(full_db_has_positions_),
+	  need_positions(false), compound_weight(false),
 	  shard_index(shard_index_),
 	  db(db_), db_size(db.get_doccount()),
 	  matcher(matcher_) { }
@@ -95,14 +91,14 @@ class QueryOptimiser {
 			      Xapian::termcount wqf,
 			      double factor) {
 	return localsubmatch.open_post_list(term, wqf, factor, need_positions,
-					    in_synonym, this, false);
+					    compound_weight, this, false);
     }
 
     PostList * open_lazy_post_list(const std::string& term,
 				   Xapian::termcount wqf,
 				   double factor) {
 	return localsubmatch.open_post_list(term, wqf, factor, need_positions,
-					    in_synonym, this, true);
+					    compound_weight, this, true);
     }
 
     PostList * make_synonym_postlist(PostList * pl,
@@ -138,8 +134,8 @@ class QueryOptimiser {
 	}
     }
 
-    bool need_wdf_for_synonym() const {
-	return in_synonym && !localsubmatch.weight_needs_wdf();
+    bool need_wdf_for_compound_weight() const {
+	return compound_weight && !localsubmatch.weight_needs_wdf();
     }
 };
 

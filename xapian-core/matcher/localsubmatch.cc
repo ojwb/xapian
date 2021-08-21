@@ -1,4 +1,4 @@
-/** @file localsubmatch.cc
+/** @file
  *  @brief SubMatch class for a local database.
  */
 /* Copyright (C) 2006,2007,2009,2010,2011,2013,2014,2015,2016,2017,2018,2019,2020 Olly Betts
@@ -60,6 +60,8 @@ class LazyWeight : public Xapian::Weight {
 
     double factor;
 
+    const Xapian::Database::Internal* shard;
+
     LazyWeight * clone() const;
 
     void init(double factor_);
@@ -70,13 +72,15 @@ class LazyWeight : public Xapian::Weight {
 	       Xapian::Weight::Internal * stats_,
 	       Xapian::termcount qlen_,
 	       Xapian::termcount wqf__,
-	       double factor_)
+	       double factor_,
+	       const Xapian::Database::Internal* shard_)
 	: pl(pl_),
 	  real_wt(real_wt_),
 	  stats(stats_),
 	  qlen(qlen_),
 	  wqf(wqf__),
-	  factor(factor_)
+	  factor(factor_),
+	  shard(shard_)
     { }
 
     std::string name() const;
@@ -158,7 +162,7 @@ double
 LazyWeight::get_maxpart() const
 {
     // This gets called first for the case we care about.
-    return pl->resolve_lazy_termweight(real_wt, stats, qlen, wqf, factor);
+    return pl->resolve_lazy_termweight(real_wt, stats, qlen, wqf, factor, shard);
 }
 
 double
@@ -180,8 +184,7 @@ LocalSubMatch::get_postlist(PostListTree * matcher,
     // LocalSubMatch::open_post_list() for each term in the query.
     PostList * pl;
     {
-	QueryOptimiser opt(*db, *this, matcher, shard_index,
-			   full_db_has_positions);
+	QueryOptimiser opt(*db, *this, matcher, shard_index);
 	double factor = wt_factory.is_bool_weight_() ? 0.0 : 1.0;
 	pl = query.internal->postlist(&opt, factor);
 	*total_subqs_ptr = opt.get_total_subqs();
@@ -190,7 +193,7 @@ LocalSubMatch::get_postlist(PostListTree * matcher,
     if (pl) {
 	unique_ptr<Xapian::Weight> extra_wt(wt_factory.clone());
 	// Only uses term-independent stats.
-	extra_wt->init_(*total_stats, qlen);
+	extra_wt->init_(*total_stats, qlen, db);
 	if (extra_wt->get_maxextra() != 0.0) {
 	    // There's a term-independent weight contribution, so we combine
 	    // the postlist tree with an ExtraWeightPostList which adds in this
@@ -234,7 +237,7 @@ LocalSubMatch::make_synonym_postlist(PostListTree* pltree,
 	freqs = or_pl->get_termfreq_est_using_stats(*total_stats);
     }
     wt->init_(*total_stats, qlen, factor,
-	      freqs.termfreq, freqs.reltermfreq, freqs.collfreq);
+	      freqs.termfreq, freqs.reltermfreq, freqs.collfreq, db);
 
     res->set_weight(wt.release());
     RETURN(res.release());
@@ -245,7 +248,7 @@ LocalSubMatch::open_post_list(const string& term,
 			      Xapian::termcount wqf,
 			      double factor,
 			      bool need_positions,
-			      bool in_synonym,
+			      bool compound_weight,
 			      QueryOptimiser * qopt,
 			      bool lazy_weight)
 {
@@ -260,7 +263,7 @@ LocalSubMatch::open_post_list(const string& term,
     } else {
 	weighted = (factor != 0.0);
 	if (!need_positions) {
-	    if ((!weighted && !in_synonym) ||
+	    if ((!weighted && !compound_weight) ||
 		!wt_factory.get_sumpart_needs_wdf_()) {
 		Xapian::doccount sub_tf;
 		db->get_freqs(term, &sub_tf, NULL);
@@ -293,28 +296,28 @@ LocalSubMatch::open_post_list(const string& term,
     }
 
     if (lazy_weight) {
-	// Term came from a wildcard, but we may already have that term in the
-	// query anyway, so check before accumulating its TermFreqs.
-	map<string, TermFreqs>::iterator i = total_stats->termfreqs.find(term);
-	if (i == total_stats->termfreqs.end()) {
-	    Xapian::doccount sub_tf;
-	    Xapian::termcount sub_cf;
-	    db->get_freqs(term, &sub_tf, &sub_cf);
-	    total_stats->termfreqs.insert({term, TermFreqs(sub_tf, 0, sub_cf)});
+	auto res = total_stats->termfreqs.emplace(term, TermFreqs());
+	if (res.second) {
+	    // Term came from a wildcard, but the same term may be elsewhere
+	    // in the query so only accumulates its TermFreqs if emplace()
+	    // created a new element.
+	    db->get_freqs(term,
+			  &res.first->second.termfreq,
+			  &res.first->second.collfreq);
 	}
     }
 
     if (weighted) {
 	Xapian::Weight * wt = wt_factory.clone();
 	if (!lazy_weight) {
-	    wt->init_(*total_stats, qlen, term, wqf, factor);
+	    wt->init_(*total_stats, qlen, term, wqf, factor, db, pl);
 	    if (pl->get_termfreq() > 0)
 		total_stats->set_max_part(term, wt->get_maxpart());
 	} else {
 	    // Delay initialising the actual weight object, so that we can
 	    // gather stats for the terms lazily expanded from a wildcard
 	    // (needed for the remote database case).
-	    wt = new LazyWeight(pl, wt, total_stats, qlen, wqf, factor);
+	    wt = new LazyWeight(pl, wt, total_stats, qlen, wqf, factor, db);
 	}
 	pl->set_termweight(wt);
     }

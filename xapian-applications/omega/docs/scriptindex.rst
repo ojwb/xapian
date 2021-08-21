@@ -119,6 +119,17 @@ load
 lower
 	lowercase the text (useful for generating boolean terms)
 
+ltrim[=CHARACTERSTOTRIM]
+        remove leading characters from the text which are in
+        ``CHARACTERSTOTRIM`` (default: space, tab, formfeed, vertical tab,
+        carriage return, linefeed).
+
+        Currently only ASCII characters are supported in ``CHARACTERSTOTRIM``.
+
+        See also ``rtrim``, ``squash`` and ``trim``.
+
+        ``ltrim`` was added in Omega 1.4.19.
+
 parsedate=FORMAT
         parse the text as a date string using ``strptime()`` (or C++11's
         ``std::get_time()`` on platforms without ``strptime()``) with the
@@ -139,6 +150,17 @@ parsedate=FORMAT
 
         ``parsedate`` was added in Omega 1.4.6.
 
+rtrim[=CHARACTERSTOTRIM]
+        remove trailing characters from the text which are in
+        ``CHARACTERSTOTRIM`` (default: space, tab, formfeed, vertical tab,
+        carriage return, linefeed).
+
+        Currently only ASCII characters are supported in ``CHARACTERSTOTRIM``.
+
+        See also ``ltrim``, ``squash`` and ``trim``.
+
+        ``rtrim`` was added in Omega 1.4.19.
+
 spell
         Generate spelling correction data for any ``index`` or ``indexnopos``
         actions in the remainder of this list of actions.
@@ -155,6 +177,30 @@ split=DELIMITER[,OPERATION]
 
         If you want to specify ``,`` for delimiter, you need to quote it, e.g.
         ``split=",",dedup``.
+
+squash[=CHARACTERSTOTRIM]
+        replace runs of one or more characters from ``CHARACTERSTOTRIM`` in the
+        text with a single space.  Leading and trailing runs are removed entirely.
+
+        ``CHARACTERSTOTRIM`` defaults to: space, tab, formfeed, vertical tab,
+        carriage return, linefeed).
+
+        Currently only ASCII characters are supported in ``CHARACTERSTOTRIM``.
+
+        See also ``ltrim``, ``rtrim`` and ``trim``.
+
+        ``squash`` was added in Omega 1.4.19.
+
+trim[=CHARACTERSTOTRIM]
+        remove leading and trailing characters from the text which are in
+        ``CHARACTERSTOTRIM`` (default: space, tab, formfeed, vertical tab,
+        carriage return, linefeed).
+
+        Currently only ASCII characters are supported in ``CHARACTERSTOTRIM``.
+
+        See also ``ltrim``, ``rtrim`` and ``squash``.
+
+        ``trim`` was added in Omega 1.4.19.
 
 truncate=LENGTH
 	truncate to at most LENGTH bytes, but avoid chopping off a word (useful
@@ -184,6 +230,13 @@ unique[=PREFIX]
         You can use ``unique`` at most once in each index script (this is only
         enforced since Omega 1.4.5, but older versions didn't handle multiple
         instances usefully).
+
+unxml
+        strip out XML tags, replacing with a space (``unxml`` is similar to
+        ``unhtml``, but ``unhtml`` varies the whitespace type or omits it
+        entirely, based on HTML tag semantics).
+
+        ``unxml`` was added in Omega 1.5.0.
 
 value=VALUESLOT
 	add as a Xapian document value in slot VALUESLOT.  Values can be used

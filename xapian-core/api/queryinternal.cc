@@ -1,4 +1,4 @@
-/** @file queryinternal.cc
+/** @file
  * @brief Xapian::Query internals
  */
 /* Copyright (C) 2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019 Olly Betts
@@ -58,7 +58,7 @@
 #include "unicode/description_append.h"
 
 #include <algorithm>
-#include <functional>
+#include <limits>
 #include <list>
 #include <memory>
 #include <string>
@@ -1521,9 +1521,9 @@ QueryWildcard::postlist(QueryOptimiser * qopt, double factor) const
 	    op = Query::OP_OR;
 	}
 
-	bool old_in_synonym = qopt->in_synonym;
-	if (!old_in_synonym) {
-	    qopt->in_synonym = (op == Query::OP_SYNONYM);
+	bool old_compound_weight = qopt->compound_weight;
+	if (!old_compound_weight) {
+	    qopt->compound_weight = (op == Query::OP_SYNONYM);
 	}
 
 	BoolOrContext ctx(qopt, 0);
@@ -1533,7 +1533,7 @@ QueryWildcard::postlist(QueryOptimiser * qopt, double factor) const
 	    qopt->inc_total_subqs();
 	}
 
-	qopt->in_synonym = old_in_synonym;
+	qopt->compound_weight = old_compound_weight;
 
 	if (ctx.empty())
 	    RETURN(NULL);
@@ -1633,9 +1633,9 @@ QueryEditDistance::postlist(QueryOptimiser * qopt, double factor) const
 	    op = Query::OP_OR;
 	}
 
-	bool old_in_synonym = qopt->in_synonym;
-	if (!old_in_synonym) {
-	    qopt->in_synonym = (op == Query::OP_SYNONYM);
+	bool old_compound_weight = qopt->compound_weight;
+	if (!old_compound_weight) {
+	    qopt->compound_weight = (op == Query::OP_SYNONYM);
 	}
 
 	BoolOrContext ctx(qopt, 0);
@@ -1645,7 +1645,7 @@ QueryEditDistance::postlist(QueryOptimiser * qopt, double factor) const
 	    qopt->inc_total_subqs();
 	}
 
-	qopt->in_synonym = old_in_synonym;
+	qopt->compound_weight = old_compound_weight;
 
 	if (ctx.empty())
 	    RETURN(NULL);
@@ -1908,13 +1908,13 @@ QueryBranch::do_synonym(QueryOptimiser * qopt, double factor) const
 	return ctx.postlist();
     }
 
-    bool old_in_synonym = qopt->in_synonym;
-    Assert(!old_in_synonym);
-    qopt->in_synonym = true;
+    bool old_compound_weight = qopt->compound_weight;
+    Assert(!old_compound_weight);
+    qopt->compound_weight = true;
     do_bool_or_like(ctx, qopt);
     PostList * pl = ctx.postlist();
+    qopt->compound_weight = old_compound_weight;
     if (!pl) return NULL;
-    qopt->in_synonym = old_in_synonym;
 
     bool wdf_disjoint = false;
     Assert(!subqueries.empty());
@@ -2358,9 +2358,11 @@ QueryAndMaybe::postlist_sub_and_like(AndContext& ctx,
     // We only need to consider the right branch or branches if we're weighted
     // - an unweighted OP_AND_MAYBE can be replaced with its left branch.
     if (factor != 0.0) {
-	// Only keep zero-weight subqueries if we need their wdf for synonyms.
+	// Only keep zero-weight subqueries if we need their wdf because they're
+	// underneath a compound weight.
 	OrContext& maybe_ctx = ctx.get_maybe_ctx(subqueries.size() - 1);
-	do_or_like(maybe_ctx, qopt, factor, 0, 1, qopt->need_wdf_for_synonym());
+	bool need_wdf = qopt->need_wdf_for_compound_weight();
+	do_or_like(maybe_ctx, qopt, factor, 0, 1, need_wdf);
     }
     return true;
 }
@@ -2399,11 +2401,6 @@ QueryFilter::postlist_sub_and_like(AndContext& ctx, QueryOptimiser * qopt, doubl
 bool
 QueryWindowed::postlist_windowed(Query::op op, AndContext& ctx, QueryOptimiser * qopt, double factor) const
 {
-    if (!qopt->full_db_has_positions) {
-	// No positional data anywhere, so just handle as AND.
-	return QueryAndLike::postlist_sub_and_like(ctx, qopt, factor);
-    }
-
     if (!qopt->db.has_positions()) {
 	// No positions in this subdatabase so this matches nothing, which
 	// means the whole andcontext matches nothing.

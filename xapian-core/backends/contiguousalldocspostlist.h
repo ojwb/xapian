@@ -1,4 +1,4 @@
-/** @file contiguousalldocspostlist.h
+/** @file
  * @brief Iterate all document ids when they form a contiguous range.
  */
 /* Copyright (C) 2007,2008,2009,2011,2017 Olly Betts
@@ -77,6 +77,9 @@ class ContiguousAllDocsPostList : public LeafPostList {
 
     /// Return true if and only if we're off the end of the list.
     bool at_end() const;
+
+    /// Always return 1 (wdf isn't totally meaningful for us).
+    Xapian::termcount get_wdf_upper_bound() const;
 
     /// Return a string description of this object.
     std::string get_description() const;
