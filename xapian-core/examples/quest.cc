@@ -1,7 +1,7 @@
 /** @file
  * @brief Command line search tool using Xapian::QueryParser.
  */
-/* Copyright (C) 2004,2005,2006,2007,2008,2009,2010,2012,2013,2014,2016,2018,2019 Olly Betts
+/* Copyright (C) 2004-2021 Olly Betts
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -51,6 +51,7 @@ static const char * const sw[] = {
 
 struct qp_flag { const char * s; unsigned f; };
 static const qp_flag flag_tab[] = {
+    { "accumulate", Xapian::QueryParser::FLAG_ACCUMULATE },
     { "auto_multiword_synonyms", Xapian::QueryParser::FLAG_AUTO_MULTIWORD_SYNONYMS },
     { "auto_synonyms", Xapian::QueryParser::FLAG_AUTO_SYNONYMS },
     { "boolean", Xapian::QueryParser::FLAG_BOOLEAN },
@@ -60,6 +61,7 @@ static const qp_flag flag_tab[] = {
     { "default", Xapian::QueryParser::FLAG_DEFAULT },
     { "fuzzy", Xapian::QueryParser::FLAG_FUZZY },
     { "lovehate", Xapian::QueryParser::FLAG_LOVEHATE },
+    { "no_positions", Xapian::QueryParser::FLAG_NO_POSITIONS },
     { "partial", Xapian::QueryParser::FLAG_PARTIAL },
     { "phrase", Xapian::QueryParser::FLAG_PHRASE },
     { "pure_not", Xapian::QueryParser::FLAG_PURE_NOT },
@@ -146,7 +148,8 @@ static void show_usage() {
 "                                    'english' (pass 'none' to disable stemming)\n"
 "  -p, --prefix=PFX:TERMPFX          add a prefix\n"
 "  -b, --boolean-prefix=PFX:TERMPFX  add a boolean prefix\n"
-"  -f, --flags=FLAG1[,FLAG2]...      specify QueryParser flags.  Valid flags:";
+"  -f, --flags=FLAG1[,FLAG2]...      specify QueryParser flags (default:\n"
+"                                    default).  Valid flags:";
 #define INDENT \
 "                                    "
     size_t pos = 256;
@@ -260,7 +263,8 @@ try {
 
     Xapian::Database db;
     Xapian::QueryParser parser;
-    unsigned flags = parser.FLAG_DEFAULT|parser.FLAG_SPELLING_CORRECTION;
+    unsigned flags = 0;
+    bool flags_set = false;
     int weight = -1;
 
     int c;
@@ -318,7 +322,7 @@ try {
 		break;
 	    }
 	    case 'f':
-		flags = 0;
+		flags_set = true;
 		do {
 		    char * comma = strchr(optarg, ',');
 		    if (comma)
@@ -373,6 +377,9 @@ try {
     parser.set_stemming_strategy(Xapian::QueryParser::STEM_SOME);
     parser.set_stopper(&mystopper);
 
+    if (!flags_set) {
+	flags = Xapian::QueryParser::FLAG_DEFAULT;
+    }
     Xapian::Query query = parser.parse_query(argv[optind], flags);
     const string & correction = parser.get_corrected_query_string();
     if (!correction.empty())

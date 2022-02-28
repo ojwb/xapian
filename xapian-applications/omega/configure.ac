@@ -75,7 +75,7 @@ dnl Probe for any options needed to enable C++11 support.
 AX_CXX_COMPILE_STDCXX_11
 
 dnl Run tests using the C++ compiler.
-AC_LANG_CPLUSPLUS
+AC_LANG([C++])
 
 dnl Enable large file support if possible.
 AC_SYS_LARGEFILE
@@ -86,12 +86,12 @@ AC_DEFUN([XAPIAN_TEST_CXXFLAGS],
   [
   XTC_save_CXXFLAGS=$CXXFLAGS
   CXXFLAGS="$CXXFLAGS $1"
-  AC_TRY_COMPILE([], [],
-		 [CXXFLAGS=$XTC_save_CXXFLAGS
-		  $2="${$2} $1"
-		  $3],
-		 [CXXFLAGS=$XTC_save_CXXFLAGS
-		  $4])
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
+		    [CXXFLAGS=$XTC_save_CXXFLAGS
+		     $2="${$2} $1"
+		     $3],
+		    [CXXFLAGS=$XTC_save_CXXFLAGS
+		     $4])
   ])
 
 dnl Check for xapian-core.
@@ -196,11 +196,12 @@ AC_SUBST([MAGIC_LIBS])
 dnl See if ftime returns void (as it does on mingw)
 AC_MSG_CHECKING([return type of ftime])
 if test $ac_cv_func_ftime = yes ; then
-  AC_TRY_COMPILE([#include <sys/timeb.h>],
-    [struct timeb tp; int i = ftime(&tp);],
-    AC_MSG_RESULT([int]),
-    AC_MSG_RESULT([void])
-    AC_DEFINE([FTIME_RETURNS_VOID], [1], [Define if ftime returns void]))
+  AC_COMPILE_IFELSE(
+    [AC_LANG_PROGRAM([[#include <sys/timeb.h>]],
+		     [[struct timeb tp; int i = ftime(&tp);]])],
+    [AC_MSG_RESULT(int)],
+    [AC_MSG_RESULT(void)
+     AC_DEFINE([FTIME_RETURNS_VOID], [1], [Define if ftime returns void])])
 fi
 
 dnl mingw (for instance) lacks ssize_t
@@ -215,10 +216,12 @@ AC_CHECK_FUNCS([getgrouplist])
 
 dnl See if getgrouplist() takes gid_t * (e.g. Linux) or int * (e.g. OS X).
 if test $ac_cv_func_getgrouplist = yes ; then
-  AC_TRY_COMPILE([#include <grp.h>
-#include <unistd.h>],
-    [int g[10]; int n = 10; return getgrouplist("root", 1, g, &n) == -1;],
-    AC_DEFINE([GETGROUPLIST_TAKES_INT_P], 1, [Define if getgrouplist takes int *]))
+  AC_COMPILE_IFELSE(
+    [AC_LANG_PROGRAM([[#include <grp.h>
+#include <unistd.h>]],
+		     [[int g[10]; int n = 10; return getgrouplist("root", 1, g, &n) == -1;]])],
+    [AC_DEFINE([GETGROUPLIST_TAKES_INT_P], 1, [Define if getgrouplist takes int *])],
+    [])
 fi
 
 dnl Check for lstat() (not available under mingw for example).
@@ -249,17 +252,9 @@ AC_CHECK_FUNCS([fnmatch])
 OMINDEX_MODULES=""
 
 dnl check if poppler is available.
-PKG_CHECK_MODULES([POPPLER], [poppler-cpp], [
-    save_LIBS=$LIBS
-    LIBS="$LIBS $POPPLER_LIBS"
-    AC_LINK_IFELSE([#include <poppler/cpp/poppler-version.h>
-		    int main(){
-			poppler::version_string();
-			return 0;
-		    }],
-		   [AC_DEFINE(HAVE_POPPLER, 1, [Define HAVE_POPPLER if the library is available])
-		    OMINDEX_MODULES="$OMINDEX_MODULES omindex_poppler"])
-    LIBS=$save_LIBS],[ ])
+PKG_CHECK_MODULES([POPPLER], [poppler-glib >= 0.16], [
+    AC_DEFINE(HAVE_POPPLER, 1, [Define HAVE_POPPLER if the library is available])
+    OMINDEX_MODULES="$OMINDEX_MODULES omindex_poppler"],[ ])
 
 dnl check if libe-book is available.
 PKG_CHECK_MODULES([LIBEBOOK], [libe-book-0.1,librevenge-0.0,librevenge-generators-0.0,librevenge-stream-0.0], [
@@ -379,12 +374,12 @@ pcre_runtime_installed() {
   dnl Simple check to see if the problem is likely to be that we're using a
   dnl "packaged" pcre but only have the runtime package installed.
   for sfx in '' 32 64 ; do
-    set /usr/lib$sfx/libpcre*.so.*
-    if test "/usr/lib$sfx/libpcre?.so.*" != "$1" ; then
+    set /usr/lib$sfx/libpcre2-*.so.*
+    if test "/usr/lib$sfx/libpcre2-*.so.*" != "$1" ; then
       if test -r /etc/debian_version ; then
-	pkg="libpcre3-dev"
+	pkg="libpcre2-dev"
       else
-	pkg="pcre-devel"
+	pkg="pcre2-devel"
       fi
       AS_SET_STATUS([0])
     fi
@@ -392,39 +387,41 @@ pcre_runtime_installed() {
   AS_SET_STATUS([1])
 }
 
-AC_ARG_VAR(PCRE_CONFIG, [Location of pcre-config])
-if test -z "$PCRE_CONFIG" ; then
+PCRE2_LIBS_FLAG=--libs8
+AC_ARG_VAR(PCRE2_CONFIG, [Location of pcre2-config])
+if test -z "$PCRE2_CONFIG" ; then
   AC_ARG_VAR(PKG_CONFIG, [Location of pkg-config])
   AC_PATH_TOOL(PKG_CONFIG, [pkg-config])
   if test -n "$PKG_CONFIG" ; then
-    pcre_try="$PKG_CONFIG libpcre"
+    pcre_try="$PKG_CONFIG libpcre2-8"
     if $pcre_try 2>/dev/null ; then
-      PCRE_CONFIG=$pcre_try
+      PCRE2_CONFIG=$pcre_try
+      PCRE2_LIBS_FLAG=--libs
     else
       if pcre_runtime_installed ; then
-	AC_MSG_ERROR(['$pcre_try' failed, but the PCRE runtime library seems to be installed.  If you've installed PCRE from a package, you probably need to install an extra package called something like $pkg in order to be able to build $PACKAGE_NAME.])
+	AC_MSG_ERROR(['$pcre_try' failed, but the PCRE2 runtime library seems to be installed.  If you've installed PCRE2 from a package, you probably need to install an extra package called something like $pkg in order to be able to build $PACKAGE_NAME.])
       else
-	AC_MSG_ERROR(['$pcre_try' failed.  If the PCRE library is installed, you need to add PCRE_CONFIG=/path/to/pcre-config to your configure command.])
+	AC_MSG_ERROR(['$pcre_try' failed.  If the PCRE2 library is installed, you need to add PCRE2_CONFIG=/path/to/pcre2-config to your configure command.])
       fi
     fi
   else
-    dnl Fall back to looking for pcre-config, but that's not installed on PATH
+    dnl Fall back to looking for pcre2-config, but that's not installed on PATH
     dnl with the platform tuple prefixed (at least under MXE), so preferring
-    dnl 'pkg-config libpcre' works better when cross-compiling.
-    AC_PATH_TOOL(PCRE_CONFIG, [pcre-config])
-    if test -z $PCRE_CONFIG ; then
+    dnl 'pkg-config libpcre2' works better when cross-compiling.
+    AC_PATH_TOOL(PCRE2_CONFIG, [pcre2-config])
+    if test -z $PCRE2_CONFIG ; then
       if pcre_runtime_installed ; then
-	AC_MSG_ERROR([Can't find pcre-config, although the PCRE runtime library seems to be installed.  If you've installed PCRE from a package, you probably need to install an extra package called something like $pkg in order to be able to build $PACKAGE_NAME.])
+	AC_MSG_ERROR([Can't find pcre2-config, although the PCRE2 runtime library seems to be installed.  If you've installed PCRE2 from a package, you probably need to install an extra package called something like $pkg in order to be able to build $PACKAGE_NAME.])
       else
-	AC_MSG_ERROR([Can't find pcre-config.  If the PCRE library is installed, you need to add PCRE_CONFIG=/path/to/pcre-config to your configure command.])
+	AC_MSG_ERROR([Can't find pcre2-config.  If the PCRE2 library is installed, you need to add PCRE2_CONFIG=/path/to/pcre2-config to your configure command.])
       fi
     fi
   fi
 fi
-PCRE_CFLAGS=`$PCRE_CONFIG --cflags`
-PCRE_LIBS=`$PCRE_CONFIG --libs`
-AC_SUBST(PCRE_CFLAGS)
-AC_SUBST(PCRE_LIBS)
+PCRE2_CFLAGS=`$PCRE2_CONFIG --cflags`
+PCRE2_LIBS=`$PCRE2_CONFIG $PCRE2_LIBS_FLAG`
+AC_SUBST(PCRE2_CFLAGS)
+AC_SUBST(PCRE2_LIBS)
 
 AC_MSG_CHECKING([for /dev/stdin])
 if test -c /dev/stdin && (echo hello|$GREP hello /dev/stdin >&AS_MESSAGE_LOG_FD 2>&1); then
@@ -453,12 +450,6 @@ if test yes = "$GXX"; then
       gxx_version=`echo __GNUC__.__GNUC_MINOR__.__GNUC_PATCHLEVEL__|$CXX -E -|sed '/^#/d;s/ //g'`
       AC_MSG_RESULT([GCC $gxx_version])
 
-      case $gxx_version in
-      [[0123]].*|4.[[0-7]].*)
-	AC_MSG_ERROR([Xapian requires GCC 4.8 or later])
-	;;
-      esac
-
       dnl -Wundef was supported by g++ 3.0.
       dnl
       dnl -Wlogical-op and -Wmissing-declarations (for C++) were added in
@@ -468,6 +459,20 @@ if test yes = "$GXX"; then
       dnl
       dnl All the other options were supported by g++ 2.95.
       AM_CXXFLAGS="$AM_CXXFLAGS -Wall -W -Wredundant-decls -Wpointer-arith -Wcast-qual -Wcast-align -Wformat-security -fno-gnu-keywords -Wundef -Woverloaded-virtual -Wstrict-null-sentinel -Wshadow -Wstrict-overflow=1 -Wlogical-op -Wmissing-declarations -Wdouble-promotion"
+
+      case $gxx_version in
+      [[0123]].*|4.[[0-7]].*)
+	AC_MSG_ERROR([Xapian requires GCC 4.8 or later])
+	;;
+      4.*|5.*)
+	;;
+      6.*)
+	AM_CXXFLAGS="$AM_CXXFLAGS -Wduplicated-cond"
+	;;
+      *)
+	AM_CXXFLAGS="$AM_CXXFLAGS -Wduplicated-cond -Wduplicated-branches"
+	;;
+      esac
 
       dnl FIXME:
       dnl -Wold-style-cast is interesting, but triggers for macros from

@@ -261,9 +261,9 @@ other filters too - see below):
 * SVG (.svg)
 * CSV (Comma-Separated Values) files (.csv)
 * PDF (.pdf) if pdftotext (comes with poppler or xpdf) or libpoppler
-  (in particular libpoppler-cpp-dev) are available
+  (in particular libpoppler-glib-dev) are available
 * PostScript (.ps, .eps, .ai) if ps2pdf (from ghostscript) and pdftotext (comes
-  with poppler or xpdf) or libpoppler (in particular libpoppler-cpp-dev) are available
+  with poppler or xpdf) or libpoppler (in particular libpoppler-glib-dev) are available
 * OpenOffice/StarOffice documents (.sxc, .stc, .sxd, .std, .sxi, .sti, .sxm,
   .sxw, .sxg, .stw) if unzip is available
 * OpenDocument format documents (.odt, .ods, .odp, .odg, .odc, .odf, .odb,
@@ -292,7 +292,7 @@ other filters too - see below):
   also possible to use numbers2text as an external filter)
 * Apple Pages documents (.pages) if libetonyek is available (it is
   also possible to use pages2text as an external filter)
-* AbiWord documents (.abw)
+* AbiWord documents (.abw, .awt)
 * Compressed AbiWord documents (.zabw)
 * Rich Text Format documents (.rtf) if unrtf is available
 * Perl POD documentation (.pl, .pm, .pod) if pod2text is available

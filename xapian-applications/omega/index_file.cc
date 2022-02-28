@@ -191,6 +191,8 @@ index_add_default_libraries()
 #endif
 #if defined HAVE_LIBARCHIVE
     Worker* omindex_libarchive = new Worker("omindex_libarchive");
+    index_library("application/oxps", omindex_libarchive);
+    index_library("application/vnd.ms-xpsdocument", omindex_libarchive);
     index_library("application/vnd.oasis.opendocument.text",
 		  omindex_libarchive);
     index_library("application/vnd.oasis.opendocument.spreadsheet",
@@ -1165,20 +1167,27 @@ index_mimetype(const string & file, const string & urlterm, const string & url,
 	    try {
 		XpsParser xpsparser;
 		run_filter(cmd, false, &dump);
-		// Look for Byte-Order Mark (BOM).
-		if (startswith(dump, "\xfe\xff") || startswith(dump, "\xff\xfe")) {
-		    // UTF-16 in big-endian/little-endian order - we just
-		    // convert it as "UTF-16" and let the conversion handle the
-		    // BOM as that way we avoid the copying overhead of erasing
-		    // 2 bytes from the start of dump.
-		    convert_to_utf8(dump, "UTF-16");
-		}
 		xpsparser.parse(dump);
 		dump = xpsparser.dump;
 	    } catch (const ReadError&) {
 		skip_cmd_failed(urlterm, context, cmd,
 				d.get_size(), d.get_mtime());
 		return;
+	    }
+
+	    cmd = "unzip -p";
+	    append_filename_argument(cmd, file);
+	    cmd += " docProps/core.xml";
+	    try {
+		OpenDocMetaParser metaparser;
+		metaparser.parse(stdout_to_string(cmd, false));
+		title = metaparser.title;
+		keywords = metaparser.keywords;
+		// FIXME: topic = metaparser.topic;
+		sample = metaparser.sample;
+		author = metaparser.author;
+	    } catch (const ReadError&) {
+		// Ignore errors as not all XPS files contain this file.
 	    }
 	} else if (mimetype == "text/csv") {
 	    // Currently we assume that text files are UTF-8 unless they have a

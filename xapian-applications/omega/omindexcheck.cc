@@ -3,6 +3,7 @@
  */
 /* Copyright (C) 2019 Bruno Baruffaldi
  * Copyright (C) 2020 Parth Kapadia
+ * Copyright (C) 2021,2022 Olly Betts
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -19,14 +20,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301
  * USA
  */
-#include <config.h>
-#include "worker.h"
-#include "stringutils.h"
 
+#include <config.h>
+
+#include <xapian.h>
+
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <unordered_map>
-#include <xapian.h>
 
 using namespace std;
 
@@ -112,7 +114,7 @@ index_test()
     tests.insert({"odf/test.odt",
 		  {{"Zедой", "Z喬伊不分享食物"}}});
     tests.insert({"odf/libarchive_text.odt",
-		  {{"Stesttitle", "Atestauthor", "Zsampl", "Zhead", "Ztext",
+		  {{"Stesttitle", "Aolly", "Zsampl", "Zhead", "Ztext",
 		    "Zhello", "Zworld"}}});
     tests.insert({"odf/libarchive_text_template.ott",
 		  {{"Zjane", "Zdoe", "Zstructur"}}});
@@ -145,11 +147,14 @@ index_test()
 		  {{"ZSproject", "ZSresearch", "Zhead", "Ztext"}}});
 
     // OOXML formats
-    tests.insert({"ooxml/book.xlsx",
+    tests.insert({"ooxml/Book.xlsx",
 		  {{"Zmodi", "Zgood", "Zemploye"}}});
-    tests.insert({"ooxml/doc.docx",
+    tests.insert({"ooxml/2sheets.xlsx",
+		  {{"0.123456", "123.456", "15", "2021", "3.14159265358979",
+		    "43", "55", "Aolly", "Ssheet", "Stitle", "xmas"}}});
+    tests.insert({"ooxml/Doc.docx",
 		  {{"Zедой", "Z喬伊不分享食物", "ZSbakeri"}}});
-    tests.insert({"ooxml/nature.pptx",
+    tests.insert({"ooxml/Nature.pptx",
 		  {{"ZSnatur", "Zbeauti", "Zsampl"}}});
 #endif
 #if defined HAVE_LIBABW
@@ -157,9 +162,20 @@ index_test()
     // lack a bug fix for the title to be handled properly. (< libabw-0.1.2)
     tests.insert({"abw/test.abw",
 		  {{"ZAparth", "Zabiword", "Zsampl", "Zdocument"}}});
+    tests.insert({"abw/macbeth.zabw",
+		  {{"Ashakespeare", "Awilliam", "Smacbeth",
+		    "ambition", "macduff", "shall"}}});
+#else
+    // Indexed using AbiwordParser class, which doesn't currently handle metadata.
+    tests.insert({"abw/test.abw",
+		  {{"Zabiword", "Zsampl", "Zdocument"}}});
+    tests.insert({"abw/macbeth.zabw",
+		  {{"ambition", "macduff", "shall"}}});
+#endif
     tests.insert({"abw/test1.abw",
 		  {{"Zедой", "Z喬伊不分享食物"}}});
-#endif
+    tests.insert({"abw/Friendly-Letter.awt",
+		  {{"address", "addressee", "body", "dear", "sincerely"}}});
 #if defined HAVE_LIBCDR
     // .cdr versions >= 16 are not included in the tests as they will work
     // correctly only with libcdr >= 0.1.6
@@ -182,6 +198,8 @@ index_test()
     tests.insert({"audio/file_example_WAV_1MG.wav",
 		  {{"Zstereo", "wav", "Zms"}, SKIP_IF_NO_TERMS}});
 #endif
+    tests.insert({"application/vnd.ms-xpsdocument_xpstest.xps",
+		 {{"second", "header", "footer"}}});
 }
 
 static test_result
@@ -225,11 +243,11 @@ compare_test(testcase& test, const Xapian::Document& doc, const string& file)
 int
 main(int argc, char** argv)
 {
-    Xapian::Database db;
     test_result result = PASS;
     if (argc <= 1)
 	return 1;
-    db.add_database(Xapian::Database(argv[1]));
+
+    Xapian::Database db(argv[1]);
 
     index_test();
     for (auto t = db.allterms_begin("U"); t != db.allterms_end("U"); ++t) {
@@ -237,6 +255,9 @@ main(int argc, char** argv)
 	string url(term, 2);
 	Xapian::PostingIterator p = db.postlist_begin(term);
 	if (p == db.postlist_end(term)) {
+	    // This shouldn't be possible.
+	    cerr << "Term " << term << " doesn't index anything?!\n";
+	    result = FAIL;
 	    continue;
 	}
 	Xapian::docid did = *p;
@@ -249,8 +270,15 @@ main(int argc, char** argv)
 		result = FAIL;
 	    else if (result == PASS && individual_result == SKIP)
 		result = SKIP;
+	    tests.erase(iter);
 	}
     }
+
+    for (auto t : tests) {
+	cerr << "Testcase for URL " << t.first << " wasn't exercised\n";
+	result = FAIL;
+    }
+
     // exit status of 77 to denote a skipped test (standard for automake)
     if (result == PASS)
 	return 0;

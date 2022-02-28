@@ -2,6 +2,7 @@
  * @brief Extract text and metadata using poppler.
  */
 /* Copyright (C) 2019 Bruno Baruffaldi
+ * Copyright (C) 2022 Olly Betts
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -23,28 +24,15 @@
 #include "handler.h"
 #include "str.h"
 
-#include <poppler/cpp/poppler-document.h>
-#include <poppler/cpp/poppler-page.h>
+#include <poppler/glib/poppler-document.h>
+#include <poppler/glib/poppler-page.h>
 
 using namespace std;
-using namespace poppler;
 
-static string
-text_to_utf8(const ustring& x)
+static inline void
+assign_if_nonnull(string& v, gchar* s)
 {
-    byte_array buf = x.to_utf8();
-    string text(buf.data(), buf.size());
-    return text;
-}
-
-static void
-clear_text(string& text)
-{
-    int i, j, sz = text.length();
-    for (j = i = 0; i < sz; ++i)
-	if (!isspace(text[i]) || (i && !isspace(text[i - 1])))
-	    text[j++] = text[i];
-    text.resize(j);
+    if (s) v = s;
 }
 
 bool
@@ -58,29 +46,60 @@ extract(const string& filename,
 	string& error)
 {
     try {
-	document * doc = document::load_from_file(filename);
+	GError* e;
+#if GLIB_CHECK_VERSION(2,58,0)
+	gchar* abs_filename = g_canonicalize_filename(filename.c_str(), NULL);
+#else
+	gchar* abs_filename;
+	if (g_path_is_absolute(filename.c_str())) {
+	    abs_filename = g_strdup(filename.c_str());
+	} else {
+	    gchar* cwd = g_get_current_dir();
+	    abs_filename = g_build_filename(cwd, filename.c_str(), NULL);
+	    g_free(cwd);
+	}
+#endif
+	gchar* uri = g_filename_to_uri(abs_filename, NULL, &e);
+	g_free(abs_filename);
+	if (!uri) {
+	    error = "Poppler Error: g_filename_to_uri() failed: ";
+	    error += e->message;
+	    g_error_free(e);
+	    return false;
+	}
 
+	PopplerDocument* doc = poppler_document_new_from_file(uri, NULL, &e);
+	g_free(uri);
 	if (!doc) {
-	    error = "Poppler Error: Failed to read pdf file";
+	    error = "Poppler Error: Failed to read pdf file: ";
+	    error += e->message;
+	    g_error_free(e);
 	    return false;
 	}
 
 	// Extracting PDF metadata
-	author = text_to_utf8(doc->info_key("Author"));
-	title = text_to_utf8(doc->info_key("Title"));
-	keywords = text_to_utf8(doc->info_key("Keywords"));
-	int npages = doc->pages();
+	assign_if_nonnull(author, poppler_document_get_author(doc));
+	assign_if_nonnull(title, poppler_document_get_title(doc));
+	assign_if_nonnull(keywords, poppler_document_get_keywords(doc));
+	time_t datetime = poppler_document_get_creation_date(doc);
+	if (datetime != time_t(-1)) {
+	    // FIXME: Add support for this to the worker protocol.
+	}
+	int npages = poppler_document_get_n_pages(doc);
 	pages = str(npages);
 	// Extracting text from PDF file
 	for (int i = 0; i < npages; ++i) {
-	    page *p(doc->create_page(i));
-	    if (!p) {
+	    PopplerPage* page = poppler_document_get_page(doc, i);
+	    if (!page) {
 		error = "Poppler Error: Failed to create page " + str(i);
+		g_object_unref(page);
+		g_object_unref(doc);
 		return false;
 	    }
-	    dump += text_to_utf8(p->text());
+	    dump += poppler_page_get_text(page);
+	    g_object_unref(page);
 	}
-	clear_text(dump);
+	g_object_unref(doc);
     } catch (...) {
 	error = "Poppler threw an exception";
 	return false;

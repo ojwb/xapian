@@ -41,7 +41,11 @@ namespace Xapian {
 class Database;
 class Stem;
 
-/// Base class for stop-word decision functor.
+/** Abstract base class for stop-word decision functor.
+ *
+ *  If you just want to use an existing stopword list, see
+ *  Xapian::SimpleStopper.
+ */
 class XAPIAN_VISIBILITY_DEFAULT Stopper
     : public Xapian::Internal::opt_intrusive_base {
     /// Don't allow assignment.
@@ -101,12 +105,16 @@ class XAPIAN_VISIBILITY_DEFAULT SimpleStopper : public Stopper {
 
     /** Initialise from a pair of iterators.
      *
-     * Xapian includes stop list files for many languages. You can initialise from a file like that:
-     * @code
-     * ifstream words("stopwords/english/stop.txt");
-     * Xapian::SimplerStopper stopper(istream_iterator<string>(words), istream_iterator<string>());
-     * @endcode
+     *  Xapian includes stopword list files for many languages.  You can
+     *  initialise from a file like so:
+     *  @code
+     *  std::ifstream words("stopwords/english/stop.txt");
+     *  Xapian::SimplerStopper stopper(std::istream_iterator<std::string>(words), std::istream_iterator<std::string>());
+     *  @endcode
      *
+     *  In bindings for other languages it isn't possible to pass a C++
+     *  iterator pair, so instead this constructor is wrapped to allow
+     *  passing a filename.
      */
     template<class Iterator>
     SimpleStopper(Iterator begin, Iterator end) : stop_words(begin, end) { }
