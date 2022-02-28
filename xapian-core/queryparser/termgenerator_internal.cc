@@ -300,7 +300,13 @@ TermGenerator::Internal::index_text(Utf8Iterator itor, termcount wdf_inc,
     }
 
     parse_terms(itor, cjk_flags, with_positions,
-	[=, this](const string & term, bool positional, size_t) {
+	[=
+#if __cplusplus >= 201907L
+// C++20 no longer supports implicit `this` in lambdas but older C++ versions
+// don't allow `this` here.
+	, this
+#endif
+	](const string & term, bool positional, size_t) {
 	    if (term.size() > max_word_length) return true;
 
 	    if (current_stop_mode == TermGenerator::STOP_ALL &&
