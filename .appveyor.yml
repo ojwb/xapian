@@ -56,11 +56,11 @@ environment:
   - TOOLCHAIN: msvc
     platform: x86
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-    VCVARS_BAT: "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars32.bat\""
+    VCVARS_BAT: "\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars32.bat\""
   - TOOLCHAIN: msvc
     platform: x64
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-    VCVARS_BAT: "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat\""
+    VCVARS_BAT: "\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat\""
 matrix:
   allow_failures:
   # mingw build currently sometimes fails due to trying to delete open files.
@@ -69,6 +69,7 @@ matrix:
   - TOOLCHAIN: mingw
     platform: x86
 install:
+  - if defined VCVARS_BAT call %VCVARS_BAT%
   - ps: >-
       $env:CONFIGOPTS="--disable-documentation"
   - ps: >-
