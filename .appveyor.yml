@@ -69,7 +69,6 @@ matrix:
   - TOOLCHAIN: mingw
     platform: x86
 install:
-  - if defined VCVARS_BAT call %VCVARS_BAT%
   - ps: >-
       $env:CONFIGOPTS="--disable-documentation"
   - ps: >-
