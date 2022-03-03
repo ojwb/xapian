@@ -17,7 +17,7 @@ environment:
   - TOOLCHAIN: mingw64
     platform: x64
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-  Fails trying to run apitest.exe etc for unknown reasons.
+# Fails trying to run apitest.exe etc for unknown reasons.
    - TOOLCHAIN: cygwin
      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
      platform: x86
