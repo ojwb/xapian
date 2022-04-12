@@ -227,6 +227,7 @@ AC_TYPE_MODE_T
 
 dnl Check for perl (needed to generate some sources and documentation).
 AC_PATH_PROG([PERL], [perl], [])
+AC_ARG_VAR([PERL], [Perl interpreter])
 if test x$USE_MAINTAINER_MODE = xyes; then
   test -z "$PERL" && AC_MSG_ERROR([perl is required in maintainer mode])
 fi
@@ -244,11 +245,13 @@ AM_CONDITIONAL([MAINTAINER_NO_DOCS], [test x"$USE_MAINTAINER_MODE$enable_documen
 if test x"$enable_documentation" = xyes ; then
   dnl Check for help2man. (Needed to make man pages from "--help" output).
   AC_PATH_PROG([HELP2MAN], [help2man], [])
+  AC_ARG_VAR([HELP2MAN], [help2man man page generator])
   test -z "$HELP2MAN" && AC_MSG_ERROR([help2man is required to build documentation])
 
   dnl Check for rst2html. (Needed to make HTML from reStructuredText format)
   dnl Also look for rst2html.py, which archlinux reportedly installs it as.
   AC_PATH_PROGS([RST2HTML], [rst2html rst2html.py], [])
+  AC_ARG_VAR([RST2HTML], [reST to HTML convertor])
   test -z "$RST2HTML" && AC_MSG_ERROR([rst2html is required to build documentation (try package python-docutils)])
 fi
 
@@ -273,6 +276,7 @@ esac
 
 if test -n "$use_valgrind_if_non_empty" ; then
   AC_PATH_PROG([VALGRIND], [valgrind], [])
+  AC_ARG_VAR([VALGRIND], [debugging tool (optionally used by test harness)])
   if test -n "$VALGRIND" ; then
     dnl Check that the installed valgrind version works, and supports the
     dnl options we use.  This means we won't try to use valgrind < 3.3.0
@@ -316,7 +320,42 @@ dnl If EATMYDATA is set to an empty value, then skip this check and don't use
 dnl eatmydata.
 if test -n "${EATMYDATA-unset}" ; then
   AC_PATH_PROG([EATMYDATA], [eatmydata], [])
+  AC_ARG_VAR([EATMYDATA], [wrapper to disable fsync (optionally used by test harness)])
 fi
+
+dnl Checks for library functions.
+AC_FUNC_STRERROR_R
+
+AC_CACHE_CHECK([for sys_errlist and sys_nerr], xo_cv_sys_errlist_and_sys_nerr, [
+  AC_LINK_IFELSE([AC_LANG_PROGRAM(
+dnl On Linux, sys_errlist and sys_nerr need <stdio.h>, though the man page
+dnl says <errno.h>.  The man page seems to match other platforms such as
+dnl NetBSD, so include both headers to ensure we get them.
+[[#include <errno.h>
+#include <stdio.h>]],
+[[  printf("%s", sys_errlist[sys_nerr - 1]);]])],
+  [ xo_cv_sys_errlist_and_sys_nerr=yes ],
+  [ xo_cv_sys_errlist_and_sys_nerr=no ])
+])
+if test "x$xo_cv_sys_errlist_and_sys_nerr" = "xyes" ; then
+  AC_DEFINE([HAVE_SYS_ERRLIST_AND_SYS_NERR], [1],[Define if you have 'sys_errlist' and 'sys_nerr'])
+fi
+
+AC_CACHE_CHECK([for _sys_errlist and _sys_nerr], xo_cv__sys_errlist_and__sys_nerr, [
+  AC_LINK_IFELSE([AC_LANG_PROGRAM(
+[[#include <errno.h>
+#include <stdio.h>]],
+[[  printf("%s", _sys_errlist[_sys_nerr - 1]);]])],
+  [ xo_cv__sys_errlist_and__sys_nerr=yes ],
+  [ xo_cv__sys_errlist_and__sys_nerr=no
+  ])
+])
+if test "x$xo_cv__sys_errlist_and__sys_nerr" = "xyes" ; then
+  AC_DEFINE([HAVE__SYS_ERRLIST_AND__SYS_NERR], [1],[Define if you have '_sys_errlist' and '_sys_nerr'])
+fi
+
+dnl GNU-specific replacement for sys_errlist and sys_nerr.
+AC_CHECK_FUNCS([strerrordesc_np])
 
 dnl libsvm is required.
 AC_CHECK_HEADER([libsvm/svm.h], [], AC_MSG_ERROR([libsvm required but libsvm/svm.h not found]), [ ])
@@ -444,12 +483,6 @@ if test yes = "$GXX"; then
       gxx_version=`echo __GNUC__.__GNUC_MINOR__.__GNUC_PATCHLEVEL__|$CXX -E -|sed '/^#/d;s/ //g'`
       AC_MSG_RESULT([GCC $gxx_version])
 
-      case $gxx_version in
-      [[0123]].*|4.[[0-7]].*)
-	AC_MSG_ERROR([Xapian requires GCC 4.8 or later])
-	;;
-      esac
-
       dnl -Wundef was supported by g++ 3.0.
       dnl
       dnl -Wlogical-op and -Wmissing-declarations (for C++) were added in
@@ -459,6 +492,20 @@ if test yes = "$GXX"; then
       dnl
       dnl All the other options were supported by g++ 2.95.
       AM_CXXFLAGS="$AM_CXXFLAGS -Wall -W -Wredundant-decls -Wpointer-arith -Wcast-qual -Wcast-align -Wformat-security -fno-gnu-keywords -Wundef -Woverloaded-virtual -Wstrict-null-sentinel -Wshadow -Wstrict-overflow=1 -Wlogical-op -Wmissing-declarations -Wdouble-promotion"
+
+      case $gxx_version in
+      [[0123]].*|4.[[0-7]].*)
+	AC_MSG_ERROR([Xapian requires GCC 4.8 or later])
+	;;
+      4.*|5.*)
+	;;
+      6.*)
+	AM_CXXFLAGS="$AM_CXXFLAGS -Wduplicated-cond"
+	;;
+      *)
+	AM_CXXFLAGS="$AM_CXXFLAGS -Wduplicated-cond -Wduplicated-branches"
+	;;
+      esac
 
       dnl FIXME:
       dnl -Wold-style-cast is interesting, but triggers for macros from

@@ -166,8 +166,8 @@ class Database::Internal : public Xapian::Internal::intrusive_base {
 
     /** Return the frequency of a given value slot.
      *
-     *  This is the number of documents which have a (non-empty) value
-     *  stored in the slot.
+     *  This is the number of documents which have a (non-empty) value stored
+     *  in the slot.
      *
      *  @param slot The value slot to examine.
      */
@@ -175,8 +175,8 @@ class Database::Internal : public Xapian::Internal::intrusive_base {
 
     /** Get a lower bound on the values stored in the given value slot.
      *
-     *  If the lower bound isn't available for the given database type,
-     *  this will return the lowest possible bound - the empty string.
+     *  If there are no values stored in the given value slot, this will return
+     *  an empty string.
      *
      *  @param slot The value slot to examine.
      */
@@ -184,11 +184,17 @@ class Database::Internal : public Xapian::Internal::intrusive_base {
 
     /** Get an upper bound on the values stored in the given value slot.
      *
+     *  If there are no values stored in the given value slot, this will return
+     *  an empty string.
+     *
      *  @param slot The value slot to examine.
      */
     virtual std::string get_value_upper_bound(valueno slot) const = 0;
 
-    /// Get a lower bound on the length of a document in this DB.
+    /** Get a lower bound on the length of a document in this DB.
+     *
+     *  This bound does not include any zero-length documents.
+     */
     virtual termcount get_doclength_lower_bound() const = 0;
 
     /// Get an upper bound on the length of a document in this DB.
@@ -455,9 +461,9 @@ class Database::Internal : public Xapian::Internal::intrusive_base {
     /** Get backend information about this database.
      *
      *  @param path	If non-NULL, and set the pointed to string to the file
-     *			path of this database (or if to some string describing
+     *			path of this database (or to some string describing
      *			the database in a backend-specified format if "path"
-     *			isn't a concept which  make sense).
+     *			isn't a concept which makes sense).
      *
      *  @return	A constant indicating the backend type.
      */

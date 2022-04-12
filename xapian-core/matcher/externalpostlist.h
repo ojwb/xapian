@@ -1,7 +1,7 @@
 /** @file
  * @brief Return document ids from an external source.
  */
-/* Copyright 2008,2009,2011,2019 Olly Betts
+/* Copyright 2008-2022 Olly Betts
  * Copyright 2009 Lemur Consulting Ltd
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,7 @@ namespace Xapian {
     class PostingSource;
 }
 
+class EstimateOp;
 class PostListTree;
 
 class ExternalPostList : public PostList {
@@ -48,20 +49,18 @@ class ExternalPostList : public PostList {
   public:
     /** Constructor.
      *
+     *  @param estimate_op		    Object to report min/est/max to.
      *  @param max_weight_cached_flag_ptr   Pointer to flag to clear when max
      *					    weight changes.
      */
     ExternalPostList(const Xapian::Database & db,
 		     Xapian::PostingSource *source_,
+		     EstimateOp* estimate_op,
 		     double factor_,
 		     bool* max_weight_cached_flag_ptr,
 		     Xapian::doccount shard_index);
 
-    Xapian::doccount get_termfreq_min() const;
-
-    Xapian::doccount get_termfreq_est() const;
-
-    Xapian::doccount get_termfreq_max() const;
+    Xapian::doccount get_termfreq() const;
 
     Xapian::docid get_docid() const;
 

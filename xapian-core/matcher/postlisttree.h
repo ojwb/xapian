@@ -73,9 +73,16 @@ class PostListTree {
 	  vsdoc(vsdoc_),
 	  db(db_) {}
 
-    ~PostListTree() {
+    /// Delete all the PostList objects.
+    void delete_postlists() {
 	for (Xapian::doccount i = 0; i != n_shards; ++i)
 	    delete shard_pls[i];
+	n_shards = 0;
+	shard_pls = nullptr;
+    }
+
+    ~PostListTree() {
+	delete_postlists();
     }
 
     /** Return pointer to flag to set to false to invalidate cached max weight.
@@ -117,30 +124,6 @@ class PostListTree {
 
     void force_recalc() {
 	use_cached_max_weight = false;
-    }
-
-    Xapian::doccount get_termfreq_min() const {
-	Xapian::doccount result = 0;
-	for (Xapian::doccount i = 0; i != n_shards; ++i)
-	    if (shard_pls[i])
-		result += shard_pls[i]->get_termfreq_min();
-	return result;
-    }
-
-    Xapian::doccount get_termfreq_max() const {
-	Xapian::doccount result = 0;
-	for (Xapian::doccount i = 0; i != n_shards; ++i)
-	    if (shard_pls[i])
-		result += shard_pls[i]->get_termfreq_max();
-	return result;
-    }
-
-    Xapian::doccount get_termfreq_est() const {
-	Xapian::doccount result = 0;
-	for (Xapian::doccount i = 0; i != n_shards; ++i)
-	    if (shard_pls[i])
-		result += shard_pls[i]->get_termfreq_est();
-	return result;
     }
 
     Xapian::docid get_docid() const {

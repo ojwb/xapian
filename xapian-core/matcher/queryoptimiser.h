@@ -81,6 +81,15 @@ class QueryOptimiser {
 	if (hint_owned) delete hint;
     }
 
+    template<typename... Args>
+    EstimateOp* add_op(Args... args) {
+	return localsubmatch.add_op(args...);
+    }
+
+    void pop_op() {
+	localsubmatch.pop_op();
+    }
+
     void inc_total_subqs() { ++total_subqs; }
 
     Xapian::termcount get_total_subqs() const { return total_subqs; }
@@ -104,7 +113,7 @@ class QueryOptimiser {
     PostList * make_synonym_postlist(PostList * pl,
 				     double factor,
 				     bool wdf_disjoint) {
-	return localsubmatch.make_synonym_postlist(matcher, pl, this, factor,
+	return localsubmatch.make_synonym_postlist(matcher, pl, factor,
 						   wdf_disjoint);
     }
 
@@ -132,6 +141,9 @@ class QueryOptimiser {
 	    }
 	    delete pl;
 	}
+	// Remove the EstimateOp (and any sub-ops) which we generated for this
+	// PostList.
+	localsubmatch.pop_op();
     }
 
     bool need_wdf_for_compound_weight() const {

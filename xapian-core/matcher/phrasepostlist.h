@@ -25,6 +25,7 @@
 #include "selectpostlist.h"
 #include <vector>
 
+class EstimateOp;
 class PostListTree;
 
 /** Postlist which matches a phrase using positional information.
@@ -52,6 +53,7 @@ class PhrasePostList : public SelectPostList {
 
   public:
     PhrasePostList(PostList *source_,
+		   EstimateOp* estimate_op_,
 		   Xapian::termpos window_,
 		   const std::vector<PostList*>::const_iterator &terms_begin,
 		   const std::vector<PostList*>::const_iterator &terms_end,
@@ -61,7 +63,7 @@ class PhrasePostList : public SelectPostList {
 
     Xapian::termcount get_wdf() const;
 
-    Xapian::doccount get_termfreq_est() const;
+    Xapian::doccount get_termfreq() const;
 
     TermFreqs get_termfreq_est_using_stats(
 	const Xapian::Weight::Internal & stats) const;
