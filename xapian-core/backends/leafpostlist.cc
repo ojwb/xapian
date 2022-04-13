@@ -29,6 +29,7 @@
 #include "debuglog.h"
 
 #include <algorithm>
+#include <limits>
 
 using namespace std;
 
