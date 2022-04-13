@@ -33,7 +33,7 @@
 
 #if !HAVE_DECL___BUILTIN_ADD_OVERFLOW
 # if HAVE_DECL__ADDCARRY_U32 || HAVE_DECL__ADDCARRY_U64
-#  include <immintrin.h>
+#  include <intrin.h>
 # endif
 #endif
 

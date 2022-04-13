@@ -465,7 +465,7 @@ AC_CHECK_DECLS([__builtin_popcount(unsigned),
 AC_CHECK_DECLS([__popcnt, __popcnt64], [], [], [#include <intrin.h>])
 AC_CHECK_DECLS([_addcarry_u32(unsigned char, unsigned, unsigned, unsigned*),
 		_addcarry_u64(unsigned char, unsigned __int64, unsigned __int64, unsigned __int64*)],
-	       [], [], [#include <immintrin.h>])
+	       [], [], [#include <intrin.h>])
 
 dnl Check for poll().
 AC_CHECK_FUNCS([poll])
