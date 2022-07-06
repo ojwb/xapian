@@ -15,10 +15,10 @@ install:
       $env:PATH="C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin;C:\msys64\usr\bin;$env:PATH"
   - ps: >-
       $env:CONFIGOPTS+=" --host=x86_64-w64-mingw32"
-  - bash -c 'pacman -Sy --noconfirm --needed base-devel doxygen mingw-w64-x86_64-toolchain mingw-w64-x86_64-doxygen mingw-w64-x86_64-python-pip mingw-w64-x86_64-graphviz zlib-devel'
+  - bash -c 'pacman -Sy --noconfirm --needed base-devel doxygen mingw-w64-x86_64-toolchain zlib-devel'
   - bash -c 'time ./bootstrap --download-tools=ifneeded --fetch-url-command="curl -L" xapian-core'
 build_script:
-  - bash -c 'time ./configure $CONFIGOPTS --disable-backend-honey --with-go'
+  - bash -c 'time ./configure $CONFIGOPTS --disable-documentation --disable-backend-honey --with-go || cat config.log'
 test_script:
   - bash -c 'echo dummy'
 
