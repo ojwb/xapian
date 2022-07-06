@@ -14,6 +14,12 @@ install:
       $env:PATH="C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin;C:\msys64\usr\bin;$env:PATH"
   - ps: >-
       $env:CONFIGOPTS+=" --host=x86_64-w64-mingw32"
+  - bash -c 'rm -rf /var/lib/pacman/sync/* /etc/pacman.d/gnupg'
+  - bash -c 'pacman-key --init'
+  - bash -c 'pacman-key --populate msys2'
+  - bash -c 'curl -O https://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz'
+  - bash -c 'curl -O https://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig'
+  - bash -c 'pacman -U --config <(echo) msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz'
   - bash -c 'pacman -Syyu || pacman -Syyu || true'
   - bash -c 'pacman -Sy --noconfirm --needed base-devel doxygen mingw-w64-x86_64-toolchain mingw-w64-x86_64-doxygen mingw-w64-x86_64-python-pip mingw-w64-x86_64-graphviz zlib-devel'
   - bash -c 'time ./bootstrap --download-tools=never --fetch-url-command="curl -L" xapian-core'
