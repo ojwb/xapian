@@ -16,7 +16,7 @@ install:
   - ps: >-
       $env:CONFIGOPTS+=" --host=x86_64-w64-mingw32"
   - bash -c 'pacman -Sy --noconfirm --needed base-devel doxygen mingw-w64-x86_64-toolchain mingw-w64-x86_64-doxygen mingw-w64-x86_64-python-pip mingw-w64-x86_64-graphviz zlib-devel'
-  - bash -c 'time ./bootstrap --download-tools=never --fetch-url-command="curl -L" xapian-core'
+  - bash -c 'time ./bootstrap --fetch-url-command="curl -L" xapian-core'
 build_script:
   - bash -c 'time ./configure $CONFIGOPTS --disable-backend-honey --with-go'
 test_script:
