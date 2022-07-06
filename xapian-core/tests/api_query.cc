@@ -1,7 +1,7 @@
 /** @file
  * @brief Query-related tests.
  */
-/* Copyright (C) 2008,2009,2012,2013,2015,2016,2017,2018,2019 Olly Betts
+/* Copyright (C) 2008-2022 Olly Betts
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -82,6 +82,26 @@ DEFINE_TESTCASE(matchnothing1, !backend) {
     Xapian::Query q2(Xapian::Query::OP_AND,
 		     Xapian::Query("foo"), Xapian::Query::MatchNothing);
     TEST_STRINGS_EQUAL(q2.get_description(), "Query()");
+
+    Xapian::Query q3(Xapian::Query::OP_AND,
+		     Xapian::Query::MatchNothing, Xapian::Query("foo"));
+    TEST_STRINGS_EQUAL(q2.get_description(), "Query()");
+
+    Xapian::Query q4(Xapian::Query::OP_AND_MAYBE,
+		     Xapian::Query("foo"), Xapian::Query::MatchNothing);
+    TEST_STRINGS_EQUAL(q4.get_description(), "Query(foo)");
+
+    Xapian::Query q5(Xapian::Query::OP_AND_MAYBE,
+		     Xapian::Query::MatchNothing, Xapian::Query("foo"));
+    TEST_STRINGS_EQUAL(q5.get_description(), "Query()");
+
+    Xapian::Query q6(Xapian::Query::OP_AND_NOT,
+		     Xapian::Query("foo"), Xapian::Query::MatchNothing);
+    TEST_STRINGS_EQUAL(q6.get_description(), "Query(foo)");
+
+    Xapian::Query q7(Xapian::Query::OP_AND_NOT,
+		     Xapian::Query::MatchNothing, Xapian::Query("foo"));
+    TEST_STRINGS_EQUAL(q7.get_description(), "Query()");
 }
 
 DEFINE_TESTCASE(overload1, !backend) {
@@ -317,10 +337,10 @@ DEFINE_TESTCASE(xor3, backend) {
     Xapian::Database db = get_database("apitest_simpledata");
 
     static const char * const subqs[] = {
-	"hack", "which", "paragraph", "is", "return"
+	"this", "hack", "which", "paragraph", "is", "return", "this", "this"
     };
     // Document where the subqueries run out *does* match XOR:
-    Xapian::Query q(Xapian::Query::OP_XOR, subqs, subqs + 5);
+    Xapian::Query q(Xapian::Query::OP_XOR, subqs + 1, subqs + 6);
     Xapian::Enquire enq(db);
     enq.set_query(q);
     Xapian::MSet mset = enq.get_mset(0, 10);
@@ -331,7 +351,7 @@ DEFINE_TESTCASE(xor3, backend) {
     TEST_EQUAL(*mset[2], 3);
 
     // Document where the subqueries run out *does not* match XOR:
-    q = Xapian::Query(Xapian::Query::OP_XOR, subqs, subqs + 4);
+    q = Xapian::Query(Xapian::Query::OP_XOR, subqs + 1, subqs + 5);
     enq.set_query(q);
     mset = enq.get_mset(0, 10);
 
@@ -340,6 +360,32 @@ DEFINE_TESTCASE(xor3, backend) {
     TEST_EQUAL(*mset[1], 4);
     TEST_EQUAL(*mset[2], 2);
     TEST_EQUAL(*mset[3], 3);
+
+    // Tests that XOR subqueries that match all docs are handled well when
+    // calculating min/est/max match counts.
+    q = Xapian::Query(Xapian::Query::OP_XOR, subqs, subqs + 2);
+    enq.set_query(q);
+    mset = enq.get_mset(0, 0);
+    TEST_EQUAL(mset.size(), 0);
+    TEST_EQUAL(mset.get_matches_lower_bound(), 5);
+    TEST_EQUAL(mset.get_matches_estimated(), 5);
+    TEST_EQUAL(mset.get_matches_upper_bound(), 5);
+
+    q = Xapian::Query(Xapian::Query::OP_XOR, subqs + 5, subqs + 7);
+    enq.set_query(q);
+    mset = enq.get_mset(0, 0);
+    TEST_EQUAL(mset.size(), 0);
+    TEST_EQUAL(mset.get_matches_lower_bound(), 5);
+    TEST_EQUAL(mset.get_matches_estimated(), 5);
+    TEST_EQUAL(mset.get_matches_upper_bound(), 5);
+
+    q = Xapian::Query(Xapian::Query::OP_XOR, subqs + 5, subqs + 8);
+    enq.set_query(q);
+    mset = enq.get_mset(0, 0);
+    TEST_EQUAL(mset.size(), 0);
+    TEST_EQUAL(mset.get_matches_lower_bound(), 1);
+    TEST_EQUAL(mset.get_matches_estimated(), 1);
+    TEST_EQUAL(mset.get_matches_upper_bound(), 1);
 }
 
 /// Check encoding of non-UTF8 terms in query descriptions.
@@ -1200,6 +1246,24 @@ DEFINE_TESTCASE(emptynot1, backend) {
     enq.set_query(query);
     Xapian::MSet mset = enq.get_mset(0, 10);
     TEST_EQUAL(mset.size(), 1);
+    // Essentially the same test but with a term which doesn't match anything
+    // on the right side.
+    query = Xapian::Query("document") & Xapian::Query("api");
+    query = Xapian::Query(query.OP_AND_NOT,
+			  query,
+			  Xapian::Query("nosuchterm"));
+    enq.set_query(query);
+    mset = enq.get_mset(0, 10);
+    TEST_EQUAL(mset.size(), 1);
+    // Essentially the same test but with a wildcard which doesn't match
+    // anything on right side.
+    query = Xapian::Query("document") & Xapian::Query("api");
+    query = Xapian::Query(query.OP_AND_NOT,
+			  query,
+			  Xapian::Query(query.OP_WILDCARD, "nosuchwildcard"));
+    enq.set_query(query);
+    mset = enq.get_mset(0, 10);
+    TEST_EQUAL(mset.size(), 1);
 }
 
 // Similar case to emptynot1 but for OP_AND_MAYBE.  This case wasn't failing,
@@ -1217,6 +1281,64 @@ DEFINE_TESTCASE(emptymaybe1, backend) {
     enq.set_query(query);
     Xapian::MSet mset = enq.get_mset(0, 10);
     TEST_EQUAL(mset.size(), 1);
+    // Essentially the same test but with a term which doesn't match anything
+    // on the right side.
+    query = Xapian::Query("document") & Xapian::Query("api");
+    query = Xapian::Query(query.OP_AND_MAYBE,
+			  query,
+			  Xapian::Query("nosuchterm"));
+    enq.set_query(query);
+    mset = enq.get_mset(0, 10);
+    TEST_EQUAL(mset.size(), 1);
+    // Essentially the same test but with a wildcard which doesn't match
+    // anything on right side.
+    query = Xapian::Query("document") & Xapian::Query("api");
+    query = Xapian::Query(query.OP_AND_MAYBE,
+			  query,
+			  Xapian::Query(query.OP_WILDCARD, "nosuchwildcard"));
+    enq.set_query(query);
+    mset = enq.get_mset(0, 10);
+    TEST_EQUAL(mset.size(), 1);
+}
+
+// Regression test for optimisation bug on git master before 1.5.0.
+// The query optimiser ignored the NOT part when the LHS contained
+// a MatchAll.
+DEFINE_TESTCASE(allnot1, backend) {
+    Xapian::Database db(get_database("apitest_simpledata"));
+    Xapian::Enquire enq(db);
+    Xapian::Query query;
+    // This case wasn't a problem, but would have been if the index-all term
+    // was handled like MatchAll by this optimisation (which it might be in
+    // future).
+    query = Xapian::Query{query.OP_AND_NOT,
+			  Xapian::Query("this"),
+			  Xapian::Query("the")};
+    enq.set_query(0 * query);
+    Xapian::MSet mset = enq.get_mset(0, 10);
+    TEST_EQUAL(mset.size(), 2);
+    query = Xapian::Query{query.OP_AND_NOT,
+			  query.MatchAll,
+			  Xapian::Query("the")};
+    enq.set_query(0 * query);
+    mset = enq.get_mset(0, 10);
+    TEST_EQUAL(mset.size(), 2);
+}
+
+// Regression test for optimisation bug on git master before 1.5.0.
+// The query optimiser didn't handle the RHS of AND_MAYBE not matching
+// anything.
+DEFINE_TESTCASE(emptymayberhs1, backend) {
+    Xapian::Database db(get_database("apitest_simpledata"));
+    Xapian::Enquire enq(db);
+    // The RHS doesn't match anything, which now gives a NULL PostList*, and
+    // we were trying to dereference that in this case.
+    Xapian::Query query(Xapian::Query::OP_AND_MAYBE,
+			Xapian::Query("document"),
+			Xapian::Query("xyzzy"));
+    enq.set_query(query);
+    Xapian::MSet mset = enq.get_mset(0, 10);
+    TEST_EQUAL(mset.size(), 2);
 }
 
 DEFINE_TESTCASE(phraseweightcheckbug1, backend) {
@@ -1241,5 +1363,43 @@ DEFINE_TESTCASE(orphanedhint1, backend) {
     tout << query.get_description() << '\n';
     enq.set_query(query);
     Xapian::MSet mset = enq.get_mset(0, 3);
+    TEST_EQUAL(mset.size(), 1);
+}
+
+// Regression test for bugs in initial implementation of query optimisation
+// based on docid range information.
+DEFINE_TESTCASE(docidrangebugs1, backend) {
+    Xapian::Database db(get_database("apitest_simpledata"));
+    Xapian::Enquire enq(db);
+
+    // This triggered a bug in BoolOrPostList::get_docid_range().
+    Xapian::Query query(Xapian::Query::OP_FILTER,
+			Xapian::Query("typo"),
+			Xapian::Query("rubbish") | Xapian::Query("this"));
+    enq.set_query(query);
+    Xapian::MSet mset = enq.get_mset(0, 1);
+    TEST_EQUAL(mset.size(), 1);
+
+    Xapian::Query query2(Xapian::Query::OP_FILTER,
+			 Xapian::Query("typo"),
+			 Xapian::Query("this") | Xapian::Query("rubbish"));
+    enq.set_query(query2);
+    mset = enq.get_mset(0, 1);
+    TEST_EQUAL(mset.size(), 1);
+
+    // Alternative reproducer where the first term doesn't match any
+    // documents.
+    Xapian::Query query3(Xapian::Query::OP_FILTER,
+			 Xapian::Query("typo"),
+			 Xapian::Query("nosuchterm") | Xapian::Query("this"));
+    enq.set_query(query3);
+    mset = enq.get_mset(0, 1);
+    TEST_EQUAL(mset.size(), 1);
+
+    Xapian::Query query4(Xapian::Query::OP_FILTER,
+			 Xapian::Query("typo"),
+			 Xapian::Query("this") | Xapian::Query("nosuchterm"));
+    enq.set_query(query4);
+    mset = enq.get_mset(0, 1);
     TEST_EQUAL(mset.size(), 1);
 }

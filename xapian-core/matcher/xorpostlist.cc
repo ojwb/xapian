@@ -21,7 +21,7 @@
 
 #include <config.h>
 
-#include "multixorpostlist.h"
+#include "xorpostlist.h"
 
 #include "debuglog.h"
 #include "omassert.h"
@@ -30,7 +30,7 @@
 
 using namespace std;
 
-MultiXorPostList::~MultiXorPostList()
+XorPostList::~XorPostList()
 {
     if (plist) {
 	for (size_t i = 0; i < n_kids; ++i) {
@@ -40,78 +40,16 @@ MultiXorPostList::~MultiXorPostList()
     }
 }
 
-Xapian::doccount
-MultiXorPostList::get_termfreq() const
-{
-    LOGCALL(MATCH, Xapian::doccount, "MultiXorPostList::get_termfreq", NO_ARGS);
-    // We shortcut an empty shard and avoid creating a postlist tree for it.
-    Assert(db_size);
-    // We calculate the estimate assuming independence.  The simplest
-    // way to calculate this seems to be a series of (n_kids - 1) pairwise
-    // calculations, which gives the same answer regardless of the order.
-    double scale = 1.0 / db_size;
-    double P_est = plist[0]->get_termfreq() * scale;
-    for (size_t i = 1; i < n_kids; ++i) {
-	double P_i = plist[i]->get_termfreq() * scale;
-	P_est += P_i - 2.0 * P_est * P_i;
-    }
-    return static_cast<Xapian::doccount>(P_est * db_size + 0.5);
-}
-
-TermFreqs
-MultiXorPostList::get_termfreq_est_using_stats(
-	const Xapian::Weight::Internal & stats) const
-{
-    LOGCALL(MATCH, TermFreqs, "MultiXorPostList::get_termfreq_est_using_stats", stats);
-    // We calculate the estimate assuming independence.  The simplest
-    // way to calculate this seems to be a series of (n_kids - 1) pairwise
-    // calculations, which gives the same answer regardless of the order.
-    TermFreqs freqs(plist[0]->get_termfreq_est_using_stats(stats));
-
-    // Our caller should have ensured this.
-    Assert(stats.collection_size);
-    double scale = 1.0 / stats.collection_size;
-    double P_est = freqs.termfreq * scale;
-    double rtf_scale = 0.0;
-    if (stats.rset_size != 0) {
-	rtf_scale = 1.0 / stats.rset_size;
-    }
-    double Pr_est = freqs.reltermfreq * rtf_scale;
-    // If total_length is 0, cf must always be 0 so cf_scale is irrelevant.
-    double cf_scale = 0.0;
-    if (usual(stats.total_length != 0)) {
-	cf_scale = 1.0 / stats.total_length;
-    }
-    double Pc_est = freqs.collfreq * cf_scale;
-
-    for (size_t i = 1; i < n_kids; ++i) {
-	freqs = plist[i]->get_termfreq_est_using_stats(stats);
-	double P_i = freqs.termfreq * scale;
-	P_est += P_i - 2.0 * P_est * P_i;
-	double Pc_i = freqs.collfreq * cf_scale;
-	Pc_est += Pc_i - 2.0 * Pc_est * Pc_i;
-	// If the rset is empty, Pr_est should be 0 already, so leave
-	// it alone.
-	if (stats.rset_size != 0) {
-	    double Pr_i = freqs.reltermfreq * rtf_scale;
-	    Pr_est += Pr_i - 2.0 * Pr_est * Pr_i;
-	}
-    }
-    RETURN(TermFreqs(Xapian::doccount(P_est * stats.collection_size + 0.5),
-		     Xapian::doccount(Pr_est * stats.rset_size + 0.5),
-		     Xapian::termcount(Pc_est * stats.total_length + 0.5)));
-}
-
 Xapian::docid
-MultiXorPostList::get_docid() const
+XorPostList::get_docid() const
 {
     return did;
 }
 
 double
-MultiXorPostList::get_weight(Xapian::termcount doclen,
-			     Xapian::termcount unique_terms,
-			     Xapian::termcount wdfdocmax) const
+XorPostList::get_weight(Xapian::termcount doclen,
+			Xapian::termcount unique_terms,
+			Xapian::termcount wdfdocmax) const
 {
     Assert(did);
     double result = 0;
@@ -123,15 +61,15 @@ MultiXorPostList::get_weight(Xapian::termcount doclen,
 }
 
 bool
-MultiXorPostList::at_end() const
+XorPostList::at_end() const
 {
     return (did == 0);
 }
 
 double
-MultiXorPostList::recalc_maxweight()
+XorPostList::recalc_maxweight()
 {
-    LOGCALL(MATCH, double, "MultiXorPostList::recalc_maxweight", NO_ARGS);
+    LOGCALL(MATCH, double, "XorPostList::recalc_maxweight", NO_ARGS);
     double max_total = plist[0]->recalc_maxweight();
     double min_max = max_total;
     for (size_t i = 1; i < n_kids; ++i) {
@@ -148,9 +86,9 @@ MultiXorPostList::recalc_maxweight()
 }
 
 PostList *
-MultiXorPostList::next(double w_min)
+XorPostList::next(double w_min)
 {
-    LOGCALL(MATCH, PostList *, "MultiXorPostList::next", w_min);
+    LOGCALL(MATCH, PostList*, "XorPostList::next", w_min);
     Xapian::docid old_did = did;
     did = 0;
     size_t matching_count = 0;
@@ -197,9 +135,9 @@ MultiXorPostList::next(double w_min)
 }
 
 PostList *
-MultiXorPostList::skip_to(Xapian::docid did_min, double w_min)
+XorPostList::skip_to(Xapian::docid did_min, double w_min)
 {
-    LOGCALL(MATCH, PostList *, "MultiXorPostList::skip_to", did_min | w_min);
+    LOGCALL(MATCH, PostList*, "XorPostList::skip_to", did_min | w_min);
     Xapian::docid old_did = did;
     did = 0;
     size_t matching_count = 0;
@@ -246,8 +184,20 @@ MultiXorPostList::skip_to(Xapian::docid did_min, double w_min)
     RETURN(next(w_min));
 }
 
+void
+XorPostList::get_docid_range(Xapian::docid& first, Xapian::docid& last) const
+{
+    plist[0]->get_docid_range(first, last);
+    for (size_t i = 1; i != n_kids; ++i) {
+	Xapian::docid f = 1, l = Xapian::docid(-1);
+	plist[i]->get_docid_range(f, l);
+	first = min(first, f);
+	last = max(last, l);
+    }
+}
+
 string
-MultiXorPostList::get_description() const
+XorPostList::get_description() const
 {
     string desc("(");
     desc += plist[0]->get_description();
@@ -260,7 +210,7 @@ MultiXorPostList::get_description() const
 }
 
 Xapian::termcount
-MultiXorPostList::get_wdf() const
+XorPostList::get_wdf() const
 {
     Xapian::termcount totwdf = 0;
     for (size_t i = 0; i < n_kids; ++i) {
@@ -271,7 +221,7 @@ MultiXorPostList::get_wdf() const
 }
 
 Xapian::termcount
-MultiXorPostList::count_matching_subqs() const
+XorPostList::count_matching_subqs() const
 {
     Xapian::termcount total = 0;
     for (size_t i = 0; i < n_kids; ++i) {

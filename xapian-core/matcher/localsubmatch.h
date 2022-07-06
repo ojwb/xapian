@@ -24,6 +24,7 @@
 
 #include "api/queryinternal.h"
 #include "backends/databaseinternal.h"
+#include "backends/leafpostlist.h"
 #include "estimateop.h"
 #include "weight/weightinternal.h"
 #include "xapian/enquire.h"
@@ -51,7 +52,7 @@ class LocalSubMatch {
     /// The statistics for the collection.
     Xapian::Weight::Internal* total_stats;
 
-    /// The original query before any rearrangement.
+    /// The query.
     Xapian::Query query;
 
     /// The query length (used by some weighting schemes).
@@ -104,23 +105,35 @@ class LocalSubMatch {
     }
 
     void pop_op() {
-	for (unsigned elements_to_pop = 1; elements_to_pop; --elements_to_pop) {
+	unsigned elements_to_pop = 1;
+	do {
 	    EstimateOp* p = estimate_stack;
 	    estimate_stack = estimate_stack->get_next();
 	    // We may need to pop subqueries (recursively!)
 	    elements_to_pop += p->get_subquery_count();
 	    delete p;
-	}
+	} while (--elements_to_pop);
     }
 
     Estimates resolve() {
-	if (rare(!estimate_stack))
-	    return Estimates(0, 0, 0);
+	Estimates result;
+	if (rare(!estimate_stack)) {
+	    result = Estimates(0, 0, 0);
+	    return result;
+	}
 	auto db_size = db->get_doccount();
 	// We shortcut an empty shard and avoid creating a postlist tree for
 	// it so the estimate stack should be empty.
 	Assert(db_size);
-	return estimate_stack->resolve(db_size);
+	Xapian::docid db_first, db_last;
+	db->get_used_docid_range(db_first, db_last);
+	result = estimate_stack->resolve(db_size, db_first, db_last);
+	// After resolve(), estimate_stack should contain exactly one entry.
+	// If not, that probably suggests something went wrong while building
+	// it, or perhaps while resolving it.
+	Assert(estimate_stack);
+	Assert(!estimate_stack->get_next());
+	return result;
     }
 
     /** Fetch and collate statistics.
@@ -147,26 +160,52 @@ class LocalSubMatch {
     }
 
     /// Get PostList.
-    PostList * get_postlist(PostListTree* matcher,
-			    Xapian::termcount* total_subqs_ptr);
+    PostList* get_postlist(PostListTree* matcher,
+			   Xapian::termcount* total_subqs_ptr);
 
     /** Convert a postlist into a synonym postlist.
      */
-    PostList * make_synonym_postlist(PostListTree* pltree,
-				     PostList* or_pl,
-				     double factor,
-				     bool wdf_disjoint);
+    PostList* make_synonym_postlist(PostListTree* pltree,
+				    PostList* or_pl,
+				    double factor,
+				    bool wdf_disjoint,
+				    const TermFreqs& termfreqs);
 
-    PostList * open_post_list(const std::string& term,
-			      Xapian::termcount wqf,
-			      double factor,
-			      bool need_positions,
-			      bool compound_weight,
-			      Xapian::Internal::QueryOptimiser* qopt,
-			      bool lazy_weight);
+    LeafPostList* open_post_list(const std::string& term,
+				 Xapian::termcount wqf,
+				 double factor,
+				 bool need_positions,
+				 bool compound_weight,
+				 Xapian::Internal::QueryOptimiser* qopt,
+				 bool lazy_weight,
+				 TermFreqs* termfreqs);
+
+    void register_lazy_postlist_for_stats(LeafPostList* pl,
+					  TermFreqs* termfreqs) {
+	auto res = total_stats->termfreqs.emplace(pl->get_term(), TermFreqs());
+	if (res.second) {
+	    // Only register if the term isn't already registered - e.g. a term
+	    // from a wildcard expansion which is also present in the query
+	    // verbatim such as: foo* food
+	    res.first->second.termfreq = pl->get_termfreq();
+	    res.first->second.collfreq = pl->get_collfreq();
+#ifdef XAPIAN_ASSERTIONS
+	    Xapian::doccount tf;
+	    Xapian::termcount cf;
+	    db->get_freqs(pl->get_term(), &tf, &cf);
+	    AssertEq(res.first->second.termfreq, tf);
+	    AssertEq(res.first->second.collfreq, cf);
+#endif
+	}
+	if (termfreqs) *termfreqs = res.first->second;
+    }
 
     bool weight_needs_wdf() const {
 	return wt_factory.get_sumpart_needs_wdf_();
+    }
+
+    const Xapian::Weight::Internal* get_stats() const {
+	return total_stats;
     }
 };
 

@@ -31,7 +31,6 @@ jobs:
     - name: Install package dependencies
       run: |
         sudo apt-get update
-        # libtesseract-dev -> "Skipping - The assistant process ./omindex_tesseract failed"
         sudo apt-get install \
             doxygen \
             graphviz \
@@ -48,7 +47,6 @@ jobs:
             python3-dev \
             tcl \
             tcl-dev \
-            libsvm-dev \
             libicu-dev \
             pkg-config \
             libpoppler-glib-dev \
@@ -59,7 +57,10 @@ jobs:
             libarchive-dev \
             libabw-dev \
             libcdr-dev \
-            libextractor-dev
+            libextractor-dev \
+            libmwaw-dev \
+            libtesseract-dev \
+            tesseract-ocr-eng
     - name: bootstrap source tree
       run: ./bootstrap xapian-core xapian-applications/omega swig xapian-bindings xapian-letor
     - name: configure
@@ -91,7 +92,6 @@ jobs:
         sudo apt-get install \
             clang \
             libc++-dev
-        # libtesseract-dev -> "Skipping - The assistant process ./omindex_tesseract failed"
         sudo apt-get install \
             doxygen \
             graphviz \
@@ -104,7 +104,6 @@ jobs:
             libmagic-dev \
             tcl \
             tcl-dev \
-            libsvm-dev \
             libicu-dev \
             pkg-config \
             libpoppler-glib-dev \
@@ -115,7 +114,10 @@ jobs:
             libarchive-dev \
             libabw-dev \
             libcdr-dev \
-            libextractor-dev
+            libextractor-dev \
+            libmwaw-dev \
+            libtesseract-dev \
+            tesseract-ocr-eng
     - name: bootstrap source tree
       run: ./bootstrap xapian-core xapian-applications/omega swig xapian-bindings xapian-letor
     - name: configure
@@ -151,7 +153,6 @@ jobs:
         sudo apt-get install \
             gcc-4.8 \
             g++-4.8
-        # libtesseract-dev FIXME
         sudo apt-get install \
             doxygen \
             graphviz \
@@ -168,7 +169,6 @@ jobs:
             python3-dev \
             tcl \
             tcl-dev \
-            libsvm-dev \
             libpoppler-glib-dev \
             libglib2.0-dev \
             libe-book-dev \
@@ -177,7 +177,10 @@ jobs:
             libarchive-dev \
             libabw-dev \
             libcdr-dev \
-            libextractor-dev
+            libextractor-dev \
+            libmwaw-dev \
+            libtesseract-dev \
+            tesseract-ocr-eng
     - name: bootstrap source tree
       run: ./bootstrap xapian-core xapian-applications/omega swig xapian-bindings xapian-letor
     - name: configure
@@ -253,36 +256,34 @@ jobs:
     - name: Install package dependencies
       run: |
         brew update
-        # libabw seems to have gone?
-        # Workaround collision from mono package to something else.
-        # mono seems to collide with a different version of mono?
-        # tesseract worker fails to build: /usr/local/Cellar/tesseract/5.0.1/include/tesseract/baseapi.h:21:12: fatal error: 'config_auto.h' file not found
         brew install \
             doxygen \
             gmime \
             graphviz \
             help2man \
             icu4c \
+            libabw \
             libarchive \
             libcdr \
             libetonyek \
             libextractor \
             libiconv \
             libmagic \
-            libsvm \
+            libmwaw \
             lua \
+            mono-mdk \
             pcre2 \
             pkgconfig \
             pngcrush \
             poppler \
-            python
+            pygments \
+            python \
+            tesseract
         pip3 install sphinx docutils
-        mkdir -p '${{ runner.temp }}/xapian-libsvm-fixed-include'
-        ln -sF "`ls -1d /usr/local/Cellar/libsvm/3.*/include|tail -n 1`" '${{ runner.temp }}/xapian-libsvm-fixed-include/libsvm'
     - name: bootstrap source tree
       run: ./bootstrap xapian-core xapian-applications/omega swig xapian-bindings xapian-letor
     - name: configure
-      run: ./configure CC='ccache gcc' CXX='ccache g++' CPPFLAGS='-I${{ runner.temp }}/xapian-libsvm-fixed-include' PYTHON3=/usr/local/bin/python PKG_CONFIG_PATH=/usr/local/opt/icu4c/lib/pkgconfig --prefix='${{ runner.temp }}/XapianInstall' --with-libiconv-prefix=/usr/local/opt/libiconv
+      run: ./configure CC='ccache gcc' CXX='ccache g++' PKG_CONFIG_PATH=/usr/local/opt/icu4c/lib/pkgconfig --prefix='${{ runner.temp }}/XapianInstall' --with-libiconv-prefix=/usr/local/opt/libiconv
     - name: make
       run: |
         make -j3

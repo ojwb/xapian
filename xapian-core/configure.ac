@@ -92,7 +92,7 @@ fi
 
 dnl See HACKING document for details of the reasons for required versions.
 AM_INIT_AUTOMAKE([1.13 -Wportability tar-ustar no-dist-gzip dist-xz std-options])
-AC_CONFIG_SRCDIR([matcher/multiandpostlist.cc])
+AC_CONFIG_SRCDIR([matcher/andpostlist.cc])
 
 AC_CONFIG_HEADERS([config.h])
 
@@ -236,7 +236,7 @@ if test no = "$xo_cv_cxx_works" ; then
 fi
 
 dnl Probe for any options needed to enable C++11 support.
-AX_CXX_COMPILE_STDCXX_11
+AX_CXX_COMPILE_STDCXX([11])
 
 dnl We don't use a C compiler to compile Xapian's code, but on some platforms
 dnl (e.g. mingw) libtool uses $LTCC which defaults to $CC, and it's also use to
@@ -445,6 +445,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <type_traits>]],
 dnl We need to specify the argument types for builtin functions, or else
 dnl AC_CHECK_DECLS fails to detect them when the compiler is clang.
 AC_CHECK_DECLS([__builtin_add_overflow(int, int, int*),
+		__builtin_sub_overflow(int, int, int*),
 		__builtin_mul_overflow(int, int, int*)], [], [], [ ])
 AC_CHECK_DECLS([__builtin_bswap16(uint16_t),
 		__builtin_bswap32(uint32_t),
@@ -464,7 +465,9 @@ AC_CHECK_DECLS([__builtin_popcount(unsigned),
 		__builtin_popcountll(unsigned long long)], [], [], [ ])
 AC_CHECK_DECLS([__popcnt, __popcnt64], [], [], [#include <intrin.h>])
 AC_CHECK_DECLS([_addcarry_u32(unsigned char, unsigned, unsigned, unsigned*),
-		_addcarry_u64(unsigned char, unsigned __int64, unsigned __int64, unsigned __int64*)],
+		_addcarry_u64(unsigned char, unsigned __int64, unsigned __int64, unsigned __int64*),
+		_subborrow_u32(unsigned char, unsigned, unsigned, unsigned*),
+		_subborrow_u64(unsigned char, unsigned __int64, unsigned __int64, unsigned __int64*)],
 	       [], [], [#include <intrin.h>])
 
 dnl Check for poll().

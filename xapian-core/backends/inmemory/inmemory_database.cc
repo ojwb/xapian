@@ -3,7 +3,7 @@
  */
 /* Copyright 1999,2000,2001 BrightStation PLC
  * Copyright 2002 Ananova Ltd
- * Copyright 2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2014,2017,2019 Olly Betts
+ * Copyright 2002-2022 Olly Betts
  * Copyright 2006,2009 Lemur Consulting Ltd
  *
  * This program is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 
 #include "debuglog.h"
 
+#include "backends/contiguousalldocspostlist.h"
 #include "expand/expandweight.h"
 #include "inmemory_document.h"
 #include "inmemory_alltermslist.h"
@@ -85,22 +86,17 @@ InMemoryPostList::InMemoryPostList(intrusive_ptr<const InMemoryDatabase> db_,
 	: LeafPostList(term_),
 	  pos(imterm.docs.begin()),
 	  end(imterm.docs.end()),
-	  termfreq(imterm.term_freq),
 	  started(false),
 	  db(db_),
 	  wdf_upper_bound(0)
 {
+    termfreq = imterm.term_freq;
+    collfreq = imterm.collection_freq;
     while (pos != end && !pos->valid) ++pos;
     if (pos != end) {
 	auto first_wdf = (*pos).wdf;
 	wdf_upper_bound = max(first_wdf, imterm.collection_freq - first_wdf);
     }
-}
-
-Xapian::doccount
-InMemoryPostList::get_termfreq() const
-{
-    return termfreq;
 }
 
 Xapian::docid
@@ -153,6 +149,19 @@ InMemoryPostList::at_end() const
     return (pos == end);
 }
 
+void
+InMemoryPostList::get_docid_range(Xapian::docid& first,
+				  Xapian::docid& last) const
+{
+    Assert(!started);
+    if (pos != end) {
+	first = pos->did;
+	last = (end - 1)->did;
+    } else {
+	last = 0;
+    }
+}
+
 string
 InMemoryPostList::get_description() const
 {
@@ -177,6 +186,7 @@ PositionList *
 InMemoryPostList::open_position_list() const
 {
     if (db->is_closed()) InMemoryDatabase::throw_database_closed();
+    if (pos->positions.empty()) return nullptr;
     return new InMemoryPositionList(pos->positions.copy());
 }
 
@@ -314,13 +324,7 @@ InMemoryTermList::positionlist_begin() const
 InMemoryAllDocsPostList::InMemoryAllDocsPostList(intrusive_ptr<const InMemoryDatabase> db_)
 	: LeafPostList(std::string()), did(0), db(db_)
 {
-}
-
-Xapian::doccount
-InMemoryAllDocsPostList::get_termfreq() const
-{
-    if (db->is_closed()) InMemoryDatabase::throw_database_closed();
-    return db->totdocs;
+    collfreq = termfreq = db->totdocs;
 }
 
 Xapian::docid
@@ -405,7 +409,7 @@ InMemoryDatabase::InMemoryDatabase()
       totdocs(0), totlen(0), positions_present(false), closed(false)
 {
     // We keep an empty entry in postlists for convenience of implementing
-    // allterms iteration and returning a PostList for an absent term.
+    // allterms iteration.
     postlists.insert(make_pair(string(), InMemoryTerm()));
 }
 
@@ -448,14 +452,20 @@ InMemoryDatabase::open_leaf_post_list(const string& term, bool need_read_pos) co
     if (closed) InMemoryDatabase::throw_database_closed();
     if (term.empty()) {
 	Assert(!need_read_pos);
+	Xapian::doccount doccount = totdocs;
+	if (rare(doccount == 0)) {
+	    return nullptr;
+	}
+	if (doccount == termlists.size()) {
+	    // The used docid range is exactly 1 to doccount inclusive.
+	    return new ContiguousAllDocsPostList(doccount);
+	}
 	intrusive_ptr<const InMemoryDatabase> ptrtothis(this);
 	return new InMemoryAllDocsPostList(ptrtothis);
     }
     map<string, InMemoryTerm>::const_iterator i = postlists.find(term);
     if (i == postlists.end() || i->second.term_freq == 0) {
-	i = postlists.begin();
-	// Check that our dummy entry for string() is present.
-	Assert(i->first.empty());
+	return nullptr;
     }
     intrusive_ptr<const InMemoryDatabase> ptrtothis(this);
     return new InMemoryPostList(ptrtothis, i->second, term);
@@ -701,7 +711,7 @@ InMemoryDatabase::open_position_list(Xapian::docid did,
 	    return new InMemoryPositionList(t->positions);
 	}
     }
-    return new InMemoryPositionList();
+    return nullptr;
 }
 
 void
@@ -995,6 +1005,21 @@ InMemoryDatabase::open_allterms(const string & prefix) const
     return new InMemoryAllTermsList(&postlists,
 				    intrusive_ptr<const InMemoryDatabase>(this),
 				    prefix);
+}
+
+void
+InMemoryDatabase::get_used_docid_range(Xapian::docid& first,
+				       Xapian::docid& last) const
+{
+    if (closed) InMemoryDatabase::throw_database_closed();
+    first = 1;
+    last = termlists.size();
+    if (last == 0 || last == totdocs) {
+	// Empty database or contiguous range starting at 1.
+	return;
+    }
+    while (!termlists[first - 1].is_valid) ++first;
+    while (!termlists[last - 1].is_valid) --last;
 }
 
 Xapian::Database::Internal*

@@ -404,7 +404,7 @@ main(int argc, char **argv)
 
     string dbpath;
     int getopt_ret;
-    while ((getopt_ret = gnu_getopt_long(argc, argv, "hvd:D:U:M:F:l:s:pfRSVe:im:E:T:",
+    while ((getopt_ret = gnu_getopt_long(argc, argv, "hvd:D:U:M:G:F:l:s:pfRSVe:im:E:T:C",
 					 longopts, NULL)) != -1) {
 	switch (getopt_ret) {
 	case 'h': {
@@ -449,7 +449,7 @@ main(int argc, char **argv)
 "  -f, --follow              follow symbolic links\n"
 "  -i, --ignore-exclusions   ignore meta robots tags and similar exclusions\n"
 "  -S, --spelling            index data for spelling correction\n"
-"  -m, --max-size            maximum size of file to index (in bytes or with a\n"
+"  -m, --max-size=N[SUFFIX]  maximum size of file to index (in bytes or with a\n"
 "                            suffix of 'K'/'k', 'M'/'m', 'G'/'g')\n"
 "                            (default: unlimited)\n"
 "      --sample=SOURCE       what to use for the stored sample of text for\n"

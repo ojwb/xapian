@@ -2,7 +2,7 @@
  * @brief tests of replication functionality
  */
 /* Copyright 2008 Lemur Consulting Ltd
- * Copyright 2009,2010,2011,2012,2013,2014,2015,2016,2017,2020 Olly Betts
+ * Copyright 2009-2022 Olly Betts
  * Copyright 2010 Richard Boulton
  * Copyright 2011 Dan Colish
  *
@@ -64,14 +64,6 @@ static void mktmpdir(const string & path) {
     }
 }
 
-static off_t get_file_size(const string & path) {
-    off_t size = file_size(path);
-    if (errno) {
-	FAIL_TEST("Can't stat '" << path << "'");
-    }
-    return size;
-}
-
 static size_t do_read(int fd, char * p, size_t desired)
 {
     size_t total = 0;
@@ -103,8 +95,10 @@ static void do_write(int fd, const char * p, size_t n)
 }
 
 // Make a truncated copy of a file.
-static size_t
-truncated_copy(const string & srcpath, const string & destpath, size_t tocopy)
+static file_size_type
+truncated_copy(const string& srcpath,
+	       const string& destpath,
+	       file_size_type tocopy)
 {
     FD fdin(open(srcpath.c_str(), O_RDONLY | O_BINARY));
     if (fdin == -1) {
@@ -449,8 +443,12 @@ replicate_with_brokenness(Xapian::DatabaseMaster & master,
 
     // Try applying truncated changesets of various different lengths.
     string brokenchangesetpath = tempdir + "/changeset_broken";
-    size_t filesize = size_t(get_file_size(changesetpath));
-    size_t len = 10;
+    auto filesize = file_size(changesetpath);
+    if (errno) {
+	FAIL_TEST("Can't stat '" << changesetpath << "'");
+    }
+    file_size_type len = 10;
+    file_size_type copylen;
     while (len < filesize) {
 	auto copylen = truncated_copy(changesetpath, brokenchangesetpath, len);
 	TEST_EQUAL(copylen, len);

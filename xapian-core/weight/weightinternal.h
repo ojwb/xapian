@@ -37,6 +37,10 @@
 #include <map>
 #include <string>
 
+namespace Xapian {
+
+namespace Internal {
+
 /// The frequencies for a term.
 struct TermFreqs {
     Xapian::doccount termfreq;
@@ -61,9 +65,27 @@ struct TermFreqs {
 	max_part += other.max_part;
     }
 
+    void operator*=(double factor) {
+	termfreq = Xapian::doccount(termfreq * factor + 0.5);
+	reltermfreq = Xapian::doccount(reltermfreq * factor + 0.5);
+	collfreq = Xapian::termcount(collfreq * factor + 0.5);
+    }
+
+    void operator/=(unsigned x) {
+	termfreq /= x;
+	reltermfreq /= x;
+	collfreq /= x;
+    }
+
     /// Return a std::string describing this object.
     std::string get_description() const;
 };
+
+}
+
+}
+
+using Xapian::Internal::TermFreqs;
 
 namespace Xapian {
 
@@ -226,7 +248,9 @@ class Weight::Internal {
 #ifdef XAPIAN_ASSERTIONS
 	finalised = true;
 #endif
-	if (rare(collection_size == 0)) return 0;
+	// We shortcut an empty shard and avoid creating a postlist tree for
+	// it, and all shards must be empty for collection_size to be zero.
+	Assert(collection_size);
 	return Xapian::doclength(total_length) / collection_size;
     }
 

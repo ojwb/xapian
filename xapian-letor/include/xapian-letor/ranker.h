@@ -193,7 +193,7 @@ class XAPIAN_VISIBILITY_DEFAULT Ranker : public Xapian::Internal::intrusive_base
   protected:
     /// Method to train the model. Overridden in ranker subclass.
     virtual void
-    train(const std::vector<Xapian::FeatureVector> & training_data) = 0;
+    train(const std::vector<std::vector<FeatureVector>>& training_data) = 0;
 
     /** Method to save model as db metadata. Overridden in ranker subclass.
      *
@@ -256,7 +256,7 @@ class XAPIAN_VISIBILITY_DEFAULT ListNETRanker: public Ranker {
      *
      * @exception LetorInternalError will be thrown if training data is null.
      */
-    void train(const std::vector<Xapian::FeatureVector> & training_data);
+    void train(const std::vector<std::vector<FeatureVector>>& training_data);
 
     /** Method to save ListNET model as db metadata.
      *
@@ -290,8 +290,8 @@ class XAPIAN_VISIBILITY_DEFAULT ListNETRanker: public Ranker {
      *  @exception	LetorInternalError will be thrown if model file
      *			is not compatible.
      */
-    std::vector<Xapian::FeatureVector>
-    rank_fvv(const std::vector<Xapian::FeatureVector> & fvv) const;
+    std::vector<FeatureVector>
+    rank_fvv(const std::vector<FeatureVector>& fvv) const;
 
   public:
     /* Construct ListNet instance
@@ -304,52 +304,6 @@ class XAPIAN_VISIBILITY_DEFAULT ListNETRanker: public Ranker {
 
     /// Destructor
     ~ListNETRanker();
-};
-
-/// SVMRanker class
-class XAPIAN_VISIBILITY_DEFAULT SVMRanker: public Ranker {
-    /// Model data string
-    std::string model_data;
-
-    /** Method to train the model.
-     *
-     *  @exception LetorInternalError will be thrown if training data is null.
-     */
-    void train(const std::vector<Xapian::FeatureVector> & training_data);
-
-    /** Method to save SVMRanker model as db metadata.
-     *
-     *  @param model_key      Metadata key using which model is to be stored.
-     */
-    void save_model_to_metadata(const std::string & model_key);
-
-    /** Method to load model from an external file.
-     *
-     *  @param model_key        Metadata key using which model is to be
-     *				loaded.
-     *
-     *  @exception LetorInternalError will be thrown if no model exists
-     *		   corresponding to the supplied key
-     */
-    void load_model_from_metadata(const std::string & model_key);
-
-    /** Method to re-rank a std::vector<Xapian::FeatureVector> by using the
-     *  model.
-     *
-     *  @param fvv vector<FeatureVector> that will be re-ranked
-     */
-    std::vector<Xapian::FeatureVector>
-    rank_fvv(const std::vector<Xapian::FeatureVector> & fvv) const;
-
-  public:
-    /* TODO: Pass struct svm_parameter* to constructor to be able to configure
-     * libsvm params at run time.
-     */
-    /// Constructor
-    SVMRanker();
-
-    /// Destructor
-    ~SVMRanker();
 };
 
 class XAPIAN_VISIBILITY_DEFAULT ListMLERanker : public Ranker {
@@ -365,7 +319,7 @@ class XAPIAN_VISIBILITY_DEFAULT ListMLERanker : public Ranker {
      * @exception InvalidArgumentError will be thrown if training_data is
      *            empty.
      */
-    void train(const std::vector<Xapian::FeatureVector>& training_data);
+    void train(const std::vector<std::vector<FeatureVector>>& training_data);
 
     /** Save ListMLE model as db metadata.
      *
@@ -393,8 +347,8 @@ class XAPIAN_VISIBILITY_DEFAULT ListMLERanker : public Ranker {
      *  @exception	InvalidArgumentError will be thrown if model file
      *			is not compatible.
      */
-    std::vector<Xapian::FeatureVector>
-    rank_fvv(const std::vector<Xapian::FeatureVector>& fvv) const;
+    std::vector<FeatureVector>
+    rank_fvv(const std::vector<FeatureVector>& fvv) const;
 
   public:
     /* Construct ListMLE instance

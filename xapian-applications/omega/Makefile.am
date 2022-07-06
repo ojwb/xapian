@@ -53,7 +53,8 @@ EXTRA_PROGRAMS =\
 	omindex_libarchive\
 	omindex_libabw\
 	omindex_libcdr\
-	omindex_libextractor
+	omindex_libextractor\
+	omindex_libmwaw
 
 EXTRA_DIST =\
 	clickmodel/testdata/test1.log\
@@ -222,6 +223,10 @@ omindex_libextractor_SOURCES = assistant.cc worker_comms.cc handler_libextractor
 omindex_libextractor_LDADD = $(LIBEXTRACTOR_LIBS)
 omindex_libextractor_CXXFLAGS = $(LIBEXTRACTOR_CFLAGS)
 
+omindex_libmwaw_SOURCES = assistant.cc worker_comms.cc handler_libmwaw.cc common/str.cc
+omindex_libmwaw_LDADD = $(LIBMWAW_LIBS)
+omindex_libmwaw_CXXFLAGS = $(LIBMWAW_CFLAGS) $(XAPIAN_CXXFLAGS)
+
 scriptindex_SOURCES = scriptindex.cc\
  genericxmlparser.cc htmlparser.cc xmlparser.cc\
  common/getopt.cc common/str.cc commonhelp.cc utils.cc hashterm.cc loadfile.cc\
@@ -265,7 +270,7 @@ sdbntest_LDADD = $(NO_INSTALL)
 jsonesctest_SOURCES = jsonesctest.cc jsonescape.cc
 jsonesctest_LDADD = $(NO_INSTALL) $(XAPIAN_LIBS)
 
-omindexcheck_SOURCES = omindexcheck.cc worker.cc worker_comms.cc common/closefrom.cc pkglibbindir.cc freemem.cc
+omindexcheck_SOURCES = omindexcheck.cc
 omindexcheck_LDADD = $(NO_INSTALL) $(XAPIAN_LIBS)
 
 if !MAINTAINER_NO_DOCS

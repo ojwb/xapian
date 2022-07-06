@@ -92,11 +92,13 @@ hash[=LENGTH]
 hextobin
         converts pairs of hex digits to binary byte values (providing a way
         to specify arbitrary binary strings e.g. for use in a document value
-        slot).  The input should have an even length and be composed entirely
-        of hex digits (if it isn't, an error is reported and the value is
-        unchanged).
+        slot).  The input must have an even length and be composed entirely
+        of hex digits (if it isn't, an error is reported).
 
-        ``hextobin`` was added in Omega 1.4.6.
+        ``hextobin`` was added in Omega 1.4.6.  Prior to Omega 1.4.20, the
+        "error" on a bad value was really handled like a warning - it didn't
+        cause Omega to exit with non-zero status, instead the value was
+        passed on unchanged.
 
 index[=PREFIX]
 	split text into words and index (with prefix PREFIX if specified).
@@ -111,7 +113,9 @@ load
         and then sets the current text to the contents.  If the current text
         is empty, a warning is issued (since Xapian 1.4.10).  If the file can't
         be loaded (not found, wrong permissions, etc) then an error is issued and
-        the current text is set to empty.
+        scriptindex exits (prior to Omega 1.4.20 this "error" was really handled
+        as a warning - scriptindex continued with the current text set to empty,
+        and the final exit status wasn't affected).
 
         If the next action is ``truncate``, then scriptindex is smart enough to
         know it only needs to load the start of a large file.
@@ -209,14 +213,14 @@ truncate=LENGTH
 unhtml
 	strip out HTML tags
 
-unique[=PREFIX]
+unique[=PREFIX[,missing=MISSINGACTION]]
 	use the value in this field for a unique ID.  If the value is empty,
 	a warning is issued but nothing else is done.  Only one record with
 	each value of the ID may be present in the index: adding a new record
 	with an ID which is already present will cause the old record to be
         replaced or deleted.
 
-        Deletion happens if the only input field present has the `unique`
+        Deletion happens if the only input field present has the ``unique``
         action applied to it.  (Prior to 1.5.0, if there were multiple lists
         of actions applied to an input field this triggered replacement instead
         of deletion).  If you want to suppress this deletion feature, supplying
@@ -230,6 +234,21 @@ unique[=PREFIX]
         You can use ``unique`` at most once in each index script (this is only
         enforced since Omega 1.4.5, but older versions didn't handle multiple
         instances usefully).
+
+        The optional ``missing`` parameter is supported since Omega 1.4.20.
+        It controls what happens when a record is processed which doesn't
+        trigger the ``unique`` action or triggers the ``unique`` action with
+        an empty value.  It can be one of:
+
+          * ``error``: Exit with an error upon encountering such a document
+            (default in Omega >= 1.5.0)
+          * ``new``: Create a new document (default in Omega < 1.4.20 when
+            ``unique`` not triggered)
+          * ``warn+new``: Issue a warning and create a new document (default in
+            Omega >= 1.4.20 and in older versions when ``unique`` is triggered
+            with an empty value)
+          * ``skip``: Move on to the next record
+          * ``warn+skip``: Issue a warning and move on to the next record
 
 unxml
         strip out XML tags, replacing with a space (``unxml`` is similar to
@@ -270,10 +289,21 @@ weight=FACTOR
 Input files:
 ============
 
-The data to be indexed is read in from one or more files.  Each file has
-records separated by a blank line.  Each record contains one or more fields of
-the form "name=value".  If value contains newlines, these must be escaped by
-inserting an equals sign ('=') after each newline.  Here's an example record::
+The data to be indexed is read in from one or more input files.  Each input
+file consists of zero or more records, each separated by one or more blank
+lines.
+
+Omega 1.4.20 and later explicitly allow multiple blank lines between
+records, and also blank lines before the first record and after the last
+record - in earlier versions only a single blank line after each record was
+explicitly handled, and extra blank lines were handled as an empty records.
+If you want to be compatible with older versions we recommend a single
+blank line after each record (with the blank line after the final record
+being optional).
+
+Each record contains one or more fields of the form "name=value".  If value
+contains newlines, these must be escaped by inserting an equals sign ('=')
+after each newline.  Here's an example record::
 
  id=ghq147
  title=Sample Record

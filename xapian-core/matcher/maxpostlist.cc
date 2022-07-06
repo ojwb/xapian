@@ -38,67 +38,6 @@ MaxPostList::~MaxPostList()
     }
 }
 
-Xapian::doccount
-MaxPostList::get_termfreq() const
-{
-    // We shortcut an empty shard and avoid creating a postlist tree for it.
-    Assert(db_size);
-
-    // We calculate the estimate assuming independence.  The simplest
-    // way to calculate this seems to be a series of (n_kids - 1) pairwise
-    // calculations, which gives the same answer regardless of the order.
-    double scale = 1.0 / db_size;
-    double P_est = plist[0]->get_termfreq() * scale;
-    for (size_t i = 1; i < n_kids; ++i) {
-	double P_i = plist[i]->get_termfreq() * scale;
-	P_est += P_i - P_est * P_i;
-    }
-    return static_cast<Xapian::doccount>(P_est * db_size + 0.5);
-}
-
-TermFreqs
-MaxPostList::get_termfreq_est_using_stats(
-	const Xapian::Weight::Internal & stats) const
-{
-    // We calculate the estimate assuming independence.  The simplest
-    // way to calculate this seems to be a series of (n_kids - 1) pairwise
-    // calculations, which gives the same answer regardless of the order.
-    TermFreqs freqs(plist[0]->get_termfreq_est_using_stats(stats));
-
-    // Our caller should have ensured this.
-    Assert(stats.collection_size);
-    double scale = 1.0 / stats.collection_size;
-    double P_est = freqs.termfreq * scale;
-    double rtf_scale = 0.0;
-    if (stats.rset_size != 0) {
-	rtf_scale = 1.0 / stats.rset_size;
-    }
-    double Pr_est = freqs.reltermfreq * rtf_scale;
-    // If total_length is 0, cf must always be 0 so cf_scale is irrelevant.
-    double cf_scale = 0.0;
-    if (usual(stats.total_length != 0)) {
-	cf_scale = 1.0 / stats.total_length;
-    }
-    double Pc_est = freqs.collfreq * cf_scale;
-
-    for (size_t i = 1; i < n_kids; ++i) {
-	freqs = plist[i]->get_termfreq_est_using_stats(stats);
-	double P_i = freqs.termfreq * scale;
-	P_est += P_i - P_est * P_i;
-	double Pc_i = freqs.collfreq * cf_scale;
-	Pc_est += Pc_i - Pc_est * Pc_i;
-	// If the rset is empty, Pr_est should be 0 already, so leave
-	// it alone.
-	if (stats.rset_size != 0) {
-	    double Pr_i = freqs.reltermfreq * rtf_scale;
-	    Pr_est += Pr_i - Pr_est * Pr_i;
-	}
-    }
-    return TermFreqs(Xapian::doccount(P_est * stats.collection_size + 0.5),
-		     Xapian::doccount(Pr_est * stats.rset_size + 0.5),
-		     Xapian::termcount(Pc_est * stats.total_length + 0.5));
-}
-
 Xapian::docid
 MaxPostList::get_docid() const
 {
@@ -220,6 +159,18 @@ MaxPostList::skip_to(Xapian::docid did_min, double w_min)
     }
 
     return NULL;
+}
+
+void
+MaxPostList::get_docid_range(Xapian::docid& first, Xapian::docid& last) const
+{
+    plist[0]->get_docid_range(first, last);
+    for (size_t i = 1; i != n_kids; ++i) {
+	Xapian::docid f = 1, l = Xapian::docid(-1);
+	plist[i]->get_docid_range(f, l);
+	first = min(first, f);
+	last = max(last, l);
+    }
 }
 
 string

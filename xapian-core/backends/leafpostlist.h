@@ -1,7 +1,7 @@
 /** @file
  * @brief Abstract base class for leaf postlists.
  */
-/* Copyright (C) 2007,2009,2011,2013,2015,2016,2017,2020 Olly Betts
+/* Copyright (C) 2007-2022 Olly Betts
  * Copyright (C) 2009 Lemur Consulting Ltd
  *
  * This program is free software; you can redistribute it and/or
@@ -48,12 +48,24 @@ class LeafPostList : public PostList {
     /// The term name for this postlist (empty for an alldocs postlist).
     std::string term;
 
+    /** The collection frequency of the term.
+     *
+     *  This is the sum of wdf values for the term in all documents.
+     */
+    Xapian::termcount collfreq;
+
     /// Only constructable as a base class for derived classes.
     explicit LeafPostList(const std::string & term_)
 	: weight(0), term(term_) { }
 
   public:
     ~LeafPostList();
+
+    /** Get the collection frequency of the term.
+     *
+     *  This is the sum of wdf values for the term in all documents.
+     */
+    Xapian::termcount get_collfreq() const { return collfreq; }
 
     /** Set the weighting scheme to use during matching.
      *
@@ -89,17 +101,11 @@ class LeafPostList : public PostList {
 	return stats->termfreqs[term].max_part;
     }
 
-    /** Return the exact term frequency. */
-    virtual Xapian::doccount get_termfreq() const = 0;
-
     double get_weight(Xapian::termcount doclen,
 		      Xapian::termcount unique_terms,
 		      Xapian::termcount wdfdocmax) const;
 
     double recalc_maxweight();
-
-    TermFreqs get_termfreq_est_using_stats(
-	const Xapian::Weight::Internal & stats) const;
 
     Xapian::termcount count_matching_subqs() const;
 
@@ -119,23 +125,30 @@ class LeafPostList : public PostList {
      *			Note that open_position_list() may still be called even
      *			if need_read_pos is false.
      *
-     *  @return		The new postlist object, or NULL if not supported
+     *  @param[out] pl  If true is returned, set to a new LeafPostList object
+     *			(or may be set to NULL if the term doesn't index any
+     *			documents).  The caller takes ownership of the returned
+     *			object.
+     *
+     *  @return		true if successful (and pl has been set); false if not
      *			(in which case the caller should probably open the
      *			postlist via the database instead).
      */
-    virtual LeafPostList * open_nearby_postlist(const std::string & term_,
-						bool need_read_pos) const;
+    virtual bool open_nearby_postlist(const std::string& term_,
+				      bool need_read_pos,
+				      LeafPostList*& pl) const;
 
     virtual Xapian::termcount get_wdf_upper_bound() const = 0;
 
+    /** Get the term name. */
+    const std::string& get_term() const { return term; }
+
     /** Set the term name.
      *
-     *  This is useful when we optimise a term matching all documents to an
-     *  all documents postlist under OP_SYNONYM, as the term name is used by
-     *  LeafPostList::get_termfreq_est_using_stats() to locate the appropriate
-     *  TermFreqs object.
+     *  This is used when we optimise a term matching all documents to an
+     *  all documents postlist so that postlist reports the correct termname.
      */
-    void set_term(const std::string & term_) { term = term_; }
+    void set_term(const std::string& term_) { term = term_; }
 };
 
 #endif // XAPIAN_INCLUDED_LEAFPOSTLIST_H

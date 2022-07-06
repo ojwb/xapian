@@ -176,7 +176,7 @@ Matcher::for_all_remotes(Action action)
 #endif
 
 Matcher::Matcher(const Xapian::Database& db_,
-		 const Xapian::Query& query_,
+		 const Xapian::Query& query,
 		 Xapian::termcount query_length,
 		 const Xapian::RSet* rset,
 		 Xapian::Weight::Internal& stats,
@@ -192,14 +192,14 @@ Matcher::Matcher(const Xapian::Database& db_,
 		 bool sort_val_reverse,
 		 double time_limit,
 		 const vector<opt_intrusive_ptr<Xapian::MatchSpy>>& matchspies)
-    : db(db_), query(query_)
+    : db(db_)
 {
     // An empty query should get handled higher up.
     Assert(!query.empty());
 
     Xapian::doccount n_shards = db.internal->size();
     vector<Xapian::RSet> subrsets;
-    if (rset && rset->internal.get()) {
+    if (rset && rset->internal) {
 	rset->internal->shard(n_shards, subrsets);
     } else {
 	subrsets.resize(n_shards);
@@ -344,7 +344,7 @@ Matcher::get_local_mset(Xapian::doccount first,
     try {
 	bool all_null = true;
 	for (size_t i = 0; i != locals.size(); ++i) {
-	    if (!locals[i].get()) {
+	    if (!locals[i]) {
 		postlists.push_back(NULL);
 		continue;
 	    }
@@ -414,7 +414,7 @@ Matcher::get_local_mset(Xapian::doccount first,
 	Xapian::doccount matches_estimated = 0;
 	Xapian::doccount matches_upper_bound = 0;
 	for (size_t i = 0; i != locals.size(); ++i) {
-	    if (locals[i].get()) {
+	    if (locals[i]) {
 		Estimates e = locals[i]->resolve();
 		matches_lower_bound += e.min;
 		matches_estimated += e.est;
@@ -529,22 +529,8 @@ Matcher::get_local_mset(Xapian::doccount first,
     // the EstimateOp objects.
     pltree.delete_postlists();
 
-    Xapian::doccount matches_lower_bound = 0;
-    Xapian::doccount matches_estimated = 0;
-    Xapian::doccount matches_upper_bound = 0;
-    for (size_t i = 0; i != locals.size(); ++i) {
-	if (locals[i].get()) {
-	    Estimates e = locals[i]->resolve();
-	    matches_lower_bound += e.min;
-	    matches_estimated += e.est;
-	    matches_upper_bound += e.max;
-	}
-    }
-
     return proto_mset.finalise(mdecider,
-			       matches_lower_bound,
-			       matches_estimated,
-			       matches_upper_bound);
+			       locals);
 }
 
 Xapian::MSet
@@ -568,12 +554,10 @@ Matcher::get_mset(Xapian::doccount first,
 {
     AssertRel(check_at_least, >=, first + maxitems);
 
-    Assert(!query.empty());
-
 #ifdef XAPIAN_HAS_REMOTE_BACKEND
     if (locals.empty() && remotes.size() == 1) {
 	// Short cut for a single remote database.
-	Assert(remotes[0].get());
+	Assert(remotes[0]);
 	remotes[0]->start_match(first, maxitems, check_at_least, sorter,
 				stats);
 	return remotes[0]->get_mset(matchspies);
@@ -589,7 +573,7 @@ Matcher::get_mset(Xapian::doccount first,
 
 #ifdef XAPIAN_HAS_REMOTE_BACKEND
     for (auto&& submatch : remotes) {
-	Assert(submatch.get());
+	Assert(submatch);
 	// We need to fetch the first "first" results too, as merging may push
 	// those down into the part of the merged MSet we care about.
 	Xapian::doccount remote_maxitems = first + maxitems;
@@ -608,7 +592,7 @@ Matcher::get_mset(Xapian::doccount first,
     Xapian::MSet local_mset;
     if (!locals.empty()) {
 	for (auto&& submatch : locals) {
-	    if (submatch.get())
+	    if (submatch)
 		submatch->start_match(stats);
 	}
 
@@ -659,7 +643,7 @@ Matcher::get_mset(Xapian::doccount first,
 	    merged_mset.internal->merge_stats(remote_mset.internal.get(),
 					      collapse_max != 0);
 	    auto& merged_stats = merged_mset.internal->stats;
-	    if (!merged_stats.get()) {
+	    if (!merged_stats) {
 		merged_stats = std::move(remote_mset.internal->stats);
 	    } else {
 		merged_stats->merge(*(remote_mset.internal->stats));

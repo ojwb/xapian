@@ -1,7 +1,7 @@
 /** @file
  *  @brief Remote backend database class
  */
-/* Copyright (C) 2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2017,2018,2019,2020 Olly Betts
+/* Copyright (C) 2006-2022 Olly Betts
  * Copyright (C) 2007,2009,2010 Lemur Consulting Ltd
  *
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
 
 #include "api/msetinternal.h"
 #include "api/smallvector.h"
+#include "backends/contiguousalldocspostlist.h"
 #include "backends/inmemory/inmemory_positionlist.h"
 #include "net_postlist.h"
 #include "remote-document.h"
@@ -204,12 +205,16 @@ RemoteDatabase::open_allterms(const string& prefix) const
 PostList *
 RemoteDatabase::open_post_list(const string& term) const
 {
-    return RemoteDatabase::open_leaf_post_list(term, false);
-}
+    if (term.empty()) {
+	if (!cached_stats_valid) update_stats();
+	if (rare(doccount == 0))
+	    return nullptr;
+	if (doccount == lastdocid) {
+	    // The used docid range is exactly 1 to doccount inclusive.
+	    return new ContiguousAllDocsPostList(doccount);
+	}
+    }
 
-LeafPostList *
-RemoteDatabase::open_leaf_post_list(const string& term, bool) const
-{
     send_message(MSG_POSTLIST, term);
 
     string message;
@@ -230,6 +235,15 @@ RemoteDatabase::open_leaf_post_list(const string& term, bool) const
 			       std::move(message));
 }
 
+LeafPostList *
+RemoteDatabase::open_leaf_post_list(const string&, bool) const
+{
+    // This method is only called during the match, and remote shards are
+    // handled by running the match on the remote.
+    Assert(false);
+    return nullptr;
+}
+
 PositionList *
 RemoteDatabase::open_position_list(Xapian::docid did, const string &term) const
 {
@@ -238,9 +252,11 @@ RemoteDatabase::open_position_list(Xapian::docid did, const string &term) const
     message += term;
     send_message(MSG_POSITIONLIST, message);
 
-    Xapian::VecCOW<Xapian::termpos> positions;
-
     get_message(message, REPLY_POSITIONLIST);
+    if (message.empty())
+	return nullptr;
+
+    Xapian::VecCOW<Xapian::termpos> positions;
     Xapian::termpos lastpos = static_cast<Xapian::termpos>(-1);
     const char* p = message.data();
     const char* p_end = p + message.size();

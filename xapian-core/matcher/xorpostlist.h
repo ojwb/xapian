@@ -19,8 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-#ifndef XAPIAN_INCLUDED_MULTIXORPOSTLIST_H
-#define XAPIAN_INCLUDED_MULTIXORPOSTLIST_H
+#ifndef XAPIAN_INCLUDED_XORPOSTLIST_H
+#define XAPIAN_INCLUDED_XORPOSTLIST_H
 
 #include "backends/postlist.h"
 #include "postlisttree.h"
@@ -28,24 +28,21 @@
 #include <algorithm>
 
 /// N-way XOR postlist.
-class MultiXorPostList : public PostList {
+class XorPostList : public PostList {
     /// Don't allow assignment.
-    void operator=(const MultiXorPostList &);
+    XorPostList& operator=(const XorPostList&) = delete;
 
     /// Don't allow copying.
-    MultiXorPostList(const MultiXorPostList &);
+    XorPostList(const XorPostList&) = delete;
 
     /// The current docid, or zero if we haven't started or are at_end.
-    Xapian::docid did;
+    Xapian::docid did = 0;
 
     /// The number of sub-postlists.
     size_t n_kids;
 
     /// Array of pointers to sub-postlists.
-    PostList ** plist;
-
-    /// The number of documents in the database.
-    Xapian::doccount db_size;
+    PostList** plist = nullptr;
 
     /// Pointer to the matcher object, so we can report pruning.
     PostListTree *matcher;
@@ -65,21 +62,28 @@ class MultiXorPostList : public PostList {
      *  a pointer to the matcher, and the document collection size.
      */
     template<class RandomItor>
-    MultiXorPostList(RandomItor pl_begin, RandomItor pl_end,
-		     PostListTree * matcher_, Xapian::doccount db_size_)
-	: did(0), n_kids(pl_end - pl_begin), plist(NULL),
-	  db_size(db_size_), matcher(matcher_)
+    XorPostList(RandomItor pl_begin, RandomItor pl_end,
+		PostListTree* matcher_, Xapian::doccount db_size)
+	: n_kids(pl_end - pl_begin), matcher(matcher_)
     {
 	plist = new PostList * [n_kids];
 	std::copy(pl_begin, pl_end, plist);
+
+	// We shortcut an empty shard and avoid creating a postlist tree for it.
+	Assert(db_size);
+	// We calculate the estimate assuming independence.  The simplest
+	// way to calculate this seems to be a series of (n_kids - 1) pairwise
+	// calculations, which gives the same answer regardless of the order.
+	double scale = 1.0 / db_size;
+	double P_est = plist[0]->get_termfreq() * scale;
+	for (size_t i = 1; i < n_kids; ++i) {
+	    double P_i = plist[i]->get_termfreq() * scale;
+	    P_est += P_i - 2.0 * P_est * P_i;
+	}
+	termfreq = static_cast<Xapian::doccount>(P_est * db_size + 0.5);
     }
 
-    ~MultiXorPostList();
-
-    Xapian::doccount get_termfreq() const;
-
-    TermFreqs get_termfreq_est_using_stats(
-	const Xapian::Weight::Internal & stats) const;
+    ~XorPostList();
 
     Xapian::docid get_docid() const;
 
@@ -99,10 +103,14 @@ class MultiXorPostList : public PostList {
 
     PostList* skip_to(Xapian::docid, double w_min);
 
+    void get_docid_range(Xapian::docid& first, Xapian::docid& last) const;
+
     std::string get_description() const;
 
-    /** get_wdf() for MultiXorPostlists returns the sum of the wdfs of the
-     *  sub postlists which match the current docid.
+    /** Get the within-document frequency.
+     *
+     *  For XorPostlist returns the sum of the wdfs of the matching sub
+     *  postlists.
      *
      *  The wdf isn't really meaningful in many situations, but if the lists
      *  are being combined as a synonym we want the sum of the wdfs, so we do
@@ -113,4 +121,4 @@ class MultiXorPostList : public PostList {
     Xapian::termcount count_matching_subqs() const;
 };
 
-#endif // XAPIAN_INCLUDED_MULTIXORPOSTLIST_H
+#endif // XAPIAN_INCLUDED_XORPOSTLIST_H

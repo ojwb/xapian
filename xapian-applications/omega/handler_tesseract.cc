@@ -2,6 +2,7 @@
  * @brief Extract text from Images using tesseract.
  */
 /* Copyright (C) 2019 Bruno Baruffaldi
+ * Copyright (C) 2022 Olly Betts
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -21,8 +22,12 @@
 #include <config.h>
 #include "handler.h"
 
+// Workaround stupidity in tesseract headers.
+#undef HAVE_CONFIG_H
 #include <tesseract/baseapi.h>
 #include <leptonica/allheaders.h>
+
+#include <sysexits.h>
 
 using namespace std;
 using namespace tesseract;
@@ -54,8 +59,14 @@ extract(const string& filename,
     // Create the ocr if necessary
     if (!ocr) {
 	ocr = new TessBaseAPI();
-	if (ocr->Init(NULL, NULL))
-	    _Exit(1);
+	// Tesseract documents that passing nullptr for the second parameter
+	// here is the same as "eng", but that fails to work on macos (tested
+	// with the homebrew tesseract v5.1.0).
+	//
+	// FIXME: We ought to provide a way to allow the language to use here
+	// to be specified.
+	if (ocr->Init(nullptr, "eng"))
+	    _Exit(EX_UNAVAILABLE);
 	ocr->SetPageSegMode(PSM_AUTO_OSD);
     }
     // Open Image

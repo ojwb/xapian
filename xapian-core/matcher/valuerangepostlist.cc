@@ -39,30 +39,6 @@ ValueRangePostList::~ValueRangePostList()
     delete valuelist;
 }
 
-Xapian::doccount
-ValueRangePostList::get_termfreq() const
-{
-    return est;
-}
-
-TermFreqs
-ValueRangePostList::get_termfreq_est_using_stats(
-	const Xapian::Weight::Internal & stats) const
-{
-    LOGCALL(MATCH, TermFreqs, "ValueRangePostList::get_termfreq_est_using_stats", stats);
-    // FIXME: It's hard to estimate well - perhaps consider the values of
-    // begin and end like above?
-
-    // total_length may be too large to represent - if so use the largest
-    // value we can represent.
-    Xapian::totallength max_cf{numeric_limits<Xapian::termcount>::max()};
-    auto cf(static_cast<Xapian::termcount>(min(stats.total_length / 2,
-                                               max_cf)));
-    RETURN(TermFreqs(stats.collection_size / 2,
-		     stats.rset_size / 2,
-		     cf));
-}
-
 Xapian::docid
 ValueRangePostList::get_docid() const
 {

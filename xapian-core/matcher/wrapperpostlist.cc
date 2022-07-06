@@ -22,19 +22,6 @@
 
 #include "wrapperpostlist.h"
 
-Xapian::doccount
-WrapperPostList::get_termfreq() const
-{
-    return pl->get_termfreq();
-}
-
-TermFreqs
-WrapperPostList::get_termfreq_est_using_stats(
-	const Xapian::Weight::Internal& stats) const
-{
-    return pl->get_termfreq_est_using_stats(stats);
-}
-
 Xapian::docid
 WrapperPostList::get_docid() const
 {

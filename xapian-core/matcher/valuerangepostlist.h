@@ -35,8 +35,6 @@ class ValueRangePostList : public PostList {
 
     const std::string begin, end;
 
-    Xapian::doccount est;
-
     ValueList* valuelist = nullptr;
 
     /// Disallow copying.
@@ -47,17 +45,15 @@ class ValueRangePostList : public PostList {
 
   public:
     ValueRangePostList(const Xapian::Database::Internal *db_,
-		       Xapian::doccount est_,
+		       Xapian::doccount termfreq_,
 		       Xapian::valueno slot_,
 		       const std::string &begin_, const std::string &end_)
-	: db(db_), slot(slot_), begin(begin_), end(end_), est(est_) { }
+	: db(db_), slot(slot_), begin(begin_), end(end_) {
+	// Static estimate of termfreq based on the slot bounds and range ends.
+	termfreq = termfreq_;
+    }
 
     ~ValueRangePostList();
-
-    Xapian::doccount get_termfreq() const;
-
-    TermFreqs get_termfreq_est_using_stats(
-	const Xapian::Weight::Internal & stats) const;
 
     Xapian::docid get_docid() const;
 

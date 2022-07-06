@@ -19,8 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-#ifndef XAPIAN_INCLUDED_MULTIANDPOSTLIST_H
-#define XAPIAN_INCLUDED_MULTIANDPOSTLIST_H
+#ifndef XAPIAN_INCLUDED_ANDPOSTLIST_H
+#define XAPIAN_INCLUDED_ANDPOSTLIST_H
 
 #include "backends/postlist.h"
 #include "omassert.h"
@@ -29,7 +29,7 @@
 #include <algorithm>
 
 /// N-way AND postlist.
-class MultiAndPostList : public PostList {
+class AndPostList : public PostList {
     /** Comparison functor which orders PostList* by ascending
      *  get_termfreq(). */
     struct ComparePostListTermFreqAscending {
@@ -40,28 +40,25 @@ class MultiAndPostList : public PostList {
     };
 
     /// Don't allow assignment.
-    void operator=(const MultiAndPostList &);
+    AndPostList& operator=(const AndPostList&) = delete;
 
     /// Don't allow copying.
-    MultiAndPostList(const MultiAndPostList &);
+    AndPostList(const AndPostList&) = delete;
 
     /// The current docid, or zero if we haven't started or are at_end.
-    Xapian::docid did;
+    Xapian::docid did = 0;
 
     /// The number of sub-postlists.
     size_t n_kids;
 
     /// Array of pointers to sub-postlists.
-    PostList ** plist;
+    PostList** plist = nullptr;
 
     /// Array of maximum weights for the sub-postlists.
-    double * max_wt;
+    double* max_wt = nullptr;
 
     /// Total maximum weight (== sum of max_wt values).
-    double max_total;
-
-    /// The number of documents in the database.
-    Xapian::doccount db_size;
+    double max_total = 0.0;
 
     /// Pointer to the matcher object, so we can report pruning.
     PostListTree *matcher;
@@ -115,14 +112,12 @@ class MultiAndPostList : public PostList {
     PostList * find_next_match(double w_min);
 
   public:
-    /** Construct from 2 random-access iterators to a container of PostList*,
-     *  a pointer to the matcher, and the document collection size.
+    /** Construct from 2 random-access iterators to a container of PostList*
+     *  and a pointer to the matcher.
      */
     template<class RandomItor>
-    MultiAndPostList(RandomItor pl_begin, RandomItor pl_end,
-		     PostListTree * matcher_, Xapian::doccount db_size_)
-	: did(0), n_kids(pl_end - pl_begin), plist(NULL), max_wt(NULL),
-	  max_total(0), db_size(db_size_), matcher(matcher_)
+    AndPostList(RandomItor pl_begin, RandomItor pl_end, PostListTree* matcher_)
+	: n_kids(pl_end - pl_begin), matcher(matcher_)
     {
 	allocate_plist_and_max_wt();
 
@@ -131,15 +126,38 @@ class MultiAndPostList : public PostList {
 	// the longer lists based on those.
 	std::partial_sort_copy(pl_begin, pl_end, plist, plist + n_kids,
 			       ComparePostListTermFreqAscending());
+
+	Xapian::docid first = 1, last = Xapian::docid(-1);
+	AndPostList::get_docid_range(first, last);
+	if (rare(last < first)) {
+	    // This probably always gets handled at a higher level.
+	    termfreq = 0;
+	}
+
+	// We calculate the estimate assuming independence.
+	double r = (last - first + 1);
+	for (size_t i = 0; i < n_kids; ++i) {
+	    auto est = plist[i]->get_termfreq();
+	    first = 1;
+	    last = Xapian::docid(-1);
+	    plist[i]->get_docid_range(first, last);
+	    // If this wasn't true then AndPostList::get_docid_range() should
+	    // have returned last < first which is handled above.
+	    Assert(last >= first);
+	    r *= double(est) / (last - first + 1);
+	}
+	termfreq = static_cast<Xapian::doccount>(r + 0.5);
     }
 
     /** Construct as the decay product of an OrPostList or AndMaybePostList. */
-    MultiAndPostList(PostList *l, PostList *r,
-		     double lmax, double rmax,
-		     PostListTree * matcher_, Xapian::doccount db_size_)
-	: did(0), n_kids(2), plist(NULL), max_wt(NULL),
-	  max_total(lmax + rmax), db_size(db_size_), matcher(matcher_)
+    AndPostList(PostList* l, PostList* r,
+		double lmax, double rmax,
+		PostListTree* matcher_, Xapian::doccount termfreq_)
+	: n_kids(2), max_total(lmax + rmax), matcher(matcher_)
     {
+	// Just copy the estimate from the PostList which decayed.
+	termfreq = termfreq_;
+
 	// Even if we're the decay product of an OrPostList, we may want to
 	// swap here, as the subqueries may also have decayed and so their
 	// estimated termfreqs may have changed.
@@ -155,12 +173,7 @@ class MultiAndPostList : public PostList {
 	max_wt[1] = lmax;
     }
 
-    ~MultiAndPostList();
-
-    Xapian::doccount get_termfreq() const;
-
-    TermFreqs get_termfreq_est_using_stats(
-	const Xapian::Weight::Internal & stats) const;
+    ~AndPostList();
 
     Xapian::docid get_docid() const;
 
@@ -176,10 +189,13 @@ class MultiAndPostList : public PostList {
 
     PostList* skip_to(Xapian::docid, double w_min);
 
+    void get_docid_range(Xapian::docid& first, Xapian::docid& last) const;
+
     std::string get_description() const;
 
-    /** get_wdf() for MultiAndPostlists returns the sum of the wdfs of the
-     *  sub postlists.
+    /** Get the within-document frequency.
+     *
+     *  For AndPostlist returns the sum of the wdfs of the sub postlists.
      *
      *  The wdf isn't really meaningful in many situations, but if the lists
      *  are being combined as a synonym we want the sum of the wdfs, so we do
@@ -192,4 +208,4 @@ class MultiAndPostList : public PostList {
     void gather_position_lists(OrPositionList* orposlist);
 };
 
-#endif // XAPIAN_INCLUDED_MULTIANDPOSTLIST_H
+#endif // XAPIAN_INCLUDED_ANDPOSTLIST_H

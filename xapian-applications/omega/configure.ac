@@ -67,7 +67,7 @@ esac
 AC_SUBST([NO_INSTALL])
 
 dnl Probe for any options needed to enable C++11 support.
-AX_CXX_COMPILE_STDCXX_11
+AX_CXX_COMPILE_STDCXX([11])
 
 dnl Run tests using the C++ compiler.
 AC_LANG([C++])
@@ -102,12 +102,18 @@ CXXFLAGS="$CXXFLAGS $XAPIAN_CXXFLAGS"
 dnl We need to specify the argument types for builtin functions, or else
 dnl AC_CHECK_DECLS fails to detect them when the compiler is clang.
 AC_CHECK_DECLS([__builtin_add_overflow(int, int, int*),
+		__builtin_sub_overflow(int, int, int*),
 		__builtin_mul_overflow(int, int, int*)], [], [], [ ])
 AC_CHECK_DECLS([__builtin_bswap32(uint32_t)], [], [],
 	       [#include <stdint.h>])
 AC_CHECK_DECLS([_byteswap_ulong], [], [],
 	       [#include <stdlib.h>])
 AC_CHECK_DECLS([__builtin_expect(long, long)], [], [], [ ])
+AC_CHECK_DECLS([_addcarry_u32(unsigned char, unsigned, unsigned, unsigned*),
+		_addcarry_u64(unsigned char, unsigned __int64, unsigned __int64, unsigned __int64*),
+		_subborrow_u32(unsigned char, unsigned, unsigned, unsigned*),
+		_subborrow_u64(unsigned char, unsigned __int64, unsigned __int64, unsigned __int64*)],
+	       [], [], [#include <intrin.h>])
 
 dnl Check for time functions.
 AC_FUNC_STRFTIME
@@ -174,6 +180,10 @@ dnl so we can provide our own declaration to access it.
 AC_CHECK_FUNCS([setenv _putenv_s])
 AC_CHECK_DECLS([_putenv_s(const char*, const char*)], [], [],
 [#include <stdlib.h>])
+
+dnl See if we have closefrom(), or some functions that are useful to implement
+dnl closefrom() on platforms which don't provide it.
+AC_CHECK_FUNCS([closefrom getdirentries getrlimit])
 
 dnl libmagic used to detect MIME types for files we don't detect by extension.
 AC_CHECK_HEADERS([magic.h])
@@ -296,10 +306,15 @@ PKG_CHECK_MODULES([LIBEXTRACTOR], [libextractor], [
     AC_DEFINE(HAVE_LIBEXTRACTOR, 1, [Define HAVE_LIBEXTRACTOR if the library is available])
     OMINDEX_MODULES="$OMINDEX_MODULES omindex_libextractor"],[ ])
 
+dnl check if libmwaw is available.
+PKG_CHECK_MODULES([LIBMWAW], [libmwaw-0.3,librevenge-0.0,librevenge-generators-0.0,librevenge-stream-0.0], [
+    AC_DEFINE(HAVE_LIBMWAW, 1, [Define HAVE_LIBMWAW if the library is available])
+    OMINDEX_MODULES="$OMINDEX_MODULES omindex_libmwaw"],[ ])
+
 AC_SUBST([OMINDEX_MODULES])
 
 dnl mingw has _snprintf so check for that too.
-AC_MSG_CHECKING([for  snprintf])
+AC_MSG_CHECKING([for snprintf])
 AC_CACHE_VAL([xo_cv_func_snprintf],
   [
   xo_cv_func_snprintf=no

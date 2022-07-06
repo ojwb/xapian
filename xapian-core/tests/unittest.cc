@@ -1,7 +1,7 @@
 /** @file
  * @brief Unit tests of non-Xapian-specific internal code.
  */
-/* Copyright (C) 2006,2007,2009,2010,2012,2015,2016,2017,2018,2019 Olly Betts
+/* Copyright (C) 2006-2022 Olly Betts
  * Copyright (C) 2007 Richard Boulton
  *
  * This program is free software; you can redistribute it and/or
@@ -92,7 +92,7 @@ using namespace std;
 // fileutils.cc uses opendir(), etc though not in a function we currently test.
 #include "../common/msvc_dirent.cc"
 
-// The UUID code uses hexdigit().
+// The UUID code uses hex_digit().
 #include "../api/constinfo.cc"
 
 // Stub replacement, which doesn't deal with escaping or producing valid UTF-8.
@@ -702,13 +702,17 @@ static void test_movesupport1()
 
 	// Test move constructor
 	Xapian::Internal::intrusive_ptr<A> p2(std::move(p1));
+	TEST(p2);
 	TEST_EQUAL(p2->get_x(), 5);
 	TEST_EQUAL(p1.get(), 0);
+	TEST(!p1);
 
 	// Test move assignment
 	p3 = std::move(p2);
+	TEST(p3);
 	TEST_EQUAL(p3->get_x(), 5);
 	TEST_EQUAL(p2.get(), 0);
+	TEST(!p2);
     }
 
     {
@@ -718,10 +722,12 @@ static void test_movesupport1()
 
 	// Test move constructor
 	Xapian::Internal::intrusive_ptr_nonnull<A> p2(std::move(p1));
+	TEST(p2.get());
 	TEST_EQUAL(p2->get_x(), 5);
 
 	// Test move assignment
 	p3 = std::move(p2);
+	TEST(p3.get());
 	TEST_EQUAL(p3->get_x(), 5);
     }
 
@@ -735,14 +741,18 @@ static void test_movesupport1()
 
 	// Test move constructor
 	Xapian::Internal::opt_intrusive_ptr<B> p2(std::move(p1));
+	TEST(p2);
 	TEST_EQUAL(p2->get_x(), 5);
 	TEST_EQUAL(p1.get(), 0);
+	TEST(!p1);
 	TEST_EQUAL(alive, true);
 
 	// Test move assignment
 	p3 = std::move(p2);
+	TEST(p3);
 	TEST_EQUAL(p3->get_x(), 5);
 	TEST_EQUAL(p2.get(), 0);
+	TEST(!p2);
 	TEST_EQUAL(alive, true);
     }
     // Test that object b1 has been deleted.
@@ -751,18 +761,71 @@ static void test_movesupport1()
 
 static void test_addoverflows1()
 {
+    const auto ulong_max = numeric_limits<unsigned long>::max();
+    const auto uint_max = numeric_limits<unsigned int>::max();
+    const auto ushort_max = numeric_limits<unsigned short>::max();
+    const auto uchar_max = numeric_limits<unsigned char>::max();
+
+    unsigned long res_ulong;
+    unsigned res_uint;
+    unsigned short res_ushort;
+    unsigned char res_uchar;
+
+    TEST(!add_overflows(0UL, 0UL, res_ulong));
+    TEST_EQUAL(res_ulong, 0);
+    TEST(!add_overflows(0UL, 0UL, res_uint));
+    TEST_EQUAL(res_uint, 0);
+    TEST(!add_overflows(0UL, 0UL, res_ushort));
+    TEST_EQUAL(res_ushort, 0);
+    TEST(!add_overflows(0UL, 0UL, res_uchar));
+    TEST_EQUAL(res_uchar, 0);
+
+    TEST(add_overflows(ulong_max, 1UL, res_ulong));
+    TEST_EQUAL(res_ulong, 0);
+    TEST(add_overflows(uint_max, 1UL, res_uint));
+    TEST_EQUAL(res_uint, 0);
+    TEST(add_overflows(ushort_max, 1UL, res_ushort));
+    TEST_EQUAL(res_ushort, 0);
+    TEST(add_overflows(uchar_max, 1UL, res_uchar));
+    TEST_EQUAL(res_uchar, 0);
+
+    TEST(add_overflows(1UL, ulong_max, res_ulong));
+    TEST_EQUAL(res_ulong, 0);
+    TEST(add_overflows(1UL, uint_max, res_uint));
+    TEST_EQUAL(res_uint, 0);
+    TEST(add_overflows(1UL, ushort_max, res_ushort));
+    TEST_EQUAL(res_ushort, 0);
+    TEST(add_overflows(1UL, uchar_max, res_uchar));
+    TEST_EQUAL(res_uchar, 0);
+
+    TEST(add_overflows(ulong_max, ulong_max, res_ulong));
+    TEST_EQUAL(res_ulong, ulong_max - 1UL);
+    TEST(add_overflows(uint_max, uint_max, res_uint));
+    TEST_EQUAL(res_uint, uint_max - 1UL);
+    TEST(add_overflows(ushort_max, ushort_max, res_ushort));
+    TEST_EQUAL(res_ushort, ushort_max - 1UL);
+    TEST(add_overflows(uchar_max, uchar_max, res_uchar));
+    TEST_EQUAL(res_uchar, uchar_max - 1UL);
+
+    res_uchar = 1;
+    TEST(add_overflows(res_uchar, unsigned(uchar_max) + 1U, res_uchar));
+    TEST_EQUAL(res_uchar, 1);
+}
+
+static void test_suboverflows1()
+{
     unsigned long res;
-    TEST(!add_overflows(0UL, 0UL, res));
+    TEST(!sub_overflows(0UL, 0UL, res));
     TEST_EQUAL(res, 0);
 
-    TEST(add_overflows(ULONG_MAX, 1UL, res));
-    TEST_EQUAL(res, 0);
+    TEST(sub_overflows(0UL, 1UL, res));
+    TEST_EQUAL(res, ULONG_MAX);
 
-    TEST(add_overflows(1UL, ULONG_MAX, res));
-    TEST_EQUAL(res, 0);
+    TEST(sub_overflows(ULONG_MAX - 1UL, ULONG_MAX, res));
+    TEST_EQUAL(res, ULONG_MAX);
 
-    TEST(add_overflows(ULONG_MAX, ULONG_MAX, res));
-    TEST_EQUAL(res, ULONG_MAX - 1UL);
+    TEST(sub_overflows(0UL, ULONG_MAX, res));
+    TEST_EQUAL(res, 1);
 }
 
 static void test_muloverflows1()
@@ -894,6 +957,7 @@ static const test_desc tests[] = {
     TESTCASE(uuid1),
     TESTCASE(movesupport1),
     TESTCASE(addoverflows1),
+    TESTCASE(suboverflows1),
     TESTCASE(muloverflows1),
     TESTCASE(parseunsigned1),
     TESTCASE(parsesigned1),

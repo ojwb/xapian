@@ -56,24 +56,6 @@ LeafPostList::recalc_maxweight()
     return weight ? weight->get_maxpart() : 0;
 }
 
-TermFreqs
-LeafPostList::get_termfreq_est_using_stats(
-	const Xapian::Weight::Internal & stats) const
-{
-    LOGCALL(MATCH, TermFreqs, "LeafPostList::get_termfreq_est_using_stats", stats);
-    if (term.empty()) {
-	// total_length may be too large to represent - if so use the largest
-	// value we can represent.
-	Xapian::totallength max_cf{numeric_limits<Xapian::termcount>::max()};
-	auto cf(static_cast<Xapian::termcount>(min(stats.total_length,
-						   max_cf)));
-	RETURN(TermFreqs(stats.collection_size, stats.rset_size, cf));
-    }
-    map<string, TermFreqs>::const_iterator i = stats.termfreqs.find(term);
-    Assert(i != stats.termfreqs.end());
-    RETURN(i->second);
-}
-
 Xapian::termcount
 LeafPostList::count_matching_subqs() const
 {
@@ -86,8 +68,9 @@ LeafPostList::gather_position_lists(OrPositionList* orposlist)
     orposlist->add_poslist(read_position_list());
 }
 
-LeafPostList *
-LeafPostList::open_nearby_postlist(const std::string &, bool) const
+bool
+LeafPostList::open_nearby_postlist(const std::string&, bool,
+				   LeafPostList*&) const
 {
-    return NULL;
+    return false;
 }

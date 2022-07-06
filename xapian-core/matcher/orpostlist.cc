@@ -1,7 +1,7 @@
 /** @file
  * @brief PostList class implementing Query::OP_OR
  */
-/* Copyright 2017 Olly Betts
+/* Copyright 2017,2022 Olly Betts
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -23,20 +23,91 @@
 #include "orpostlist.h"
 
 #include "andmaybepostlist.h"
+#include "andpostlist.h"
 #include "min_non_zero.h"
-#include "multiandpostlist.h"
 #include "postlisttree.h"
 
 #include <algorithm>
 
 using namespace std;
 
+template<typename T>
+static void
+estimate_or_assuming_indep(double a, double b, double n, T& res)
+{
+    Assert(n != 0.0);
+    res = static_cast<T>(a + b - (a * b / n) + 0.5);
+}
+
+template<typename T>
+static void
+estimate_or_assuming_indep(double a, double af, double al,
+			   double b, double bf, double bl,
+			   T& res)
+{
+    // Clamp estimates to range lengths.
+    a = min(a, al - af + 1.0);
+    b = min(b, bl - bf + 1.0);
+    AssertRel(a,>=,0);
+    AssertRel(b,>=,0);
+
+    if (al < bf || bl < af) {
+	// Disjoint ranges.
+	res = a + b;
+	return;
+    }
+
+    // Arrange for af <= bf.
+    if (af > bf) {
+	swap(a, b);
+	swap(af, bf);
+	swap(al, bl);
+    }
+
+    // Arrange for al <= bl.
+    if (al > bl) {
+	bf += (al - bl);
+	bl = al;
+    }
+
+    double arate = a / (al - af + 1);
+    double brate = b / (bl - bf + 1);
+
+    double r = arate * (bf - af) +
+	       brate * (bl - al) +
+	       (arate + brate - arate * brate) * (al - bf + 1);
+    res = static_cast<T>(r + 0.5);
+}
+
+OrPostList::OrPostList(PostList* left, PostList* right,
+		       PostListTree* pltree_)
+    : l(left), r(right), pltree(pltree_)
+{
+    auto l_tf_est = l->get_termfreq();
+    auto r_tf_est = r->get_termfreq();
+    Xapian::docid l_first = 1, l_last = Xapian::docid(-1);
+    Xapian::docid r_first = 1, r_last = Xapian::docid(-1);
+    l->get_docid_range(l_first, l_last);
+    r->get_docid_range(r_first, r_last);
+    if (l_last < l_first) {
+	l_last = 0;
+	l_first = 1;
+    }
+    if (r_last < r_first) {
+	r_last = 0;
+	r_first = 1;
+    }
+    estimate_or_assuming_indep(l_tf_est, l_first, l_last,
+			       r_tf_est, r_first, r_last,
+			       termfreq);
+}
+
 PostList*
 OrPostList::decay_to_and(Xapian::docid did,
 			 double w_min,
 			 bool* valid_ptr)
 {
-    l = new MultiAndPostList(l, r, l_max, r_max, pltree, db_size);
+    l = new AndPostList(l, r, l_max, r_max, pltree, termfreq);
     r = NULL;
     PostList* result;
     if (valid_ptr) {
@@ -60,7 +131,7 @@ OrPostList::decay_to_andmaybe(PostList* left,
 			      bool* valid_ptr)
 {
     if (l != left) swap(l_max, r_max);
-    l = new AndMaybePostList(left, right, l_max, r_max, pltree, db_size);
+    l = new AndMaybePostList(left, right, l_max, r_max, pltree);
     r = NULL;
     PostList* result;
     if (valid_ptr) {
@@ -344,61 +415,6 @@ OrPostList::check(Xapian::docid did, double w_min, bool& valid)
     return NULL;
 }
 
-template<typename T>
-static void
-estimate_or_assuming_indep(double a, double b, double n, T& res)
-{
-    if (rare(n == 0.0)) {
-	res = 0;
-    } else {
-	res = static_cast<T>(a + b - (a * b / n) + 0.5);
-    }
-}
-
-Xapian::doccount
-OrPostList::get_termfreq() const
-{
-    auto l_tf_est = l->get_termfreq();
-    auto r_tf_est = r->get_termfreq();
-    Xapian::doccount tf_est;
-    estimate_or_assuming_indep(l_tf_est, r_tf_est, db_size, tf_est);
-    return tf_est;
-}
-
-TermFreqs
-OrPostList::get_termfreq_est_using_stats(
-	const Xapian::Weight::Internal& stats) const
-{
-    const TermFreqs& l_freqs = l->get_termfreq_est_using_stats(stats);
-    const TermFreqs& r_freqs = r->get_termfreq_est_using_stats(stats);
-
-    // Our caller should have ensured this.
-    Assert(stats.collection_size);
-    Xapian::doccount freqest;
-    estimate_or_assuming_indep(l_freqs.termfreq,
-			       r_freqs.termfreq,
-			       stats.collection_size,
-			       freqest);
-
-    Xapian::doccount relfreqest = 0;
-    if (stats.rset_size != 0) {
-	estimate_or_assuming_indep(l_freqs.reltermfreq,
-				   r_freqs.reltermfreq,
-				   stats.rset_size,
-				   relfreqest);
-    }
-
-    Xapian::termcount collfreqest = 0;
-    if (stats.total_length != 0) {
-	estimate_or_assuming_indep(l_freqs.collfreq,
-				   r_freqs.collfreq,
-				   double(stats.total_length),
-				   collfreqest);
-    }
-
-    return TermFreqs(freqest, relfreqest, collfreqest);
-}
-
 bool
 OrPostList::at_end() const
 {
@@ -406,6 +422,16 @@ OrPostList::at_end() const
     // prune to leave the other, and if both children reach at_end() together,
     // we prune to leave one of them which will then indicate at_end() for us.
     return false;
+}
+
+void
+OrPostList::get_docid_range(Xapian::docid& first, Xapian::docid& last) const
+{
+    l->get_docid_range(first, last);
+    Xapian::docid first2 = 1, last2 = Xapian::docid(-1);
+    r->get_docid_range(first2, last2);
+    first = min(first, first2);
+    last = max(last, last2);
 }
 
 std::string

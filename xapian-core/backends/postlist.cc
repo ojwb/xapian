@@ -30,13 +30,6 @@ using namespace std;
 
 PostList::~PostList() {}
 
-TermFreqs
-PostList::get_termfreq_est_using_stats(const Xapian::Weight::Internal &) const
-{
-    throw Xapian::InvalidOperationError(
-     "get_termfreq_est_using_stats() not meaningful for this PostingIterator");
-}
-
 Xapian::termcount
 PostList::get_wdf() const
 {
@@ -73,4 +66,10 @@ void
 PostList::gather_position_lists(OrPositionList*)
 {
     Assert(false);
+}
+
+void
+PostList::get_docid_range(Xapian::docid&, Xapian::docid&) const
+{
+    // Default is to match the full range.
 }

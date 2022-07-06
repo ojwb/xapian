@@ -32,8 +32,21 @@
 using namespace std;
 
 Estimates
-EstimateOp::resolve(Xapian::doccount db_size)
+EstimateOp::resolve(Xapian::doccount db_size,
+		    Xapian::docid db_first,
+		    Xapian::docid db_last)
 {
+    // Clamp first and last to those from the DB - we lazily set first=1 and/or
+    // last=Xapian::docid(-1) when we don't have better bounds.
+    estimates.first = max(estimates.first, db_first);
+    estimates.last = min(estimates.last, db_last);
+
+    // If there are gaps in the docid numbering then max_range could be greater
+    // than db_size.  It might seem tempting to clamping max_range to db_size
+    // but the gaps will tend to inflate all the range lengths proportionally
+    // so the effect should tend to cancel out if we leave max_range alone.
+    Xapian::doccount max_range = estimates.last - estimates.first + 1;
+
     Estimates result;
     // LocalSubMatch::resolve() checks db_size == 0 so we should be able to
     // assume it is non-zero in all the cases below.
@@ -44,76 +57,140 @@ EstimateOp::resolve(Xapian::doccount db_size)
 	result = estimates;
 	break;
       case AND: {
-	result = resolve_next(db_size);
-	double scale = 1.0 / db_size;
-	double est = result.est;
-	auto n = n_subqueries;
-	while (--n) {
-	    Estimates r = resolve_next(db_size);
+	result.min = max_range;
+	result.max = max_range;
+	double est = max_range;
+	for (unsigned n = 0; n < n_subqueries; ++n) {
+	    Estimates r = resolve_next(db_size, db_first, db_last);
 
 	    // The number of matching documents is minimised when we have the
 	    // minimum number of matching documents from each sub-postlist, and
 	    // these are maximally disjoint.
-	    if (!add_overflows(result.min, r.min, result.min) &&
-		result.min <= db_size) {
-		// It's possible there's no overlap.
-		result.min = 0;
+	    auto range_i = r.last - r.first + 1;
+	    // min_overlap is the minimum number of documents from this subquery
+	    // which have to be in the range where all the subqueries overlap.
+	    Xapian::doccount min_overlap;
+	    if (!sub_overflows(r.min, range_i - max_range, min_overlap)) {
+		if (!add_overflows(result.min, min_overlap, result.min) &&
+		    result.min <= max_range) {
+		    // It's possible there's no overlap.
+		    result.min = 0;
+		} else {
+		    // The pair-wise overlap is (a + b - max_range) - this works
+		    // even if (a + b) overflows (a and b are each <= max_range
+		    // so subtracting max_range must un-overflow us).
+		    result.min -= max_range;
+		}
 	    } else {
-		// The pair-wise overlap is (a + b - db_size) - this works even
-		// if (a + b) overflows (a and b are each <= db_size so
-		// subtracting db_size must un-overflow us).
-		result.min -= db_size;
+		// This child could have nothing in the overlap.
+		result.min = 0;
 	    }
 
 	    result.max = std::min(result.max, r.max);
 
-	    // We calculate the estimate assuming independence.  With this
-	    // assumption, the estimate is the product of the estimates for the
-	    // sub-postlists divided by db_size (n_subqueries - 1) times.
-	    est = est * r.est * scale;
+	    // We calculate the estimate assuming independence - it's the
+	    // product of (est/range) for the children, multiplied by the
+	    // range for the AND.
+	    if (usual(range_i > 0)) {
+		est = est * r.est / range_i;
+	    }
 	}
 
 	result.est = static_cast<Xapian::doccount>(est + 0.5);
+	result.est = STD_CLAMP(result.est, result.min, result.max);
 	break;
       }
       case AND_NOT: {
 	AssertEq(n_subqueries, 2);
 	// NB: The RHS comes first, then the LHS.
-	Estimates r = resolve_next(db_size);
-	result = resolve_next(db_size);
+	Estimates r = resolve_next(db_size, db_first, db_last);
+	result = resolve_next(db_size, db_first, db_last);
 
-	if (result.min <= r.max) {
+	// An AND_NOT with no overlap gets optimised away before now, so we
+	// know the ranges overlap.
+	Xapian::doccount overlap =
+	    min(result.last, r.last) - max(result.first, r.first) + 1;
+
+	// The maximum number of documents that could be in common.
+	auto max_actual_overlap = min(overlap, r.max);
+
+	if (sub_overflows(result.min, max_actual_overlap, result.min)) {
+	    // This AND_NOT could match no documents.
 	    result.min = 0;
-	} else {
-	    result.min -= r.max;
 	}
 
+	Xapian::doccount range_l = result.last - result.first + 1;
+	Xapian::doccount range_r = r.last - r.first + 1;
 	// We can't match more documents than our left-side does.
-	// We also can't more documents than our right-side *doesn't*.
-	result.max = std::min(result.max, db_size - r.min);
+	// We also can't more documents than when the non-overlaps are
+	// full and the overlap as segregated as possible with the LHS
+	// achieving its maximum and the RHS its minimum.
+	//
+	// Note that the second expression can't overflow the type.
+	result.max = std::min(result.max, range_l - overlap + range_r - r.min);
 
-	// We calculate the estimate assuming independence.  With this
-	// assumption, the estimate is the product of the estimates for the
-	// sub-postlists (for the right side this is inverted by subtracting
-	// from db_size), divided by db_size.
-	double est = result.est;
-	est = (est * (db_size - r.est)) / db_size;
+	// Max is when:
+	// <---- LHS ------->
+	// [LLLLLLL|llllbbrr|RRRRRR]
+	//         <-------RHS----->
+	//
+	// #L = range_l - overlap
+	// #R = range_r - overlap
+	// #r+#b = r_min - #R
+	// #l+#b = l_max - #L
+	// #b = rmin - #R + l_max - #L - overlap
+	// result.max = #L + #l = #L + l_max - #L -
+	//           - (rmin - #R + l_max - #L - overlap)
+	//            = - rmin + #R + #L + overlap)
+	//            = #L + #R + overlap - rmin
+	//            = range_l + range_r - overlap - rmin
+
+	// We calculate the estimate assuming independence, but taking into
+	// account the range information.
+	double est = result.est * (1.0 - double(overlap) * r.est /
+		     (double(range_l) * range_r));
+
 	result.est = static_cast<Xapian::doccount>(est + 0.5);
 	break;
       }
       case OR: {
-	result = resolve_next(db_size);
-	double scale = 1.0 / db_size;
+	// FIXME: We don't currently make full use of the range information
+	// here.  Trivial testing suggested it doesn't make much difference
+	// for the estimate but we should investigate more deeply as it may
+	// be useful for min and max, and perhaps for the estimate in cases
+	// we didn't try.
+	//
+	// We also only tried applying the range version of
+	// estimate_or_assuming_indep() from orpostlist.cc which works on
+	// pairswise OR multiple times.  A fuller algorithm would work
+	// through the range starts and ends something like:
+	//
+	// * Sort start and ends into order and work through (at most 2*N-1
+	//   regions)
+	// * For min allocate to where there's most overlap, e.g.
+	//
+	//     AAAAAAAAAAAAAAAAAAAAAAA
+	// |   |      | aaaaaaa|aaaaa|        |       |       |
+	// |   |      BBBBBBBBBBBBBBBBBBBBBBBBB       |       |
+	// |   |      | bbbbbbb|bbbbb|bbbbbb  |       |       |
+	// |   |      |        CCCCCCCCCCCCCCCCCCCCCCCC       |
+	// |   |      |        |ccccc|ccc     |       |       |
+	//
+	// * For max try to allocate where there's least overlap
+	// * For est assume each range splits proportionally over the regions
+	//   it participates (potentially O(n*n) in number of subqueries)
+	result = resolve_next(db_size, db_first, db_last);
+	double scale = max_range == 0.0 ? 1.0 : 1.0 / max_range;
 	double P_est = result.est * scale;
 	auto n = n_subqueries;
 	while (--n) {
-	    Estimates r = resolve_next(db_size);
+	    Estimates r = resolve_next(db_size, db_first, db_last);
 
 	    result.min = std::max(result.min, r.min);
 
-	    // Sum(max) over subqueries but saturating at db_size.
-	    if (db_size - result.max <= r.max) {
-		result.max = db_size;
+	    // Sum(max) over subqueries but saturating at max_range.
+	    if (max_range - result.max <= r.max) {
+		result.max = max_range;
 	    } else {
 		result.max += r.max;
 	    }
@@ -126,42 +203,54 @@ EstimateOp::resolve(Xapian::doccount db_size)
 	    P_est += P_i - P_est * P_i;
 	}
 
-	result.est = static_cast<Xapian::doccount>(P_est * db_size + 0.5);
+	result.est = static_cast<Xapian::doccount>(P_est * max_range + 0.5);
 	break;
       }
       case XOR: {
-	result = resolve_next(db_size);
-	double scale = 1.0 / db_size;
+	// FIXME: We don't currently make full use of the range information
+	// here.
+	double scale = max_range == 0.0 ? 1.0 : 1.0 / max_range;
 
-	bool all_exact = (result.max == result.min);
+	bool all_exact = true;
+	bool invert = false;
 
 	unsigned max_overflow = 0;
-	Xapian::doccount max_sum = result.max;
+	Xapian::doccount max_sum = 0;
 
 	// We calculate the estimate assuming independence.  The simplest
 	// way to calculate this seems to be a series of (n_subqueries - 1)
 	// pairwise calculations, which gives the same answer regardless of the
 	// order.
-	double P_est = result.est * scale;
+	double P_est = 0.0;
+
+	unsigned j = 0;
 
 	// Need to buffer min and max values from subqueries so we can compute
 	// our min as a second pass.
 	unique_ptr<Estimates[]> min_and_max{new Estimates[n_subqueries]};
-	min_and_max[0] = result;
-	for (unsigned i = 1; i < n_subqueries; ++i) {
-	    min_and_max[i] = resolve_next(db_size);
-	    const Estimates& r = min_and_max[i];
+	for (unsigned i = 0; i < n_subqueries; ++i) {
+	    min_and_max[j] = resolve_next(db_size, db_first, db_last);
+	    const Estimates& r = min_and_max[j];
 
-	    // Maximum is if all sub-postlists are disjoint.
-	    Xapian::doccount max_i = r.max;
-	    if (add_overflows(max_sum, max_i, max_sum)) {
-		// Track how many times we overflow the type.
-		++max_overflow;
+	    if (r.min == db_size) {
+		// A subquery matches all documents which just inverts which
+		// documents match - note that but otherwise ignore this
+		// subquery.
+		invert = !invert;
+	    } else {
+		// Maximum is if all sub-postlists are disjoint.
+		Xapian::doccount max_i = r.max;
+		if (add_overflows(max_sum, max_i, max_sum)) {
+		    // Track how many times we overflow the type.
+		    ++max_overflow;
+		}
+		all_exact = all_exact && (max_i == r.min);
+
+		double P_i = r.est * scale;
+		P_est += P_i - 2.0 * P_est * P_i;
+
+		++j;
 	    }
-	    all_exact = all_exact && (max_i == r.min);
-
-	    double P_i = r.est * scale;
-	    P_est += P_i - 2.0 * P_est * P_i;
 	}
 
 	if (max_overflow || max_sum > db_size) {
@@ -177,7 +266,7 @@ EstimateOp::resolve(Xapian::doccount db_size)
 	    result.max = max_sum;
 	}
 
-	result.est = static_cast<Xapian::doccount>(P_est * db_size + 0.5);
+	result.est = static_cast<Xapian::doccount>(P_est * max_range + 0.5);
 
 	// Calculate min.
 	Xapian::doccount min = 0;
@@ -186,7 +275,7 @@ EstimateOp::resolve(Xapian::doccount db_size)
 	    // can't cancel out subquery i.  If we overflowed more than once,
 	    // then the true value of max_sum is greater than the maximum
 	    // possible tf, so there's no point checking.
-	    for (unsigned i = 0; i < n_subqueries; ++i) {
+	    for (unsigned i = 0; i < j; ++i) {
 		const Estimates& r = min_and_max[i];
 		Xapian::doccount all_the_rest = max_sum - r.max;
 		// If no overflow, or we un-overflowed again...
@@ -206,13 +295,20 @@ EstimateOp::resolve(Xapian::doccount db_size)
 	} else {
 	    result.min = min;
 	}
+
+	if (invert) {
+	    auto old_min = result.min;
+	    result.min = db_size - result.max;
+	    result.est = db_size - result.est;
+	    result.max = db_size - old_min;
+	}
 	break;
       }
       case DECIDER:
       case NEAR:
       case PHRASE:
       case EXACT_PHRASE:
-	result = resolve_next(db_size);
+	result = resolve_next(db_size, db_first, db_last);
 	if (estimates.min == 0 && estimates.max == 0) {
 	    result.min = 0;
 	    // We've arranged for type's value to be the factor we want to
@@ -229,5 +325,18 @@ EstimateOp::resolve(Xapian::doccount db_size)
     }
     AssertRel(result.min, <=, result.est);
     AssertRel(result.est, <=, result.max);
+
+    result.first = estimates.first;
+    result.last = estimates.last;
+
+    // The range size is an upper bound for max and est.  This is redundant in
+    // some cases (for example it isn't needed for AND) but it's very cheap and
+    // simpler to always ensure this.
+    if (max_range < result.max) {
+	result.max = max_range;
+	if (max_range < result.est) {
+	    result.est = max_range;
+	}
+    }
     return result;
 }

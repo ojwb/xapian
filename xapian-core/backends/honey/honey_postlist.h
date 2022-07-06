@@ -135,8 +135,6 @@ class PostingChunkReader {
 
     bool at_end() const { return p == NULL; }
 
-    Xapian::doccount get_termfreq() const { return termfreq; }
-
     Xapian::docid get_docid() const { return did; }
 
     Xapian::termcount get_wdf() const { return wdf; }
@@ -192,10 +190,9 @@ class HoneyPostList : public LeafPostList {
 
     ~HoneyPostList();
 
-    Xapian::doccount get_termfreq() const;
-
-    LeafPostList* open_nearby_postlist(const std::string& term_,
-				       bool need_read_pos) const;
+    bool open_nearby_postlist(const std::string& term_,
+			      bool need_read_pos,
+			      LeafPostList*& pl) const;
 
     Xapian::docid get_docid() const;
 
@@ -210,6 +207,8 @@ class HoneyPostList : public LeafPostList {
     PostList* skip_to(Xapian::docid did, double w_min);
 
     Xapian::termcount get_wdf_upper_bound() const;
+
+    void get_docid_range(Xapian::docid& first, Xapian::docid& last) const;
 
     std::string get_description() const;
 };
