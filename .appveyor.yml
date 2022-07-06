@@ -21,9 +21,9 @@ environment:
     platform: x64
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
 # Fails trying to run apitest.exe etc for unknown reasons.
-   - TOOLCHAIN: cygwin
-     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-     platform: x86
+  - TOOLCHAIN: cygwin
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+    platform: x86
   - TOOLCHAIN: cygwin
     platform: x64
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
