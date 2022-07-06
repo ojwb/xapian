@@ -19,7 +19,7 @@ install:
   - bash -c 'pacman-key --populate msys2'
   - bash -c 'curl -O https://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz'
   - bash -c 'curl -O https://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig'
-  - bash -c 'echo > dummy'
+  - bash -c 'touch dummy'
   - bash -c 'ls -l'
   - bash -c 'pacman -U --config dummy msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz'
   - bash -c 'pacman -Syyu || pacman -Syyu'
