@@ -6,6 +6,7 @@ environment:
     AUTOMATED_TESTING: 1
   matrix:
   - TOOLCHAIN: mingw64
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     platform: x64
 install:
   - ps: >-
