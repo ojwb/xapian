@@ -8,6 +8,9 @@ dnl Loosely based on:
 dnl http://mail.gnome.org/archives/xml/2001-August/msg00061.html
 dnl
 dnl Original author: Albert Chin
+
+#serial 1
+
 AC_DEFUN([XAPIAN_TYPE_SOCKLEN_T],
 [
   AC_MSG_CHECKING([for type to use for 5th parameter to getsockopt])
@@ -16,7 +19,7 @@ AC_DEFUN([XAPIAN_TYPE_SOCKLEN_T],
     for t in socklen_t int size_t unsigned long "unsigned long"; do
       AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 	#include <sys/types.h>
-	#if defined __WIN32__ || defined _WIN32
+	#ifdef _WIN32
 	# include <winsock2.h>
 	#else
         # include <sys/socket.h>

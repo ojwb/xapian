@@ -42,7 +42,7 @@
 #endif
 
 // Under mingw we probably don't need to provide our own sleep().
-#if defined __WIN32__ && !defined HAVE_SLEEP
+#if defined _WIN32 && !defined HAVE_SLEEP
 
 inline unsigned int
 sleep(unsigned int seconds)

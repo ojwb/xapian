@@ -25,7 +25,7 @@
 #include <vector>
 
 // Disable fd tracking where it can't possibly work.
-#ifndef __WIN32__
+#ifndef _WIN32
 # define XAPIAN_TESTSUITE_TRACK_FDS
 #endif
 

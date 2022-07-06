@@ -25,7 +25,7 @@
 #include "safenetdb.h"
 #include "safeunistd.h"
 
-#ifdef __WIN32__
+#ifdef _WIN32
 
 #include "safewinsock2.h"
 

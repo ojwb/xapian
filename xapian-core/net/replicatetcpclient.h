@@ -26,7 +26,7 @@
 #include "xapian/visibility.h"
 #include "api/replication.h"
 
-#ifdef __WIN32__
+#ifdef _WIN32
 # define SOCKET_INITIALIZER_MIXIN : private WinsockInitializer
 #else
 # define SOCKET_INITIALIZER_MIXIN

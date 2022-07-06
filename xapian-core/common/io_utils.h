@@ -78,7 +78,7 @@ inline bool io_sync(int fd)
     return fdatasync(fd) == 0;
 #elif defined HAVE_FSYNC
     return fsync(fd) == 0;
-#elif defined __WIN32__
+#elif defined _WIN32
     return _commit(fd) == 0;
 #else
 # error Cannot implement io_sync() without fdatasync(), fsync(), or _commit()

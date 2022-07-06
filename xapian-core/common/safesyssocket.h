@@ -21,7 +21,7 @@
 #ifndef XAPIAN_INCLUDED_SAFESYSSOCKET_H
 #define XAPIAN_INCLUDED_SAFESYSSOCKET_H
 
-#ifndef __WIN32__
+#ifndef _WIN32
 // Some older BSDs require sys/types.h to be included first.
 # include <sys/types.h>
 # include <sys/socket.h>
@@ -29,11 +29,11 @@
 # include "safewinsock2.h"
 #endif
 
-#ifdef __WIN32__
+#ifdef _WIN32
 # include <type_traits>
 # include "xapian/error.h"
 # if defined SOCK_CLOEXEC
-static_assert(!SOCK_CLOEXEC, "__WIN32__ doesn't support SOCK_CLOEXEC");
+static_assert(!SOCK_CLOEXEC, "_WIN32 doesn't support SOCK_CLOEXEC");
 # endif
 # define SOCK_CLOEXEC 0
 

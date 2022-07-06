@@ -28,7 +28,7 @@
 
 #include <string>
 
-#if defined __CYGWIN__ || defined __WIN32__
+#if defined __CYGWIN__ || defined _WIN32
 # include "safewindows.h"
 #else
 # include <sys/types.h>
@@ -36,7 +36,7 @@
 
 class FlintLock {
     std::string filename;
-#if defined __CYGWIN__ || defined __WIN32__
+#if defined __CYGWIN__ || defined _WIN32
     HANDLE hFile = INVALID_HANDLE_VALUE;
 #elif defined FLINTLOCK_USE_FLOCK
     int fd = -1;
@@ -67,7 +67,7 @@ class FlintLock {
     FlintLock() {}
 
     operator bool() const {
-#if defined __CYGWIN__ || defined __WIN32__
+#if defined __CYGWIN__ || defined _WIN32
 	return hFile != INVALID_HANDLE_VALUE;
 #else
 	return fd != -1;

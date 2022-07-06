@@ -98,7 +98,7 @@ RemoteServer::RemoteServer(const vector<string>& dbpaths,
 	throw;
     }
 
-#ifndef __WIN32__
+#ifndef _WIN32
     // It's simplest to just ignore SIGPIPE.  We'll still know if the
     // connection dies because we'll get EPIPE back from write().
     if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)

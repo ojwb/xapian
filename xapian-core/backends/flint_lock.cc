@@ -23,7 +23,7 @@
 
 #include "flint_lock.h"
 
-#ifndef __WIN32__
+#ifndef _WIN32
 #include <cerrno>
 
 #include "safefcntl.h"
@@ -77,7 +77,7 @@ FlintLock::test() const
     // A database which doesn't support update can't be locked for update.
     if (filename.empty()) return false;
 
-#if defined __CYGWIN__ || defined __WIN32__
+#if defined __CYGWIN__ || defined _WIN32
     if (hFile != INVALID_HANDLE_VALUE) return true;
     // Doesn't seem to be possible to check if the lock is held without briefly
     // taking the lock.
@@ -126,7 +126,7 @@ FlintLock::lock(bool exclusive, bool wait, string & explanation) {
     // Currently we only support exclusive locks.
     (void)exclusive;
     Assert(exclusive);
-#if defined __CYGWIN__ || defined __WIN32__
+#if defined __CYGWIN__ || defined _WIN32
     Assert(hFile == INVALID_HANDLE_VALUE);
 #ifdef __CYGWIN__
     char fnm[MAX_PATH];
@@ -461,7 +461,7 @@ no_ofd_support:
 
 void
 FlintLock::release() {
-#if defined __CYGWIN__ || defined __WIN32__
+#if defined __CYGWIN__ || defined _WIN32
     if (hFile == INVALID_HANDLE_VALUE) return;
     CloseHandle(hFile);
     hFile = INVALID_HANDLE_VALUE;

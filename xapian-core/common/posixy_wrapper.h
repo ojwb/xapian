@@ -23,7 +23,7 @@
 #ifndef XAPIAN_INCLUDED_POSIXY_WRAPPER_H
 #define XAPIAN_INCLUDED_POSIXY_WRAPPER_H
 
-#ifdef __WIN32__
+#ifdef _WIN32
 /** Version of open() which allows the file to be unlinked while open. */
 int posixy_open(const char *filename, int flags);
 
@@ -46,7 +46,7 @@ int posixy_rename(const char *from, const char *to);
 # define posixy_rename(F, T) std::rename(F, T)
 #endif
 
-#if defined __CYGWIN__ || defined __WIN32__
+#if defined __CYGWIN__ || defined _WIN32
 /** Version of unlink() with POSIX-like semantics (open files can be unlinked).
  *
  *  NB The file must have been opened with posixy_open() for this to work.

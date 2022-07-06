@@ -25,7 +25,7 @@
 */
 
 #include <config.h>
-#ifdef __WIN32__
+#ifdef _WIN32
 
 #include "msvc_dirent.h"
 #include <cerrno>

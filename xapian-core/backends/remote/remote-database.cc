@@ -101,7 +101,7 @@ RemoteDatabase::RemoteDatabase(int fd, double timeout_,
       mru_slot(Xapian::BAD_VALUENO),
       timeout(timeout_)
 {
-#ifndef __WIN32__
+#ifndef _WIN32
     // It's simplest to just ignore SIGPIPE.  We'll still know if the
     // connection dies because we'll get EPIPE back from write().
     if (signal(SIGPIPE, SIG_IGN) == SIG_ERR) {

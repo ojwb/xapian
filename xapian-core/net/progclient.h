@@ -38,7 +38,7 @@ class ProgClient : public RemoteDatabase {
     /// Don't allow copying.
     ProgClient(const ProgClient &);
 
-#ifndef __WIN32__
+#ifndef _WIN32
     /// Process id of the child process.
     pid_t child;
 #else
@@ -61,7 +61,7 @@ class ProgClient : public RemoteDatabase {
      */
     static int run_program(const std::string &progname,
 			   const std::string &args,
-#ifndef __WIN32__
+#ifndef _WIN32
 			   pid_t& child
 #else
 			   HANDLE& child

@@ -179,7 +179,7 @@ DEFINE_TESTCASE(spell2, spelling) {
 DEFINE_TESTCASE(spell3, spelling) {
     Xapian::WritableDatabase db1 = get_writable_database();
     // We can't just call get_writable_database() since it would delete db1
-    // which doesn't work at all under __WIN32__ and will go wrong elsewhere if
+    // which doesn't work at all under _WIN32 and will go wrong elsewhere if
     // changes to db1 are committed.
     Xapian::WritableDatabase db2 = get_named_writable_database("spell3", "");
 

@@ -41,7 +41,7 @@
 # endif
 #endif
 
-#ifdef __WIN32__
+#ifdef _WIN32
 # include <io.h> // For _open_osfhandle().
 # include "safefcntl.h"
 # include "safewindows.h"
@@ -226,7 +226,7 @@ try_next_port:
     return port;
 }
 
-#elif defined __WIN32__
+#elif defined _WIN32
 
 static HANDLE tcpsrv_handles[16];
 static unsigned tcpsrv_handles_index = 0;
@@ -338,7 +338,7 @@ try_next_port:
 }
 
 #else
-# error Neither HAVE_FORK nor __WIN32__ is defined
+# error Neither HAVE_FORK nor _WIN32 is defined
 #endif
 
 BackendManagerRemoteTcp::~BackendManagerRemoteTcp() {
@@ -421,7 +421,7 @@ BackendManagerRemoteTcp::clean_up()
 	    close(fd);
 	}
     }
-#elif defined __WIN32__
+#elif defined _WIN32
     for (unsigned i = 0; i != tcpsrv_handles_index; ++i) {
 	WaitForSingleObject(tcpsrv_handles[i], INFINITE);
 	CloseHandle(tcpsrv_handles[i]);

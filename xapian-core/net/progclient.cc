@@ -35,7 +35,7 @@
 #include <vector>
 
 #include <sys/types.h>
-#ifndef __WIN32__
+#ifndef _WIN32
 # include "safesyssocket.h"
 # include <sys/wait.h>
 #else
@@ -45,7 +45,7 @@
 
 using namespace std;
 
-#ifndef __WIN32__
+#ifndef _WIN32
 /** Split a string into a vector of strings, using a given separator
  *  character (default space)
  */
@@ -82,7 +82,7 @@ ProgClient::get_progcontext(const string &progname, const string &args)
 
 int
 ProgClient::run_program(const string &progname, const string &args,
-#ifndef __WIN32__
+#ifndef _WIN32
 			pid_t& child
 #else
 			HANDLE& child
@@ -176,7 +176,7 @@ ProgClient::run_program(const string &progname, const string &args,
     // Avoid "missing return statement" warning.
     return 0;
 #endif
-#elif defined __WIN32__
+#elif defined _WIN32
     static unsigned int pipecount = 0;
     char pipename[256];
     sprintf(pipename, "\\\\.\\pipe\\xapian-remote-%lx-%lx-%x",
@@ -250,7 +250,7 @@ ProgClient::~ProgClient()
 	do_close();
     } catch (...) {
     }
-#ifndef __WIN32__
+#ifndef _WIN32
     waitpid(child, 0, 0);
 #else
     WaitForSingleObject(child, INFINITE);

@@ -14,7 +14,7 @@
 # include "safeunistd.h"
 # include <cstdlib>
 #endif
-#ifdef __WIN32__
+#ifdef _WIN32
 # include "safewindows.h"
 #endif
 #include "safesysstat.h"

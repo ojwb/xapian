@@ -48,7 +48,7 @@
 # include <sys/pstat.h>
 #endif
 
-#ifdef __WIN32__
+#ifdef _WIN32
 # include "safewindows.h"
 #endif
 
@@ -59,7 +59,7 @@
 long
 get_free_physical_memory()
 {
-#ifndef __WIN32__
+#ifndef _WIN32
     long pagesize = 1;
     long pages = -1;
 #if defined(_SC_PAGESIZE) && defined(_SC_PHYS_PAGES)

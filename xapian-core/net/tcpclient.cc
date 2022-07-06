@@ -45,7 +45,7 @@
 #include <cerrno>
 #include <cmath>
 #include <cstring>
-#ifndef __WIN32__
+#ifndef _WIN32
 # include <netinet/in.h>
 # include <netinet/tcp.h>
 #endif
@@ -67,7 +67,7 @@ TcpClient::open_socket(const std::string & hostname, int port,
 	if (fd == -1)
 	    continue;
 
-#if !defined __WIN32__ && defined F_SETFD && defined FD_CLOEXEC
+#if !defined _WIN32 && defined F_SETFD && defined FD_CLOEXEC
 	// We can't use a preprocessor check on the *value* of SOCK_CLOEXEC as
 	// on Linux SOCK_CLOEXEC is an enum, with '#define SOCK_CLOEXEC
 	// SOCK_CLOEXEC' to allow '#ifdef SOCK_CLOEXEC' to work.
@@ -76,7 +76,7 @@ TcpClient::open_socket(const std::string & hostname, int port,
 #endif
 
 #ifndef SOCK_NONBLOCK
-#ifdef __WIN32__
+#ifdef _WIN32
 	ULONG enabled = 1;
 	int rc = ioctlsocket(fd, FIONBIO, &enabled);
 #define FLAG_NAME "FIONBIO"
@@ -117,7 +117,7 @@ TcpClient::open_socket(const std::string & hostname, int port,
 
 	int err = socket_errno();
 	if (
-#ifdef __WIN32__
+#ifdef _WIN32
 	    WSAGetLastError() == WSAEWOULDBLOCK
 #else
 	    err == EINPROGRESS
@@ -188,7 +188,7 @@ TcpClient::open_socket(const std::string & hostname, int port,
 	throw Xapian::NetworkError("Couldn't connect", connect_errno);
     }
 
-#ifdef __WIN32__
+#ifdef _WIN32
     ULONG enabled = 0;
     ioctlsocket(socketfd, FIONBIO, &enabled);
 #else

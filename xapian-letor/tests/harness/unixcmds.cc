@@ -65,7 +65,7 @@ checked_system(const string & cmd)
 
 /// Recursively copy a directory.
 void cp_R(const std::string &src, const std::string &dest) {
-#ifdef __WIN32__
+#ifdef _WIN32
     // We create the target directory first to avoid being prompted as to
     // whether we want to create a directory or a file (which makes no sense
     // when copying a directory, but that's how xcopy seems to work!)
@@ -76,12 +76,12 @@ void cp_R(const std::string &src, const std::string &dest) {
 #endif
     if (!append_filename_argument(cmd, src)) return;
     if (!append_filename_argument(cmd, dest)) return;
-#ifdef __WIN32__
+#ifdef _WIN32
     // xcopy reports how many files it copied, even with /q.
     cmd += " >nul";
 #endif
     checked_system(cmd);
-#ifndef __WIN32__
+#ifndef _WIN32
     // Allow write access to the copy (to deal with builds where srcdir is
     // readonly).
     cmd = "chmod -R +w";
@@ -128,7 +128,7 @@ void rm_rf(const string &filename) {
 	throw msg;
     }
 #else
-# ifdef __WIN32__
+# ifdef _WIN32
     string cmd("rd /s /q");
 # else
     string cmd("rm -rf");

@@ -35,7 +35,7 @@
 
 #include <sys/types.h>
 
-#ifndef __WIN32__
+#ifndef _WIN32
 #include <grp.h> // For getgrgid().
 #include <pwd.h> // For getpwuid().
 #endif
@@ -180,7 +180,7 @@ class DirectoryIterator {
     }
 
     const char * get_owner() {
-#ifndef __WIN32__
+#ifndef _WIN32
 	ensure_statbuf_valid();
 	struct passwd * pwentry = getpwuid(statbuf.st_uid);
 	return pwentry ? pwentry->pw_name : NULL;
@@ -190,7 +190,7 @@ class DirectoryIterator {
     }
 
     const char * get_group() {
-#ifndef __WIN32__
+#ifndef _WIN32
 	ensure_statbuf_valid();
 	struct group * grentry = getgrgid(statbuf.st_gid);
 	return grentry ? grentry->gr_name : NULL;
@@ -201,7 +201,7 @@ class DirectoryIterator {
 
     bool is_owner_readable() {
 	ensure_statbuf_valid();
-#ifndef __WIN32__
+#ifndef _WIN32
 	return (statbuf.st_mode & S_IRUSR);
 #else
 	return (statbuf.st_mode & S_IREAD);
@@ -210,7 +210,7 @@ class DirectoryIterator {
 
     bool is_group_readable() {
 	ensure_statbuf_valid();
-#ifndef __WIN32__
+#ifndef _WIN32
 	return (statbuf.st_mode & S_IRGRP);
 #else
 	return false;
@@ -219,7 +219,7 @@ class DirectoryIterator {
 
     bool is_other_readable() {
 	ensure_statbuf_valid();
-#ifndef __WIN32__
+#ifndef _WIN32
 	return (statbuf.st_mode & S_IROTH);
 #else
 	return false;

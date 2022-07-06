@@ -25,7 +25,7 @@
 # error You must #include <config.h> before #include "safesysselect.h"
 #endif
 
-#ifndef __WIN32__
+#ifndef _WIN32
 # ifdef HAVE_SYS_SELECT_H
 // According to POSIX 1003.1-2001.
 #  include <sys/select.h>

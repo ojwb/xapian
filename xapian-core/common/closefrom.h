@@ -25,8 +25,8 @@
 # error config.h must be included first in each C++ source file
 #endif
 
-// We don't currently need closefrom() on __WIN32__.
-#ifndef __WIN32__
+// We currently only need closefrom() when we have fork().
+#ifdef HAVE_FORK
 
 #ifdef HAVE_CLOSEFROM
 // NB: not <cstdlib> as Sun's C++ compiler omits non-standard functions there,

@@ -20,7 +20,7 @@
 
 #include <config.h>
 
-#ifdef __WIN32__
+#ifdef _WIN32
 
 #include "realtime.h"
 #include "safewindows.h"

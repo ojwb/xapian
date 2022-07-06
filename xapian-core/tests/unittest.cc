@@ -151,7 +151,7 @@ DEFINE_TESTCASE_(resolverelativepath1) {
     TEST_EQUAL(r_r_p("rel/a/tive", "foo/bar/"), "foo/bar/rel/a/tive");
     TEST_EQUAL(r_r_p("rel/a/tive", "/foo/bar"), "/foo/rel/a/tive");
     TEST_EQUAL(r_r_p("rel/a/tive", "/foo/bar/"), "/foo/bar/rel/a/tive");
-#ifndef __WIN32__
+#ifndef _WIN32
     TEST_EQUAL(r_r_p("/abs/o/lute", "/foo\\bar"), "/abs/o/lute");
     TEST_EQUAL(r_r_p("rel/a/tive", "/foo\\bar"), "/rel/a/tive");
 #else
@@ -522,7 +522,7 @@ static void test_tostring1()
     tostring_helper<long>();
     tostring_helper<long long>();
 
-#ifdef __WIN32__
+#ifdef _WIN32
     /* Test the 64 bit integer conversion to string.
      * (Currently only exists for windows.)
      */
@@ -544,7 +544,7 @@ static void test_strbool1()
 
 static void test_closefrom1()
 {
-#ifndef __WIN32__
+#ifndef _WIN32
     // Simple test.  Start from 13 as on macOS the FDTracker seems to get fd
     // 10 and we don't want to collide with that.
     closefrom(13);

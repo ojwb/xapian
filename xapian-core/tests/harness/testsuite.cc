@@ -845,7 +845,7 @@ test_driver::parse_command_line(int argc, char **argv)
     }
 #endif
 
-#ifndef __WIN32__
+#ifndef _WIN32
     {
 	bool colourise = true;
 	const char *p = getenv("XAPIAN_TESTSUITE_OUTPUT");

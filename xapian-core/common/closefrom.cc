@@ -20,8 +20,8 @@
 
 #include <config.h>
 
-// We don't currently need closefrom() on __WIN32__.
-#if !defined HAVE_CLOSEFROM && !defined __WIN32__
+// We currently only need closefrom() when we have fork().
+#if !defined HAVE_CLOSEFROM && defined HAVE_FORK
 
 #include "closefrom.h"
 

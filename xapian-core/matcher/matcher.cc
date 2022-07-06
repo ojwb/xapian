@@ -123,7 +123,7 @@ Matcher::for_all_remotes(Action action)
 	action(remotes[0].get());
     }
 #else
-#ifndef __WIN32__
+#ifndef _WIN32
     size_t n_remotes = first_oversize;
     fd_set fds;
     while (n_remotes > 1) {
@@ -257,7 +257,7 @@ Matcher::Matcher(const Xapian::Database& db_,
 
 #ifdef XAPIAN_HAS_REMOTE_BACKEND
 # ifndef HAVE_POLL
-#  ifndef __WIN32__
+#  ifndef _WIN32
     {
 	// Unfortunately select() can't monitor fds >= FD_SETSIZE, so swap those to
 	// the end here and then handle those last letting them just block if not
@@ -274,7 +274,7 @@ Matcher::Matcher(const Xapian::Database& db_,
 	}
     }
 #  else
-    // We can only use select() on sockets under __WIN32__ and with the remote
+    // We can only use select() on sockets under _WIN32 and with the remote
     // prog backend the fds aren't sockets so just avoid using select() for
     // now.
     //

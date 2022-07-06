@@ -29,7 +29,7 @@
 #include <cmath>
 #include <ctime>
 
-#ifndef __WIN32__
+#ifndef _WIN32
 # ifdef HAVE_FTIME
 #  include <sys/timeb.h>
 # endif
@@ -61,7 +61,7 @@ inline double now() {
     if (usual(clock_gettime(CLOCK_REALTIME, &ts) == 0))
 	return ts.tv_sec + (ts.tv_nsec * 1e-9);
     return double(std::time(NULL));
-#elif !defined __WIN32__
+#elif !defined _WIN32
 # if defined HAVE_GETTIMEOFDAY
     struct timeval tv;
     if (usual(gettimeofday(&tv, NULL) == 0))
@@ -80,7 +80,7 @@ inline double now() {
     return double(std::time(NULL));
 # endif
 #else
-    // For __WIN32__.
+    // For _WIN32.
     struct __timeb64 tp;
     _ftime64(&tp);
     return tp.time + tp.millitm * 1e-3;
@@ -106,7 +106,7 @@ inline void to_timespec(double t, struct timespec *ts) {
 #endif
 
 /// Fill in struct timeval from number of seconds in a double.
-#ifndef __WIN32__
+#ifndef _WIN32
 inline void to_timeval(double t, struct timeval *tv) {
     double secs;
     tv->tv_usec = long(std::modf(t, &secs) * 1e6);
@@ -133,7 +133,7 @@ inline void sleep(double t) {
     struct timespec ts;
     to_timespec(delta, &ts);
     while (nanosleep(&ts, &ts) < 0 && errno == EINTR) { }
-#elif !defined __WIN32__
+#elif !defined _WIN32
     double delta;
     struct timeval tv;
     do {

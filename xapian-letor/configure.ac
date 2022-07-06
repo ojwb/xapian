@@ -131,7 +131,7 @@ XAPIANLETOR_LDFLAGS=
 AC_SUBST([XAPIANLETOR_LDFLAGS])
 
 AC_PREPROC_IFELSE([AC_LANG_SOURCE([[
-#if defined __WIN32__ || defined _WIN32
+#ifdef _WIN32
 #error WIN32
 #endif
 ]])], [win32=no], [win32=yes])

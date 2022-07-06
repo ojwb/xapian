@@ -22,7 +22,7 @@
 #ifndef XAPIAN_INCLUDED_SAFEDIRENT_H
 #define XAPIAN_INCLUDED_SAFEDIRENT_H
 
-#ifdef __WIN32__
+#ifdef _WIN32
 # include "msvc_dirent.h"
 #else
 # include <dirent.h>

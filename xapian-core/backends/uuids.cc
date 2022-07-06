@@ -46,7 +46,7 @@
 #elif defined USE_WIN32_UUID_API
 # include "safewindows.h"
 # include <rpc.h>
-# ifdef __WIN32__
+# ifdef _WIN32
 #  include "safewinsock2.h" // For htonl() and htons().
 # else
 // Cygwin:

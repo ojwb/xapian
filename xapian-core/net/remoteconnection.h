@@ -28,7 +28,7 @@
 #include "safenetdb.h" // For EAI_* constants.
 #include "safeunistd.h"
 
-#ifdef __WIN32__
+#ifdef _WIN32
 # include "safewinsock2.h"
 
 # include <xapian/error.h>
@@ -100,8 +100,8 @@ inline int socket_errno() {
 #  define EINPROGRESS WSAEINPROGRESS
 # endif
 
-// We must call closesocket() (instead of just close()) under __WIN32__ or
-// else the socket remains in the CLOSE_WAIT state.
+// We must call closesocket() (instead of just close()) under _WIN32 or else
+// the socket remains in the CLOSE_WAIT state.
 # define CLOSESOCKET(S) closesocket(S)
 #else
 inline int socket_errno() { return errno; }
@@ -110,10 +110,10 @@ inline int socket_errno() { return errno; }
 #endif
 
 inline int eai_to_xapian(int e) {
-    // Under WIN32, the EAI_* constants are defined to be WSA_* constants with
+    // Under _WIN32, the EAI_* constants are defined to be WSA_* constants with
     // roughly equivalent meanings, so we can just let them be handled as any
     // other WSA_* error codes would be.
-#ifndef __WIN32__
+#ifndef _WIN32
     // Ensure they all have the same sign - this switch will fail to compile if
     // we bitwise-or some 1 and some 2 bits to get 3.
 #define C(X) ((X) < 0 ? 2 : 1)
@@ -207,7 +207,7 @@ class RemoteConnection {
      */
     bool read_at_least(size_t min_len, double end_time);
 
-#ifdef __WIN32__
+#ifdef _WIN32
     /** On Windows we use overlapped IO.  We share an overlapped structure
      *  for both reading and writing, as we know that we always wait for
      *  one to finish before starting another (ie, we don't *really* use
@@ -234,7 +234,7 @@ class RemoteConnection {
     RemoteConnection(int fdin_, int fdout_,
 		     const std::string & context_ = std::string());
 
-#ifdef __WIN32__
+#ifdef _WIN32
     /// Destructor
     ~RemoteConnection();
 #endif

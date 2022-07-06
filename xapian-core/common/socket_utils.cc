@@ -30,7 +30,7 @@ using namespace std;
 
 #include "stringutils.h"
 
-#ifndef __WIN32__
+#ifndef _WIN32
 # include <arpa/inet.h>
 #else
 # include <io.h>
@@ -66,7 +66,7 @@ set_socket_timeouts(int fd, double timeout)
     (void)timeout;
 #if defined SO_SNDTIMEO || defined SO_RCVTIMEO
     {
-# ifndef __WIN32__
+# ifndef _WIN32
 	struct timeval t;
 	RealTime::to_timeval(timeout, &t);
 # else
@@ -92,7 +92,7 @@ set_socket_timeouts(int fd, double timeout)
     // SO_KEEPALIVE anyway if it exists, as it will cause stuck connections to
     // time out eventually (though it may take ~2 hours).
     {
-# ifndef __WIN32__
+# ifndef _WIN32
 	int flag = 1;
 # else
 	DWORD flag = 1;
@@ -123,7 +123,7 @@ pretty_ip6(const void* p, char* buf)
     // (second) parameter of inet_ntop(), so just cast away the const in case
     // this is more widespread.
     auto src = reinterpret_cast<struct sockaddr*>(const_cast<void*>(p));
-#ifndef __WIN32__
+#ifndef _WIN32
     const char* r = inet_ntop(af, src, buf, PRETTY_IP6_LEN);
     if (!r)
 	return -1;

@@ -42,7 +42,7 @@
 # include <sys/utsname.h>
 #endif
 
-#ifdef __WIN32__
+#ifdef _WIN32
 # include "safewindows.h"
 # include "safewinsock2.h"
 #endif
@@ -94,7 +94,7 @@ PerfTestLogger::~PerfTestLogger()
 static string
 get_hostname()
 {
-#ifdef __WIN32__
+#ifdef _WIN32
     char buf[256];
     WORD WSAVerReq = MAKEWORD(1, 1);
     WSADATA WSAData;
@@ -129,7 +129,7 @@ get_hostname()
 static string
 get_loadavg()
 {
-#ifdef __WIN32__
+#ifdef _WIN32
     return string();
 #else
     string loadavg;
@@ -147,7 +147,7 @@ static string
 get_ncpus()
 {
     string ncpus;
-#ifdef __WIN32__
+#ifdef _WIN32
     SYSTEM_INFO siSysInfo;
     GetSystemInfo(&siSysInfo);
     ncpus = str(siSysInfo.dwNumberOfProcessors);
@@ -190,7 +190,7 @@ static string
 get_distro()
 {
     string distro;
-#ifdef __WIN32__
+#ifdef _WIN32
     OSVERSIONINFO osvi;
     ZeroMemory(&osvi, sizeof(OSVERSIONINFO));
     osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);

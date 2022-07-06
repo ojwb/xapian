@@ -27,8 +27,8 @@
 #include <vector>
 
 // Paths to xapian-tcpsrv and xapian-progsrv.
-#ifdef __WIN32__
-// Under __WIN32__ we want \ path separators since we pass this path to
+#ifdef _WIN32
+// Under _WIN32 we want \ path separators since we pass this path to
 // CreateProcess().
 # define XAPIAN_BIN_PATH "..\\bin\\"
 # define EXE_SUFFIX ".exe"

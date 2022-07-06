@@ -80,7 +80,7 @@ removedir(const string &dirname)
     }
 }
 
-#ifdef __WIN32__
+#ifdef _WIN32
 /// Return true iff a path starts with a drive letter.
 static bool
 has_drive(const string &path)
@@ -104,7 +104,7 @@ static inline bool slash(char ch)
 void
 resolve_relative_path(string & path, const string & base)
 {
-#ifndef __WIN32__
+#ifndef _WIN32
     if (path.empty() || path[0] != '/') {
 	// path is relative.
 	string::size_type last_slash = base.rfind('/');

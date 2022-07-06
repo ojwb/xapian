@@ -22,7 +22,7 @@
 #ifndef XAPIAN_INCLUDED_SAFENETDB_H
 #define XAPIAN_INCLUDED_SAFENETDB_H
 
-#ifndef __WIN32__
+#ifndef _WIN32
 # include <netdb.h>
 #else
 # include <ws2tcpip.h> // For getaddrinfo().

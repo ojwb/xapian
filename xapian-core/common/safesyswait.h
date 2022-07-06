@@ -22,7 +22,7 @@
 #ifndef XAPIAN_INCLUDED_SAFESYSWAIT_H
 #define XAPIAN_INCLUDED_SAFESYSWAIT_H
 
-#ifndef __WIN32__
+#ifndef _WIN32
 # include <sys/wait.h>
 #else
 // We don't try to replace waitpid(), etc - they're only useful for us when

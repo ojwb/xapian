@@ -21,14 +21,14 @@
 #ifndef XAPIAN_INCLUDED_TCPSERVER_H
 #define XAPIAN_INCLUDED_TCPSERVER_H
 
-#ifdef __WIN32__
+#ifdef _WIN32
 # include "remoteconnection.h"
 # define SOCKET_INITIALIZER_MIXIN : private WinsockInitializer
 #else
 # define SOCKET_INITIALIZER_MIXIN
 #endif
 
-#if defined __CYGWIN__ || defined __WIN32__
+#if defined __CYGWIN__ || defined _WIN32
 # include "safewindows.h" // Only for HANDLE!
 #endif
 
@@ -47,7 +47,7 @@ class XAPIAN_VISIBILITY_DEFAULT TcpServer SOCKET_INITIALIZER_MIXIN {
     /// Don't allow copying.
     TcpServer(const TcpServer &);
 
-#if defined __CYGWIN__ || defined __WIN32__
+#if defined __CYGWIN__ || defined _WIN32
     /// Mutex to stop two TcpServers running on the same port.
     HANDLE mutex = NULL;
 #endif
@@ -65,7 +65,7 @@ class XAPIAN_VISIBILITY_DEFAULT TcpServer SOCKET_INITIALIZER_MIXIN {
     XAPIAN_VISIBILITY_INTERNAL
     static int get_listening_socket(const std::string & host, int port,
 				    bool tcp_nodelay
-#if defined __CYGWIN__ || defined __WIN32__
+#if defined __CYGWIN__ || defined _WIN32
 				    , HANDLE &mutex
 #endif
 	    );

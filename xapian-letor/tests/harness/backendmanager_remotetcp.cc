@@ -43,7 +43,7 @@
 # endif
 #endif
 
-#ifdef __WIN32__
+#ifdef _WIN32
 # include <io.h> // For _open_osfhandle().
 # include "safefcntl.h"
 # include "safewindows.h"
@@ -228,7 +228,7 @@ try_next_port:
     return port;
 }
 
-#elif defined __WIN32__
+#elif defined _WIN32
 
 [[noreturn]]
 static void win32_throw_error_string(const char * str)
@@ -330,7 +330,7 @@ try_next_port:
 }
 
 #else
-# error Neither HAVE_FORK nor __WIN32__ is defined
+# error Neither HAVE_FORK nor _WIN32 is defined
 #endif
 
 BackendManagerRemoteTcp::~BackendManagerRemoteTcp() {

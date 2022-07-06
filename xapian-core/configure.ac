@@ -270,7 +270,7 @@ fi
 AC_SUBST([abi_affecting_cxxflags])
 
 AC_PREPROC_IFELSE([AC_LANG_SOURCE([[
-#if defined __WIN32__ || defined _WIN32
+#ifdef _WIN32
 #error WIN32
 #endif
 ]])], [win32=no], [win32=yes])
@@ -1513,16 +1513,6 @@ AH_BOTTOM(
 typedef long long off_t_redefinition_typedef;
 # define off_t off_t_redefinition_typedef
 
-#endif
-
-/* MSVC defines _WIN32 but not __WIN32__. */
-#if !defined __WIN32__ && defined _WIN32
-# define __WIN32__
-#endif
-
-/* MSVC defines _WIN64 but not __WIN64__. */
-#if !defined __WIN64__ && defined _WIN64
-# define __WIN64__
 #endif
 
 /* Default to enabling _FORTIFY_SOURCE at level 2.  It shouldn't cause a

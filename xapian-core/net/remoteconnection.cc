@@ -38,7 +38,7 @@
 #include <climits>
 #include <cstdint>
 #include <string>
-#ifdef __WIN32__
+#ifdef _WIN32
 # include <type_traits>
 #endif
 
@@ -77,7 +77,7 @@ throw_timeout(const char* msg, const string& context)
     throw Xapian::NetworkTimeoutError(msg, context);
 }
 
-#ifdef __WIN32__
+#ifdef _WIN32
 static inline void
 update_overlapped_offset(WSAOVERLAPPED & overlapped, DWORD n)
 {
@@ -90,7 +90,7 @@ RemoteConnection::RemoteConnection(int fdin_, int fdout_,
 				   const string & context_)
     : fdin(fdin_), fdout(fdout_), context(context_)
 {
-#ifdef __WIN32__
+#ifdef _WIN32
     memset(&overlapped, 0, sizeof(overlapped));
     overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
     if (!overlapped.hEvent)
@@ -100,7 +100,7 @@ RemoteConnection::RemoteConnection(int fdin_, int fdout_,
 #endif
 }
 
-#ifdef __WIN32__
+#ifdef _WIN32
 RemoteConnection::~RemoteConnection()
 {
     if (overlapped.hEvent)
@@ -115,7 +115,7 @@ RemoteConnection::read_at_least(size_t min_len, double end_time)
 
     if (buffer.length() >= min_len) RETURN(true);
 
-#ifdef __WIN32__
+#ifdef _WIN32
     HANDLE hin = fd_to_handle(fdin);
     do {
 	char buf[CHUNKSIZE];
@@ -245,7 +245,7 @@ RemoteConnection::send_message(char type, const string &message,
     header += type;
     pack_uint(header, message.size());
 
-#ifdef __WIN32__
+#ifdef _WIN32
     HANDLE hout = fd_to_handle(fdout);
     const string * str = &header;
 
@@ -385,7 +385,7 @@ RemoteConnection::send_file(char type, int fd, double end_time)
 	memcpy(buf + 1, enc_size.data(), enc_size.size());
     }
 
-#ifdef __WIN32__
+#ifdef _WIN32
     HANDLE hout = fd_to_handle(fdout);
     size_t count = 0;
     while (true) {
@@ -681,7 +681,7 @@ RemoteConnection::shutdown()
     // We can be called from a destructor, so we can't throw an exception.
     try {
 	send_message(MSG_SHUTDOWN, string(), 0.0);
-#ifdef __WIN32__
+#ifdef _WIN32
 	HANDLE hin = fd_to_handle(fdin);
 	char dummy;
 	DWORD received;
@@ -737,7 +737,7 @@ RemoteConnection::do_close()
     }
 }
 
-#ifdef __WIN32__
+#ifdef _WIN32
 DWORD
 RemoteConnection::calc_read_wait_msecs(double end_time)
 {

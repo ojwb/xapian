@@ -29,7 +29,7 @@ static bool
 append_filename_argument(std::string& cmd,
 			 const std::string& arg,
 			 bool leading_space = true) {
-#ifdef __WIN32__
+#ifdef _WIN32
     cmd.reserve(cmd.size() + arg.size() + 5);
     // Prevent a leading "-" on the filename being interpreted as a command
     // line option.

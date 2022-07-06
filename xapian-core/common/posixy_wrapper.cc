@@ -53,7 +53,7 @@ posixy_unlink(const char * filename)
     return r;
 }
 
-#elif defined __WIN32__
+#elif defined _WIN32
 
 #include "posixy_wrapper.h"
 
@@ -244,4 +244,4 @@ posixy_rename(const char *from, const char *to)
     return set_errno_from_getlasterror();
 }
 
-#endif // __WIN32__
+#endif // _WIN32

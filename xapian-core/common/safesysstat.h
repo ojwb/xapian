@@ -25,7 +25,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#ifdef __WIN32__
+#ifdef _WIN32
 
 // MSVC lacks these POSIX macros and other compilers may too:
 #ifndef S_ISDIR

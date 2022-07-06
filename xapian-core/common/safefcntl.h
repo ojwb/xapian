@@ -76,7 +76,7 @@ inline int open(const char *filename, int flags) {
 // O_BINARY is only useful for platforms like Windows which distinguish between
 // text and binary files, but it's cleaner to define it to 0 here for other
 // platforms so we can avoid #ifdef where we need to use it in the code.
-#ifndef __WIN32__
+#ifndef _WIN32
 # ifndef O_BINARY
 #  define O_BINARY 0
 # endif

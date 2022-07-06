@@ -36,7 +36,7 @@
 #include "socket_utils.h"
 #include "str.h"
 
-#ifdef __WIN32__
+#ifdef _WIN32
 # include <process.h>    /* _beginthreadex, _endthreadex */
 #else
 # include <netinet/in_systm.h>
@@ -62,9 +62,9 @@ using namespace std;
 # define SIGCHLD SIGCLD
 #endif
 
-#ifdef __WIN32__
-// We must call closesocket() (instead of just close()) under __WIN32__ or
-// else the socket remains in the CLOSE_WAIT state.
+#ifdef _WIN32
+// We must call closesocket() (instead of just close()) under _WIN32 or else
+// the socket remains in the CLOSE_WAIT state.
 # define CLOSESOCKET(S) closesocket(S)
 #else
 # define CLOSESOCKET(S) close(S)
@@ -74,7 +74,7 @@ using namespace std;
 TcpServer::TcpServer(const std::string & host, int port, bool tcp_nodelay,
 		     bool verbose_)
     : listen_socket(get_listening_socket(host, port, tcp_nodelay
-#if defined __CYGWIN__ || defined __WIN32__
+#if defined __CYGWIN__ || defined _WIN32
 					 , mutex
 #endif
 					 )),
@@ -85,7 +85,7 @@ TcpServer::TcpServer(const std::string & host, int port, bool tcp_nodelay,
 int
 TcpServer::get_listening_socket(const std::string & host, int port,
 				bool tcp_nodelay
-#if defined __CYGWIN__ || defined __WIN32__
+#if defined __CYGWIN__ || defined _WIN32
 				, HANDLE &mutex
 #endif
 				)
@@ -98,7 +98,7 @@ TcpServer::get_listening_socket(const std::string & host, int port,
 	if (fd == -1)
 	    continue;
 
-#if !defined __WIN32__ && defined F_SETFD && defined FD_CLOEXEC
+#if !defined _WIN32 && defined F_SETFD && defined FD_CLOEXEC
 	// We can't use a preprocessor check on the *value* of SOCK_CLOEXEC as on
 	// Linux SOCK_CLOEXEC is an enum, with '#define SOCK_CLOEXEC SOCK_CLOEXEC'
 	// to allow '#ifdef SOCK_CLOEXEC' to work.
@@ -119,7 +119,7 @@ TcpServer::get_listening_socket(const std::string & host, int port,
 	}
 
 	int optval = 1;
-#if defined __CYGWIN__ || defined __WIN32__
+#if defined __CYGWIN__ || defined _WIN32
 	// Windows has screwy semantics for SO_REUSEADDR - it allows the user
 	// to bind to a port which is already bound and listening!  That's
 	// just not suitable as we don't want multiple processes listening on
@@ -222,7 +222,7 @@ TcpServer::accept_connection()
 			    &remote_address_size);
 
     if (con_socket < 0) {
-#ifdef __WIN32__
+#ifdef _WIN32
 	if (WSAGetLastError() == WSAEINTR) {
 	    // Our CtrlHandler function closed the socket.
 	    if (mutex) CloseHandle(mutex);
@@ -249,7 +249,7 @@ TcpServer::accept_connection()
 TcpServer::~TcpServer()
 {
     CLOSESOCKET(listen_socket);
-#if defined __CYGWIN__ || defined __WIN32__
+#if defined __CYGWIN__ || defined _WIN32
     if (mutex) CloseHandle(mutex);
 #endif
 }
@@ -334,7 +334,7 @@ TcpServer::run()
     }
 }
 
-#elif defined __WIN32__
+#elif defined _WIN32
 
 // A threaded, Windows specific, implementation.
 
@@ -455,7 +455,7 @@ TcpServer::run()
 }
 
 #else
-# error Neither HAVE_FORK nor __WIN32__ are defined.
+# error Neither HAVE_FORK nor _WIN32 are defined.
 #endif
 
 void

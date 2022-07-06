@@ -22,7 +22,7 @@
 
 #include <xapian/error.h>
 
-#ifdef __WIN32__
+#ifdef _WIN32
 # include "safewindows.h"
 #else
 # include "safenetdb.h"
@@ -51,7 +51,7 @@ Xapian::Error::get_error_string() const
 {
     if (error_string.empty()) {
 	if (my_errno == 0) return NULL;
-#ifdef __WIN32__
+#ifdef _WIN32
 	if (my_errno < 0 || my_errno >= WSABASEERR) {
 	    int e = abs(my_errno);
 	    DWORD len;
