@@ -14,7 +14,7 @@ install:
       $env:PATH="C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin;C:\msys64\usr\bin;$env:PATH"
   - ps: >-
       $env:CONFIGOPTS+=" --host=x86_64-w64-mingw32"
-  - bash -c 'rm -rf /var/lib/pacman/sync/* /etc/pacman.d/gnupg'
+  - bash -c 'rm -rf /etc/pacman.d/gnupg'
   - bash -c 'pacman-key --init'
   - bash -c 'pacman-key --populate msys2'
   - bash -c 'curl -O https://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz'
