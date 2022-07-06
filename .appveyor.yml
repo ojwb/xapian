@@ -18,7 +18,10 @@ install:
   - bash -c 'pacman -Sy --noconfirm --needed base-devel doxygen mingw-w64-x86_64-toolchain zlib-devel'
   - bash -c 'time ./bootstrap --download-tools=ifneeded --fetch-url-command="curl -L" xapian-core'
 build_script:
-  - bash -c 'time ./configure $CONFIGOPTS --disable-documentation --disable-backend-honey --with-go || cat config.log'
+  - bash -c 'which gcc'
+  - bash -c 'gcc --version'
+  - bash -c 'time ./configure $CONFIGOPTS --disable-documentation --disable-backend-honey --with-go || cat xapian-core/config.log'
+  - bash -c 'echo __WIN32__ _WIN32 WIN32 __WIN64__ _WIN64 WIN64|gcc -E'
 test_script:
   - bash -c 'echo dummy'
 
