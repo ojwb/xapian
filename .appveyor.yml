@@ -19,8 +19,10 @@ install:
   - bash -c 'pacman-key --populate msys2'
   - bash -c 'curl -O https://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz'
   - bash -c 'curl -O https://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig'
-  - bash -c 'pacman -U --config <(echo) msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz'
-  - bash -c 'pacman -Syyu || pacman -Syyu || true'
+  - bash -c 'echo > dummy'
+  - bash -c 'ls -l'
+  - bash -c 'pacman -U --config dummy msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz'
+  - bash -c 'pacman -Syyu || pacman -Syyu'
   - bash -c 'pacman -Sy --noconfirm --needed base-devel doxygen mingw-w64-x86_64-toolchain mingw-w64-x86_64-doxygen mingw-w64-x86_64-python-pip mingw-w64-x86_64-graphviz zlib-devel'
   - bash -c 'time ./bootstrap --download-tools=never --fetch-url-command="curl -L" xapian-core'
 build_script:
