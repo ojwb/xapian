@@ -450,7 +450,7 @@ replicate_with_brokenness(Xapian::DatabaseMaster & master,
     file_size_type len = 10;
     file_size_type copylen;
     while (len < filesize) {
-	auto copylen = truncated_copy(changesetpath, brokenchangesetpath, len);
+	copylen = truncated_copy(changesetpath, brokenchangesetpath, len);
 	TEST_EQUAL(copylen, len);
 	tout << "Trying replication with a changeset truncated to " << len
 	     <<	" bytes, from " << filesize << " bytes\n";
