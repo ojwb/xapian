@@ -1,7 +1,7 @@
 /** @file
  * @brief determine how much free physical memory there is.
  */
-/* Copyright (C) 2007,2008,2009,2010,2019,2020 Olly Betts
+/* Copyright (C) 2007,2008,2009,2010,2020 Olly Betts
  * Copyright (C) 2008 Lemur Consulting Ltd
  *
  * This program is free software; you can redistribute it and/or modify

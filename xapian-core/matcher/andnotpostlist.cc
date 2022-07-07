@@ -23,7 +23,6 @@
 #include "andnotpostlist.h"
 
 #include <algorithm>
-#include <limits>
 
 using namespace std;
 

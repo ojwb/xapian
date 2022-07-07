@@ -28,9 +28,6 @@
 #include "omassert.h"
 #include "debuglog.h"
 
-#include <algorithm>
-#include <limits>
-
 using namespace std;
 
 LeafPostList::~LeafPostList()

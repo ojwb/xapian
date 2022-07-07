@@ -29,9 +29,6 @@
 #include "str.h"
 #include "unicode/description_append.h"
 
-#include <algorithm>
-#include <limits>
-
 using namespace std;
 
 ValueRangePostList::~ValueRangePostList()
