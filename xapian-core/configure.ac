@@ -130,7 +130,7 @@ dnl PATH correctly, so that MSDOS FIND.EXE is found before Unix find.  Help
 dnl them out by checking for this condition, rather than letting libtool
 dnl fail in obscure ways.  NB check the *BUILD* OS, not the host one!
 case $build_os in
-  *mingw* | *cygwin* | pw32*)
+  cygwin* | mingw* | msys* | pw32*)
     find /dirunlikelytoexist >/dev/null 2>&1
     if test $? = 2 ; then
 	dnl Unix find will return 1 if the directory didn't exist, or 0 if
@@ -318,7 +318,7 @@ AC_DEFUN([XAPIAN_TEST_LDFLAGS],
 ldflags=
 if test yesyes = "$GXX$enable_shared" ; then
   case $host_os in
-    *mingw* | *cygwin*)
+    cygwin* | mingw* | msys*)
       XAPIAN_TEST_LDFLAGS(
 	[-Wl,--enable-runtime-pseudo-reloc],
 	[ldflags],
@@ -717,7 +717,8 @@ AC_CACHE_CHECK([for sys_errlist and sys_nerr], xo_cv_sys_errlist_and_sys_nerr, [
   AC_LINK_IFELSE([AC_LANG_PROGRAM(
 dnl On Linux, sys_errlist and sys_nerr need <stdio.h>, though the man page
 dnl says <errno.h>.  The man page seems to match other platforms such as
-dnl NetBSD, so include both headers to ensure we get them.
+dnl NetBSD, so include both headers to ensure we get them.  With mingw and MSVC
+dnl they're provided by <stdlib.h>.
 [[#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>]],
@@ -918,10 +919,10 @@ case $enable_backend_glass$enable_backend_honey in
     AC_MSG_ERROR([zlibVersion() not found in -lz, -lzlib, or -lzdll - required for glass (you may need to install the zlib1g-dev or zlib-devel package)])
     ])
 
-  dnl Find the UUID library (from e2fsprogs/util-linux-ng, not the OSSP one).
+  dnl Find a way to generate UUIDs.
 
   case $host_os-$win32 in
-    *-yes | *cygwin*) dnl Use built-in win32 API.
+    *-yes | cygwin* | msys*) dnl Use built-in win32 API.
       AC_DEFINE([USE_WIN32_UUID_API], [1],
 		[Define to 1 to use UuidCreate(), etc])
       if test $win32 = yes ; then
@@ -1164,7 +1165,7 @@ esac
 
 AC_MSG_CHECKING([for directory separator(s)])
 case $host_os-$win32 in
-  *-yes | cygwin* | os2* | *djgpp* | *msdos* )
+  *-yes | cygwin* | msys* | os2* | *djgpp* | *msdos* )
     AC_MSG_RESULT([/ and \\])
     AC_DEFINE([DIR_SEPS], ["/\\"], [directory separator(s) as a character or string literal])
     AC_DEFINE([DIR_SEPS_LIST], [{ '/', '\\' }], [directory separator(s) as an initialiser list])
@@ -1437,9 +1438,11 @@ AH_BOTTOM(
 # pragma warning(disable:4003)
 /* A "performance" warning for converting int to bool. */
 # pragma warning(disable:4800)
-/* POSIX get to deprecate POSIX things, not MS. */
+
+/* POSIX get to deprecate POSIX things, not Microsoft. */
 # define _CRT_NONSTDC_NO_WARNINGS
 # define _CRT_SECURE_NO_WARNINGS
+
 /* WSAAddressToStringA() is deprecated and we should apparently use
  * WSAAddressToStringW(), but we don't want wide character output so
  * that would mean we'd have to convert the result back to ASCII
