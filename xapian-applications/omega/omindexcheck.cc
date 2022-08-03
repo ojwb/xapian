@@ -157,6 +157,8 @@ index_test()
 		  {{"Zедой", "Z喬伊不分享食物", "ZSbakeri"}}});
     tests.insert({"ooxml/Nature.pptx",
 		  {{"ZSnatur", "Zbeauti", "Zsampl"}}});
+    tests.insert({"application/vnd.ms-xpsdocument_xpstest.xps",
+		 {{"second", "header", "footer"}}});
 #endif
 #if defined HAVE_LIBABW
     // Title term is not being tested here because some older versions of Libabw
@@ -207,20 +209,11 @@ index_test()
     tests.insert({"apple_works/test_draw.cwk",
 		  {{"Zdraw", "Zsampl", "Zgraphic"}}});
 #endif
-    tests.insert({"application/vnd.ms-xpsdocument_xpstest.xps",
-		 {{"second", "header", "footer"}}});
 }
 
 static test_result
 compare_test(testcase& test, const Xapian::Document& doc, const string& file)
 {
-    // when all terms are found - PASS
-    // when only some terms are found - FAIL
-    // when no terms are found - SKIP/PASS/FAIL depending on the value of
-    // testcase flags
-    // FAIL - !terms.empty()
-    // PASS - terms.empty()
-    // SKIP - flag & SKIP_IF_NO_TERMS != 0
     sort(test.terms.begin(), test.terms.end());
     Xapian::TermIterator term_iterator = doc.termlist_begin();
     bool term_found = false, all_terms_exist = true;
@@ -234,19 +227,29 @@ compare_test(testcase& test, const Xapian::Document& doc, const string& file)
 	    term_found = true;
 	}
     }
-    if (term_found) {
-	if (all_terms_exist)
-	    return PASS;
-	else
-	    return FAIL;
-    }
-    // no terms found
-    if (test.flags & SKIP_IF_NO_TERMS)
-	return SKIP;
-    if (!test.terms.empty())
-	return FAIL;
-    else
+    if (all_terms_exist) {
+	// All terms found (including degenerate case where no terms are listed
+	// to check for).
 	return PASS;
+    }
+    if (test.flags & SKIP_IF_NO_TERMS) {
+	if (!term_found) {
+	    // None of the terms were found and we were asked to SKIP for that.
+	    return SKIP;
+	}
+    }
+    cerr << "Expected at least these terms:";
+    for (auto& t : test.terms) {
+	cerr << ' ' << t;
+    }
+    cerr << "\nFull list of terms actually present:";
+    for (term_iterator = doc.termlist_begin();
+	 term_iterator != doc.termlist_end();
+	 ++term_iterator) {
+	cerr << ' ' << *term_iterator;
+    }
+    cerr << '\n';
+    return FAIL;
 }
 
 int
