@@ -11,6 +11,8 @@
 	       end of the directory is reached.
     2018-04-01 Fix handle to be intptr_t not long to avoid truncation
 	       with WIN64 (where long is still 32 bits).
+    2019-12-16 Make dir->name a one element array member and over-allocate
+	       the struct so there's enough room for its actual size.
 
     Copyright Kevlin Henney, 1997, 2003. All rights reserved.
 
