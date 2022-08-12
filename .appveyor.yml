@@ -32,10 +32,10 @@ install:
         $env:PATH="C:\Mingw\bin;C:\Mingw\MSYS\1.0\bin;$env:PATH"
       } elseif ($env:TOOLCHAIN -eq "mingw64") {
         if ($env:Platform -eq "x86") {
-          $env:PATH="C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin;C:\msys64\usr\bin;$env:PATH"
+          $env:PATH="C:\mingw-w64\i686-8.1.0-posix-dwarf-rt_v6-rev0\mingw32\bin;C:\msys64\usr\bin;$env:PATH"
           $env:CONFIGOPTS+=" --host=i686-pc-mingw32"
         } else {
-          $env:PATH="C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin;C:\msys64\usr\bin;$env:PATH"
+          $env:PATH="C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin;C:\msys64\usr\bin;$env:PATH"
           $env:CONFIGOPTS+=" --host=x86_64-w64-mingw32"
         }
       } elseif ($env:TOOLCHAIN -eq "cygwin") {
@@ -98,7 +98,7 @@ build_script:
   - g++ --version
   - touch empty.cc
   - g++ -dM -E empty.cc
-  - "bash -c 'time ./configure $CONFIGOPTS || cat config.log && exit 1'"
+  - bash -c 'time ./configure $CONFIGOPTS'
   - bash -c 'time make -j2' < nul
 test_script:
   - bash -c 'time make check VERBOSE=1' < nul
