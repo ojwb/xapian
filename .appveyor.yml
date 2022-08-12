@@ -31,8 +31,7 @@ environment:
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
 build_script:
   - dir C:\mingw-w64
-  - bash -c "find /mingw-w64 -iname 'g++*.exe' -ls || true"
-  - bash -c "find /c/mingw-w64 -iname 'g++*.exe' -ls || true"
+  - bash -c "find c:/mingw-w64 -iname 'g++*.exe' -ls"
+  - bash -c "find /mingw-w64 -iname 'g++*.exe' -ls"
+  - bash -c "find /c/mingw-w64 -iname 'g++*.exe' -ls"
   - dir C:\MinGW
-  - bash -c "find /MinGW -iname 'g++*.exe' -ls || true"
-  - bash -c "find /c/MinGW -iname 'g++*.exe' -ls || true"
