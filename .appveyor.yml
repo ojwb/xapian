@@ -12,7 +12,7 @@ environment:
     AUTOMATED_TESTING: 1
   matrix:
   - TOOLCHAIN: cygwin
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
     platform: x86
 matrix:
   allow_failures:
