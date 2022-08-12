@@ -11,15 +11,15 @@ environment:
   global:
     AUTOMATED_TESTING: 1
   matrix:
-  - TOOLCHAIN: mingw
-    platform: x86
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
   - TOOLCHAIN: mingw64
     platform: x86
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
   - TOOLCHAIN: mingw64
     platform: x64
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+  - TOOLCHAIN: mingw
+    platform: x86
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
 # Fails trying to run apitest.exe etc for unknown reasons.
   - TOOLCHAIN: cygwin
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
@@ -137,7 +137,7 @@ install:
         $env:LDFLAGS="-Lc:/projects/xapian/zlib"
       }
 build_script:
-  - bash -c 'time ./configure $CONFIGOPTS'
+  - "bash -c 'time ./configure $CONFIGOPTS || { cat config.log; exit 1; }'"
   - bash -c 'time make -j2' < nul
 test_script:
   - bash -c 'time make check VERBOSE=1' < nul
