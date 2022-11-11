@@ -27,14 +27,14 @@ environment:
 build_script:
   - echo ____________________________________________
   - cd C:\mingw
-  - dir /S /B *g++*.exe
+  - dir /S /B *g++*.exe|bash -c 'while read x ; do echo "${x%?}" ; "${x%?}" --version ; done'
   - echo ____________________________________________
   - cd C:\cygwin
-  - dir /S /B *g++*.exe
+  - dir /S /B *g++*.exe|bash -c 'while read x ; do echo "${x%?}" ; "${x%?}" --version ; done'
   - echo ____________________________________________
   - cd C:\cygwin64
-  - dir /S /B *g++*.exe
+  - dir /S /B *g++*.exe|bash -c 'while read x ; do echo "${x%?}" ; "${x%?}" --version ; done'
   - echo ____________________________________________
-  - cd C:\mingw64
-  - dir /S /B *g++*.exe
+  - cd C:\mingw-w64
+  - dir /S /B *g++*.exe|bash -c 'while read x ; do echo "${x%?}" ; "${x%?}" --version ; done'
   - echo ____________________________________________
