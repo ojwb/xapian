@@ -26,22 +26,15 @@ environment:
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
 build_script:
   - echo ____________________________________________
-  - dir C:\mingw
-  - bash -c "find c:/mingw -iname 'g++*.exe' -ls||true"
-  - bash -c "find /mingw -iname 'g++*.exe' -ls||true"
-  - bash -c "find /c/mingw -iname 'g++*.exe' -ls||true"
+  - cd C:\mingw
+  - dir /S /B *g++*.exe
   - echo ____________________________________________
-  - dir C:\cygwin
-  - bash -c "find c:/cygwin -iname 'g++*.exe' -ls||true"
-  - bash -c "find /cygwin -iname 'g++*.exe' -ls||true"
-  - bash -c "find /c/cygwin -iname 'g++*.exe' -ls||true"
-  - dir C:\cygwin64
-  - bash -c "find c:/cygwin64 -iname 'g++*.exe' -ls||true"
-  - bash -c "find /cygwin64 -iname 'g++*.exe' -ls||true"
-  - bash -c "find /c/cygwin64 -iname 'g++*.exe' -ls||true"
+  - cd C:\cygwin
+  - dir /S /B *g++*.exe
   - echo ____________________________________________
-  - dir C:\mingw64
-  - bash -c "find c:/mingw64 -iname 'g++*.exe' -ls||true"
-  - bash -c "find /mingw64 -iname 'g++*.exe' -ls||true"
-  - bash -c "find /c/mingw64 -iname 'g++*.exe' -ls||true"
+  - cd C:\cygwin64
+  - dir /S /B *g++*.exe
+  - echo ____________________________________________
+  - cd C:\mingw64
+  - dir /S /B *g++*.exe
   - echo ____________________________________________
