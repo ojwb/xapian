@@ -97,12 +97,8 @@ LatLongCoords::unserialise(const string & serialised)
     const char * end_ptr = ptr + serialised.size();
     coords.clear();
     while (ptr != end_ptr) {
-	coords.push_back(LatLongCoord());
+	coords.emplace_back();
 	coords.back().unserialise(&ptr, end_ptr);
-    }
-    if (ptr != end_ptr) {
-	throw SerialisationError("Junk found at end of serialised "
-				 "LatLongCoords");
     }
 }
 

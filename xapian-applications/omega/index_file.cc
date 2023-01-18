@@ -173,6 +173,10 @@ index_add_default_libraries()
     index_library("application/vnd.apple.pages", omindex_libetonyek);
     index_library("application/vnd.apple.numbers", omindex_libetonyek);
 #endif
+#if defined HAVE_LIBGEPUB
+    Worker* omindex_libgepub = new Worker("omindex_libgepub");
+    index_library("application/epub+zip", omindex_libgepub);
+#endif
 #if defined HAVE_TESSERACT
     Worker* omindex_tesseract = new Worker("omindex_tesseract");
     index_library("image/gif", omindex_tesseract);
@@ -786,7 +790,7 @@ index_mimetype(const string& file, const string& urlterm, const string& url,
 	    // Use a worker process to extract the content.
 	    Worker* wrk = cmd_it->second.worker;
 	    int r = wrk->extract(file, mimetype, dump, title, keywords, author,
-				 pages);
+				 pages, created);
 	    if (r != 0) {
 		string msg = wrk->get_error();
 		assert(!msg.empty());
@@ -1088,6 +1092,7 @@ index_mimetype(const string& file, const string& urlterm, const string& url,
 		// FIXME: topic = metaparser.topic;
 		sample = metaparser.sample;
 		author = metaparser.author;
+		pages = metaparser.pages;
 	    } catch (const ReadError&) {
 		// It's probably best to index the document even if this fails.
 	    }

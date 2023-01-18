@@ -54,7 +54,9 @@ EXTRA_PROGRAMS =\
 	omindex_libabw\
 	omindex_libcdr\
 	omindex_libextractor\
-	omindex_libmwaw
+	omindex_libgepub\
+	omindex_libmwaw\
+	omindex_libreofficekit
 
 EXTRA_DIST =\
 	clickmodel/testdata/test1.log\
@@ -81,8 +83,7 @@ EXTRA_DIST =\
 	templates/xml \
 	templates/inc/anyalldropbox \
 	templates/inc/anyallradio \
-	templates/inc/toptermsjs \
-	xapian-omega.spec
+	templates/inc/toptermsjs
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/common \
@@ -94,7 +95,7 @@ pkglibbindir = $(pkglibdir)/bin
 pkglibbin_PROGRAMS = omega $(OMINDEX_MODULES)
 dist_pkglibbin_SCRIPTS = mhtml2html outlookmsg2html rfc822tohtml vcard2text
 bin_PROGRAMS = omindex scriptindex omindex-list generate-qrel-file
-dist_bin_SCRIPTS = dbi2omega htdig2omega mbox2omega postprocess
+dist_bin_SCRIPTS = dbi2omega mbox2omega postprocess
 
 check_PROGRAMS = atomparsertest csvesctest htmlparsertest jsonesctest md5test sdbntest urlenctest utf8converttest omindexcheck
 dist_check_SCRIPTS = omegatest sourcetest omindextest
@@ -111,7 +112,7 @@ TESTS =	atomparsertest$(EXEEXT)\
 	utf8converttest$(EXEEXT)
 
 omegadatadir = $(datadir)/omega
-dist_omegadata_DATA = htdig2omega.script mbox2omega.script
+dist_omegadata_DATA = mbox2omega.script
 
 dist_sysconf_DATA = omega.conf
 
@@ -147,7 +148,6 @@ noinst_HEADERS +=\
 	common/safewindows.h\
 	common/safewinsock2.h\
 	common/setenv.h\
-	common/stdclamp.h\
 	common/str.h\
 	common/stringutils.h
 
@@ -189,7 +189,7 @@ omindex_LDADD = $(MAGIC_LIBS) $(XAPIAN_LIBS) $(ZLIB_LIBS) libutf8convert.la
 
 omindex_poppler_SOURCES = assistant.cc worker_comms.cc common/str.cc handler_poppler.cc
 omindex_poppler_LDADD = $(POPPLER_LIBS)
-omindex_poppler_CXXFLAGS = $(POPPLER_CFLAGS)
+omindex_poppler_CXXFLAGS = $(POPPLER_CFLAGS) $(XAPIAN_CXXFLAGS)
 
 omindex_libebook_SOURCES = assistant.cc worker_comms.cc handler_libebook.cc
 omindex_libebook_LDADD = $(LIBEBOOK_LIBS)
@@ -199,9 +199,13 @@ omindex_libetonyek_SOURCES = assistant.cc worker_comms.cc handler_libetonyek.cc
 omindex_libetonyek_LDADD = $(LIBETONYEK_LIBS)
 omindex_libetonyek_CXXFLAGS = $(LIBETONYEK_CFLAGS) $(XAPIAN_CXXFLAGS)
 
+omindex_libgepub_SOURCES = assistant.cc worker_comms.cc htmlparser.cc datetime.cc xmlparser.cc common/keyword.cc handler_libgepub.cc
+omindex_libgepub_LDADD = $(LIBGEPUB_LIBS) libutf8convert.la
+omindex_libgepub_CXXFLAGS = $(LIBGEPUB_CFLAGS) $(XAPIAN_CXXFLAGS)
+
 omindex_tesseract_SOURCES = assistant.cc worker_comms.cc handler_tesseract.cc
 omindex_tesseract_LDADD = $(TESSERACT_LIBS)
-omindex_tesseract_CXXFLAGS = $(TESSERACT_CFLAGS)
+omindex_tesseract_CXXFLAGS = $(TESSERACT_CFLAGS) $(XAPIAN_CXXFLAGS)
 
 omindex_gmime_SOURCES = assistant.cc worker_comms.cc htmlparser.cc datetime.cc xmlparser.cc common/keyword.cc handler_gmime.cc
 omindex_gmime_LDADD = $(GMIME_LIBS) libutf8convert.la
@@ -221,11 +225,16 @@ omindex_libcdr_CXXFLAGS = $(LIBCDR_CFLAGS) $(XAPIAN_CXXFLAGS)
 
 omindex_libextractor_SOURCES = assistant.cc worker_comms.cc handler_libextractor.cc
 omindex_libextractor_LDADD = $(LIBEXTRACTOR_LIBS)
-omindex_libextractor_CXXFLAGS = $(LIBEXTRACTOR_CFLAGS)
+omindex_libextractor_CXXFLAGS = $(LIBEXTRACTOR_CFLAGS) $(XAPIAN_CXXFLAGS)
 
 omindex_libmwaw_SOURCES = assistant.cc worker_comms.cc handler_libmwaw.cc common/str.cc
 omindex_libmwaw_LDADD = $(LIBMWAW_LIBS)
 omindex_libmwaw_CXXFLAGS = $(LIBMWAW_CFLAGS) $(XAPIAN_CXXFLAGS)
+
+omindex_libreofficekit_SOURCES = assistant.cc worker_comms.cc datetime.cc loadfile.cc tmpdir.cc urlencode.cc xmlparser.cc htmlparser.cc common/keyword.cc common/str.cc handler_libreofficekit.cc
+omindex_libreofficekit_LDADD = $(LIBREOFFICEKIT_LIBS) libutf8convert.la
+omindex_libreofficekit_CPPFLAGS = $(AM_CPPFLAGS) $(LIBREOFFICEKIT_CPPFLAGS)
+omindex_libreofficekit_CXXFLAGS = $(LIBREOFFICEKIT_CFLAGS) $(XAPIAN_CXXFLAGS)
 
 scriptindex_SOURCES = scriptindex.cc\
  genericxmlparser.cc htmlparser.cc xmlparser.cc\

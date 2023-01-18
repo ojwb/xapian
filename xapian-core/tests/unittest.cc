@@ -61,7 +61,6 @@ using namespace std;
 // Utility code we use:
 #include "../backends/multi.h"
 #include "../common/stringutils.h"
-#include "../common/log2.h"
 
 // Simpler version of TEST_EXCEPTION macro.
 #define TEST_EXCEPTION(TYPE, CODE) \
@@ -92,7 +91,7 @@ using namespace std;
 // fileutils.cc uses opendir(), etc though not in a function we currently test.
 #include "../common/msvc_dirent.cc"
 
-// The UUID code uses hex_digit().
+// The UUID code uses hex_decode().
 #include "../api/constinfo.cc"
 
 // Stub replacement, which doesn't deal with escaping or producing valid UTF-8.
@@ -373,15 +372,6 @@ static void test_serialiseerror1()
     TEST_STRINGS_EQUAL(ecopy.get_error_string(), enoent_msg);
 }
 #endif
-
-// Test log2() (which might be our replacement version).
-static void test_log2()
-{
-    TEST_EQUAL(log2(1.0), 0.0);
-    TEST_EQUAL(log2(2.0), 1.0);
-    TEST_EQUAL(log2(1024.0), 10.0);
-    TEST_EQUAL(log2(0.5), -1.0);
-}
 
 static const double test_sortableserialise_numbers[] = {
 #ifdef INFINITY
@@ -946,7 +936,6 @@ static const test_desc tests[] = {
 #ifdef XAPIAN_HAS_REMOTE_BACKEND
     TESTCASE(serialiseerror1),
 #endif
-    TESTCASE(log2),
     TESTCASE(sortableserialise1),
     TESTCASE(tostring1),
     TESTCASE(strbool1),
