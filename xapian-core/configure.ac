@@ -1325,7 +1325,6 @@ elif test yes = "$msvc"; then
   dnl -W1 is command-line default, -W3 IDE default, -W4 highest numbered level.
   dnl Also -WX is like GCC -Werror.
   AM_CXXFLAGS="$AM_CXXFLAGS -W3"
-else
 fi
 
 XAPIAN_TEST_LDFLAGS([-Wl,-Bsymbolic-functions], [XAPIAN_LDFLAGS])
