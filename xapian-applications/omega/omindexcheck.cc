@@ -26,9 +26,13 @@
 #include <xapian.h>
 
 #include <algorithm>
+#include <iomanip>
 #include <iostream>
 #include <string>
 #include <unordered_map>
+#include <vector>
+
+#include "values.h"
 
 using namespace std;
 
@@ -48,8 +52,13 @@ enum test_result { PASS, FAIL };
 struct testcase {
     vector<string> terms;
 
+    vector<pair<Xapian::valueno, string>> values;
+
     testcase(vector<string> v)
 	: terms(std::move(v)) {}
+
+    testcase(vector<string> v, vector<pair<Xapian::valueno, string>> v2)
+	: terms(std::move(v)), values(std::move(v2)) {}
 };
 
 
@@ -68,6 +77,29 @@ index_test()
 		  {{"Sdiagram", "Timage/svg+xml", "Zstart"}}});
     tests.insert({"svg/diagram.svgz",
 		  {{"Sdiagram", "Timage/svg+xml-compressed", "Zstart"}}});
+#ifdef HAVE_GMIME
+    tests.insert({"email/html.eml",
+		  {{"Aexample", "Ame", "Aorg", "Auser", "Shtml",
+		    "Tmessage/rfc822",
+		    "XMID:E1p1II7-008OVw-1w@example.org",
+		    "XTOada", "XTOexample", "XTOorg", "XTOuser",
+		    "html", "message", "test"},
+		  {{{VALUE_CREATED, "c\x8a\xb4\xb3"}, // 1670034611
+		    {VALUE_SIZE, Xapian::sortable_serialise(450)},
+		    {VALUE_MD5, "y.<0RW\xb0\xf4\xd2+\xa8\x09\xde\xff|\x0d"}
+		   }}}});
+    tests.insert({"email/text.eml",
+		  {{"Aexample", "Ame", "Aorg", "Auser", "Stext", "Tmessage/rfc822",
+		    "XMID:E1p1II7-008OVw-1v@example.org",
+		    "XTOexample", "XTOorg", "XTOuser",
+		    "comment1", "comment2", "keyword1", "keyword2",
+		    "message", "plain", "text"},
+		  {{{VALUE_CREATED, "c\x8a\xb4\xb3"}, // 1670034611
+		    {VALUE_SIZE, Xapian::sortable_serialise(477)},
+		    {VALUE_MD5,
+		     "C\x7f\x17;;\x87\x91\x5c\x05?\x83\x14\xec\xaa\xad\x94"}
+		   }}}});
+#endif
 #if defined HAVE_POPPLER
     tests.insert({"pdf/poppler.pdf",
 		  {{"ZFpoppler", "Zsub", "Ztext", "Ztitl", "Zpie"}}});
@@ -128,13 +160,15 @@ index_test()
     tests.insert({PREFIX "opendoc/test.odt", \
 		  {{"Zедой", "Z喬伊不分享食物"}}}); \
     tests.insert({PREFIX "opendoc/text.odt", \
-		  {{"Stesttitle", "Aolly", "Zsampl", "Zhead", "Ztext", \
+		  {{"Stesttitle", NOTLO("Aolly",) "Zsampl", "Zhead", "Ztext", \
 		    "Zhello", "Zworld"}}}); \
     tests.insert({PREFIX "opendoc/text_template.ott", \
 		  {{"Zjane", "Zdoe", "Zstructur"}}}); \
+    NOTLO(\
     tests.insert({PREFIX "opendoc/presentation.odp", \
 		  {{"Zfascin", "Zfact", "Zpustak", "Zmahal", "Zmillion", \
 		    "Zpeopl", "Zbirthday", "501"}}}); \
+    )\
     tests.insert({PREFIX "opendoc/presentation_template.otp", \
 		  {{"ZSalizarin", "Zhead", "Zworld", "Ztext"}}}); \
     tests.insert({PREFIX "opendoc/spreadsheet.ods", \
@@ -148,23 +182,25 @@ index_test()
     tests.insert({PREFIX "staroffice/calc.sxc", \
 		  {{"Ztoy", "Zproduct", "Zcost", "Zquantiti", "Zcardboard"}}}); \
     tests.insert({PREFIX "staroffice/calc_template.stc", \
-		  {{"ZSpurchas", "ZStemplat", "Zproduct", "Zquantiti", \
+		  {{NOTLO("ZSpurchas", "ZStemplat",) "Zproduct", "Zquantiti", \
 		    "Zsampl"}}}); \
     tests.insert({PREFIX "staroffice/text.sxw", \
 		  {{"Zhello", "Zsampl", "Zopenoffic", "Zwriter"}}}); \
     tests.insert({PREFIX "staroffice/text_template.stw", \
-		  {{"Zhello", "Zworld", "Zsampl", "Zhead", "ZStemplat", \
-		    "ZStext"}}}); \
+		  {{"Zhello", "Zworld", "Zsampl", "Zhead", \
+		    NOTLO("ZStemplat", "ZStext")}}}); \
     tests.insert({PREFIX "staroffice/presentation.sxi", \
 		  {{"Zhead", "Zhello", "Zopenoffic", "Zimpress"}}}); \
     tests.insert({PREFIX "staroffice/presentation_template.sti", \
-		  {{"ZSproject", "ZSresearch", "Zhead", "Ztext"}}}); \
+		  {{NOTLO("ZSproject", "ZSresearch",) "Zhead", "Ztext"}}}); \
     \
     /* Microsoft XML formats */ \
     tests.insert({PREFIX "msxml/Book.xlsx", \
 		  {{"Zmodi", "Zgood", "Zemploye"}}}); \
     tests.insert({PREFIX "msxml/2sheets.xlsx", \
-		  {{"0.123456", "123.456", "15", "2021", "3.14159265358979", \
+		  {{NOTLO("0.123456",) LO("0.12346",) \
+		    "123.456", "15", "2021", \
+		    NOTLO("3.14159265358979",) LO("3.14159",) \
 		    "43", "55", "Aolly", "Ssheet", "Stitle", "xmas"}}}); \
     tests.insert({PREFIX "msxml/Doc.docx", \
 		  {{"Zедой", "Z喬伊不分享食物", "ZSbakeri"}}}); \
@@ -173,10 +209,18 @@ index_test()
     tests.insert({PREFIX "msxml/vnd.ms-xpsdocument_xpstest.xps", \
 		 {{"second", "header", "footer"}}});
 #if defined HAVE_LIBARCHIVE
+# define LO(...)
+# define NOTLO(...) __VA_ARGS__
     OFFICE_TESTCASES("")
+# undef NOTLO
+# undef LO
 #endif
 #if defined HAVE_LIBREOFFICEKIT_LIBREOFFICEKIT_HXX
+# define LO(...) __VA_ARGS__
+# define NOTLO(...)
     OFFICE_TESTCASES("lok-")
+# undef NOTLO
+# undef LO
 #endif
 #if defined HAVE_LIBABW
     // Title term is not being tested here because some older versions of Libabw
@@ -241,6 +285,19 @@ index_test()
 #endif
 }
 
+static void
+escape(const string& s, std::ostream& stream)
+{
+    for (unsigned char ch : s) {
+	if (ch >= 0x20 && ch < 127 && ch != '\\') {
+	    stream << ch;
+	} else {
+	    stream << "\\x"
+		   << std::hex << std::setfill('0') << std::setw(2) << int(ch);
+	}
+    }
+}
+
 static test_result
 compare_test(testcase& test, const Xapian::Document& doc, const string& file)
 {
@@ -269,6 +326,22 @@ compare_test(testcase& test, const Xapian::Document& doc, const string& file)
 		all_required_terms_exist = false;
 	    }
 	}
+    }
+
+    bool values_ok = true;
+    for (auto& i : test.values) {
+	const string& v = doc.get_value(i.first);
+	if (v != i.second) {
+	    cerr << file << ": error: Value slot " << i.first << " should be ";
+	    escape(i.second, cerr);
+	    cerr << " not ";
+	    escape(v, cerr);
+	    cerr << '\n';
+	    values_ok = false;
+	}
+    }
+    if (!values_ok) {
+	return FAIL;
     }
     if (!missing_optional.empty() && !no_optional) {
 	cerr << file << ": error: Only some of the optional terms index this "

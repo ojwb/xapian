@@ -1,10 +1,10 @@
 /** @file
- * @brief Tokenise CJK text as n-grams
+ * @brief Handle text without explicit word breaks
  */
 /* Copyright (c) 2007, 2008 Yung-chung Lin (henearkrxern@gmail.com)
  * Copyright (c) 2011 Richard Boulton (richard@tartarus.org)
  * Copyright (c) 2011 Brandon Schaefer (brandontschaefer@gmail.com)
- * Copyright (c) 2011,2018,2019 Olly Betts
+ * Copyright (c) 2011,2018,2019,2023 Olly Betts
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@
 
 #include <config.h>
 
-#include "cjk-tokenizer.h"
+#include "word-breaker.h"
 
 #include "omassert.h"
 #include "xapian/unicode.h"
@@ -40,7 +40,7 @@
 using namespace std;
 
 bool
-CJK::is_cjk_enabled()
+is_ngram_enabled()
 {
     const char * p;
     static bool result = ((p = getenv("XAPIAN_CJK_NGRAM")) != NULL && *p);
@@ -48,18 +48,30 @@ CJK::is_cjk_enabled()
 }
 
 bool
-CJK::codepoint_is_cjk(unsigned p)
+is_unbroken_script(unsigned p)
 {
     // Array containing the last value in each range of codepoints which
-    // are either all CJK or all non-CJK.
+    // are either all in scripts which are written without explicit word
+    // breaks, or all not in such scripts.
+    //
+    // We only include scripts here which ICU has dictionaries for.  The
+    // same list is currently also used to decide which languages to do
+    // ngrams for, though perhaps that should use a separate list.
     static const unsigned splits[] = {
 	// 0E00..0E7F; Thai, Lanna Tai, Pali
-	0x0E00 - 1, 0x0E7F,
+	// 0E80..0EFF; Lao
+	0x0E00 - 1, 0x0EFF,
+	// 1000..109F; Myanmar (Burmese)
+	0x1000 - 1, 0x109F,
 	// 1100..11FF; Hangul Jamo
 	0x1100 - 1, 0x11FF,
+	// 1780..17FF; Khmer
+	0x1780 - 1, 0x17FF,
+	// 19E0..19FF; Khmer Symbols
+	0x19E0 - 1, 0x19FF,
 	// 2E80..2EFF; CJK Radicals Supplement
 	// 2F00..2FDF; Kangxi Radicals
-	0x2E80 - 1, 0x2FDF,
+	// 2FE0..2FFF; Ideographic Description Characters
 	// 3000..303F; CJK Symbols and Punctuation
 	// 3040..309F; Hiragana
 	// 30A0..30FF; Katakana
@@ -74,11 +86,15 @@ CJK::codepoint_is_cjk(unsigned p)
 	// 3400..4DBF; CJK Unified Ideographs Extension A
 	// 4DC0..4DFF; Yijing Hexagram Symbols
 	// 4E00..9FFF; CJK Unified Ideographs
-	0x3000 - 1, 0x9FFF,
+	0x2E80 - 1, 0x9FFF,
 	// A700..A71F; Modifier Tone Letters
 	0xA700 - 1, 0xA71F,
 	// A960..A97F; Hangul Jamo Extended-A
 	0xA960 - 1, 0xA97F,
+	// A9E0..A9FF; Myanmar Extended-B (Burmese)
+	0xA9E0 - 1, 0xA9FF,
+	// AA60..AA7F; Myanmar Extended-A (Burmese)
+	0xAA60 - 1, 0xAA7F,
 	// AC00..D7AF; Hangul Syllables
 	// D7B0..D7FF; Hangul Jamo Extended-B
 	0xAC00 - 1, 0xD7FF,
@@ -88,9 +104,11 @@ CJK::codepoint_is_cjk(unsigned p)
 	0xFE30 - 1, 0xFE4F,
 	// FF00..FFEF; Halfwidth and Fullwidth Forms
 	0xFF00 - 1, 0xFFEF,
+	// 1AFF0..1AFFF; Kana Extended-B
 	// 1B000..1B0FF; Kana Supplement
 	// 1B100..1B12F; Kana Extended-A
-	0x1B000 - 1, 0x1B12F,
+	// 1B130..1B16F; Small Kana Extension
+	0x1AFF0 - 1, 0x1B16F,
 	// 1F200..1F2FF; Enclosed Ideographic Supplement
 	0x1F200 - 1, 0x1F2FF,
 	// 20000..2A6DF; CJK Unified Ideographs Extension B
@@ -102,25 +120,28 @@ CJK::codepoint_is_cjk(unsigned p)
 	0x2A700 - 1, 0x2EBEF,
 	// 2F800..2FA1F; CJK Compatibility Ideographs Supplement
 	0x2F800 - 1, 0x2FA1F,
+	// 30000..3134F; CJK Unified Ideographs Extension G
+	// 31350..323AF; CJK Unified Ideographs Extension H
+	0x30000 - 1, 0x323AF
     };
     // Binary chop to find the first entry which is >= p.  If it's an odd
-    // offset then the codepoint is CJK; if it's an even offset then it's not.
+    // offset then the codepoint is in a script which needs splitting; if it's
+    // an even offset then it's not.
     auto it = lower_bound(begin(splits), end(splits), p);
     return ((it - splits) & 1);
 }
 
 bool
-CJK::codepoint_is_cjk_wordchar(unsigned p)
+is_unbroken_wordchar(unsigned p)
 {
-    return codepoint_is_cjk(p) && Xapian::Unicode::is_wordchar(p);
+    return is_unbroken_script(p) && Xapian::Unicode::is_wordchar(p);
 }
 
 size_t
-CJK::get_cjk(Xapian::Utf8Iterator& it)
+get_unbroken(Xapian::Utf8Iterator& it)
 {
     size_t char_count = 0;
-    while (it != Xapian::Utf8Iterator() &&
-	   codepoint_is_cjk_wordchar(*it)) {
+    while (it != Xapian::Utf8Iterator() && is_unbroken_wordchar(*it)) {
 	++char_count;
 	++it;
     }
@@ -128,10 +149,11 @@ CJK::get_cjk(Xapian::Utf8Iterator& it)
 }
 
 void
-CJKNgramIterator::init() {
+NgramIterator::init()
+{
     if (it != Xapian::Utf8Iterator()) {
 	unsigned ch = *it;
-	if (CJK::codepoint_is_cjk_wordchar(ch)) {
+	if (is_unbroken_wordchar(ch)) {
 	    Xapian::Unicode::append_utf8(current_token, ch);
 	    ++it;
 	} else {
@@ -140,13 +162,13 @@ CJKNgramIterator::init() {
     }
 }
 
-CJKNgramIterator&
-CJKNgramIterator::operator++()
+NgramIterator&
+NgramIterator::operator++()
 {
     if (offset == 0) {
 	if (it != Xapian::Utf8Iterator()) {
 	    unsigned ch = *it;
-	    if (CJK::codepoint_is_cjk_wordchar(ch)) {
+	    if (is_unbroken_wordchar(ch)) {
 		offset = current_token.size();
 		Xapian::Unicode::append_utf8(current_token, ch);
 		++it;
@@ -164,7 +186,7 @@ CJKNgramIterator::operator++()
 }
 
 #ifdef USE_ICU
-CJKWordIterator::CJKWordIterator(const char* ptr, size_t len)
+WordIterator::WordIterator(const char* ptr, size_t len)
 {
     UErrorCode err = U_ZERO_ERROR;
     UText utext = UTEXT_INITIALIZER;
@@ -183,8 +205,8 @@ CJKWordIterator::CJKWordIterator(const char* ptr, size_t len)
     current_token.assign(utf8_ptr + first, p - first);
 }
 
-CJKWordIterator &
-CJKWordIterator::operator++()
+WordIterator&
+WordIterator::operator++()
 {
     int32_t first = p;
     p = brk->next();

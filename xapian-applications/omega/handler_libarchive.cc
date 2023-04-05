@@ -2,7 +2,7 @@
  * @brief Extract text and metadata using libarchive.
  */
 /* Copyright (C) 2020 Parth Kapadia
- * Copyright (C) 2022 Olly Betts
+ * Copyright (C) 2022,2023 Olly Betts
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -247,8 +247,9 @@ extract_xps(struct archive* archive_obj)
     struct archive_entry* entry;
     while (archive_read_next_header(archive_obj, &entry) == ARCHIVE_OK) {
 	string pathname = archive_entry_pathname(entry);
-	if (startswith(pathname, "Documents/1/Pages/") &&
-	    endswith(pathname, ".fpage")) {
+	if (startswith(pathname, "Documents/") &&
+	    endswith(pathname, ".fpage") &&
+	    pathname.find("/Pages/") != string::npos) {
 	    size_t total = archive_entry_size(entry);
 	    content.resize(total);
 	    ssize_t size = archive_read_data(archive_obj, &content[0], total);
@@ -274,6 +275,12 @@ extract_xps(struct archive* archive_obj)
 
     send_field(FIELD_BODY, parser.dump);
     send_field_page_count(pages);
+    return true;
+}
+
+bool
+initialise()
+{
     return true;
 }
 

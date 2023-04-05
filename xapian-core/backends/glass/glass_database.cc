@@ -4,7 +4,7 @@
 /* Copyright 1999,2000,2001 BrightStation PLC
  * Copyright 2001 Hein Ragas
  * Copyright 2002 Ananova Ltd
- * Copyright 2002-2022 Olly Betts
+ * Copyright 2002-2023 Olly Betts
  * Copyright 2006,2008 Lemur Consulting Ltd
  * Copyright 2009 Richard Boulton
  * Copyright 2009 Kan-Ru Chen
@@ -616,7 +616,7 @@ GlassDatabase::modifications_failed(glass_revision_number_t new_revision,
 	cancel();
 
 	// Reopen tables with old revision number.
-	version_file.cancel();
+	version_file.read();
 	docdata_table.open(flags, version_file.get_root(Glass::DOCDATA), old_revision);
 	spelling_table.open(flags, version_file.get_root(Glass::SPELLING), old_revision);
 	synonym_table.open(flags, version_file.get_root(Glass::SYNONYM), old_revision);
@@ -624,15 +624,7 @@ GlassDatabase::modifications_failed(glass_revision_number_t new_revision,
 	position_table.open(flags, version_file.get_root(Glass::POSITION), old_revision);
 	postlist_table.open(flags, version_file.get_root(Glass::POSTLIST), old_revision);
 
-	Xapian::termcount ub = version_file.get_spelling_wordfreq_upper_bound();
-	spelling_table.set_wordfreq_upper_bound(ub);
-
 	value_manager.reset();
-
-	// Increase revision numbers to new revision number plus one,
-	// writing increased numbers to all tables.
-	++new_revision;
-	set_revision_number(flags, new_revision);
     } catch (const Xapian::Error &e) {
 	// We failed to roll-back so close the database to avoid the risk of
 	// database corruption.
@@ -937,7 +929,7 @@ GlassDatabase::open_position_list(Xapian::docid did, const string& term) const
 TermList *
 GlassDatabase::open_allterms(const string & prefix) const
 {
-    LOGCALL(DB, TermList *, "GlassDatabase::open_allterms", NO_ARGS);
+    LOGCALL(DB, TermList*, "GlassDatabase::open_allterms", prefix);
     RETURN(new GlassAllTermsList(intrusive_ptr<const GlassDatabase>(this),
 				 prefix));
 }
@@ -992,7 +984,7 @@ GlassDatabase::get_metadata(const string & key) const
 TermList *
 GlassDatabase::open_metadata_keylist(const std::string &prefix) const
 {
-    LOGCALL(DB, TermList *, "GlassDatabase::open_metadata_keylist", NO_ARGS);
+    LOGCALL(DB, TermList*, "GlassDatabase::open_metadata_keylist", prefix);
     GlassCursor * cursor = postlist_table.cursor_get();
     if (!cursor) RETURN(NULL);
     RETURN(new GlassMetadataTermList(intrusive_ptr<const GlassDatabase>(this),
@@ -1647,7 +1639,7 @@ GlassWritableDatabase::open_position_list(Xapian::docid did, const string& term)
 TermList *
 GlassWritableDatabase::open_allterms(const string & prefix) const
 {
-    LOGCALL(DB, TermList *, "GlassWritableDatabase::open_allterms", NO_ARGS);
+    LOGCALL(DB, TermList*, "GlassWritableDatabase::open_allterms", prefix);
     if (change_count) {
 	// There are changes, and terms may have been added or removed, and so
 	// we need to flush changes for terms with the specified prefix (but

@@ -113,7 +113,12 @@ class XAPIAN_VISIBILITY_DEFAULT Document {
     /// Get the document data.
     std::string get_data() const;
 
-    /// Set the document data.
+    /** Set the document data.
+     *
+     *  This is an opaque blob as far as Xapian is concerned - it's up to you
+     *  to impose whatever structure you want on it.  If you want to store
+     *  structured data, consider using something like protocol buffers.
+     */
     void set_data(const std::string& data);
 
     /// Add a term to this document.
@@ -200,7 +205,7 @@ class XAPIAN_VISIBILITY_DEFAULT Document {
 
     /** Start iterating the terms in this document.
      *
-     *  The terms are returned ascending string order (by byte value).
+     *  The terms are returned in ascending string order (by byte value).
      */
     TermIterator termlist_begin() const;
 

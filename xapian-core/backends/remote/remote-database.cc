@@ -1,7 +1,7 @@
 /** @file
  *  @brief Remote backend database class
  */
-/* Copyright (C) 2006-2022 Olly Betts
+/* Copyright (C) 2006-2023 Olly Betts
  * Copyright (C) 2007,2009,2010 Lemur Consulting Ltd
  *
  * This program is free software; you can redistribute it and/or
@@ -88,14 +88,15 @@ throw_connection_closed_unexpectedly()
     throw Xapian::NetworkError("Connection closed unexpectedly");
 }
 
-RemoteDatabase::RemoteDatabase(int fd, double timeout_,
-			       const string& context_, bool writable,
+RemoteDatabase::RemoteDatabase(pair<int, string> fd_and_context,
+			       double timeout_,
+			       bool writable,
 			       int flags)
     : Xapian::Database::Internal(writable ?
 				 TRANSACTION_NONE :
 				 TRANSACTION_READONLY),
-      link(fd, fd, context_),
-      context(context_),
+      link(fd_and_context.first, fd_and_context.first, fd_and_context.second),
+      context(fd_and_context.second),
       cached_stats_valid(),
       mru_valstats(),
       mru_slot(Xapian::BAD_VALUENO),
@@ -704,8 +705,6 @@ RemoteDatabase::set_query(const Xapian::Query& query,
 	pack_uint(message, sort_key);
     }
     pack_bool(message, sort_value_forward);
-    // FIXME: Dummy value, remove on next protocol bump.
-    pack_bool(message, true);
     message += serialise_double(time_limit);
     message += char(percent_threshold);
     message += serialise_double(weight_threshold);
@@ -729,12 +728,14 @@ RemoteDatabase::set_query(const Xapian::Query& query,
 }
 
 void
-RemoteDatabase::get_remote_stats(Xapian::Weight::Internal& out) const
+RemoteDatabase::accumulate_remote_stats(Xapian::Weight::Internal& total) const
 {
     string message;
     get_message(message, REPLY_STATS);
     const char* p = message.data();
-    unserialise_stats(p, p + message.size(), out);
+    Xapian::Weight::Internal remote_stats;
+    unserialise_stats(p, p + message.size(), remote_stats);
+    total += remote_stats;
 }
 
 void

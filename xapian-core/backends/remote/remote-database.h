@@ -1,7 +1,7 @@
 /** @file
  *  @brief RemoteDatabase is the baseclass for remote database implementations.
  */
-/* Copyright (C) 2006,2007,2009,2010,2011,2014,2015,2017,2019,2020 Olly Betts
+/* Copyright (C) 2006-2023 Olly Betts
  * Copyright (C) 2007,2009,2010 Lemur Consulting Ltd
  *
  * This program is free software; you can redistribute it and/or
@@ -29,6 +29,8 @@
 #include "net/remoteconnection.h"
 #include "backends/valuestats.h"
 #include "xapian/weight.h"
+
+#include <utility>
 
 namespace Xapian {
     class RSet;
@@ -113,18 +115,24 @@ class RemoteDatabase : public Xapian::Database::Internal {
      *  can't be created - a derived class must be instantiated which
      *  has code in the constructor to open the socket.
      *
-     *  @param fd	The file descriptor for the connection to the server.
+     *  @param fd_and_context
+     *			A std::pair containing the file descriptor for the
+     *			connection to the server and a context string to
+     *			return with any error messages.  (These are passed
+     *			together so the caller can return them from a
+     *			single helper function easily).
      *  @param timeout_ The timeout used with the network operations.
      *			Generally a Xapian::NetworkTimeoutError exception will
      *			be thrown if the remote end doesn't respond for this
      *			length of time (in seconds).  A timeout of 0 means that
      *			operations will never timeout.
-     *  @param context_ The context to return with any error messages.
      *	@param writable	Is this a WritableDatabase?
      *	@param flags	Xapian::DB_RETRY_LOCK or 0.
      */
-    RemoteDatabase(int fd, double timeout_, const std::string& context_,
-		   bool writable, int flags);
+    RemoteDatabase(std::pair<int, std::string> fd_and_context,
+		   double timeout_,
+		   bool writable,
+		   int flags);
 
     /// Receive a message from the server.
     reply_type get_message(std::string& message,
@@ -208,8 +216,8 @@ class RemoteDatabase : public Xapian::Database::Internal {
 	return link.get_read_fd();
     }
 
-    /// Get the stats from the remote server.
-    void get_remote_stats(Xapian::Weight::Internal& out) const;
+    /// Accumulate stats from the remote server.
+    void accumulate_remote_stats(Xapian::Weight::Internal& total) const;
 
     /// Send the global stats to the remote server.
     void send_global_stats(Xapian::doccount first,

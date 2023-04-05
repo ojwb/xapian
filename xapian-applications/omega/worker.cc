@@ -1,7 +1,7 @@
 /** @file
  * @brief Class representing worker process.
  */
-/* Copyright (C) 2005-2022 Olly Betts
+/* Copyright (C) 2005-2023 Olly Betts
  * Copyright (C) 2019 Bruno Baruffaldi
  *
  * This program is free software; you can redistribute it and/or
@@ -49,6 +49,8 @@ bool Worker::ignoring_sigpipe = false;
 int
 Worker::start_worker_subprocess()
 {
+    static bool keep_stderr = (getenv("XAPIAN_OMEGA_DEBUG_WORKERS") != nullptr);
+
     int fds[2];
     if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, fds) < 0) {
 	error = string("socketpair failed: ") + strerror(errno);
@@ -86,11 +88,12 @@ Worker::start_worker_subprocess()
 	// not have their disk space released until we exit.
 	closefrom(4);
 
-	// Connect stdin, stdout, stderr to /dev/null.
+	// Connect stdin, stdout and (conditionally) stderr to /dev/null.
 	int devnull = open("/dev/null", O_RDWR);
 	dup2(devnull, 0);
 	dup2(devnull, 1);
-	dup2(devnull, 2);
+	if (!keep_stderr)
+	    dup2(devnull, 2);
 	if (devnull > 3) close(devnull);
 
 	// FIXME: For filters which support a file descriptor as input, we
@@ -154,6 +157,10 @@ Worker::extract(const std::string& filename,
 		std::string& title,
 		std::string& keywords,
 		std::string& author,
+		std::string& to,
+		std::string& cc,
+		std::string& bcc,
+		std::string& message_id,
 		int& pages,
 		time_t& created)
 {
@@ -176,6 +183,7 @@ Worker::extract(const std::string& filename,
 	if (r != 0) return r;
     }
 
+    string attachment_filename;
     // Send a filename and wait for the reply.
     if (write_string(sockt, filename) && write_string(sockt, mimetype)) {
 	while (true) {
@@ -210,6 +218,18 @@ Worker::extract(const std::string& filename,
 	      case FIELD_AUTHOR:
 		value = &author;
 		break;
+	      case FIELD_TO:
+		value = &to;
+		break;
+	      case FIELD_CC:
+		value = &cc;
+		break;
+	      case FIELD_BCC:
+		value = &bcc;
+		break;
+	      case FIELD_MESSAGE_ID:
+		value = &message_id;
+		break;
 	      case FIELD_ERROR:
 		if (!read_string(sockt, error)) goto comms_error;
 		// Fields shouldn't be empty but the protocol allows them to be.
@@ -222,6 +242,9 @@ Worker::extract(const std::string& filename,
 		return 0;
 	      case EOF:
 		goto comms_error;
+	      case FIELD_ATTACHMENT:
+		value = &attachment_filename;
+		break;
 	      default:
 		error = error_prefix + "Unknown field code ";
 		error += str(field_code);
@@ -236,6 +259,10 @@ Worker::extract(const std::string& filename,
 		if (!read_string(sockt, s)) break;
 		*value += ' ';
 		*value += s;
+	    }
+	    if (field_code == FIELD_ATTACHMENT) {
+		// FIXME: Do something more useful with attachment_filename!
+		attachment_filename.clear();
 	    }
 	}
     }

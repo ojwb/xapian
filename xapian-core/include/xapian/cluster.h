@@ -40,7 +40,10 @@
 
 namespace Xapian {
 
-/// Stopper subclass which checks for both stemmed and unstemmed stopwords
+/** Stopper subclass which checks for both stemmed and unstemmed stopwords.
+ *
+ *  This is intended for use with Xapian::Cluster.
+ */
 class XAPIAN_VISIBILITY_DEFAULT StemStopper : public Xapian::Stopper {
   public:
     /// Stemming strategies
@@ -157,7 +160,7 @@ class XAPIAN_VISIBILITY_DEFAULT FreqSource
 
     /** Start reference counting this object.
      *
-     *  You can hand ownership of a dynamically allocated FreqSource
+     *  You can transfer ownership of a dynamically allocated FreqSource
      *  object to Xapian by calling release() and then passing the object to a
      *  Xapian method.  Xapian will arrange to delete the object once it is no
      *  longer required.
@@ -169,7 +172,7 @@ class XAPIAN_VISIBILITY_DEFAULT FreqSource
 
     /** Start reference counting this object.
      *
-     *  You can hand ownership of a dynamically allocated FreqSource
+     *  You can transfer ownership of a dynamically allocated FreqSource
      *  object to Xapian by calling release() and then passing the object to a
      *  Xapian method.  Xapian will arrange to delete the object once it is no
      *  longer required.
@@ -281,7 +284,7 @@ class XAPIAN_VISIBILITY_DEFAULT PointType
 
     /** Start reference counting this object.
      *
-     *  You can hand ownership of a dynamically allocated PointType
+     *  You can transfer ownership of a dynamically allocated PointType
      *  object to Xapian by calling release() and then passing the object to a
      *  Xapian method.  Xapian will arrange to delete the object once it is no
      *  longer required.
@@ -293,7 +296,7 @@ class XAPIAN_VISIBILITY_DEFAULT PointType
 
     /** Start reference counting this object.
      *
-     *  You can hand ownership of a dynamically allocated PointType
+     *  You can transfer ownership of a dynamically allocated PointType
      *  object to Xapian by calling release() and then passing the object to a
      *  Xapian method.  Xapian will arrange to delete the object once it is no
      *  longer required.
@@ -563,7 +566,7 @@ class XAPIAN_VISIBILITY_DEFAULT Clusterer
 
     /** Start reference counting this object.
      *
-     *  You can hand ownership of a dynamically allocated Clusterer
+     *  You can transfer ownership of a dynamically allocated Clusterer
      *  object to Xapian by calling release() and then passing the object to a
      *  Xapian method.  Xapian will arrange to delete the object once it is no
      *  longer required.
@@ -575,7 +578,7 @@ class XAPIAN_VISIBILITY_DEFAULT Clusterer
 
     /** Start reference counting this object.
      *
-     *  You can hand ownership of a dynamically allocated Clusterer
+     *  You can transfer ownership of a dynamically allocated Clusterer
      *  object to Xapian by calling release() and then passing the object to a
      *  Xapian method.  Xapian will arrange to delete the object once it is no
      *  longer required.

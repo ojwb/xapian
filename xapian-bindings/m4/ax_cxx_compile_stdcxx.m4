@@ -43,7 +43,7 @@
 #   and this notice are preserved.  This file is offered as-is, without any
 #   warranty.
 
-#serial 15
+#serial 16
 
 dnl  This macro is based on the code from the AX_CXX_COMPILE_STDCXX_11 macro
 dnl  (serial version number 13).
@@ -198,6 +198,10 @@ m4_define([_AX_CXX_COMPILE_STDCXX_testbody_new_in_11], [[
 
 #error "This is not a C++ compiler"
 
+// MSVC always sets __cplusplus to 199711L in older versions; newer versions
+// only set it correctly if /Zc:__cplusplus is specified as well as a
+// /std:c++NN switch:
+// https://devblogs.microsoft.com/cppblog/msvc-now-correctly-reports-__cplusplus/
 #elif __cplusplus < 201103L && !defined _MSC_VER
 
 #error "This is not a C++11 compiler"

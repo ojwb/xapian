@@ -643,7 +643,7 @@ $set{OPT,VALUE}
 	* flag_boolean
 	* flag_boolean_any_case
 	* flag_cjk_ngram (new in 1.2.22 and 1.3.4)
-	* flag_cjk_words (new in 1.5.0)
+	* flag_ngrams (new in 1.4.23)
 	* flag_default
 	* flag_fuzzy (new in 1.5.0)
 	* flag_lovehate
@@ -658,6 +658,7 @@ $set{OPT,VALUE}
         * flag_wildcard_glob (new in 1.5.0)
         * flag_wildcard_multi (new in 1.5.0)
         * flag_wildcard_single (new in 1.5.0)
+        * flag_word_breaks (new in 1.5.0)
 
         Note that the ``Xapian::QueryParser::FLAG_ACCUMULATE`` flag is always
         enabled by Omega because it's needed for ``$stoplist`` and ``$unstem``
@@ -993,11 +994,14 @@ $weight
 Numeric Operators:
 ==================
 
-For Numeric Operators we allow trailing characters and also allow non-number arguments.
-Reason for this behaviour is that it makes things robust if some of the parameters come in as CGI parameters.
-Ex:- if you had a CGI param at the end of a URL that was supposed to be a number, and sent it in an email
-or a message, it's possible for the person receiving to end up with a URL with a dot or semicolon at the
-end (from punctuation in your message).
+OmegaScript numeric operators are forgiving in their interpretation of
+numeric arguments.  Any characters after an initial span of ASCII digits
+are ignored, so ``123abc`` is interpreted the same as ``123`` and values with no leading digits are interpreted as zero, including an empty string.
+
+A reason for this behaviour is that it gives more robust handling for numeric
+values which are specified in CGI parameters - for example, if an Omega URL
+is quoted in a text document or email, punctuation after it may get included
+in the URL when it's turned into a link or cut and pasted.
 
 $add{...}
 	add arguments together (if called with one argument, this will convert
@@ -1027,32 +1031,13 @@ $sub{A,B}
 Logical Operators:
 ==================
 
-For Logical Operators we allow empty arguments.
-Reason is that logical operators compare their arguments based on whether they are empty or not.
-OmegaScript treats an empty string as a "false" logical value and any non-empty string as "true".
+OmegaScript logical operators treat an empty string as a false logical value
+and any non-empty string as true.
 
 $and{...}
 	logical short-cutting "and" of its arguments - evaluates
 	arguments until it finds an empty one (and returns "") or
 	has evaluated them all (returns "true")
-
-$eq{A,B}
-	returns "true" if A and B are the same, "" otherwise.
-
-$ge{A,B}
-	returns "true" if A is numerically >= B.
-
-$gt{A,B}
-	returns "true" if A is numerically > B.
-
-$le{A,B}
-	returns "true" if A is numerically <= B.
-
-$lt{A,B}
-	returns "true" if A is numerically < B.
-
-$ne{A,B}
-	returns "true" if A and B are not the same, "" if they are.
 
 $not{A}
 	returns "true" for the empty string, "" otherwise.
@@ -1060,6 +1045,29 @@ $not{A}
 $or{...}
 	logical short-cutting "or" of its arguments - returns first
 	non-empty argument
+
+Comparison Operators:
+=====================
+
+These return a value suitable for use in ``$if``, ``$and``, ``$or``, etc.
+
+$eq{A,B}
+	returns "true" if A and B are the same string, "" otherwise.
+
+$ge{A,B}
+	returns "true" if A is numerically >= B, "" otherwise.
+
+$gt{A,B}
+	returns "true" if A is numerically > B, "" otherwise.
+
+$le{A,B}
+	returns "true" if A is numerically <= B, "" otherwise.
+
+$lt{A,B}
+	returns "true" if A is numerically < B, "" otherwise.
+
+$ne{A,B}
+	returns "true" if A and B are not the same string, "" if they are.
 
 Control:
 ========

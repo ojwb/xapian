@@ -24,28 +24,28 @@ Packages to install for each language
 C#
 --
 
-Debian stretch::
+Debian bullseye::
 
 apt-get install mono-devel
 
 Java
 ----
 
-Debian stretch::
+Debian bullseye::
 
-apt-get install openjdk-8-jdk
+apt-get install openjdk-11-jdk
 
 Lua
 ---
 
-Debian stretch::
+Debian bullseye::
 
-apt-get install lua5.3 liblua5.3-dev
+apt-get install lua5.4 liblua5.4-dev
 
 Perl
 ----
 
-Debian stretch: all required are packages installed by default.
+Debian bullseye: all required are packages installed by default.
 
 PHP
 ---
@@ -64,14 +64,14 @@ apt-get install python3-dev
 Ruby
 ----
 
-Debian stretch::
+Debian bullseye::
 
 apt-get install ruby-dev
 
 Tcl
 ---
 
-Debian stretch::
+Debian bullseye::
 
 apt-get install tcl-dev
 
@@ -130,14 +130,14 @@ Pike		Bill Welliver has written some Pike bindings for Xapian
 
 There are a number of other languages which SWIG supports, but which nobody has
 yet (to our knowledge!) worked on producing Xapian bindings for - see
-http://www.swig.org/compare.html for a list of supported languages.
+https://www.swig.org/compare.html for a list of supported languages.
 
 It may be possible to support a language which isn't listed above, but it's
 likely to be harder unless you're already familiar with the tools available
 for wrapping a C++ library for use with that language.
 
 Implementing Deprecation Warnings for the Bindings
-=================================================
+==================================================
 
 Currently we don't have an equivalent of the C++ ``XAPIAN_DEPRECATED()`` macro
 for the bindings, but it would be good to have.  Here are some notes on how
