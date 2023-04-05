@@ -1320,6 +1320,12 @@ if test yes = "$GXX"; then
       AC_MSG_RESULT([no])
     fi
   fi
+elif test yes = "$msvc"; then
+  dnl -we9002 treats unknown compiler options as an error rather than a
+  dnl a warning, so probes for supported options below don't incorrectly
+  dnl think an option is supported, resulting in a warning for every file
+  dnl compiled.
+  AM_CXXFLAGS="$AM_CXXFLAGS -we9002"
 fi
 
 XAPIAN_TEST_LDFLAGS([-Wl,-Bsymbolic-functions], [XAPIAN_LDFLAGS])
