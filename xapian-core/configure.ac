@@ -1322,11 +1322,12 @@ if test yes = "$GXX"; then
     fi
   fi
 elif test yes = "$msvc"; then
-  dnl -W1 is command-line default, -W3 IDE default, -W4 highest numbered level.
   dnl -we9002 treats unknown compiler options as an error rather than a
   dnl a warning, so probes for supported options below don't incorrectly
   dnl think an option is supported, resulting in a warning for every file
   dnl compiled.
+  dnl
+  dnl -W1 is command-line default, -W3 IDE default, -W4 highest numbered level.
   dnl Also -WX is like GCC -Werror.
   AM_CXXFLAGS="$AM_CXXFLAGS -W2 -we9002"
 fi
