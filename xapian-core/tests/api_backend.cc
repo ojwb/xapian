@@ -1901,6 +1901,7 @@ DEFINE_TESTCASE(allterms7, backend) {
 // doesn't seem to match their implementation.
 DEFINE_TESTCASE(remoteportreuse1, remotetcp) {
     int port;
+    bool fail = false;
     Xapian::Database db = get_remote_database("apitest_simpledata",
 					      300000,
 					      &port);
@@ -1970,13 +1971,23 @@ DEFINE_TESTCASE(remoteportreuse1, remotetcp) {
 
 	if (socketfd == -1) {
 	    if (bind_errno == EADDRINUSE) {
+		tout << "bind got EADDRINUSE\n";
 		// Good!
 	    } else if (bind_errno == EACCES) {
 		FAIL_TEST("privileged port " + str(port));
-	    } else {
-		CLOSESOCKET(socketfd);
-		FAIL_TEST("Managed to bind to in-use port");
 	    }
+	    tout << "Unexpected bind failure: " << errno_to_string(bind_errno) << '\n';
+	} else {
+	    if (listen(socketfd, 1) < 0) {
+		// Still good!
+		tout << "bind() worked but listen() got " << errno_to_string(socket_errno()) << '\n';
+	    } else {
+		tout << "Managed to bind to and listen on in-use port\n";
+		fail = true;
+	    }
+	    CLOSESOCKET(socketfd);
 	}
     }
+    if (fail) FAIL_TEST("test failed");
+    FAIL_TEST("passed, but forced fail to see logging");
 }
