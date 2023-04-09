@@ -1,7 +1,7 @@
 /** @file
  * @brief Backend-related tests.
  */
-/* Copyright (C) 2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019 Olly Betts
+/* Copyright (C) 2008-2023 Olly Betts
  * Copyright (C) 2010 Richard Boulton
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,9 @@
 #include "backendmanager.h"
 #include "errno_to_string.h"
 #include "filetests.h"
+#include "net/resolver.h"
 #include "str.h"
+#include "socket_utils.h"
 #include "testrunner.h"
 #include "testsuite.h"
 #include "testutils.h"
@@ -38,6 +40,7 @@
 #include "apitest.h"
 
 #include "safefcntl.h"
+#include "safenetdb.h"
 #include "safesysstat.h"
 #include "safeunistd.h"
 #ifdef HAVE_SOCKETPAIR
@@ -1890,5 +1893,90 @@ DEFINE_TESTCASE(allterms7, backend) {
 	string term = *i;
 	TEST(db.get_termfreq(term) > 0);
 	TEST(db.postlist_begin(term) != db.postlist_end(term));
+    }
+}
+
+// Test that we can't run a second server on the same port.
+// Microsoft Windows has weird semantics in this area; also their documentation
+// doesn't seem to match their implementation.
+DEFINE_TESTCASE(remoteportreuse1, remotetcp) {
+    int port;
+    Xapian::Database db = get_remote_database("apitest_simpledata",
+					      300000,
+					      &port);
+    for (int reuse_options : { 0, 1,
+#ifdef SO_EXCLUSIVEADDRUSE
+			       2, 3
+#endif
+			     }) {
+	tout << "reuse_options = " << reuse_options << '\n';
+	int socketfd = -1;
+	int bind_errno = 0;
+	for (auto&& r : Resolver("127.0.0.1", port, AI_PASSIVE)) {
+	    int socktype = r.ai_socktype | SOCK_CLOEXEC;
+	    int fd = socket(r.ai_family, socktype, r.ai_protocol);
+	    if (fd == -1)
+		continue;
+
+	    if (reuse_options & 1) {
+		int optval = 1;
+		// 4th argument might need to be void* or char* - cast it to
+		// char* since C++ allows implicit conversion to void* but not
+		// from void*.
+		int retval = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
+					reinterpret_cast<char*>(&optval),
+					sizeof(optval));
+
+		if (retval < 0) {
+		    int setsockopt_errno = socket_errno();
+		    CLOSESOCKET(fd);
+		    FAIL_TEST("setsockopt SO_REUSEADDR failed " +
+			      errno_to_string(setsockopt_errno));
+		}
+	    }
+
+#ifdef SO_EXCLUSIVEADDRUSE
+	    if (reuse_options & 2) {
+		int optval = 1;
+		// 4th argument might need to be void* or char* - cast it to
+		// char* since C++ allows implicit conversion to void* but not
+		// from void*.
+		int retval = setsockopt(fd, SOL_SOCKET, SO_EXCLUSIVEADDRUSE,
+					reinterpret_cast<char*>(&optval),
+					sizeof(optval));
+
+		if (retval < 0) {
+		    int setsockopt_errno = socket_errno();
+		    CLOSESOCKET(fd);
+		    FAIL_TEST("setsockopt SO_EXCLUSIVEADDRUSE failed " +
+			      errno_to_string(setsockopt_errno));
+		}
+	    }
+#endif
+
+	    if (::bind(fd, r.ai_addr, int(r.ai_addrlen)) == 0) {
+		socketfd = fd;
+		break;
+	    }
+
+	    // Note down the error code for the first address we try, which
+	    // seems likely to be more helpful than the last in the case where
+	    // they differ.
+	    if (bind_errno == 0)
+		bind_errno = socket_errno();
+
+	    CLOSESOCKET(fd);
+	}
+
+	if (socketfd == -1) {
+	    if (bind_errno == EADDRINUSE) {
+		// Good!
+	    } else if (bind_errno == EACCES) {
+		FAIL_TEST("privileged port " + str(port));
+	    } else {
+		CLOSESOCKET(socketfd);
+		FAIL_TEST("Managed to bind to in-use port");
+	    }
+	}
     }
 }
