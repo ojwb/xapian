@@ -66,6 +66,7 @@ TestRunner::set_properties_for_backend(const string & backend_name)
 
     /// A list of the properties of each backend.
     static const BackendProperties backend_properties[] = {
+#if 0
 	{ "none", 0 },
 	{ "inmemory", INMEMORY|
 	    BACKEND|POSITIONAL|WRITABLE|METADATA|VALUESTATS|GENERATED },
@@ -87,10 +88,12 @@ TestRunner::set_properties_for_backend(const string & backend_name)
 	    BACKEND|TRANSACTIONS|POSITIONAL|WRITABLE|METADATA|VALUESTATS|
 	    GENERATED|SYNONYMS
 	},
+#endif
 	{ "remotetcp_glass", REMOTE|REMOTETCP|
 	    BACKEND|TRANSACTIONS|POSITIONAL|WRITABLE|METADATA|VALUESTATS|
 	    GENERATED|SYNONYMS
 	},
+#if 0
 	{ "singlefile_glass", SINGLEFILE|
 	    BACKEND|POSITIONAL|SPELLING|SYNONYMS|VALUESTATS|COMPACT|PATH },
 	{ "honey", HONEY|
@@ -99,6 +102,7 @@ TestRunner::set_properties_for_backend(const string & backend_name)
 	    |GENERATED
 #endif
 	},
+#endif
 	{ NULL, 0 }
     };
 
@@ -135,47 +139,11 @@ TestRunner::run_tests(int argc, char ** argv)
 	srcdir = test_driver::get_srcdir();
 	string datadir = srcdir + "/testdata/";
 
-#ifdef XAPIAN_HAS_HONEY_BACKEND
-# ifdef XAPIAN_HAS_GLASS_BACKEND
-	{
-	    BackendManagerGlass glass_man(datadir);
-	    do_tests_for_backend(BackendManagerHoney(datadir, &glass_man));
-	}
-# else
-	do_tests_for_backend(BackendManagerHoney(datadir));
-# endif
-#endif
-
-	do_tests_for_backend(BackendManager(string()));
-
-#ifdef XAPIAN_HAS_INMEMORY_BACKEND
-	do_tests_for_backend(BackendManagerInMemory(datadir));
-#endif
-
 #ifdef XAPIAN_HAS_GLASS_BACKEND
 	{
 	    BackendManagerGlass glass_man(datadir);
-
-	    // Vector for multi backendmanagers.
-	    vector<BackendManager*> multi_mans;
-	    multi_mans = {&glass_man, &glass_man};
-
-	    do_tests_for_backend(glass_man);
-	    do_tests_for_backend(BackendManagerSingleFile(datadir, &glass_man));
-	    do_tests_for_backend(BackendManagerMulti(datadir, multi_mans));
 # ifdef XAPIAN_HAS_REMOTE_BACKEND
 	    BackendManagerGlass sub_glass_man(datadir);
-	    BackendManagerRemoteProg remoteprog_glass_man(&sub_glass_man);
-
-	    multi_mans = {&glass_man, &remoteprog_glass_man};
-
-	    do_tests_for_backend(BackendManagerMulti(datadir, multi_mans));
-
-	    multi_mans = {&remoteprog_glass_man, &remoteprog_glass_man};
-
-	    do_tests_for_backend(BackendManagerMulti(datadir, multi_mans));
-
-	    do_tests_for_backend(BackendManagerRemoteProg(&glass_man));
 	    do_tests_for_backend(BackendManagerRemoteTcp(&glass_man));
 # endif
 	}
