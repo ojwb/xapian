@@ -1905,6 +1905,11 @@ DEFINE_TESTCASE(remoteportreuse1, remotetcp) {
     Xapian::Database db = get_remote_database("apitest_simpledata",
 					      300000,
 					      &port);
+// With xapian-core setting no options:
+// 0 -> WSAEADDRINUSE / EADDRINUSE
+// 1 -> WSAEACCES
+// 2 -> WSAEADDRINUSE / EADDRINUSE
+// 3 -> setting second option -> WSAEINVAL
     for (int reuse_options : { 0, 1,
 #ifdef SO_EXCLUSIVEADDRUSE
 			       2, 3
