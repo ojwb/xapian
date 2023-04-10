@@ -89,33 +89,11 @@ TcpServer::get_listening_socket(const std::string & host, int port,
 	    (void)fcntl(fd, F_SETFD, FD_CLOEXEC);
 #endif
 
-	int retval = 0;
-
-#if defined __CYGWIN__ || defined __WIN32__
-	// Microsoft Windows has screwy semantics for SO_REUSEADDR - it allows
-	// binding to a port which is already bound and listening!  Even worse
-	// is that this affects *any* listening process, even if doesn't use
-	// SO_REUSEADDR itself.
-	//
-	// Rather than fixing this Microsoft instead added SO_EXCLUSIVEADDRUSE
-	// which is much closer to the correct semantics of SO_REUSEADDR.  This
-	// was added in NT4 sp4, but required admin privileges prior to XP SP2.
-	// We no longer support such old platforms so we can unconditionally
-	// use it here.
-	//
-	// There's still an issue that we can't listen on a port which has
-	// closed connections in TIME_WAIT state though (unlike other
-	// platforms).  There doesn't seem a good solution to this, but
-	// shutting down sockets explicitly with closesocket() supposedly helps
-	// avoid it.
-# define REUSE_OPTION SO_EXCLUSIVEADDRUSE
-#else
-# define REUSE_OPTION SO_REUSEADDR
-#endif
 	int optval = 1;
+
 	// 4th argument might need to be void* or char* - cast it to char*
 	// since C++ allows implicit conversion to void* but not from void*.
-	retval = setsockopt(fd, SOL_SOCKET, REUSE_OPTION,
+	int retval = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
 			    reinterpret_cast<char*>(&optval),
 			    sizeof(optval));
 
