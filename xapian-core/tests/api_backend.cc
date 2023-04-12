@@ -1896,23 +1896,39 @@ DEFINE_TESTCASE(allterms7, backend) {
     }
 }
 
-// Test that we can't run a second server on the same port.
-// Microsoft Windows has weird semantics in this area; also their documentation
-// doesn't seem to match their implementation.
+/* Test that we can't run a second server on the same port.
+ *
+ * This testcase is motivated by Microsoft's stupid and insecure semantics for
+ * SO_REUSEADDR which prior to Server 2003 allowed any process to bind to any
+ * port, even if it was already in use by a different process (and even if the
+ * original process hadn't used SO_REUSEADDR.
+ *
+ * The external behaviour we check here is that another process can't bind to
+ * the port xapian-tcpsrv is using, whatever socket options is uses.
+ *
+ * We use SO_REUSEADDR on Unix so that a connection in TIME_WAIT state doesn't
+ * block binding to the socket.  Apparently that's the default behaviour on
+ * Microsoft Windows.  Ideally we'd have an external test for this too, but it
+ * seems hard to write a reliable one.
+ */
 DEFINE_TESTCASE(remoteportreuse1, remotetcp) {
     int port;
-    bool fail = false;
     Xapian::Database db = get_remote_database("apitest_simpledata",
 					      300000,
 					      &port);
-// With xapian-core setting no options:
-// 0 -> WSAEADDRINUSE / EADDRINUSE
-// 1 -> WSAEACCES
-// 2 -> WSAEADDRINUSE / EADDRINUSE
-// 3 -> setting second option -> WSAEINVAL
+
+    // We test with (up to) 3 different socket options combinations:
+    //
+    // 0: no socket options
+    // 1: SO_REUSEADDR
+    // 2: SO_EXCLUSIVEADDRUSE (Microsoft-specific option)
+    //
+    // We don't test with SO_REUSEADDR and SO_EXCLUSIVEADDRUSE together because
+    // that's not a valid combination (second setsockopt() call fails with
+    // WSAEINVAL).
     for (int reuse_options : { 0, 1,
 #ifdef SO_EXCLUSIVEADDRUSE
-			       2, 3
+			       2
 #endif
 			     }) {
 	tout << "reuse_options = " << reuse_options << '\n';
@@ -1924,7 +1940,7 @@ DEFINE_TESTCASE(remoteportreuse1, remotetcp) {
 	    if (fd == -1)
 		continue;
 
-	    if (reuse_options & 1) {
+	    if (reuse_options == 1) {
 		int optval = 1;
 		// 4th argument might need to be void* or char* - cast it to
 		// char* since C++ allows implicit conversion to void* but not
@@ -1939,14 +1955,9 @@ DEFINE_TESTCASE(remoteportreuse1, remotetcp) {
 		    FAIL_TEST("setsockopt SO_REUSEADDR failed " +
 			      errno_to_string(setsockopt_errno));
 		}
-	    }
-
 #ifdef SO_EXCLUSIVEADDRUSE
-	    if (reuse_options & 2) {
+	    } else if (reuse_options == 2) {
 		int optval = 1;
-		// 4th argument might need to be void* or char* - cast it to
-		// char* since C++ allows implicit conversion to void* but not
-		// from void*.
 		int retval = setsockopt(fd, SOL_SOCKET, SO_EXCLUSIVEADDRUSE,
 					reinterpret_cast<char*>(&optval),
 					sizeof(optval));
@@ -1957,8 +1968,8 @@ DEFINE_TESTCASE(remoteportreuse1, remotetcp) {
 		    FAIL_TEST("setsockopt SO_EXCLUSIVEADDRUSE failed " +
 			      errno_to_string(setsockopt_errno));
 		}
-	    }
 #endif
+	    }
 
 	    if (::bind(fd, r.ai_addr, int(r.ai_addrlen)) == 0) {
 		socketfd = fd;
@@ -1974,25 +1985,19 @@ DEFINE_TESTCASE(remoteportreuse1, remotetcp) {
 	    CLOSESOCKET(fd);
 	}
 
-	if (socketfd == -1) {
-	    if (bind_errno == EADDRINUSE) {
-		tout << "bind got EADDRINUSE\n";
-		// Good!
-	    } else if (bind_errno == EACCES) {
-		FAIL_TEST("privileged port " + str(port));
-	    }
-	    tout << "Unexpected bind failure: " << errno_to_string(bind_errno) << '\n';
-	} else {
-	    if (listen(socketfd, 1) < 0) {
-		// Still good!
-		tout << "bind() worked but listen() got " << errno_to_string(socket_errno()) << '\n';
-	    } else {
-		tout << "Managed to bind to and listen on in-use port\n";
-		fail = true;
-	    }
+	if (socketfd >= 0) {
 	    CLOSESOCKET(socketfd);
+	    FAIL_TEST("Managed to bind to TCP port used by xapian-tcpsrv");
+	}
+
+#ifdef __WIN32__
+	// Gives WSAEACCES instead in some cases involving SO_EXCLUSIVEADDRUSE.
+	if (bind_errno == WSAEACCES) bind_errno = EADDRINUSE;
+#endif
+
+	if (bind_errno != EADDRINUSE) {
+	    FAIL_TEST("bind() failed with unexpected error: " +
+		      errno_to_string(bind_errno));
 	}
     }
-    if (fail) FAIL_TEST("test failed");
-    FAIL_TEST("passed, but forced fail to see logging");
 }
