@@ -1,7 +1,7 @@
 /** @file
  * @brief #include <sys/socket.h> with portability workarounds.
  */
-/* Copyright (C) 2012,2013,2014,2018,2019 Olly Betts
+/* Copyright (C) 2012,2013,2014,2018,2019,2023 Olly Betts
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -88,6 +88,16 @@ inline int accept_(int sockfd, struct sockaddr* addr, SOCKLEN_T* addrlen) {
 #  undef accept
 # endif
 # define accept(S,A,L) accept_(S,A,L)
+
+// Winsock2 effectively uses `int` instead of `socklen_t` everywhere except for
+// in `struct addrinfo` where it uses `size_t`.  This results in an integer
+// truncation warning when calling `bind()` on an address looked up with
+// `getaddrinfo()`.  To solve this we add an overload which takes `size_t`
+// and casts to `SOCKLEN_T`.
+
+inline int bind(SOCKET s, const struct sockaddr* addr, size_t addrlen) {
+    return bind(s, addr, SOCKLEN_T(addrlen));
+}
 
 #elif !defined SOCK_CLOEXEC
 # define SOCK_CLOEXEC 0

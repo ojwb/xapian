@@ -177,8 +177,8 @@ address_in_use:
 	    // 77 is EX_NOPERM.  Scripts can use this to detect if
 	    // xapian-tcpsrv failed to bind to the requested port.
 	    exit(77);
-#endif
 	}
+#endif
 	throw Xapian::NetworkError("bind failed", bind_errno);
     }
 
@@ -211,6 +211,7 @@ TcpServer::TcpServer(const std::string& host,
 int
 TcpServer::accept_connection()
 {
+#ifndef __WIN32__
     // We want to be able to report when a client disconnects, but it's better
     // to do so in the main process to avoid problems with output getting
     // interleaved.  That means we need to be able to take action if either
@@ -237,6 +238,7 @@ TcpServer::accept_connection()
 	    if (verbose) cout << "Connection closed.\n";
 	}
     }
+#endif
 
     struct sockaddr_storage client_address;
     SOCKLEN_T client_address_size = sizeof(client_address);
@@ -397,8 +399,11 @@ run_thread(void* param_)
     thread_param* param(reinterpret_cast<thread_param*>(param_));
     int socket = param->connected_socket;
 
-    param->server->handle_one_connection(socket);
+    TcpServer* tcp_server = param->server;
+    tcp_server->handle_one_connection(socket);
     closesocket(socket);
+
+    if (tcp_server->get_verbose()) cout << "Connection closed.\n";
 
     delete param;
 
