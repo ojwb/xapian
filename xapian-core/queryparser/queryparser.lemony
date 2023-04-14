@@ -895,7 +895,7 @@ QueryParser::Internal::parse_term(Utf8Iterator& it, const Utf8Iterator& end,
 		    suff_term.resize(0);
 		    break;
 		}
-		suff_term += *p;
+		suff_term += char(*p);
 	    } while (is_suffix(*++p));
 	    if (!suff_term.empty() && (p == end || !is_wordchar(*p))) {
 		// If the suffixed term doesn't exist, check that the

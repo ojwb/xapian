@@ -569,7 +569,7 @@ static void yyStackOverflow(yyParser *yypParser){
 ** Print tracing information for a SHIFT action
 */
 #ifdef XAPIAN_DEBUG_LOG
-static void yyTraceShift(yyParser *yypParser, int yyNewState, const char *zTag){
+static void yyTraceShift(yyParser *yypParser, YYACTIONTYPE yyNewState, const char *zTag){
   if( yyNewState<YYNSTATE ){
     LOGLINE(QUERYPARSER, zTag << " '" <<
                          yyTokenName[yypParser->yystack.back().major] <<
@@ -589,8 +589,8 @@ static void yyTraceShift(yyParser *yypParser, int yyNewState, const char *zTag){
 */
 static void yy_shift(
   yyParser *yypParser,          /* The parser to be shifted */
-  int yyNewState,               /* The new state to shift in */
-  int yyMajor,                  /* The major token to shift in */
+  YYACTIONTYPE yyNewState,      /* The new state to shift in */
+  YYCODETYPE yyMajor,           /* The major token to shift in */
   ParseTOKENTYPE yyMinor        /* The minor token to shift in */
 ){
   if( yyNewState > YY_MAX_SHIFT ){
@@ -747,7 +747,7 @@ static void yy_parse_failed(
 */
 static void yy_syntax_error(
   yyParser *yypParser,           /* The parser */
-  int yymajor,                   /* The major type of the error token */
+  YYCODETYPE yymajor,            /* The major type of the error token */
   ParseTOKENTYPE yyminor         /* The minor type of the error token */
 ){
   ParseARG_FETCH;
@@ -802,7 +802,7 @@ static void yy_accept(
 static
 void Parse(
   yyParser *yypParser,         /* The parser */
-  int yymajor,                 /* The major token code number */
+  YYCODETYPE yymajor,          /* The major token code number */
   ParseTOKENTYPE yyminor       /* The value for the token */
   ParseARG_PDECL               /* Optional %extra_argument parameter */
 ){

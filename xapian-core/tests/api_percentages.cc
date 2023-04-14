@@ -95,9 +95,15 @@ class MyPostingSource : public Xapian::PostingSource {
 
     double get_weight() const { return i->second; }
 
-    Xapian::doccount get_termfreq_min() const { return weights.size(); }
-    Xapian::doccount get_termfreq_est() const { return weights.size(); }
-    Xapian::doccount get_termfreq_max() const { return weights.size(); }
+    Xapian::doccount get_termfreq_min() const {
+	return Xapian::doccount(weights.size());
+    }
+    Xapian::doccount get_termfreq_est() const {
+	return Xapian::doccount(weights.size());
+    }
+    Xapian::doccount get_termfreq_max() const {
+	return Xapian::doccount(weights.size());
+    }
 
     void next(double /*wt*/) {
 	if (!started) {

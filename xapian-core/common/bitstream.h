@@ -1,7 +1,7 @@
 /** @file
  * @brief Classes to encode/decode a bitstream.
  */
-/* Copyright (C) 2004,2005,2006,2008,2012,2013,2014,2017,2018 Olly Betts
+/* Copyright (C) 2004,2005,2006,2008,2012,2013,2014,2017,2018,2023 Olly Betts
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -60,7 +60,7 @@ class BitWriter {
 
     /// Perform interpolative encoding of pos elements between j and k.
     void encode_interpolative(const Xapian::VecCOW<Xapian::termpos>& pos,
-			      int j, int k);
+			      Xapian::termpos j, Xapian::termpos k);
 };
 
 /// Read a stream created by BitWriter.

@@ -1,7 +1,7 @@
 /** @file
  * @brief Definitions, types, etc for use inside honey.
  */
-/* Copyright (C) 2010,2014,2015,2017,2018 Olly Betts
+/* Copyright (C) 2010,2014,2015,2017,2018,2023 Olly Betts
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 #define XAPIAN_INCLUDED_HONEY_DEFS_H
 
 #include "internaltypes.h"
+#include <xapian/types.h>
 
 #define SST_SEARCH
 
@@ -61,7 +62,12 @@ static_assert((HONEY_DOCLEN_CHUNK_MAX - 1) % 12 == 0,
  *  The disk format supports 64-bit docids, but if Xapian::docid is narrower
  *  then it's the largest value supported by the type that matters here.
  */
-#define HONEY_MAX_DOCID Xapian::docid(0xffffffffffffffff)
+constexpr Xapian::docid HONEY_MAX_DOCID = []() {
+	if constexpr(sizeof(Xapian::docid) < 8)
+	    return Xapian::docid(-1);
+	else
+	    return Xapian::docid(0xffffffffffffffff);
+    }();
 
 namespace Honey {
 

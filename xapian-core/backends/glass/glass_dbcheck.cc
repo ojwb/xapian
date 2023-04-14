@@ -792,7 +792,9 @@ check_glass_table(const char * tablename, const string &db_dir, int fd,
 		    string::size_type len = static_cast<unsigned char>(*pos++);
 		    if (len > current_tname.length()) {
 			// The wdf was squeezed into the same byte.
-			current_wdf = len / (current_tname.length() + 1) - 1;
+			auto w = len / (current_tname.length() + 1) - 1;
+			// len is <= 255 so this cast can't overflow.
+			current_wdf = Xapian::termcount(w);
 			len %= (current_tname.length() + 1);
 			got_wdf = true;
 		    }

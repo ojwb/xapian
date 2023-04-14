@@ -57,6 +57,17 @@ struct TermFreqs {
 	  reltermfreq(reltermfreq_),
 	  collfreq(collfreq_),
 	  max_part(max_part_) {}
+    TermFreqs(Xapian::doccount termfreq_,
+	      Xapian::doccount reltermfreq_,
+	      Xapian::totallength collfreq_,
+	      double max_part_ = 0.0)
+	: termfreq(termfreq_),
+	  reltermfreq(reltermfreq_),
+	  /* Saturate if we overflow. */
+	  collfreq(collfreq_ > Xapian::termcount(-1) ?
+		       Xapian::termcount(-1) :
+		       Xapian::termcount(collfreq_)),
+	  max_part(max_part_) {}
 
     void operator+=(const TermFreqs & other) {
 	termfreq += other.termfreq;

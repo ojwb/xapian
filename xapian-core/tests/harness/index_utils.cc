@@ -84,7 +84,8 @@ FileIndexer::index_to(Xapian::WritableDatabase & db)
 	value0 += para;
 	doc.add_value(0, value0);
 
-	for (Xapian::valueno i = min(para.length(), size_t(10)); i >= 1; --i) {
+	auto max_slot = Xapian::valueno(min(para.length(), size_t(10)));
+	for (Xapian::valueno i = max_slot; i >= 1; --i) {
 	    doc.add_value(i, para.substr(i, 1));
 	}
 	// Value 11 is useful for tests of sorting

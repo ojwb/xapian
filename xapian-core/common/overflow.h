@@ -195,7 +195,7 @@ mul_overflows(T1 a, T2 b, R& res) {
     // and testing it.
     auto r = a * b;
     typedef decltype(r) r_type;
-    res = r_type(r);
+    res = R(r);
     // We've overflowed if r doesn't fit in type R, or if the multiplication
     // wrapped.
     return r_type(res) != r || (a != 0 && r / r_type(a) != r_type(b));

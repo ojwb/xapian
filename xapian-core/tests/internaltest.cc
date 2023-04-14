@@ -257,7 +257,7 @@ static void test_chartype1()
 {
     char tested[128];
     memset(tested, 0, sizeof(tested));
-    for (int ch = '0'; ch != '9' + 1; ++ch) {
+    for (unsigned char ch = '0'; ch != '9' + 1; ++ch) {
 	tested[ch] = 1;
 	TEST(!C_isupper(ch));
 	TEST(!C_islower(ch));
@@ -280,7 +280,7 @@ static void test_chartype1()
 	TEST_EQUAL(hex_decode(ch, ch), char((v << 4) | v));
     }
 
-    for (int ch = 'A'; ch != 'F' + 1; ++ch) {
+    for (unsigned char ch = 'A'; ch != 'F' + 1; ++ch) {
 	tested[ch] = 1;
 	TEST(C_isupper(ch));
 	TEST(!C_islower(ch));
@@ -303,7 +303,7 @@ static void test_chartype1()
 	TEST_EQUAL(hex_decode(ch, ch), char((v << 4) | v));
     }
 
-    for (int ch = 'G'; ch != 'Z' + 1; ++ch) {
+    for (unsigned char ch = 'G'; ch != 'Z' + 1; ++ch) {
 	tested[ch] = 1;
 	TEST(C_isupper(ch));
 	TEST(!C_islower(ch));
@@ -321,7 +321,7 @@ static void test_chartype1()
 	TEST(C_isnotspace(ch));
     }
 
-    for (int ch = 'a'; ch != 'f' + 1; ++ch) {
+    for (unsigned char ch = 'a'; ch != 'f' + 1; ++ch) {
 	tested[ch] = 1;
 	TEST(!C_isupper(ch));
 	TEST(C_islower(ch));
@@ -344,7 +344,7 @@ static void test_chartype1()
 	TEST_EQUAL(hex_decode(ch, ch), char((v << 4) | v));
     }
 
-    for (int ch = 'g'; ch != 'z' + 1; ++ch) {
+    for (unsigned char ch = 'g'; ch != 'z' + 1; ++ch) {
 	tested[ch] = 1;
 	TEST(!C_isupper(ch));
 	TEST(C_islower(ch));
@@ -363,7 +363,7 @@ static void test_chartype1()
     }
 
     for (const char* p = "\t\n\f\r "; *p; ++p) {
-	int ch = *p;
+	unsigned char ch = *p;
 	tested[ch] = 1;
 	TEST(!C_isupper(ch));
 	TEST(!C_islower(ch));
@@ -382,7 +382,7 @@ static void test_chartype1()
     }
 
     // Check remaining non-top-bit-set characters aren't anything.
-    for (int ch = 0; ch != 128; ++ch) {
+    for (unsigned char ch = 0; ch != 128; ++ch) {
 	if (tested[ch]) continue;
 	TEST(!C_isupper(ch));
 	TEST(!C_islower(ch));

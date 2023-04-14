@@ -398,13 +398,13 @@ make_start_of_chunk(bool new_is_last_chunk,
 
 static void
 write_start_of_chunk(string & chunk,
-		     unsigned int start_of_chunk_header,
-		     unsigned int end_of_chunk_header,
+		     size_t start_of_chunk_header,
+		     size_t end_of_chunk_header,
 		     bool is_last_chunk,
 		     Xapian::docid first_did_in_chunk,
 		     Xapian::docid last_did_in_chunk)
 {
-    Assert(size_t(end_of_chunk_header - start_of_chunk_header) <= chunk.size());
+    Assert(end_of_chunk_header - start_of_chunk_header <= chunk.size());
 
     chunk.replace(start_of_chunk_header,
 		  end_of_chunk_header - start_of_chunk_header,

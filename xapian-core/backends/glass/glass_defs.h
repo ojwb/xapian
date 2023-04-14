@@ -1,7 +1,7 @@
 /** @file
  * @brief Definitions, types, etc for use inside glass.
  */
-/* Copyright (C) 2010,2014,2015,2017 Olly Betts
+/* Copyright (C) 2010,2014,2015,2017,2023 Olly Betts
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 #define XAPIAN_INCLUDED_GLASS_DEFS_H
 
 #include "internaltypes.h"
+#include <xapian/types.h>
 
 /// Glass table extension.
 #define GLASS_TABLE_EXTENSION "glass"
@@ -40,7 +41,12 @@
  *  The disk format supports 64-bit docids, but if Xapian::docid is narrower
  *  then it's the largest value supported by the type that matters here.
  */
-#define GLASS_MAX_DOCID Xapian::docid(0xffffffffffffffff)
+constexpr Xapian::docid GLASS_MAX_DOCID = []() {
+	if constexpr(sizeof(Xapian::docid) < 8)
+	    return Xapian::docid(-1);
+	else
+	    return Xapian::docid(0xffffffffffffffff);
+    }();
 
 namespace Glass {
     enum table_type {

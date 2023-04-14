@@ -161,7 +161,9 @@ GlassTermList::next()
 	    // The wdf is also stored in the "reuse" byte.
 	    wdf_in_reuse = true;
 	    size_t divisor = current_term.size() + 1;
-	    current_wdf = len / divisor - 1;
+	    auto w = len / divisor - 1;
+	    // len is <= 255 so this cast can't overflow.
+	    current_wdf = Xapian::termcount(w);
 	    len %= divisor;
 	}
 	current_term.resize(len);
