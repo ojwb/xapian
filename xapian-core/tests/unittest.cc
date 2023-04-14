@@ -846,7 +846,7 @@ static void test_muloverflows1()
 template<typename U>
 inline static void parseunsigned_helper() {
     U val;
-    const U max_val = numeric_limits<U>::max();
+    constexpr U max_val = numeric_limits<U>::max();
     tout << "Testing with parseunsigned_helper" << endl;
     TEST(parse_unsigned("0", val));
     TEST_EQUAL(val, 0);
@@ -863,7 +863,7 @@ inline static void parseunsigned_helper() {
 # pragma warning(disable:4307)
 #endif
     // Only test if we can construct a value one larger easily.
-    if (max_val + 1ull != 0)
+    if constexpr(max_val + 1ull != 0)
 	TEST(!parse_unsigned(str(max_val + 1ull).c_str(), val));
 #ifdef _MSC_VER
 # pragma warning(pop)
