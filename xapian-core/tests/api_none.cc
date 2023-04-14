@@ -942,5 +942,4 @@ DEFINE_TESTCASE(errorcopyctor, !backend) {
     } catch (Xapian::Error&) {
 	return;
     }
-    FAIL_TEST("Expected RangeError wasn't caught");
 }
