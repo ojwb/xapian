@@ -31,7 +31,7 @@ using namespace std;
 Xapian::termcount
 InMemoryPositionList::get_approx_size() const
 {
-    return positions.size();
+    return Xapian::termcount(positions.size());
 }
 
 Xapian::termpos

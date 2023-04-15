@@ -507,7 +507,7 @@ class ProtoMSet {
 		// We didn't get all the results requested, so we know that
 		// we've got all there are, and the bounds and estimate are
 		// all equal to that number.
-		m = results.size();
+		m = size();
 		// And that should equal known_matching_docs, unless a percentage
 		// threshold caused some matches to be excluded.
 		if (!percent_threshold) {
@@ -551,7 +551,7 @@ class ProtoMSet {
 		// We didn't get all the results requested, so we know that we've
 		// got all there are, and the bounds and estimate are all equal to
 		// that number.
-		matches_lower_bound = results.size();
+		matches_lower_bound = size();
 		matches_estimated = matches_lower_bound;
 		matches_upper_bound = matches_lower_bound;
 
@@ -610,7 +610,7 @@ class ProtoMSet {
 		    estimate_scale *= (1.0 - percent_threshold_factor);
 
 		    // This is all we can be sure of without additional work.
-		    matches_lower_bound = results.size();
+		    matches_lower_bound = size();
 
 		    if (collapser) {
 			uncollapsed_lower_bound = matches_lower_bound;

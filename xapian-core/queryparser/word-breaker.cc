@@ -169,7 +169,7 @@ NgramIterator::operator++()
 	if (it != Xapian::Utf8Iterator()) {
 	    unsigned ch = *it;
 	    if (is_unbroken_wordchar(ch)) {
-		offset = current_token.size();
+		offset = unsigned(current_token.size());
 		Xapian::Unicode::append_utf8(current_token, ch);
 		++it;
 	    } else {

@@ -591,7 +591,7 @@ InMemoryDatabase::get_unique_terms(Xapian::docid did) const
     // get_unique_terms() really ought to only count terms with wdf > 0, but
     // that's expensive to calculate on demand, so for now let's just ensure
     // unique_terms <= doclen.
-    Xapian::termcount terms = termlists[did - 1].terms.size();
+    auto terms = Xapian::termcount(termlists[did - 1].terms.size());
     return std::min(terms, Xapian::termcount(doclengths[did - 1]));
 }
 
@@ -688,7 +688,7 @@ InMemoryDatabase::positionlist_count(Xapian::docid did,
     auto t = lower_bound(doc.terms.begin(), doc.terms.end(),
 			 temp, InMemoryTermEntryLessThan());
     if (t != doc.terms.end() && t->tname == tname) {
-	return t->positions.size();
+	return Xapian::termcount(t->positions.size());
     }
     return 0;
 }
@@ -937,7 +937,7 @@ InMemoryDatabase::make_doc(const string & docdata)
 
     AssertEqParanoid(termlists.size(), doclengths.size());
 
-    return termlists.size();
+    return Xapian::docid(termlists.size());
 }
 
 void InMemoryDatabase::make_posting(InMemoryDoc * doc,
@@ -1011,7 +1011,7 @@ InMemoryDatabase::get_used_docid_range(Xapian::docid& first,
 {
     if (closed) InMemoryDatabase::throw_database_closed();
     first = 1;
-    last = termlists.size();
+    last = Xapian::docid(termlists.size());
     if (last == 0 || last == totdocs) {
 	// Empty database or contiguous range starting at 1.
 	return;
