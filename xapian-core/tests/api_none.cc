@@ -945,8 +945,8 @@ DEFINE_TESTCASE(errorcopyctor, !backend) {
     Xapian::RangeError e("test");
     try {
 	errorcopyctor_helper(e);
-	FAIL_TEST("Expected exception to be thrown");
     } catch (Xapian::Error&) {
 	return;
     }
+    FAIL_TEST("Expected exception to be thrown");
 }
