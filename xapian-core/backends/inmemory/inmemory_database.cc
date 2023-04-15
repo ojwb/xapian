@@ -561,7 +561,7 @@ Xapian::docid
 InMemoryDatabase::get_lastdocid() const
 {
     if (closed) InMemoryDatabase::throw_database_closed();
-    return termlists.size();
+    return Xapian::docid(termlists.size());
 }
 
 Xapian::totallength
@@ -931,6 +931,10 @@ InMemoryDatabase::make_term(const string & tname)
 Xapian::docid
 InMemoryDatabase::make_doc(const string & docdata)
 {
+    if (rare(termlists.size() == Xapian::docid(-1))) {
+	// Really unlikely to actually happen for inmemory.
+	throw Xapian::DatabaseError("Run out of docids");
+    }
     termlists.push_back(InMemoryDoc(true));
     doclengths.push_back(0);
     doclists.push_back(docdata);
