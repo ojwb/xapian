@@ -636,12 +636,12 @@ DEFINE_TESTCASE(qpmemoryleak1, writable && !inmemory) {
     Xapian::Database database(get_writable_database_as_database());
     Xapian::QueryParser queryparser;
     queryparser.set_database(database);
-    TEST_EXCEPTION(Xapian::DatabaseModifiedError,
+    TEST_EXCEPTION3(Xapian::DatabaseModifiedError,
 	for (int k = 0; k < 1000; ++k) {
 	    wdb.add_document(doc);
 	    wdb.commit();
 	    (void)queryparser.parse_query("1", queryparser.FLAG_PARTIAL);
-	}
+	},
 	SKIP_TEST("didn't manage to trigger DatabaseModifiedError");
     );
 }
