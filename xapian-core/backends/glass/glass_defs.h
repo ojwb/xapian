@@ -22,7 +22,6 @@
 #define XAPIAN_INCLUDED_GLASS_DEFS_H
 
 #include "internaltypes.h"
-#include <xapian/types.h>
 
 /// Glass table extension.
 #define GLASS_TABLE_EXTENSION "glass"
@@ -40,13 +39,10 @@
  *
  *  The disk format supports 64-bit docids, but if Xapian::docid is narrower
  *  then it's the largest value supported by the type that matters here.
+ *  The expression here should evaluate to Xapian::docid(0xffffffffffffffff)
+ *  but without triggering compiler warnings about truncating casts.
  */
-constexpr Xapian::docid GLASS_MAX_DOCID = []() {
-	if constexpr(sizeof(Xapian::docid) < 8)
-	    return Xapian::docid(-1);
-	else
-	    return Xapian::docid(0xffffffffffffffff);
-    }();
+#define GLASS_MAX_DOCID (~(Xapian::docid(-1) << 16 << 16 << 16 << 16))
 
 namespace Glass {
     enum table_type {
