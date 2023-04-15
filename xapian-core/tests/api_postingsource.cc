@@ -586,7 +586,7 @@ DEFINE_TESTCASE(emptyvalwtsource1, backend && !remote && !multi) {
     }
 }
 
-#ifndef HAVE_TIMER_CREATE
+#ifdef HAVE_TIMER_CREATE
 class SlowDecreasingValueWeightPostingSource
     : public Xapian::DecreasingValueWeightPostingSource {
   public:
