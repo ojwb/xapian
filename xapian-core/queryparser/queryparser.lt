@@ -802,7 +802,7 @@ static void yy_accept(
 static
 void Parse(
   yyParser *yypParser,         /* The parser */
-  YYCODETYPE yymajor,          /* The major token code number */
+  int token,                   /* The major token code number */
   ParseTOKENTYPE yyminor       /* The value for the token */
   ParseARG_PDECL               /* Optional %extra_argument parameter */
 ){
@@ -814,6 +814,7 @@ void Parse(
 #ifdef YYERRORSYMBOL
   int yyerrorhit = 0;   /* True if yymajor has invoked an error */
 #endif
+  YYCODETYPE yymajor = static_cast<YYCODETYPE>(token);
 
 #if !defined(YYERRORSYMBOL) && !defined(YYNOERRORRECOVERY)
   yyendofinput = (yymajor==0);
