@@ -352,7 +352,7 @@ MultiDatabase::get_wdfdocmax(Xapian::docid did) const
 {
     Assert(did != 0);
 
-    auto n_shards = shards.size();
+    auto n_shards = Xapian::doccount(shards.size());
     auto shard = shards[shard_number(did, n_shards)];
     auto shard_did = shard_docid(did, n_shards);
     return shard->get_wdfdocmax(shard_did);

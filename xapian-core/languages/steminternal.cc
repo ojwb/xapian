@@ -148,7 +148,7 @@ string
 SnowballStemImplementation::operator()(const string & word)
 {
     const symbol * s = reinterpret_cast<const symbol *>(word.data());
-    replace_s(0, l, word.size(), s);
+    replace_s(0, l, int(word.size()), s);
     c = 0;
     if (stem() < 0) {
 	// FIXME: Is there a better choice of exception class?

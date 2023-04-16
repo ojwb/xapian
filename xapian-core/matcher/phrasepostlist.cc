@@ -93,7 +93,7 @@ PhrasePostList::test_doc()
 		goto reject;
 	    }
 	    pos = poslists[i]->get_position();
-	    b = pos + (terms.size() - i);
+	    b = pos + Xapian::termpos(terms.size() - i);
 	} while (b - base <= window);
 	// Advance the start of the window to the first position it could match
 	// in given the current position of term i.

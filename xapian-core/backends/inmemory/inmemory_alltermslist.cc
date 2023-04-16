@@ -33,7 +33,7 @@ InMemoryAllTermsList::get_approx_size() const
     // This may be an over-estimate due to deleted entries, and we may be
     // restricted to a prefix, but we only use this value to build a balanced
     // or-tree, and it'll do a decent job for that.
-    return tmap->size();
+    return Xapian::termcount(tmap->size());
 }
 
 string
@@ -52,7 +52,7 @@ InMemoryAllTermsList::get_termfreq() const
     Assert(!at_end());
     Assert(!it->first.empty());
     /* FIXME: this isn't quite right. */
-    return it->second.docs.size();
+    return Xapian::doccount(it->second.docs.size());
 }
 
 TermList *

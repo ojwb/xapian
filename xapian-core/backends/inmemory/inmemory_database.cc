@@ -212,7 +212,8 @@ InMemoryTermList::InMemoryTermList(intrusive_ptr<const InMemoryDatabase> db_,
 				   Xapian::docid did_,
 				   const InMemoryDoc & doc,
 				   Xapian::termcount len)
-	: pos(doc.terms.begin()), end(doc.terms.end()), terms(doc.terms.size()),
+	: pos(doc.terms.begin()), end(doc.terms.end()),
+	  terms(Xapian::termcount(doc.terms.size())),
 	  started(false), db(db_), did(did_), document_length(len)
 {
     LOGLINE(DB, "InMemoryTermList::InMemoryTermList(): " <<

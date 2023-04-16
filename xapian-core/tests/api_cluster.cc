@@ -89,14 +89,14 @@ RoundRobin::cluster(const Xapian::MSet &mset)
     for (Xapian::MSetIterator it = mset.begin(); it != mset.end(); ++it)
 	points.push_back(Xapian::Point(tlg, it.get_document()));
 
-    unsigned int i = 0;
+    size_t i = 0;
     while (i < num_of_clusters) {
 	Xapian::Cluster cluster_rr;
 	cset.add_cluster(cluster_rr);
 	i++;
     }
 
-    unsigned int size = points.size();
+    size_t size = points.size();
     for (i = 0; i < size; ++i)
 	cset.add_to_cluster(points[i], i % num_of_clusters);
 

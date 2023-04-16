@@ -384,7 +384,7 @@ GlassSpellingTermList::get_approx_size() const
 {
     // This is only used to decide how to build a OR-tree of TermList objects
     // so we just need to return "sizes" which are ordered roughly correctly.
-    return data.size();
+    return Xapian::termcount(data.size());
 }
 
 std::string

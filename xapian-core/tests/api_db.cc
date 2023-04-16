@@ -1530,7 +1530,7 @@ DEFINE_TESTCASE(sortrel1, backend) {
     static const Xapian::docid order9[] = { 7,6,2,9,5,1,8,4,3 };
 
     Xapian::MSet mset;
-    size_t i;
+    Xapian::doccount i;
 
     mset = enquire.get_mset(0, 10);
     TEST_EQUAL(mset.size(), sizeof(order1) / sizeof(Xapian::docid));

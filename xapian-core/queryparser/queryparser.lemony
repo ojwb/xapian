@@ -1404,7 +1404,7 @@ phrased_term:
 		}
 		if (op == "ADJ") {
 		    if (it != end && *it == '/') {
-			size_t width = 0;
+			Xapian::termcount width = 0;
 			Utf8Iterator p = it;
 			while (++p != end && U_isdigit(*p)) {
 			    width = (width * 10) + (*p - '0');
@@ -1431,7 +1431,7 @@ phrased_term:
 	    } else if (op.size() == 4) {
 		if (op == "NEAR") {
 		    if (it != end && *it == '/') {
-			size_t width = 0;
+			Xapian::termcount width = 0;
 			Utf8Iterator p = it;
 			while (++p != end && U_isdigit(*p)) {
 			    width = (width * 10) + (*p - '0');
@@ -1814,7 +1814,7 @@ reprocess:
 	    if (default_op_is_positional) {
 		q_original_terms = Query(default_op,
 					 subqs2.begin(), subqs2.end(),
-					 subqs2.size() + 9);
+					 Xapian::termcount(subqs2.size() + 9));
 	    } else {
 		q_original_terms = Query(default_op,
 					 subqs2.begin(), subqs2.end());
@@ -1856,7 +1856,7 @@ reprocess:
     if (!subqs.empty()) {
 	if (default_op_is_positional) {
 	    q = new Query(default_op, subqs.begin(), subqs.end(),
-			     subqs.size() + 9);
+			  Xapian::termcount(subqs.size() + 9));
 	} else {
 	    q = new Query(default_op, subqs.begin(), subqs.end());
 	}
@@ -1906,7 +1906,7 @@ class Terms {
 	if (window == size_t(-1)) op = Query::OP_AND;
 	Query * q = NULL;
 	size_t n_terms = terms.size();
-	Xapian::termcount w = w_delta + terms.size();
+	Xapian::termcount w = w_delta + Xapian::termcount(terms.size());
 	if (uniform_prefixes) {
 	    if (prefixes) {
 		for (auto&& prefix : *prefixes) {
@@ -1977,7 +1977,7 @@ class Terms {
 	// The common meaning of 'a NEAR b' is "a within 10 terms of b", which
 	// means a window size of 11.  For more than 2 terms, we just add one
 	// to the window size for each extra term.
-	size_t w = window;
+	Xapian::termcount w = window;
 	if (w == 0) w = 10;
 	return as_opwindow_query(Query::OP_NEAR, w - 1);
     }
@@ -1987,7 +1987,7 @@ class Terms {
 	// The common meaning of 'a ADJ b' is "a at most 10 terms before b",
 	// which means a window size of 11.  For more than 2 terms, we just add
 	// one to the window size for each extra term.
-	size_t w = window;
+	Xapian::termcount w = window;
 	if (w == 0) w = 10;
 	return as_opwindow_query(Query::OP_PHRASE, w - 1);
     }

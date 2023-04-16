@@ -252,7 +252,8 @@ RemoteConnection::send_message(char type, const string &message,
     size_t count = 0;
     while (true) {
 	DWORD n;
-	BOOL ok = WriteFile(hout, str->data() + count, str->size() - count, &n, &overlapped);
+	BOOL ok = WriteFile(hout, str->data() + count,
+			    DWORD(str->size() - count), &n, &overlapped);
 	if (!ok) {
 	    int errcode = GetLastError();
 	    if (errcode != ERROR_IO_PENDING)
@@ -390,7 +391,8 @@ RemoteConnection::send_file(char type, int fd, double end_time)
     size_t count = 0;
     while (true) {
 	DWORD n;
-	BOOL ok = WriteFile(hout, buf + count, c - count, &n, &overlapped);
+	BOOL ok = WriteFile(hout, buf + count, DWORD(c - count),
+			    &n, &overlapped);
 	if (!ok) {
 	    int errcode = GetLastError();
 	    if (errcode != ERROR_IO_PENDING)
