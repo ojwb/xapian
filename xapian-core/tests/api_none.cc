@@ -275,13 +275,6 @@ class TestRangeProcessor : public Xapian::RangeProcessor {
 /// Check reference counting of user-subclassable classes.
 DEFINE_TESTCASE(subclassablerefcount1, !backend) {
     bool gone_auto, gone;
-#ifdef _MSC_VER
-    // MSVC incorrectly warns these are potentially uninitialised.  It's
-    // unhelpful to always initialise these as that could mask if a genuine bug
-    // were introduced (which currently would likely be caught by a warning
-    // from a smarter compiler).
-    gone_auto = gone = false;
-#endif
 
     // Simple test of release().
     {
@@ -363,13 +356,6 @@ class TestFieldProcessor : public Xapian::FieldProcessor {
 /// Check reference counting of user-subclassable classes.
 DEFINE_TESTCASE(subclassablerefcount2, !backend) {
     bool gone_auto, gone;
-#ifdef _MSC_VER
-    // MSVC incorrectly warns these are potentially uninitialised.  It's
-    // unhelpful to always initialise these as that could mask if a genuine bug
-    // were introduced (which currently would likely be caught by a warning
-    // from a smarter compiler).
-    gone_auto = gone = false;
-#endif
 
     // Simple test of release().
     {
@@ -434,13 +420,6 @@ DEFINE_TESTCASE(subclassablerefcount3, backend) {
     Xapian::Database db = get_database("apitest_simpledata");
 
     bool gone_auto, gone;
-#ifdef _MSC_VER
-    // MSVC incorrectly warns these are potentially uninitialised.  It's
-    // unhelpful to always initialise these as that could mask if a genuine bug
-    // were introduced (which currently would likely be caught by a warning
-    // from a smarter compiler).
-    gone_auto = gone = false;
-#endif
 
     // Simple test of release().
     {
@@ -495,7 +474,13 @@ class TestStopper : public Xapian::Stopper {
     DestroyedFlag destroyed;
 
   public:
-    TestStopper(bool & destroyed_) : destroyed(destroyed_) { }
+    TestStopper(bool & destroyed_) : destroyed(destroyed_) {
+#ifdef _MSC_VER
+	// MSVC incorrectly warns this is potentially uninitialised (it's
+	// initialised by the DestroyedFlag constructor.
+	destroyed_ = false;
+#endif
+    }
 
     bool operator()(const std::string&) const { return true; }
 };
@@ -503,13 +488,6 @@ class TestStopper : public Xapian::Stopper {
 /// Check reference counting of Stopper with QueryParser.
 DEFINE_TESTCASE(subclassablerefcount4, !backend) {
     bool gone_auto, gone;
-#ifdef _MSC_VER
-    // MSVC incorrectly warns these are potentially uninitialised.  It's
-    // unhelpful to always initialise these as that could mask if a genuine bug
-    // were introduced (which currently would likely be caught by a warning
-    // from a smarter compiler).
-    gone_auto = gone = false;
-#endif
 
     // Simple test of release().
     {
@@ -580,13 +558,6 @@ DEFINE_TESTCASE(subclassablerefcount4, !backend) {
 /// Check reference counting of Stopper with TermGenerator.
 DEFINE_TESTCASE(subclassablerefcount5, !backend) {
     bool gone_auto, gone;
-#ifdef _MSC_VER
-    // MSVC incorrectly warns these are potentially uninitialised.  It's
-    // unhelpful to always initialise these as that could mask if a genuine bug
-    // were introduced (which currently would likely be caught by a warning
-    // from a smarter compiler).
-    gone_auto = gone = false;
-#endif
 
     // Simple test of release().
     {
@@ -668,13 +639,6 @@ DEFINE_TESTCASE(subclassablerefcount6, backend) {
     Xapian::Database db = get_database("apitest_simpledata");
 
     bool gone_auto, gone;
-#ifdef _MSC_VER
-    // MSVC incorrectly warns these are potentially uninitialised.  It's
-    // unhelpful to always initialise these as that could mask if a genuine bug
-    // were introduced (which currently would likely be caught by a warning
-    // from a smarter compiler).
-    gone_auto = gone = false;
-#endif
 
     // Simple test of release().
     {
@@ -759,13 +723,6 @@ DEFINE_TESTCASE(subclassablerefcount7, backend) {
     rset.add_document(1);
 
     bool gone_auto, gone;
-#ifdef _MSC_VER
-    // MSVC incorrectly warns these are potentially uninitialised.  It's
-    // unhelpful to always initialise these as that could mask if a genuine bug
-    // were introduced (which currently would likely be caught by a warning
-    // from a smarter compiler).
-    gone_auto = gone = false;
-#endif
 
     for (int flags = 0;
 	 flags <= Xapian::Enquire::INCLUDE_QUERY_TERMS;
