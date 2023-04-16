@@ -1543,8 +1543,8 @@ phrased_term:
 			size_t n = term_end_index - term_start_index;
 			size_t pos = term_start_index + correction_offset;
 			corrected_query.replace(pos, n, suggest);
-			correction_offset += suggest.size();
-			correction_offset -= n;
+			correction_offset += int(suggest.size());
+			correction_offset -= int(n);
 		    }
 		    break;
 		}
@@ -1871,10 +1871,10 @@ class Terms {
 
     /** Window size.
      *
-     *  size_t(-1) means don't use positional info (so an OP_AND query gets
-     *  created).
+     *  Xapian::termcount(-1) means don't use positional info (so an OP_AND
+     *  query gets created).
      */
-    size_t window;
+    Xapian::termcount window;
 
     /** Keep track of whether the terms added all have the same list of
      *  prefixes.  If so, we'll build a set of phrases, one using each prefix.
@@ -1903,7 +1903,7 @@ class Terms {
 
     /// Convert to a query using the given operator and window size.
     Query * as_opwindow_query(Query::op op, Xapian::termcount w_delta) const {
-	if (window == size_t(-1)) op = Query::OP_AND;
+	if (window == Xapian::termcount(-1)) op = Query::OP_AND;
 	Query * q = NULL;
 	size_t n_terms = terms.size();
 	Xapian::termcount w = w_delta + Xapian::termcount(terms.size());
@@ -1932,7 +1932,7 @@ class Terms {
     }
 
     explicit Terms(bool no_pos)
-	: window(no_pos ? size_t(-1) : 0),
+	: window(no_pos ? Xapian::termcount(-1) : 0),
 	  uniform_prefixes(true),
 	  prefixes(NULL) { }
 
@@ -1963,7 +1963,7 @@ class Terms {
 	terms.push_back(term);
     }
 
-    void adjust_window(size_t alternative_window) {
+    void adjust_window(Xapian::termcount alternative_window) {
 	if (alternative_window > window) window = alternative_window;
     }
 

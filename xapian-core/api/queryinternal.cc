@@ -441,7 +441,7 @@ OrContext::postlist(TermFreqs* termfreqs, bool bool_or)
 	}
     }
 
-    qopt->add_op(EstimateOp::OR, pls.size(), first, last);
+    qopt->add_op(EstimateOp::OR, size(), first, last);
 
     if (bool_or) {
 	auto pl = new BoolOrPostList(pls.begin(), pls.end(), qopt->db_size);
@@ -504,7 +504,7 @@ OrContext::postlist_max()
     PostList * pl;
     pl = new MaxPostList(pls.begin(), pls.end(), qopt->matcher, qopt->db_size);
     // Same as OR for number of matches.
-    qopt->add_op(EstimateOp::OR, pls.size(), first, last);
+    qopt->add_op(EstimateOp::OR, size(), first, last);
 
     pls.clear();
     return pl;
@@ -571,7 +571,7 @@ XorContext::postlist(TermFreqs* termfreqs)
 
     Xapian::doccount db_size = qopt->db_size;
     auto pl = new XorPostList(pls.begin(), pls.end(), qopt->matcher, db_size);
-    qopt->add_op(EstimateOp::XOR, pls.size(), first, last);
+    qopt->add_op(EstimateOp::XOR, size(), first, last);
 
     // Empty pls so our destructor doesn't delete them all!
     pls.clear();
@@ -758,7 +758,7 @@ AndContext::postlist(TermFreqs* termfreqs)
     }
 
     unique_ptr<PostList> pl;
-    switch (pls.size()) {
+    switch (size()) {
       case 0:
 	if (!match_all) {
 	    // The "and" part doesn't match anything, so any "not" part or
@@ -772,7 +772,7 @@ AndContext::postlist(TermFreqs* termfreqs)
 	break;
       default:
 	pl.reset(new AndPostList(pls.begin(), pls.end(), matcher));
-	qopt->add_op(EstimateOp::AND, pls.size(), first, last);
+	qopt->add_op(EstimateOp::AND, size(), first, last);
 	break;
     }
 
