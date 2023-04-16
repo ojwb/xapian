@@ -251,6 +251,10 @@ class DestroyedFlag {
 
   public:
     DestroyedFlag(bool & destroyed_) : destroyed(destroyed_) {
+	destroyed_ = false;
+    }
+
+    DestroyedFlag(bool* destroyed_) : destroyed(*destroyed_) {
 	destroyed = false;
     }
 
@@ -263,7 +267,7 @@ class TestRangeProcessor : public Xapian::RangeProcessor {
     DestroyedFlag destroyed;
 
   public:
-    TestRangeProcessor(bool & destroyed_)
+    TestRangeProcessor(bool* destroyed_)
 	: Xapian::RangeProcessor(0), destroyed(destroyed_) { }
 
     Xapian::Query operator()(const std::string&, const std::string&)
@@ -278,7 +282,7 @@ DEFINE_TESTCASE(subclassablerefcount1, !backend) {
 
     // Simple test of release().
     {
-	Xapian::RangeProcessor * rp = new TestRangeProcessor(gone);
+	Xapian::RangeProcessor * rp = new TestRangeProcessor(&gone);
 	TEST(!gone);
 	Xapian::QueryParser qp;
 	qp.add_rangeprocessor(rp->release());
@@ -288,7 +292,7 @@ DEFINE_TESTCASE(subclassablerefcount1, !backend) {
 
     // Check a second call to release() has no effect.
     {
-	Xapian::RangeProcessor * rp = new TestRangeProcessor(gone);
+	Xapian::RangeProcessor * rp = new TestRangeProcessor(&gone);
 	TEST(!gone);
 	Xapian::QueryParser qp;
 	qp.add_rangeprocessor(rp->release());
@@ -300,14 +304,14 @@ DEFINE_TESTCASE(subclassablerefcount1, !backend) {
     // Test reference counting works, and that a RangeProcessor with automatic
     // storage works OK.
     {
-	TestRangeProcessor rp_auto(gone_auto);
+	TestRangeProcessor rp_auto(&gone_auto);
 	TEST(!gone_auto);
 	{
 	    Xapian::QueryParser qp1;
 	    {
 		Xapian::QueryParser qp2;
 		Xapian::RangeProcessor * rp;
-		rp = new TestRangeProcessor(gone);
+		rp = new TestRangeProcessor(&gone);
 		TEST(!gone);
 		qp1.add_rangeprocessor(rp->release());
 		TEST(!gone);
@@ -330,7 +334,7 @@ DEFINE_TESTCASE(subclassablerefcount1, !backend) {
     {
 	Xapian::QueryParser qp;
 	{
-	    Xapian::RangeProcessor * rp = new TestRangeProcessor(gone);
+	    Xapian::RangeProcessor * rp = new TestRangeProcessor(&gone);
 	    TEST(!gone);
 	    qp.add_rangeprocessor(rp);
 	    delete rp;
@@ -346,7 +350,13 @@ class TestFieldProcessor : public Xapian::FieldProcessor {
     DestroyedFlag destroyed;
 
   public:
-    TestFieldProcessor(bool & destroyed_) : destroyed(destroyed_) { }
+    TestFieldProcessor(bool & destroyed_) : destroyed(destroyed_) {
+#ifdef _MSC_VER
+	// MSVC incorrectly warns this is potentially uninitialised (it's
+	// initialised by DestroyedFlag's constructor.
+	destroyed_ = false;
+#endif
+    }
 
     Xapian::Query operator()(const string &str) {
 	return Xapian::Query(str);
@@ -410,7 +420,13 @@ class TestMatchSpy : public Xapian::MatchSpy {
     DestroyedFlag destroyed;
 
   public:
-    TestMatchSpy(bool & destroyed_) : destroyed(destroyed_) { }
+    TestMatchSpy(bool & destroyed_) : destroyed(destroyed_) {
+#ifdef _MSC_VER
+	// MSVC incorrectly warns this is potentially uninitialised (it's
+	// initialised by DestroyedFlag's constructor.
+	destroyed_ = false;
+#endif
+    }
 
     void operator()(const Xapian::Document &, double) { }
 };
@@ -477,7 +493,7 @@ class TestStopper : public Xapian::Stopper {
     TestStopper(bool & destroyed_) : destroyed(destroyed_) {
 #ifdef _MSC_VER
 	// MSVC incorrectly warns this is potentially uninitialised (it's
-	// initialised by the DestroyedFlag constructor.
+	// initialised by DestroyedFlag's constructor.
 	destroyed_ = false;
 #endif
     }
@@ -629,7 +645,13 @@ class TestKeyMaker : public Xapian::KeyMaker {
     DestroyedFlag destroyed;
 
   public:
-    TestKeyMaker(bool & destroyed_) : destroyed(destroyed_) { }
+    TestKeyMaker(bool & destroyed_) : destroyed(destroyed_) {
+#ifdef _MSC_VER
+	// MSVC incorrectly warns this is potentially uninitialised (it's
+	// initialised by DestroyedFlag's constructor.
+	destroyed_ = false;
+#endif
+    }
 
     string operator()(const Xapian::Document&) const { return string(); }
 };
@@ -710,7 +732,13 @@ class TestExpandDecider : public Xapian::ExpandDecider {
     DestroyedFlag destroyed;
 
   public:
-    TestExpandDecider(bool & destroyed_) : destroyed(destroyed_) { }
+    TestExpandDecider(bool & destroyed_) : destroyed(destroyed_) {
+#ifdef _MSC_VER
+	// MSVC incorrectly warns this is potentially uninitialised (it's
+	// initialised by DestroyedFlag's constructor.
+	destroyed_ = false;
+#endif
+    }
 
     bool operator()(const string&) const { return true; }
 };
