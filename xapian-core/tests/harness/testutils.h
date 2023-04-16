@@ -124,7 +124,7 @@ void test_mset_order_equal(const Xapian::MSet &mset1,
  *
  *  Variant with custom fail-to-throw action.
  */
-#define TEST_EXCEPTION3(TYPE, CODE FAIL_TO_THROW_ACTION) \
+#define TEST_EXCEPTION3(TYPE, CODE, FAIL_TO_THROW_ACTION) \
     TEST_EXCEPTION_(TYPE, CODE, true, FAIL_TO_THROW_ACTION)
 
 #endif // XAPIAN_INCLUDED_TESTUTILS_H

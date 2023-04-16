@@ -1175,10 +1175,10 @@ DEFINE_TESTCASE(blocksize1, glass) {
     } else {
 	FAIL_TEST("Unhandled backend type");
     }
-    static const unsigned bad_sizes[] = {
+    static const int bad_sizes[] = {
 	65537, 8000, 2000, 1024, 16, 7, 3, 1, 0
     };
-    for (size_t block_size : bad_sizes) {
+    for (int block_size : bad_sizes) {
 	rm_rf(db_dir);
 	Xapian::WritableDatabase db(db_dir, flags, block_size);
 	Xapian::Document doc;
