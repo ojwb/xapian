@@ -942,10 +942,15 @@ errorcopyctor_helper(Xapian::Error& error)
 /// Regression test for warning with GCC 9.
 DEFINE_TESTCASE(errorcopyctor, !backend) {
     Xapian::RangeError e("test");
+    bool threw = false;
     try {
 	errorcopyctor_helper(e);
     } catch (Xapian::Error&) {
-	return;
+	threw = true;
     }
-    FAIL_TEST("Expected exception to be thrown");
+    if (!threw) {
+	// This shouldn't happen, but if it somehow does we don't want the
+	// testcase to pass.
+	FAIL_TEST("Expected exception to be thrown");
+    }
 }
