@@ -41,7 +41,7 @@ HoneyAllDocsPostList::HoneyAllDocsPostList(const HoneyDatabase* db,
 {
     LOGCALL_CTOR(DB, "HoneyAllDocsPostList", db | doccount);
     static const char doclen_key_prefix[2] = {
-	0, char(Honey::KEY_DOCLEN_CHUNK)
+	0, char(static_cast<unsigned char>(Honey::KEY_DOCLEN_CHUNK))
     };
     cursor->find_entry_ge(string(doclen_key_prefix, 2));
     /* For an all documents postlist the term frequency is the number of
@@ -243,7 +243,7 @@ DocLenChunkReader::update(HoneyCursor* cursor)
     width /= 8;
     if ((len - 1) % width != 0)
 	throw Xapian::DatabaseCorruptError("Doclen data chunk has junk at end");
-    Xapian::docid first_did = last_did - (len - 1) / width + 1;
+    Xapian::docid first_did = last_did - Xapian::docid((len - 1) / width) + 1;
 
     did = first_did;
     if (!read_doclen(p)) {

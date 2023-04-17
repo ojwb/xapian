@@ -42,7 +42,7 @@ make_valuechunk_key(Xapian::valueno slot, Xapian::docid last_did)
     if (slot < (Honey::KEY_VALUE_CHUNK_HI - Honey::KEY_VALUE_CHUNK) >> 3) {
 	key += char(Honey::KEY_VALUE_CHUNK + slot);
     } else {
-	key += char(Honey::KEY_VALUE_CHUNK_HI);
+	key += static_cast<unsigned char>(Honey::KEY_VALUE_CHUNK_HI);
 	pack_uint_preserving_sort(key, slot);
     }
     pack_uint_preserving_sort(key, last_did);

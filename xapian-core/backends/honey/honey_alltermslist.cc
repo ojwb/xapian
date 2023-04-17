@@ -66,7 +66,7 @@ HoneyAllTermsList::get_approx_size() const
     // This is an over-estimate and not entirely proportional between shards,
     // but we only use this value to build a balanced or-tree, and it'll at
     // least tend to distinguish large databases from small ones.
-    return database->postlist_table.get_approx_entry_count();
+    return Xapian::termcount(database->postlist_table.get_approx_entry_count());
 }
 
 string

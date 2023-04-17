@@ -128,7 +128,7 @@ HoneyTable::add(const std::string& key,
     // Encode "compressed?" flag in bottom bit.
     // FIXME: Don't do this if a table is uncompressed?  That saves a byte
     // for each item where the extra bit pushes the length up by a byte.
-    size_t val_size_enc = (val_size << 1) | compressed;
+    size_t val_size_enc = (val_size << 1) | size_t(compressed);
     std::string val_len;
     pack_uint(val_len, val_size_enc);
     // FIXME: pass together so we can potentially writev() both?
@@ -215,7 +215,7 @@ HoneyTable::read_key(std::string& key,
 	    *p++ = char(ch2);
 	    if (ch2 < 128) break;
 	}
-	r = p - buf;
+	r = int(p - buf);
     }
     const char* p = buf;
     const char* end = p + r;
@@ -263,9 +263,12 @@ HoneyTable::get_exact_entry(const std::string& key, std::string* tag) const
 	case EOF:
 	    return false;
 	case 0x00: {
+	    // FIXME: store.read() can return EOF
 	    unsigned char first =
 		static_cast<unsigned char>(key[0] - store.read());
-	    unsigned char range = store.read();
+	    // FIXME: store.read() can return EOF
+	    unsigned char range =
+		static_cast<unsigned char>(store.read());
 	    if (first > range)
 		return false;
 	    store.skip(first * 4); // FIXME: pointer width
@@ -346,7 +349,8 @@ HoneyTable::get_exact_entry(const std::string& key, std::string* tag) const
 		char* e = buf;
 		while (true) {
 		    int b = store.read();
-		    *e++ = b;
+		    // FIXME: store.read() can return EOF
+		    *e++ = char(b);
 		    if ((b & 0x80) == 0) break;
 		}
 		const char* p = buf;
@@ -379,10 +383,10 @@ HoneyTable::get_exact_entry(const std::string& key, std::string* tag) const
 			if (ch2 == EOF) {
 			    break;
 			}
-			*p++ = ch2;
+			*p++ = char(ch2);
 			if (ch2 < 128) break;
 		    }
-		    r = p - buf;
+		    r = int(p - buf);
 		}
 		const char* p = buf;
 		const char* end = p + r;
@@ -439,7 +443,7 @@ HoneyTable::get_exact_entry(const std::string& key, std::string* tag) const
 	    CompressionStream comp_stream;
 	    comp_stream.decompress_start();
 	    tag->resize(0);
-	    if (!comp_stream.decompress_chunk(v.data(), v.size(), *tag)) {
+	    if (!comp_stream.decompress_chunk(v.data(), int(v.size()), *tag)) {
 		// Decompression didn't complete.
 		abort();
 	    }

@@ -46,8 +46,8 @@ HoneyPositionTable::pack(string& s,
     if (vec.size() > 1) {
 	BitWriter wr(s);
 	wr.encode(vec[0], vec.back());
-	wr.encode(vec.size() - 2, vec.back() - vec[0]);
-	wr.encode_interpolative(vec, 0, vec.size() - 1);
+	wr.encode(Xapian::termpos(vec.size() - 2), vec.back() - vec[0]);
+	wr.encode_interpolative(vec, 0, Xapian::termpos(vec.size() - 1));
 	swap(s, wr.freeze());
     }
 }

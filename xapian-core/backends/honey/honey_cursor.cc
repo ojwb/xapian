@@ -103,7 +103,7 @@ HoneyCursor::next_from_index()
 	    *p++ = char(ch2);
 	    if (ch2 < 128) break;
 	}
-	r = p - buf;
+	r = int(p - buf);
     }
     const char* p = buf;
     const char* end = p + r;
@@ -149,7 +149,7 @@ HoneyCursor::read_tag(bool keep_compressed)
 	comp_stream.decompress_start();
 	string new_tag;
 	if (!comp_stream.decompress_chunk(current_tag.data(),
-					  current_tag.size(),
+					  int(current_tag.size()),
 					  new_tag)) {
 	    // Decompression didn't complete.
 	    abort();
@@ -212,8 +212,12 @@ HoneyCursor::do_find(const string& key, bool greater_than)
 	    case EOF:
 		return false;
 	    case 0x00: {
-		unsigned char first = key[0] - store.read();
-		unsigned char range = store.read();
+		// FIXME: store.read() can return EOF
+		unsigned char first =
+		    static_cast<unsigned char>(key[0] - store.read());
+		// FIXME: store.read() can return EOF
+		unsigned char range =
+		    static_cast<unsigned char>(store.read());
 		if (first > range) {
 		    is_at_end = true;
 		    return false;
@@ -309,7 +313,8 @@ HoneyCursor::do_find(const string& key, bool greater_than)
 		    char* e = buf;
 		    while (true) {
 			int b = store.read();
-			*e++ = b;
+			// FIXME: store.read() can return EOF
+			*e++ = char(b);
 			if ((b & 0x80) == 0) break;
 		    }
 		    const char* p = buf;

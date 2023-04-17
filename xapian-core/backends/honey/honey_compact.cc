@@ -264,7 +264,7 @@ class PostlistCursor<const GlassTable&> : private GlassCursor {
 	    // Set key to placeholder value which just indicates that this is a
 	    // doclen chunk.
 	    static const char doclen_key_prefix[2] = {
-		0, char(Honey::KEY_DOCLEN_CHUNK)
+		0, char(static_cast<unsigned char>(Honey::KEY_DOCLEN_CHUNK))
 	    };
 	    key.assign(doclen_key_prefix, 2);
 
@@ -310,7 +310,7 @@ class PostlistCursor<const GlassTable&> : private GlassCursor {
 	    Assert(!endswith(newtag, "\xff\xff\xff\xff"));
 
 	    AssertEq(newtag.size() % 4, 0);
-	    chunk_lastdid = firstdid - 1 + newtag.size() / 4;
+	    chunk_lastdid = firstdid - 1 + Xapian::docid(newtag.size() / 4);
 
 	    // Only encode document lengths using a whole number of bytes for
 	    // now.  We could allow arbitrary bit widths, but it complicates
@@ -478,7 +478,7 @@ class PostlistCursor<const HoneyTable&> : private HoneyCursor {
 		const char* end = p + key.length();
 		p += 2;
 		Xapian::valueno slot;
-		if (p[-1] != char(Honey::KEY_VALUE_CHUNK_HI)) {
+		if (p[-1] != char(static_cast<unsigned char>(Honey::KEY_VALUE_CHUNK_HI))) {
 		    slot = p[-1] - Honey::KEY_VALUE_CHUNK;
 		} else {
 		    if (!unpack_uint_preserving_sort(&p, end, &slot))
@@ -495,7 +495,7 @@ class PostlistCursor<const HoneyTable&> : private HoneyCursor {
 		if (did == 0)
 		    throw Xapian::DatabaseCorruptError("Bad doclen key");
 		chunk_lastdid = did + offset;
-		firstdid = chunk_lastdid - (tag.size() - 2) / (tag[0] / 8);
+		firstdid = chunk_lastdid - Xapian::docid((tag.size() - 2) / (tag[0] / 8));
 		key.resize(2);
 		return true;
 	    }
@@ -826,9 +826,9 @@ merge_postlists(Xapian::Compactor* compactor,
 		tag.append(cur->tag, 1, copy_size);
 		cur->tag.erase(1, copy_size);
 		copy_size /= byte_width;
-		cur->firstdid += copy_size;
-		chunk_lastdid += gap_size;
-		chunk_lastdid += copy_size;
+		cur->firstdid += Xapian::docid(copy_size);
+		chunk_lastdid += Xapian::docid(gap_size);
+		chunk_lastdid += Xapian::docid(copy_size);
 		break;
 	    }
 
@@ -1901,10 +1901,10 @@ next_without_next:
 			if (slots.size() > 1) {
 			    BitWriter slots_used(enc);
 			    slots_used.encode(first_slot, last_slot);
-			    slots_used.encode(slots.size() - 2,
+			    slots_used.encode(Xapian::termpos(slots.size() - 2),
 					      last_slot - first_slot);
 			    slots_used.encode_interpolative(slots, 0,
-							    slots.size() - 1);
+							    Xapian::termpos(slots.size() - 1));
 			    encoded_slots_used = slots_used.freeze();
 			} else {
 			    encoded_slots_used = std::move(enc);
@@ -1959,7 +1959,7 @@ next_without_next:
 			    newtag += char(reuse);
 
 			    if (reuse > current_term.size()) {
-				current_wdf = reuse / (current_term.size() + 1);
+				current_wdf = Xapian::termcount(reuse / (current_term.size() + 1));
 				reuse = reuse % (current_term.size() + 1);
 			    }
 			    current_term.resize(reuse);

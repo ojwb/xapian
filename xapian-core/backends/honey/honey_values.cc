@@ -383,7 +383,7 @@ HoneyValueManager::add_document(Xapian::docid did, const Xapian::Document& doc,
     if (count > 1) {
 	slots_used.encode(first_slot, last_slot);
 	slots_used.encode(count - 2, last_slot - first_slot);
-	slots_used.encode_interpolative(slotvec, 0, slotvec.size() - 1);
+	slots_used.encode_interpolative(slotvec, 0, Xapian::termpos(slotvec.size() - 1));
     }
 
     return slots_used.freeze();

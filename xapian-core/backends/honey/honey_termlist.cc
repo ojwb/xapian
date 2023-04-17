@@ -146,7 +146,7 @@ HoneyTermList::next()
     if (!current_term.empty()) {
 	size_t reuse = static_cast<unsigned char>(*pos++);
 	if (reuse > current_term.size()) {
-	    current_wdf = reuse / (current_term.size() + 1);
+	    current_wdf = Xapian::termcount(reuse / (current_term.size() + 1));
 	    reuse = reuse % (current_term.size() + 1);
 	}
 	current_term.resize(reuse);

@@ -83,7 +83,7 @@ HoneyPostListTable::get_used_docid_range(Xapian::doccount doccount,
     Assert(cursor);
 
     static const char doclen_key_prefix[2] = {
-	0, char(Honey::KEY_DOCLEN_CHUNK)
+	0, char(static_cast<unsigned char>(Honey::KEY_DOCLEN_CHUNK))
     };
     if (cursor->find_entry_ge(string(doclen_key_prefix, 2))) {
 	first = 1;
@@ -97,7 +97,7 @@ HoneyPostListTable::get_used_docid_range(Xapian::doccount doccount,
 	}
 	cursor->read_tag();
 	unsigned width = cursor->current_tag[0] / 8;
-	first = last_in_first_chunk - (cursor->current_tag.size() - 2) / width;
+	first = last_in_first_chunk - Xapian::docid((cursor->current_tag.size() - 2) / width);
     }
 
     // We know the last docid is at least first - 1 + doccount, so seek
