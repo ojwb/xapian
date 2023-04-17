@@ -927,7 +927,6 @@ case $enable_backend_glass$enable_backend_honey in
 
   dnl Find a way to generate UUIDs.
 
-  AC_MSG_WARN([Switching on |$host_os-$win32|])
   case $host_os-$win32 in
     *-yes | cygwin* | msys*) dnl Use built-in win32 API.
       AC_DEFINE([USE_WIN32_UUID_API], [1],
