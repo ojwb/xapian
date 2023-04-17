@@ -19,12 +19,12 @@ environment:
     platform: x86
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
     VCVARS_BAT: "\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars32.bat\""
+    # We only test 64-bit cygwin as 32-bit support has been dropped as of
+    # Cygwin 3.4:
+    # https://cygwin.com/pipermail/cygwin/2022-November/252542.html
   - TOOLCHAIN: cygwin
     platform: x64
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-  - TOOLCHAIN: cygwin
-    platform: x64
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
   - TOOLCHAIN: msvc
     platform: x86
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
@@ -77,6 +77,10 @@ install:
   - if "%TOOLCHAIN%"=="mingw64" appveyor-retry bash -c 'pacman -Sy --noconfirm zlib-devel'
   # Work around odd ownership of directories in CI build image.
   - if "%TOOLCHAIN%"=="cygwin" bash -c 'git config --global --add safe.directory /cygdrive/c/projects/xapian'
+  # Install cygwin git and patch packages since those installed in the image
+  # want the 32-bit cygwin1.dll which means they fail to work if the 64-bit
+  # cygwin1.dll is first on PATH.
+  - if "%TOOLCHAIN%"=="cygwin" appveyor-retry C:\cygwin64\setup-x86_64.exe -qnNdO -R C:/cygwin64 -s http://cygwin.mirror.constant.com -l C:/cygwin64/var/cache/setup -P zlib-devel -P git -P patch
   - bash -c 'time ./bootstrap --fetch-url-command="curl --retry 5 --retry-connrefused -L" xapian-core'
   - if defined VCVARS_BAT call %VCVARS_BAT%
   - if "%TOOLCHAIN%"=="msvc" mkdir zlib
