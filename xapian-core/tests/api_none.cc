@@ -251,7 +251,7 @@ class DestroyedFlag {
 
   public:
     DestroyedFlag(bool & destroyed_) : destroyed(destroyed_) {
-	destroyed_ = false;
+	destroyed = false;
     }
 
     DestroyedFlag(bool* destroyed_) : destroyed(*destroyed_) {
@@ -263,12 +263,29 @@ class DestroyedFlag {
     }
 };
 
+class DestroyedFlag_ {
+    bool* destroyed;
+
+  public:
+    DestroyedFlag_(bool* destroyed_) : destroyed(destroyed_) {
+	*destroyed = false;
+    }
+
+    ~DestroyedFlag_() {
+	*destroyed = true;
+    }
+};
+
 class TestRangeProcessor : public Xapian::RangeProcessor {
     DestroyedFlag destroyed;
 
   public:
     TestRangeProcessor(bool* destroyed_)
-	: Xapian::RangeProcessor(0), destroyed(destroyed_) { }
+	: Xapian::RangeProcessor(0), destroyed(destroyed_) {
+#ifdef _MSC_VER
+	*destroyed_ = false;
+#endif
+    }
 
     Xapian::Query operator()(const std::string&, const std::string&)
     {
@@ -350,12 +367,7 @@ class TestFieldProcessor : public Xapian::FieldProcessor {
     DestroyedFlag destroyed;
 
   public:
-    TestFieldProcessor(bool & destroyed_) : destroyed(destroyed_) {
-#ifdef _MSC_VER
-	// MSVC incorrectly warns this is potentially uninitialised (it's
-	// initialised by DestroyedFlag's constructor.
-	destroyed_ = false;
-#endif
+    TestFieldProcessor(bool* destroyed_) : destroyed(destroyed_) {
     }
 
     Xapian::Query operator()(const string &str) {
@@ -369,7 +381,7 @@ DEFINE_TESTCASE(subclassablerefcount2, !backend) {
 
     // Simple test of release().
     {
-	Xapian::FieldProcessor * proc = new TestFieldProcessor(gone);
+	Xapian::FieldProcessor * proc = new TestFieldProcessor(&gone);
 	TEST(!gone);
 	Xapian::QueryParser qp;
 	qp.add_prefix("foo", proc->release());
@@ -379,7 +391,7 @@ DEFINE_TESTCASE(subclassablerefcount2, !backend) {
 
     // Check a second call to release() has no effect.
     {
-	Xapian::FieldProcessor * proc = new TestFieldProcessor(gone);
+	Xapian::FieldProcessor * proc = new TestFieldProcessor(&gone);
 	TEST(!gone);
 	Xapian::QueryParser qp;
 	qp.add_prefix("foo", proc->release());
@@ -391,14 +403,14 @@ DEFINE_TESTCASE(subclassablerefcount2, !backend) {
     // Test reference counting works, and that a FieldProcessor with automatic
     // storage works OK.
     {
-	TestFieldProcessor proc_auto(gone_auto);
+	TestFieldProcessor proc_auto(&gone_auto);
 	TEST(!gone_auto);
 	{
 	    Xapian::QueryParser qp1;
 	    {
 		Xapian::QueryParser qp2;
 		Xapian::FieldProcessor * proc;
-		proc = new TestFieldProcessor(gone);
+		proc = new TestFieldProcessor(&gone);
 		TEST(!gone);
 		qp1.add_prefix("foo", proc->release());
 		TEST(!gone);
@@ -417,10 +429,10 @@ DEFINE_TESTCASE(subclassablerefcount2, !backend) {
 }
 
 class TestMatchSpy : public Xapian::MatchSpy {
-    DestroyedFlag destroyed;
+    DestroyedFlag_ destroyed;
 
   public:
-    TestMatchSpy(bool & destroyed_) : destroyed(destroyed_) {
+    TestMatchSpy(bool & destroyed_) : destroyed(&destroyed_) {
 #ifdef _MSC_VER
 	// MSVC incorrectly warns this is potentially uninitialised (it's
 	// initialised by DestroyedFlag's constructor.
@@ -642,15 +654,10 @@ DEFINE_TESTCASE(subclassablerefcount5, !backend) {
 }
 
 class TestKeyMaker : public Xapian::KeyMaker {
-    DestroyedFlag destroyed;
+    DestroyedFlag_ destroyed;
 
   public:
-    TestKeyMaker(bool & destroyed_) : destroyed(destroyed_) {
-#ifdef _MSC_VER
-	// MSVC incorrectly warns this is potentially uninitialised (it's
-	// initialised by DestroyedFlag's constructor.
-	destroyed_ = false;
-#endif
+    TestKeyMaker(bool* destroyed_) : destroyed(destroyed_) {
     }
 
     string operator()(const Xapian::Document&) const { return string(); }
@@ -664,7 +671,7 @@ DEFINE_TESTCASE(subclassablerefcount6, backend) {
 
     // Simple test of release().
     {
-	Xapian::KeyMaker * keymaker = new TestKeyMaker(gone);
+	Xapian::KeyMaker * keymaker = new TestKeyMaker(&gone);
 	TEST(!gone);
 	Xapian::Enquire enq(db);
 	enq.set_sort_by_key(keymaker->release(), false);
@@ -675,13 +682,13 @@ DEFINE_TESTCASE(subclassablerefcount6, backend) {
     // Test that setting a new keymaker causes the previous one to be released.
     {
 	bool gone0;
-	Xapian::KeyMaker * keymaker0 = new TestKeyMaker(gone0);
+	Xapian::KeyMaker * keymaker0 = new TestKeyMaker(&gone0);
 	TEST(!gone0);
 	Xapian::Enquire enq(db);
 	enq.set_sort_by_key(keymaker0->release(), false);
 	TEST(!gone0);
 
-	Xapian::KeyMaker * keymaker = new TestKeyMaker(gone);
+	Xapian::KeyMaker * keymaker = new TestKeyMaker(&gone);
 	TEST(!gone);
 	enq.set_sort_by_key_then_relevance(keymaker->release(), false);
 	TEST(gone0);
@@ -691,7 +698,7 @@ DEFINE_TESTCASE(subclassablerefcount6, backend) {
 
     // Check a second call to release() has no effect.
     {
-	Xapian::KeyMaker * keymaker = new TestKeyMaker(gone);
+	Xapian::KeyMaker * keymaker = new TestKeyMaker(&gone);
 	TEST(!gone);
 	Xapian::Enquire enq(db);
 	enq.set_sort_by_key(keymaker->release(), false);
@@ -703,14 +710,14 @@ DEFINE_TESTCASE(subclassablerefcount6, backend) {
     // Test reference counting works, and that a KeyMaker with automatic
     // storage works OK.
     {
-	TestKeyMaker keymaker_auto(gone_auto);
+	TestKeyMaker keymaker_auto(&gone_auto);
 	TEST(!gone_auto);
 	{
 	    Xapian::Enquire enq1(db);
 	    {
 		Xapian::Enquire enq2(db);
 		Xapian::KeyMaker * keymaker;
-		keymaker = new TestKeyMaker(gone);
+		keymaker = new TestKeyMaker(&gone);
 		TEST(!gone);
 		enq1.set_sort_by_key(keymaker->release(), false);
 		TEST(!gone);
@@ -729,14 +736,14 @@ DEFINE_TESTCASE(subclassablerefcount6, backend) {
 }
 
 class TestExpandDecider : public Xapian::ExpandDecider {
-    DestroyedFlag destroyed;
+    DestroyedFlag_ destroyed;
 
   public:
-    TestExpandDecider(bool & destroyed_) : destroyed(destroyed_) {
+    TestExpandDecider(bool* destroyed_) : destroyed(destroyed_) {
 #ifdef _MSC_VER
 	// MSVC incorrectly warns this is potentially uninitialised (it's
 	// initialised by DestroyedFlag's constructor.
-	destroyed_ = false;
+	*destroyed_ = false;
 #endif
     }
 
@@ -757,7 +764,7 @@ DEFINE_TESTCASE(subclassablerefcount7, backend) {
 	 flags += Xapian::Enquire::INCLUDE_QUERY_TERMS) {
 	// Test of auto lifetime ExpandDecider.
 	{
-	    TestExpandDecider edecider_auto(gone_auto);
+	    TestExpandDecider edecider_auto(&gone_auto);
 	    TEST(!gone_auto);
 	    (void)enq.get_eset(5, rset, 0, &edecider_auto);
 	    TEST(!gone_auto);
@@ -766,7 +773,7 @@ DEFINE_TESTCASE(subclassablerefcount7, backend) {
 
 	// Simple test of release().
 	{
-	    Xapian::ExpandDecider * edecider = new TestExpandDecider(gone);
+	    Xapian::ExpandDecider * edecider = new TestExpandDecider(&gone);
 	    TEST(!gone);
 	    (void)enq.get_eset(5, rset, 0, edecider);
 	    TEST(!gone);
@@ -776,7 +783,7 @@ DEFINE_TESTCASE(subclassablerefcount7, backend) {
 
 	// Test that a released ExpandDecider gets cleaned up by get_eset().
 	{
-	    Xapian::ExpandDecider * edecider = new TestExpandDecider(gone);
+	    Xapian::ExpandDecider * edecider = new TestExpandDecider(&gone);
 	    TEST(!gone);
 	    (void)enq.get_eset(5, rset, 0, edecider->release());
 	    TEST(gone);
@@ -784,7 +791,7 @@ DEFINE_TESTCASE(subclassablerefcount7, backend) {
 
 	// Check a second call to release() has no effect.
 	{
-	    Xapian::ExpandDecider * edecider = new TestExpandDecider(gone);
+	    Xapian::ExpandDecider * edecider = new TestExpandDecider(&gone);
 	    TEST(!gone);
 	    edecider->release();
 	    TEST(!gone);
@@ -795,9 +802,9 @@ DEFINE_TESTCASE(subclassablerefcount7, backend) {
 
     // Test combinations of released/non-released with ExpandDeciderAnd.
     {
-	TestExpandDecider edecider_auto(gone_auto);
+	TestExpandDecider edecider_auto(&gone_auto);
 	TEST(!gone_auto);
-	Xapian::ExpandDecider * edecider = new TestExpandDecider(gone);
+	Xapian::ExpandDecider * edecider = new TestExpandDecider(&gone);
 	TEST(!gone);
 	(void)enq.get_eset(5, rset, 0,
 		(new Xapian::ExpandDeciderAnd(
@@ -808,9 +815,9 @@ DEFINE_TESTCASE(subclassablerefcount7, backend) {
     }
     TEST(gone_auto);
     {
-	TestExpandDecider edecider_auto(gone_auto);
+	TestExpandDecider edecider_auto(&gone_auto);
 	TEST(!gone_auto);
-	Xapian::ExpandDecider * edecider = new TestExpandDecider(gone);
+	Xapian::ExpandDecider * edecider = new TestExpandDecider(&gone);
 	TEST(!gone);
 	(void)enq.get_eset(5, rset, 0,
 		(new Xapian::ExpandDeciderAnd(
