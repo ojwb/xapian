@@ -891,12 +891,10 @@ AC_SEARCH_LIBS([timer_create], [rt],
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
 [[#if defined _AIX
 #error timer_create always fails with EAGAIN on AIX 7.1
-#elif defined __GNU__
-#error timer_create always fails with ENOSYS on GNU Hurd
 #elif defined __NetBSD__
-#error timer_create timers never fire on NetBSD 7.1
+#error SIGEV_THREAD not implemented in NetBSD 9.2 (see `man sigevent`)
 #elif defined __OpenBSD__
-#error timer_create always fails with ENOSYS on OpenBSD 6.2 (and no prototype)
+#error timer_create always fails with ENOSYS on OpenBSD 7.3 (and no prototype)
 #endif]])],
 	[AC_MSG_RESULT([yes])
 	AC_DEFINE([HAVE_TIMER_CREATE], [1], [Define to 1 if you have the 'timer_create' function.])]
@@ -1266,9 +1264,10 @@ if test yes = "$GXX"; then
 
       dnl The exact format of g++ --version seems to change with almost every
       dnl minor release so use the preprocessor macros which should be more
-      dnl robust.
+      dnl robust.  Pass -xc++ to avoid warnings about any command-line options
+      dnl included in $CXX which aren't valid for C (such as -std=c++17).
       AC_MSG_CHECKING([for version of $CXX])
-      gxx_version=`echo __GNUC__.__GNUC_MINOR__.__GNUC_PATCHLEVEL__|$CXX -E -|sed '/^#/d;s/ //g'`
+      gxx_version=`echo __GNUC__.__GNUC_MINOR__.__GNUC_PATCHLEVEL__|$CXX -xc++ -E -|sed '/^#/d;s/ //g'`
       AC_MSG_RESULT([GCC $gxx_version])
 
       dnl -Wundef was supported by g++ 3.0.
