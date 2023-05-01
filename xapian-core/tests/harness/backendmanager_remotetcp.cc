@@ -75,8 +75,12 @@ struct ServerData {
      */
     pid_t pid;
 #elif defined __WIN32__
-    /// Value of pid which indicates an unused entry.
-    static constexpr HANDLE UNUSED_PID = INVALID_HANDLE_VALUE;
+    /** Value of pid which indicates an unused entry.
+     *
+     *  This is a #define because it's a pointer type which doesn't work as a
+     *  `static const` or `static constexpr` class member.
+     */
+#define UNUSED_PID INVALID_HANDLE_VALUE
 
     /** The remote server process ID. */
     HANDLE pid;
@@ -89,7 +93,7 @@ struct ServerData {
     }
 
     void clean_up() {
-	if (pid == ServerData::UNUSED_PID) return;
+	if (pid == UNUSED_PID) return;
 #ifdef HAVE_FORK
 	int status;
 	while (waitpid(pid, &status, 0) == -1 && errno == EINTR) { }
@@ -98,8 +102,8 @@ struct ServerData {
 	// to SIG_IGN.  If we did somehow see that, it seems reasonable to
 	// treat the child as successfully cleaned up.
 #elif defined __WIN32__
-	WaitForSingleObject(child, INFINITE);
-	CloseHandle(child);
+	WaitForSingleObject(pid, INFINITE);
+	CloseHandle(pid);
 #endif
     }
 };
