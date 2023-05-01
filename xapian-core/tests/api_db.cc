@@ -3,7 +3,7 @@
  */
 /* Copyright 1999,2000,2001 BrightStation PLC
  * Copyright 2002 Ananova Ltd
- * Copyright 2002-2022 Olly Betts
+ * Copyright 2002-2023 Olly Betts
  * Copyright 2006,2007,2008,2009 Lemur Consulting Ltd
  *
  * This program is free software; you can redistribute it and/or
@@ -1684,7 +1684,7 @@ make_netstats1_db(Xapian::WritableDatabase& db, const string&)
 }
 
 // Test network stats and local stats give the same results.
-DEFINE_TESTCASE(netstats1, generated) {
+DEFINE_TESTCASE(netstats1, backend) {
     static const char * const words[] = { "paragraph", "word" };
     Xapian::Query query(Xapian::Query::OP_OR, words, words + 2);
     const size_t MSET_SIZE = 10;

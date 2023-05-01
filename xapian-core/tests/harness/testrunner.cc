@@ -2,7 +2,7 @@
  * @brief Run multiple tests for different backends.
  */
 /* Copyright 2008,2009 Lemur Consulting Ltd
- * Copyright 2008,2009,2010,2011,2015,2017,2018,2019 Olly Betts
+ * Copyright 2008,2009,2010,2011,2015,2017,2018,2019,2023 Olly Betts
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -68,36 +68,34 @@ TestRunner::set_properties_for_backend(const string & backend_name)
     static const BackendProperties backend_properties[] = {
 	{ "none", 0 },
 	{ "inmemory", INMEMORY|
-	    BACKEND|POSITIONAL|WRITABLE|METADATA|VALUESTATS|GENERATED },
+	    BACKEND|POSITIONAL|WRITABLE|METADATA|VALUESTATS },
 	{ "glass", GLASS|
 	    BACKEND|TRANSACTIONS|POSITIONAL|WRITABLE|SPELLING|METADATA|
-	    SYNONYMS|VALUESTATS|GENERATED|COMPACT|PATH
+	    SYNONYMS|VALUESTATS|COMPACT|PATH
 #ifdef XAPIAN_HAS_REMOTE_BACKEND
 	    |REPLICAS
 #endif
 	},
 	{ "multi_glass", MULTI|
 	    BACKEND|POSITIONAL|WRITABLE|METADATA|SPELLING|SYNONYMS|VALUESTATS|
-	    GENERATED|COMPACT|PATH },
+	    COMPACT|PATH },
 	{ "multi_glass_remoteprog_glass", MULTI|REMOTE|
-	    BACKEND|WRITABLE|GENERATED|SYNONYMS },
+	    BACKEND|WRITABLE|SYNONYMS },
 	{ "multi_remoteprog_glass", MULTI|REMOTE|
-	    BACKEND|WRITABLE|GENERATED|SYNONYMS },
+	    BACKEND|WRITABLE|SYNONYMS },
 	{ "remoteprog_glass", REMOTE|
 	    BACKEND|TRANSACTIONS|POSITIONAL|WRITABLE|METADATA|VALUESTATS|
-	    GENERATED|SYNONYMS
+	    SYNONYMS
 	},
 	{ "remotetcp_glass", REMOTE|REMOTETCP|
 	    BACKEND|TRANSACTIONS|POSITIONAL|WRITABLE|METADATA|VALUESTATS|
-	    GENERATED|SYNONYMS
+	    SYNONYMS
 	},
 	{ "singlefile_glass", SINGLEFILE|
-	    BACKEND|POSITIONAL|SPELLING|SYNONYMS|VALUESTATS|COMPACT|PATH },
+	    BACKEND|POSITIONAL|SPELLING|SYNONYMS|VALUESTATS|COMPACT|PATH
+	},
 	{ "honey", HONEY|
 	    BACKEND|POSITIONAL|SPELLING|SYNONYMS|VALUESTATS|COMPACT|PATH
-#ifdef XAPIAN_HAS_GLASS_BACKEND
-	    |GENERATED
-#endif
 	},
 	{ NULL, 0 }
     };

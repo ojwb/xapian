@@ -11,14 +11,15 @@ environment:
   global:
     AUTOMATED_TESTING: 1
   matrix:
-  - TOOLCHAIN: msvc
-    platform: x64
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-    VCVARS_BAT: "\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat\""
-  - TOOLCHAIN: msvc
+  - TOOLCHAIN: mingw
     platform: x86
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-    VCVARS_BAT: "\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars32.bat\""
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+  - TOOLCHAIN: mingw64
+    platform: x86
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+  - TOOLCHAIN: mingw64
+    platform: x64
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
     # We only test 64-bit cygwin as 32-bit support has been dropped as of
     # Cygwin 3.4:
     # https://cygwin.com/pipermail/cygwin/2022-November/252542.html
@@ -41,15 +42,14 @@ environment:
     platform: x64
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
     VCVARS_BAT: "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat\""
-  - TOOLCHAIN: mingw
+  - TOOLCHAIN: msvc
     platform: x86
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-  - TOOLCHAIN: mingw64
-    platform: x86
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-  - TOOLCHAIN: mingw64
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+    VCVARS_BAT: "\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars32.bat\""
+  - TOOLCHAIN: msvc
     platform: x64
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+    VCVARS_BAT: "\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat\""
 install:
   - ps: >-
       $env:CONFIGOPTS="--disable-documentation"
