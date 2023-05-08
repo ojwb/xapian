@@ -265,13 +265,17 @@ DEFINE_TESTCASE(overload1, !backend) {
  *
  *  Currently the OR-subquery case is supported, other operators aren't.
  */
-DEFINE_TESTCASE(possubqueries1, writable) {
-    Xapian::WritableDatabase db = get_writable_database();
-    Xapian::Document doc;
-    doc.add_posting("a", 1);
-    doc.add_posting("b", 2);
-    doc.add_posting("c", 3);
-    db.add_document(doc);
+DEFINE_TESTCASE(possubqueries1, backend) {
+    Xapian::Database db = get_database("possubqueries1",
+				       [](Xapian::WritableDatabase& wdb,
+					  const string&)
+				       {
+					   Xapian::Document doc;
+					   doc.add_posting("a", 1);
+					   doc.add_posting("b", 2);
+					   doc.add_posting("c", 3);
+					   wdb.add_document(doc);
+				       });
 
     Xapian::Query a_or_b(Xapian::Query::OP_OR,
 			 Xapian::Query("a"),
@@ -508,7 +512,7 @@ DEFINE_TESTCASE(wildcard1, backend) {
     const Xapian::Query::op o = Xapian::Query::OP_WILDCARD;
 
     for (auto&& test : wildcard1_testcases) {
-	tout << test.pattern << endl;
+	tout << test.pattern << '\n';
 	auto tend = test.terms + 4;
 	while (tend[-1] == NULL) --tend;
 	bool expect_exception = (tend - test.terms == 4 && tend[-1][0] == '\0');
@@ -601,7 +605,7 @@ DEFINE_TESTCASE(dualprefixwildcard1, backend) {
     Xapian::Query q(Xapian::Query::OP_SYNONYM,
 		    Xapian::Query(Xapian::Query::OP_WILDCARD, "fo"),
 		    Xapian::Query(Xapian::Query::OP_WILDCARD, "Sfo"));
-    tout << q.get_description() << endl;
+    tout << q.get_description() << '\n';
     Xapian::Enquire enq(db);
     enq.set_query(q);
     TEST_EQUAL(enq.get_mset(0, 5).size(), 2);
@@ -624,9 +628,9 @@ DEFINE_TESTCASE(specialwildcard1, !backend) {
     TEST_EQUAL(Xapian::Query(o, "*?*", 0, f).get_description(), QUERY_ALLDOCS);
 }
 
-/// Test `?` extended wildcard.
-DEFINE_TESTCASE(singlecharwildcard1, writable) {
-    Xapian::WritableDatabase db = get_writable_database();
+static void
+gen_singlecharwildcard1_db(Xapian::WritableDatabase& db, const string&)
+{
     {
 	Xapian::Document doc;
 	doc.add_term("test");
@@ -657,8 +661,12 @@ DEFINE_TESTCASE(singlecharwildcard1, writable) {
 	doc.add_term("t*t");
 	db.add_document(doc);
     }
-    db.commit();
+}
 
+/// Test `?` extended wildcard.
+DEFINE_TESTCASE(singlecharwildcard1, backend) {
+    Xapian::Database db = get_database("singlecharwildcard1",
+				       gen_singlecharwildcard1_db);
     Xapian::Enquire enq(db);
     enq.set_weighting_scheme(Xapian::BoolWeight());
 
@@ -687,9 +695,9 @@ DEFINE_TESTCASE(singlecharwildcard1, writable) {
     }
 }
 
-/// Test `*` extended wildcard.
-DEFINE_TESTCASE(multicharwildcard1, writable) {
-    Xapian::WritableDatabase db = get_writable_database();
+static void
+gen_multicharwildcard1_db(Xapian::WritableDatabase& db, const string&)
+{
     {
 	Xapian::Document doc;
 	doc.add_term("ananas");
@@ -715,8 +723,12 @@ DEFINE_TESTCASE(multicharwildcard1, writable) {
 	doc.add_term("b?nanas");
 	db.add_document(doc);
     }
-    db.commit();
+}
 
+/// Test `*` extended wildcard.
+DEFINE_TESTCASE(multicharwildcard1, backend) {
+    Xapian::Database db = get_database("multicharwildcard1",
+				       gen_multicharwildcard1_db);
     Xapian::Enquire enq(db);
     enq.set_weighting_scheme(Xapian::BoolWeight());
 
@@ -783,7 +795,7 @@ DEFINE_TESTCASE(editdist1, backend) {
     const Xapian::Query::op o = Xapian::Query::OP_EDIT_DISTANCE;
 
     for (auto&& test : editdist1_testcases) {
-	tout << test.target << endl;
+	tout << test.target << '\n';
 	auto tend = test.terms + 4;
 	while (tend > test.terms && tend[-1] == NULL) --tend;
 	bool expect_exception = (tend - test.terms == 4 && tend[-1][0] == '\0');
@@ -805,7 +817,7 @@ DEFINE_TESTCASE(editdist1, backend) {
 	q = Xapian::Query(o, test.target, test.max_expansion, max_type,
 			  q.OP_SYNONYM, test.edit_distance);
 	enq.set_query(q);
-	tout << q.get_description() << endl;
+	tout << q.get_description() << '\n';
 	try {
 	    Xapian::MSet mset = enq.get_mset(0, 10);
 	    TEST(!expect_exception);
@@ -839,7 +851,7 @@ DEFINE_TESTCASE(editdist2, backend) {
     const Xapian::Query::op o = Xapian::Query::OP_EDIT_DISTANCE;
 
     for (auto&& test : editdist2_testcases) {
-	tout << test.target << endl;
+	tout << test.target << '\n';
 	auto tend = test.terms + 4;
 	while (tend > test.terms && tend[-1] == NULL) --tend;
 	bool expect_exception = (tend - test.terms == 4 && tend[-1][0] == '\0');
@@ -861,7 +873,7 @@ DEFINE_TESTCASE(editdist2, backend) {
 	q = Xapian::Query(o, test.target, test.max_expansion, max_type,
 			  q.OP_SYNONYM, test.edit_distance);
 	enq.set_query(q);
-	tout << q.get_description() << endl;
+	tout << q.get_description() << '\n';
 	try {
 	    Xapian::MSet mset = enq.get_mset(0, 10);
 	    TEST(!expect_exception);
@@ -895,7 +907,7 @@ DEFINE_TESTCASE(dualprefixeditdist1, backend) {
     Xapian::Query q0(OP_EDIT_DISTANCE, "possum");
     Xapian::Query q1(OP_EDIT_DISTANCE, "Spossum", 0, 0, OP_SYNONYM, 2, 1);
     Xapian::Query q(OP_SYNONYM, q0, q1);
-    tout << q.get_description() << endl;
+    tout << q.get_description() << '\n';
     Xapian::Enquire enq(db);
     enq.set_query(q0);
     Xapian::MSet mset = enq.get_mset(0, 5);

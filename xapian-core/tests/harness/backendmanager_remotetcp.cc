@@ -64,16 +64,12 @@ using namespace std;
 // Start at port DEFAULT_PORT and increment until one isn't already in use.
 #define DEFAULT_PORT 1239
 
-struct ServerData {
+class ServerData {
 #ifdef HAVE_FORK
     /// Value of pid which indicates an unused entry.
     static constexpr pid_t UNUSED_PID = 0;
 
-    /** The remote server process ID.
-     *
-     *  This will actually be the /bin/sh process.
-     */
-    pid_t pid;
+    typedef pid_t pid_type;
 #elif defined __WIN32__
     /** Value of pid which indicates an unused entry.
      *
@@ -82,15 +78,28 @@ struct ServerData {
      */
 #define UNUSED_PID INVALID_HANDLE_VALUE
 
-    /** The remote server process ID. */
-    HANDLE pid;
+    typedef HANDLE pid_type;
 #else
 # error Neither HAVE_FORK nor __WIN32__ is defined
 #endif
 
-    void reset() {
-	pid = UNUSED_PID;
-    }
+    /** The remote server process ID.
+     *
+     *  Under Unix, this will actually be the /bin/sh process.
+     */
+    pid_type pid;
+
+    /** The internal pointer of the Database object.
+     *
+     *  We use this to find the entry for a given Xapian::Database object (in
+     *  kill_remote()).
+     */
+    const void* db_internal;
+
+  public:
+    void set_pid(pid_type pid_) { pid = pid_; }
+
+    void set_db_internal(const void* dbi) { db_internal = dbi; }
 
     void clean_up() {
 	if (pid == UNUSED_PID) return;
@@ -106,19 +115,45 @@ struct ServerData {
 	CloseHandle(pid);
 #endif
     }
+
+    bool kill_remote(const void* dbi) {
+	if (pid == UNUSED_PID || dbi != db_internal) return false;
+#ifdef HAVE_FORK
+	// Kill the process group that we put the server in so that we kill
+	// the server itself and not just the /bin/sh that launched it.
+	if (kill(-pid, SIGKILL) < 0) {
+	    throw Xapian::DatabaseError("Couldn't kill remote server",
+					errno);
+	}
+#elif defined __WIN32__
+	if (!TerminateProcess(pid, 0)) {
+	    throw Xapian::DatabaseError("Couldn't kill remote server",
+					-GetLastError());
+	}
+#endif
+	clean_up();
+	pid = UNUSED_PID;
+	return true;
+    }
 };
 
-// We can't dynamically allocate memory for this because it confuses the leak
-// detector.  We only have 1-3 tcpsrv children running at once anyway, so a
-// fixed size array isn't a problem, and linear scanning to find an entry has
-// a small bounded cost.
+// We can't dynamically resize this on demand (e.g. by using a std::vector)
+// because it would confuse the leak detector.  We clean up after each testcase
+// so this only needs to store the children launched by a single testcase,
+// which is at most 6 currently, but the entries are tiny so allocate enough
+// that future testcases shouldn't hit the limit either.
+//
+// We need to linear scan up to first_unused_server_data entries to implement
+// BackendManagerRemoteTcp::kill_remote(), but with a small fixed bound on the
+// number of entries that's effectively O(1); also very few testcases use this
+// feature anyway.
 static ServerData server_data[16];
 
 static unsigned first_unused_server_data = 0;
 
 #ifdef HAVE_FORK
 
-static int
+static std::pair<int, ServerData&>
 launch_xapian_tcpsrv(const string & args)
 {
     int port = DEFAULT_PORT;
@@ -156,6 +191,10 @@ try_next_port:
 	dup2(fds[1], 1);
 	dup2(fds[1], 2);
 	close(fds[1]);
+	// Put this process into its own process group so that we can kill the
+	// server itself easily by killing the process group.  Just killing
+	// `child` only kills the /bin/sh and leaves the server running.
+	setpgid(0, 0);
 	execl("/bin/sh", "/bin/sh", "-c", cmd.c_str(), static_cast<void*>(0));
 	_exit(-1);
     }
@@ -212,19 +251,17 @@ try_next_port:
 	if (strcmp(buf, "Listening...\n") == 0) break;
 	output += buf;
     }
-
-    // We must fclose() the FILE* to avoid valgrind detecting memory leaks from
-    // its buffers.
     fclose(fh);
 
-    if (first_unused_server_data < std::size(server_data)) {
-	server_data[first_unused_server_data++].pid = child;
-	return port;
+    if (first_unused_server_data >= std::size(server_data)) {
+	// We used to quietly ignore not finding a slot, but it's helpful to
+	// know if we haven't allocated enough.
+	throw Xapian::DatabaseError("Not enough ServerData slots");
     }
 
-    // We used to quietly ignore not finding a slot, but it's helpful to know
-    // if we haven't allocated enough slots.
-    throw Xapian::DatabaseError("Not enough ServerData slots");
+    auto& data = server_data[first_unused_server_data++];
+    data.set_pid(child);
+    return {port, data};
 }
 
 #elif defined __WIN32__
@@ -252,7 +289,7 @@ static void win32_throw_error_string(const char * str)
 
 // This implementation uses the WIN32 API to start xapian-tcpsrv as a child
 // process and read its output using a pipe.
-static int
+static std::pair<int, ServerData&>
 launch_xapian_tcpsrv(const string & args)
 {
     int port = DEFAULT_PORT;
@@ -324,14 +361,15 @@ try_next_port:
     }
     fclose(fh);
 
-    if (first_unused_server_data < std::size(server_data)) {
-	server_data[first_unused_server_data++].pid = procinfo.hProcess;
-	return port;
+    if (first_unused_server_data >= std::size(server_data)) {
+	// We used to quietly ignore not finding a slot, but it's helpful to
+	// know if we haven't allocated enough.
+	throw Xapian::DatabaseError("Not enough ServerData slots");
     }
 
-    // We used to quietly ignore not finding a slot, but it's helpful to know
-    // if we haven't allocated enough slots.
-    throw Xapian::DatabaseError("Not enough ServerData slots");
+    auto& data = server_data[first_unused_server_data++];
+    data.set_pid(procinfo.hProcess);
+    return {port, data};
 }
 
 #else
@@ -341,28 +379,24 @@ try_next_port:
 static Xapian::Database
 get_remotetcp_db(const string& args, int* port_ptr = nullptr)
 {
-    int port = launch_xapian_tcpsrv(args);
-    auto db = Xapian::Remote::open(LOCALHOST, port);
+    auto [port, server] = launch_xapian_tcpsrv(args);
     if (port_ptr) *port_ptr = port;
+    auto db = Xapian::Remote::open(LOCALHOST, port);
+    server.set_db_internal(db.internal.get());
     return db;
 }
 
 static Xapian::WritableDatabase
 get_remotetcp_writable_db(const string& args)
 {
-    int port = launch_xapian_tcpsrv(args);
+    auto [port, server] = launch_xapian_tcpsrv(args);
     auto db = Xapian::Remote::open_writable(LOCALHOST, port);
+    server.set_db_internal(db.internal.get());
     return db;
 }
 
 BackendManagerRemoteTcp::~BackendManagerRemoteTcp() {
     BackendManagerRemoteTcp::clean_up();
-}
-
-std::string
-BackendManagerRemoteTcp::get_dbtype() const
-{
-    return "remotetcp_" + sub_manager->get_dbtype();
 }
 
 Xapian::Database
@@ -408,10 +442,20 @@ BackendManagerRemoteTcp::get_writable_database_again()
 }
 
 void
+BackendManagerRemoteTcp::kill_remote(const Xapian::Database& db)
+{
+    const void* db_internal = db.internal.get();
+    for (unsigned i = 0; i != first_unused_server_data; ++i) {
+	if (server_data[i].kill_remote(db_internal))
+	    return;
+    }
+    throw Xapian::DatabaseError("No known server for remote DB");
+}
+
+void
 BackendManagerRemoteTcp::clean_up()
 {
-    for (unsigned i = 0; i != first_unused_server_data; ++i) {
-	server_data[i].clean_up();
+    while (first_unused_server_data) {
+	server_data[--first_unused_server_data].clean_up();
     }
-    first_unused_server_data = 0;
 }

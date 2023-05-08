@@ -68,12 +68,12 @@ DEFINE_TESTCASE(termstats, backend) {
 }
 
 // Check that stub databases work.
-DEFINE_TESTCASE(stubdb1, path) {
+DEFINE_TESTCASE(stubdb1, check && path) {
     mkdir(".stub", 0755);
     const char * dbpath = ".stub/stubdb1";
     ofstream out(dbpath);
     TEST(out.is_open());
-    out << "auto ../" << get_database_path("apitest_simpledata") << endl;
+    out << "auto ../" << get_database_path("apitest_simpledata") << '\n';
     out.close();
 
     {
@@ -99,7 +99,7 @@ DEFINE_TESTCASE(stubdb2, path) {
     ofstream out(dbpath);
     TEST(out.is_open());
     out << "remote :" << BackendManager::get_xapian_progsrv_command()
-	<< ' ' << get_database_path("apitest_simpledata") << endl;
+	<< ' ' << get_database_path("apitest_simpledata") << '\n';
     out.close();
 
     try {
@@ -126,7 +126,7 @@ DEFINE_TESTCASE(stubdb2, path) {
 
     out.open(dbpath);
     TEST(out.is_open());
-    out << "remote" << endl;
+    out << "remote\n";
     out.close();
 
     // Quietly ignored prior to 1.4.1.
@@ -147,7 +147,7 @@ DEFINE_TESTCASE(stubdb2, path) {
 
     out.open(dbpath);
     TEST(out.is_open());
-    out << "remote foo" << endl;
+    out << "remote foo\n";
     out.close();
 
     // Quietly ignored prior to 1.4.1.
@@ -163,7 +163,7 @@ DEFINE_TESTCASE(stubdb2, path) {
 #ifdef XAPIAN_HAS_REMOTE_BACKEND
     out.open(dbpath);
     TEST(out.is_open());
-    out << "remote [::1]:65535" << endl;
+    out << "remote [::1]:65535\n";
     out.close();
 
     try {
@@ -205,7 +205,7 @@ DEFINE_TESTCASE(stubdb2, path) {
     out.open(dbpath);
     TEST(out.is_open());
     // Invalid - the port number is required.
-    out << "remote [::1]" << endl;
+    out << "remote [::1]\n";
     out.close();
 
     // 1.4.0 threw:
@@ -262,7 +262,7 @@ DEFINE_TESTCASE(stubdb5, path) {
     ofstream out(dbpath);
     TEST(out.is_open());
     out << "bad\n"
-	   "auto ../" << get_database_path("apitest_simpledata") << endl;
+	   "auto ../" << get_database_path("apitest_simpledata") << '\n';
     out.close();
 
     TEST_EXCEPTION(Xapian::DatabaseOpeningError,
@@ -344,7 +344,7 @@ DEFINE_TESTCASE(stubdb9, path) {
     ofstream out(dbpath);
     TEST(out.is_open());
     out << "remote :" << BackendManager::get_xapian_progsrv_command()
-	<< ' ' << get_database_path("apitest_simpledata") << endl;
+	<< ' ' << get_database_path("apitest_simpledata") << '\n';
     out.close();
 
     try {
@@ -1309,7 +1309,7 @@ DEFINE_TESTCASE(sortvalue1, backend) {
 
     for (int pass = 1; pass <= 2; ++pass) {
 	for (Xapian::valueno value_no = 1; value_no < 7; ++value_no) {
-	    tout << "Sorting on value " << value_no << endl;
+	    tout << "Sorting on value " << value_no << '\n';
 	    enquire.set_sort_by_value(value_no, true);
 	    Xapian::MSet allbset = enquire.get_mset(0, 100);
 	    Xapian::MSet partbset1 = enquire.get_mset(0, 3);
@@ -1321,7 +1321,7 @@ DEFINE_TESTCASE(sortvalue1, backend) {
 	    Xapian::MSetIterator i, j;
 	    j = allbset.begin();
 	    for (i = partbset1.begin(); i != partbset1.end(); ++i) {
-		tout << "Entry " << n << ": " << *i << " | " << *j << endl;
+		tout << "Entry " << n << ": " << *i << " | " << *j << '\n';
 		TEST(j != allbset.end());
 		if (*i != *j) ok = false;
 		++j;
@@ -1329,7 +1329,7 @@ DEFINE_TESTCASE(sortvalue1, backend) {
 	    }
 	    tout << "===\n";
 	    for (i = partbset2.begin(); i != partbset2.end(); ++i) {
-		tout << "Entry " << n << ": " << *i << " | " << *j << endl;
+		tout << "Entry " << n << ": " << *i << " | " << *j << '\n';
 		TEST(j != allbset.end());
 		if (*i != *j) ok = false;
 		++j;
@@ -1362,7 +1362,7 @@ DEFINE_TESTCASE(consistency1, backend && !remote) {
 		    TEST_EQUAL(start + mset.size(),
 			       min(start + size, bigmset.size()));
 		} else if (size) {
-//		tout << start << mset.size() << bigmset.size() << endl;
+//		tout << start << mset.size() << bigmset.size() << '\n';
 		    TEST(start >= bigmset.size());
 		}
 		for (Xapian::doccount i = 0; i < mset.size(); ++i) {
@@ -1381,16 +1381,15 @@ DEFINE_TESTCASE(consistency1, backend && !remote) {
 // Test that specifying a nonexistent input file throws an exception
 // (backend-specific cases).
 DEFINE_TESTCASE(databasenotfounderror1, glass || honey) {
-    const string& dbtype = get_dbtype();
-    string db_dir = "." + dbtype;
+    string db_dir = "." + get_dbtype();
 
     int db_type_flag;
-    if (dbtype == "glass") {
+    if (get_dbtype() == "glass") {
 	db_type_flag = Xapian::DB_BACKEND_GLASS;
-    } else if (dbtype == "honey") {
+    } else if (get_dbtype() == "honey") {
 	db_type_flag = Xapian::DB_BACKEND_HONEY;
     } else {
-	FAIL_TEST("Backend " + dbtype + " not handled by testcase");
+	FAIL_TEST("Backend " + get_dbtype() + " not handled by testcase");
     }
 
     mkdir(db_dir.c_str(), 0755);

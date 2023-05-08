@@ -60,7 +60,7 @@ DEFINE_TESTCASE(valuerange1, backend) {
 	    for (Xapian::docid j = db.get_lastdocid(); j != 0; --j) {
 		if (matched.find(j) == matched.end()) {
 		    string value = db.get_document(j).get_value(1);
-		    tout << value << " < '" << start << "' or > '" << end << "'" << endl;
+		    tout << value << " < '" << start << "' or > '" << end << "'\n";
 		    TEST(value < start || value > end);
 		}
 	    }
@@ -70,12 +70,15 @@ DEFINE_TESTCASE(valuerange1, backend) {
 
 // Regression test for Query::OP_VALUE_LE - used to return document IDs for
 // non-existent documents.
-DEFINE_TESTCASE(valuerange2, writable) {
-    Xapian::WritableDatabase db = get_writable_database();
-    Xapian::Document doc;
-    doc.set_data("5");
-    doc.add_value(0, "5");
-    db.replace_document(5, doc);
+DEFINE_TESTCASE(valuerange2, backend) {
+    Xapian::Database db = get_database("valuerange2",
+				       [](Xapian::WritableDatabase& wdb,
+					  const string&) {
+					   Xapian::Document doc;
+					   doc.set_data("5");
+					   doc.add_value(0, "5");
+					   wdb.replace_document(5, doc);
+				       });
     Xapian::Enquire enq(db);
 
     Xapian::Query query(Xapian::Query::OP_VALUE_LE, 0, "6");
@@ -267,7 +270,7 @@ DEFINE_TESTCASE(valuerange7, backend) {
     enq.set_query(query);
     mset = enq.get_mset(0, 0);
     TEST_EQUAL(mset.get_matches_estimated(), 1);
-    if (startswith(get_dbtype(), "multi")) {
+    if (db.size() > 1) {
 	// The second shard will just have one document with "ZERO" in the slot
 	// so we can tell there's exactly one match there, and the first shard
 	// has one "ZERO\0" and one empty entry, so we can tell that can't
@@ -297,7 +300,7 @@ DEFINE_TESTCASE(valuege1, backend) {
 	for (i = mset.begin(); i != mset.end(); ++i) {
 	    matched.insert(*i);
 	    string value = db.get_document(*i).get_value(1);
-	    tout << "'" << start << "' <= '" << value << "'" << endl;
+	    tout << "'" << start << "' <= '" << value << "'\n";
 	    TEST_REL(value,>=,start);
 	}
 	// Check that documents not in the MSet don't match the value range
@@ -305,7 +308,7 @@ DEFINE_TESTCASE(valuege1, backend) {
 	for (Xapian::docid j = db.get_lastdocid(); j != 0; --j) {
 	    if (matched.find(j) == matched.end()) {
 		string value = db.get_document(j).get_value(1);
-		tout << value << " < '" << start << "'" << endl;
+		tout << value << " < '" << start << "'\n";
 		TEST_REL(value,<,start);
 	    }
 	}

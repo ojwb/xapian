@@ -204,26 +204,8 @@ DEFINE_TESTCASE(simplequery3, backend) {
     TEST_MSET_SIZE(mymset, 6);
 }
 
-// multidb2 no longer exists.
-
-// test that a multidb with 2 dbs query returns correct docids
-DEFINE_TESTCASE(multidb3, backend && !multi) {
-    Xapian::Database mydb2(get_database("apitest_simpledata"));
-    mydb2.add_database(get_database("apitest_simpledata2"));
-    Xapian::Enquire enquire(mydb2);
-
-    // make a query
-    Xapian::Query myquery = query(Xapian::Query::OP_OR, "inmemory", "word");
-    enquire.set_weighting_scheme(Xapian::BoolWeight());
-    enquire.set_query(myquery);
-
-    // retrieve the top ten results
-    Xapian::MSet mymset = enquire.get_mset(0, 10);
-    mset_expect_order(mymset, 2, 3, 7);
-}
-
 // test that a multidb with 3 dbs query returns correct docids
-DEFINE_TESTCASE(multidb4, backend && !multi) {
+DEFINE_TESTCASE(multidb2, backend && !multi) {
     Xapian::Database mydb2(get_database("apitest_simpledata"));
     mydb2.add_database(get_database("apitest_simpledata2"));
     mydb2.add_database(get_database("apitest_termorder"));
@@ -237,22 +219,6 @@ DEFINE_TESTCASE(multidb4, backend && !multi) {
     // retrieve the top ten results
     Xapian::MSet mymset = enquire.get_mset(0, 10);
     mset_expect_order(mymset, 2, 3, 4, 10);
-}
-
-// tests MultiPostList::skip_to().
-DEFINE_TESTCASE(multidb5, backend && !multi) {
-    Xapian::Database mydb2(get_database("apitest_simpledata"));
-    mydb2.add_database(get_database("apitest_simpledata2"));
-    Xapian::Enquire enquire(mydb2);
-
-    // make a query
-    Xapian::Query myquery = query(Xapian::Query::OP_AND, "inmemory", "word");
-    enquire.set_weighting_scheme(Xapian::BoolWeight());
-    enquire.set_query(myquery);
-
-    // retrieve the top ten results
-    Xapian::MSet mymset = enquire.get_mset(0, 10);
-    mset_expect_order(mymset, 2);
 }
 
 // tests that when specifying maxitems to get_mset, no more than
@@ -449,7 +415,7 @@ DEFINE_TESTCASE(expandmaxitems1, backend) {
     enquire.set_query(Xapian::Query("this"));
 
     Xapian::MSet mymset = enquire.get_mset(0, 10);
-    tout << "mymset.size() = " << mymset.size() << endl;
+    tout << "mymset.size() = " << mymset.size() << '\n';
     TEST(mymset.size() >= 2);
 
     Xapian::RSet myrset;
@@ -789,7 +755,7 @@ DEFINE_TESTCASE(pctcutoff3, backend) {
 	int new_percent = mset1.convert_to_percent(i);
 	if (new_percent != percent) {
 	    tout.str(string());
-	    tout << "Testing " << percent << "% cutoff" << endl;
+	    tout << "Testing " << percent << "% cutoff\n";
 	    enquire.set_cutoff(percent);
 	    Xapian::MSet mset2 = enquire.get_mset(0, 10);
 	    TEST_EQUAL(mset2.back().get_percent(), percent);
@@ -1559,9 +1525,8 @@ DEFINE_TESTCASE(msetzeroitems1, backend) {
 
 // test that the matches_* of a simple query are as expected
 DEFINE_TESTCASE(matches1, backend) {
-    bool multi = startswith(get_dbtype(), "multi");
-
-    Xapian::Enquire enquire(get_database("apitest_simpledata"));
+    Xapian::Database db = get_database("apitest_simpledata");
+    Xapian::Enquire enquire(db);
     Xapian::Query myquery;
     Xapian::MSet mymset;
 
@@ -1608,7 +1573,7 @@ DEFINE_TESTCASE(matches1, backend) {
     myquery = query(Xapian::Query::OP_AND, "simple", "word");
     enquire.set_query(myquery);
     mymset = enquire.get_mset(0, 0);
-    if (multi) {
+    if (db.size() > 1) {
 	// We get a tighter lower bound because each shard is handled
 	// separately and that happens to give us the same tight range for
 	// both terms in one shard, and no matches for one term in the other.
@@ -2057,13 +2022,15 @@ DEFINE_TESTCASE(emptyterm1, backend) {
 }
 
 // Test for alldocs postlist with a sparse database.
-DEFINE_TESTCASE(alldocspl1, writable) {
-    Xapian::WritableDatabase db = get_writable_database();
-    Xapian::Document doc;
-    doc.set_data("5");
-    doc.add_value(0, "5");
-    db.replace_document(5, doc);
-
+DEFINE_TESTCASE(alldocspl1, backend) {
+    Xapian::Database db = get_database("alldocspl1",
+				       [](Xapian::WritableDatabase& wdb,
+					  const string&) {
+					   Xapian::Document doc;
+					   doc.set_data("5");
+					   doc.add_value(0, "5");
+					   wdb.replace_document(5, doc);
+				       });
     Xapian::PostingIterator i = db.postlist_begin("");
     TEST(i != db.postlist_end(""));
     TEST_EQUAL(*i, 5);
@@ -2185,7 +2152,7 @@ DEFINE_TESTCASE(scaleweight1, backend) {
     for (auto qstr : queries) {
 	tout.str(string());
 	Xapian::Query query1 = qp.parse_query(qstr);
-	tout << "query1: " << query1.get_description() << endl;
+	tout << "query1: " << query1.get_description() << '\n';
 	for (const double *multp = multipliers; multp[0] != multp[1]; ++multp) {
 	    double mult = *multp;
 	    if (mult < 0) {
@@ -2195,7 +2162,7 @@ DEFINE_TESTCASE(scaleweight1, backend) {
 		continue;
 	    }
 	    Xapian::Query query2(Xapian::Query::OP_SCALE_WEIGHT, query1, mult);
-	    tout << "query2: " << query2.get_description() << endl;
+	    tout << "query2: " << query2.get_description() << '\n';
 
 	    enq.set_query(query1);
 	    Xapian::MSet mset1 = enq.get_mset(0, 20);

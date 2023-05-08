@@ -71,18 +71,22 @@ TestRunner::set_properties_for_backend(const string & backend_name)
 	    BACKEND|POSITIONAL|WRITABLE|METADATA|VALUESTATS },
 	{ "glass", GLASS|
 	    BACKEND|TRANSACTIONS|POSITIONAL|WRITABLE|SPELLING|METADATA|
-	    SYNONYMS|VALUESTATS|COMPACT|PATH
+	    SYNONYMS|VALUESTATS|CHECK|COMPACT|PATH
 #ifdef XAPIAN_HAS_REMOTE_BACKEND
 	    |REPLICAS
 #endif
 	},
 	{ "multi_glass", MULTI|
-	    BACKEND|POSITIONAL|WRITABLE|METADATA|SPELLING|SYNONYMS|VALUESTATS|
-	    COMPACT|PATH },
+	    BACKEND|TRANSACTIONS|POSITIONAL|WRITABLE|METADATA|VALUESTATS|
+	    SPELLING|SYNONYMS|CHECK|COMPACT|PATH },
 	{ "multi_glass_remoteprog_glass", MULTI|REMOTE|
-	    BACKEND|WRITABLE|SYNONYMS },
+	    BACKEND|TRANSACTIONS|POSITIONAL|WRITABLE|METADATA|VALUESTATS|
+	    SYNONYMS
+	},
 	{ "multi_remoteprog_glass", MULTI|REMOTE|
-	    BACKEND|WRITABLE|SYNONYMS },
+	    BACKEND|TRANSACTIONS|POSITIONAL|WRITABLE|METADATA|VALUESTATS|
+	    SYNONYMS
+	},
 	{ "remoteprog_glass", REMOTE|
 	    BACKEND|TRANSACTIONS|POSITIONAL|WRITABLE|METADATA|VALUESTATS|
 	    SYNONYMS
@@ -92,10 +96,12 @@ TestRunner::set_properties_for_backend(const string & backend_name)
 	    SYNONYMS
 	},
 	{ "singlefile_glass", SINGLEFILE|
-	    BACKEND|POSITIONAL|SPELLING|SYNONYMS|VALUESTATS|COMPACT|PATH
+	    BACKEND|POSITIONAL|METADATA|SPELLING|SYNONYMS|VALUESTATS|
+	    CHECK|COMPACT|PATH
 	},
 	{ "honey", HONEY|
-	    BACKEND|POSITIONAL|SPELLING|SYNONYMS|VALUESTATS|COMPACT|PATH
+	    BACKEND|POSITIONAL|METADATA|SPELLING|SYNONYMS|VALUESTATS|
+	    CHECK|COMPACT|PATH
 	},
 	{ NULL, 0 }
     };
@@ -115,8 +121,7 @@ TestRunner::do_tests_for_backend_(BackendManager* manager)
     const string& backend_name = manager->get_dbtype();
     if (use_backend(backend_name)) {
 	set_properties_for_backend(backend_name);
-	cout << "Running tests with backend \"" << backend_name << "\"..."
-	     << endl;
+	cout << "Running tests with backend \"" << backend_name << "\"...\n";
 	backendmanager = manager;
 	result_so_far = max(result_so_far, run());
 	backendmanager = NULL;
@@ -144,7 +149,7 @@ TestRunner::run_tests(int argc, char ** argv)
 # endif
 #endif
 
-	do_tests_for_backend(BackendManager(string()));
+	do_tests_for_backend(BackendManager(string(), "none"));
 
 #ifdef XAPIAN_HAS_INMEMORY_BACKEND
 	do_tests_for_backend(BackendManagerInMemory(datadir));
@@ -180,16 +185,16 @@ TestRunner::run_tests(int argc, char ** argv)
 #endif
     } catch (const std::exception& e) {
 	cerr << "\nTest harness failed with std::exception: " << e.what()
-	     << endl;
+	     << '\n';
 	return 1;
     } catch (const Xapian::Error &e) {
-	cerr << "\nTest harness failed with " << e.get_description() << endl;
+	cerr << "\nTest harness failed with " << e.get_description() << '\n';
 	return 1;
     } catch (const std::string &e) {
-	cerr << "\nTest harness failed with \"" << e << "\"" << endl;
+	cerr << "\nTest harness failed with \"" << e << "\"\n";
 	return 1;
     } catch (const char * e) {
-	cout << e << endl;
+	cout << e << '\n';
 	return 1;
     }
     return result_so_far;

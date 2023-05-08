@@ -987,17 +987,20 @@ DEFINE_TESTCASE(qp_odd_chars1, !backend) {
 }
 
 // Test right truncation.
-DEFINE_TESTCASE(qp_flag_wildcard1, writable) {
-    Xapian::WritableDatabase db = get_writable_database();
-    Xapian::Document doc;
-    doc.add_term("abc");
-    doc.add_term("main");
-    doc.add_term("muscat");
-    doc.add_term("muscle");
-    doc.add_term("musclebound");
-    doc.add_term("muscular");
-    doc.add_term("mutton");
-    db.add_document(doc);
+DEFINE_TESTCASE(qp_flag_wildcard1, backend) {
+    Xapian::Database db = get_database("qp_flag_wildcard1",
+				       [](Xapian::WritableDatabase& wdb,
+					  const string&) {
+					   Xapian::Document doc;
+					   doc.add_term("abc");
+					   doc.add_term("main");
+					   doc.add_term("muscat");
+					   doc.add_term("muscle");
+					   doc.add_term("musclebound");
+					   doc.add_term("muscular");
+					   doc.add_term("mutton");
+					   wdb.add_document(doc);
+				       });
     Xapian::QueryParser qp;
     qp.set_database(db);
     Xapian::Query qobj = qp.parse_query("ab*", Xapian::QueryParser::FLAG_WILDCARD);
@@ -1085,13 +1088,16 @@ DEFINE_TESTCASE(qp_flag_wildcard1, writable) {
 }
 
 // Test right truncation with prefixes.
-DEFINE_TESTCASE(qp_flag_wildcard2, writable) {
-    Xapian::WritableDatabase db = get_writable_database();
-    Xapian::Document doc;
-    doc.add_term("Aheinlein");
-    doc.add_term("Ahuxley");
-    doc.add_term("hello");
-    db.add_document(doc);
+DEFINE_TESTCASE(qp_flag_wildcard2, backend) {
+    Xapian::Database db = get_database("qp_flag_wildcard2",
+				       [](Xapian::WritableDatabase& wdb,
+					  const string&) {
+					   Xapian::Document doc;
+					   doc.add_term("Aheinlein");
+					   doc.add_term("Ahuxley");
+					   doc.add_term("hello");
+					   wdb.add_document(doc);
+				       });
     Xapian::QueryParser qp;
     qp.set_database(db);
     qp.add_prefix("author", "A");
@@ -1118,17 +1124,20 @@ test_qp_flag_wildcard3_helper(const Xapian::Database &db,
 }
 
 // Test right truncation with a limit on expansion.
-DEFINE_TESTCASE(qp_flag_wildcard3, writable) {
-    Xapian::WritableDatabase db = get_writable_database();
-    Xapian::Document doc;
-    doc.add_term("abc");
-    doc.add_term("main");
-    doc.add_term("muscat");
-    doc.add_term("muscle");
-    doc.add_term("musclebound");
-    doc.add_term("muscular");
-    doc.add_term("mutton");
-    db.add_document(doc);
+DEFINE_TESTCASE(qp_flag_wildcard3, backend) {
+    Xapian::Database db = get_database("qp_flag_wildcard3",
+				       [](Xapian::WritableDatabase& wdb,
+					  const string&) {
+					   Xapian::Document doc;
+					   doc.add_term("abc");
+					   doc.add_term("main");
+					   doc.add_term("muscat");
+					   doc.add_term("muscle");
+					   doc.add_term("musclebound");
+					   doc.add_term("muscular");
+					   doc.add_term("mutton");
+					   wdb.add_document(doc);
+				       });
 
     // Test that a max of 0 doesn't set a limit.
     test_qp_flag_wildcard3_helper(db, 0, "z*");
@@ -1194,7 +1203,7 @@ DEFINE_TESTCASE(qp_flag_wildcard4, !backend) {
     Xapian::QueryParser qp;
 
     for (const auto& test : testcases) {
-	tout << test.min_len << ' ' << test.query_string << endl;
+	tout << test.min_len << ' ' << test.query_string << '\n';
 	qp.set_min_wildcard_prefix(test.min_len, FLAG_WILDCARD | FLAG_PARTIAL);
 
 	string query_string = string(test.query_string) + '*';
@@ -1250,9 +1259,10 @@ DEFINE_TESTCASE(qp_flag_wildcard4, !backend) {
     }
 }
 
-// Test partial queries.
-DEFINE_TESTCASE(qp_flag_partial1, writable) {
-    Xapian::WritableDatabase db = get_writable_database();
+static void
+gen_qp_flag_partial1_db(Xapian::WritableDatabase& db,
+			const string&)
+{
     Xapian::Document doc;
     Xapian::Stem stemmer("english");
     doc.add_term("abc");
@@ -1276,6 +1286,13 @@ DEFINE_TESTCASE(qp_flag_partial1, writable) {
     doc.add_term("XTWOpartial3");
     doc.add_term("XTWOpartial4");
     db.add_document(doc);
+}
+
+// Test partial queries.
+DEFINE_TESTCASE(qp_flag_partial1, backend) {
+    Xapian::Database db = get_database("qp_flag_partial1",
+				       gen_qp_flag_partial1_db);
+    Xapian::Stem stemmer("english");
     Xapian::QueryParser qp;
     qp.set_database(db);
     qp.set_stemmer(stemmer);
@@ -1446,7 +1463,7 @@ DEFINE_TESTCASE(qp_flag_fuzzy1, !backend) {
 	    qp.set_default_op(Xapian::Query::OP_AND);
 	    continue;
 	}
-	tout << t.q << endl;
+	tout << t.q << '\n';
 	auto qobj = qp.parse_query(t.q, flags);
 	string expect = "Query(";
 	expect += t.expect;
@@ -1465,7 +1482,7 @@ DEFINE_TESTCASE(qp_flag_fuzzy2, !backend) {
     Xapian::QueryParser qp;
     qp.add_prefix("author", "A");
     for (auto&& t : testcases) {
-	tout << t.q << endl;
+	tout << t.q << '\n';
 	auto qobj = qp.parse_query(t.q, qp.FLAG_FUZZY);
 	string expect = "Query(";
 	expect += t.expect;
@@ -1483,11 +1500,11 @@ test_qp_flag_fuzzy3_helper(const Xapian::Database& db,
     qp.set_database(db);
     if (max_expansion == Xapian::termcount(-1)) {
 	tout << "testing fuzzy query '" << query_string << "' with default "
-		"limit (which should be 0)" << endl;
+		"limit (which should be 0)\n";
 	max_expansion = 0;
     } else {
 	tout << "testing fuzzy query '" << query_string << "' with limit "
-	     << max_expansion << endl;
+	     << max_expansion << '\n';
 	qp.set_max_expansion(max_expansion);
     }
     Xapian::Enquire e(db);
@@ -1502,23 +1519,26 @@ test_qp_flag_fuzzy3_helper(const Xapian::Database& db,
 }
 
 /// Test fuzzy matching with a limit on expansion.
-DEFINE_TESTCASE(qp_flag_fuzzy3, writable) {
-    Xapian::WritableDatabase db = get_writable_database();
-    Xapian::Document doc;
-    doc.add_term("abc");
-    doc.add_term("main");
-    doc.add_term("marcel");
-    doc.add_term("muscadet");
-    doc.add_term("muscae");
-    doc.add_term("muscat");
-    doc.add_term("muscid");
-    doc.add_term("muscle");
-    doc.add_term("muscly");
-    doc.add_term("musclebound");
-    doc.add_term("muscular");
-    doc.add_term("mutton");
-    doc.add_term("tusche");
-    db.add_document(doc);
+DEFINE_TESTCASE(qp_flag_fuzzy3, backend) {
+    Xapian::Database db = get_database("qp_flag_fuzzy3",
+				       [](Xapian::WritableDatabase& wdb,
+					  const string&) {
+					   Xapian::Document doc;
+					   doc.add_term("abc");
+					   doc.add_term("main");
+					   doc.add_term("marcel");
+					   doc.add_term("muscadet");
+					   doc.add_term("muscae");
+					   doc.add_term("muscat");
+					   doc.add_term("muscid");
+					   doc.add_term("muscle");
+					   doc.add_term("muscly");
+					   doc.add_term("musclebound");
+					   doc.add_term("muscular");
+					   doc.add_term("mutton");
+					   doc.add_term("tusche");
+					   wdb.add_document(doc);
+				       });
 
     // Test that the default is no limit.
     test_qp_flag_fuzzy3_helper(db, Xapian::termcount(-1), "zzz~");
@@ -1551,21 +1571,21 @@ DEFINE_TESTCASE(wildquery1, backend) {
     Xapian::Enquire enquire(db);
 
     Xapian::Query qobj = queryparser.parse_query("th*", flags);
-    tout << qobj.get_description() << endl;
+    tout << qobj.get_description() << '\n';
     enquire.set_query(qobj);
     Xapian::MSet mymset = enquire.get_mset(0, 10);
     // Check that 6 documents were returned.
     TEST_MSET_SIZE(mymset, 6);
 
     qobj = queryparser.parse_query("notindb* \"this\"", flags);
-    tout << qobj.get_description() << endl;
+    tout << qobj.get_description() << '\n';
     enquire.set_query(qobj);
     mymset = enquire.get_mset(0, 10);
     // Check that 6 documents were returned.
     TEST_MSET_SIZE(mymset, 6);
 
     qobj = queryparser.parse_query("+notindb* \"this\"", flags);
-    tout << qobj.get_description() << endl;
+    tout << qobj.get_description() << '\n';
     enquire.set_query(qobj);
     mymset = enquire.get_mset(0, 10);
     // Check that 0 documents were returned.
@@ -1965,9 +1985,9 @@ DEFINE_TESTCASE(qp_range2, !backend) {
     }
 }
 
-// Test NumberRangeProcessors with actual data.
-DEFINE_TESTCASE(qp_range3, writable) {
-    Xapian::WritableDatabase db = get_writable_database();
+static void
+gen_qp_range3_db(Xapian::WritableDatabase& db, const string&)
+{
     double low = -10;
     int steps = 60;
     double step = 0.5;
@@ -1978,6 +1998,15 @@ DEFINE_TESTCASE(qp_range3, writable) {
 	doc.add_value(1, Xapian::sortable_serialise(v));
 	db.add_document(doc);
     }
+}
+
+// Test NumberRangeProcessors with actual data.
+DEFINE_TESTCASE(qp_range3, backend) {
+    double low = -10;
+    int steps = 60;
+    double step = 0.5;
+
+    Xapian::Database db = get_database("qp_range3", gen_qp_range3_db);
 
     Xapian::NumberRangeProcessor rp_num(1);
     Xapian::QueryParser qp;
@@ -2443,7 +2472,7 @@ DEFINE_TESTCASE(qp_spell1, spelling) {
 	q = qp.parse_query(p->query,
 			   Xapian::QueryParser::FLAG_SPELLING_CORRECTION |
 			   Xapian::QueryParser::FLAG_BOOLEAN);
-	tout << "Query: " << p->query << endl;
+	tout << "Query: " << p->query << '\n';
 	TEST_STRINGS_EQUAL(qp.get_corrected_query_string(), p->expect);
     }
 }
@@ -2476,7 +2505,7 @@ DEFINE_TESTCASE(qp_spell2, spelling)
 	q = qp.parse_query(p->query,
 			   Xapian::QueryParser::FLAG_SPELLING_CORRECTION |
 			   Xapian::QueryParser::FLAG_BOOLEAN);
-	tout << "Query: " << p->query << endl;
+	tout << "Query: " << p->query << '\n';
 	TEST_STRINGS_EQUAL(qp.get_corrected_query_string(), p->expect);
     }
 }
@@ -2513,7 +2542,7 @@ DEFINE_TESTCASE(qp_spellwild1, spelling) {
 			   Xapian::QueryParser::FLAG_SPELLING_CORRECTION |
 			   Xapian::QueryParser::FLAG_BOOLEAN |
 			   Xapian::QueryParser::FLAG_WILDCARD);
-	tout << "Query: " << p->query << endl;
+	tout << "Query: " << p->query << '\n';
 	TEST_STRINGS_EQUAL(qp.get_corrected_query_string(), p->expect);
     }
     for (p = test_mispelled_wildcard_queries; p->query; ++p) {
@@ -2522,7 +2551,7 @@ DEFINE_TESTCASE(qp_spellwild1, spelling) {
 			   Xapian::QueryParser::FLAG_SPELLING_CORRECTION |
 			   Xapian::QueryParser::FLAG_BOOLEAN |
 			   Xapian::QueryParser::FLAG_WILDCARD);
-	tout << "Query: " << p->query << endl;
+	tout << "Query: " << p->query << '\n';
 	TEST_STRINGS_EQUAL(qp.get_corrected_query_string(), p->expect);
     }
 }
@@ -2550,7 +2579,7 @@ DEFINE_TESTCASE(qp_spellpartial1, spelling) {
 	q = qp.parse_query(p->query,
 			   Xapian::QueryParser::FLAG_SPELLING_CORRECTION |
 			   Xapian::QueryParser::FLAG_PARTIAL);
-	tout << "Query: " << p->query << endl;
+	tout << "Query: " << p->query << '\n';
 	TEST_STRINGS_EQUAL(qp.get_corrected_query_string(), p->expect);
     }
 }
@@ -2600,7 +2629,7 @@ DEFINE_TESTCASE(qp_synonym1, synonyms) {
 	expect += ')';
 	Xapian::Query q;
 	q = qp.parse_query(p->query, qp.FLAG_AUTO_SYNONYMS|qp.FLAG_DEFAULT);
-	tout << "Query: " << p->query << endl;
+	tout << "Query: " << p->query << '\n';
 	TEST_STRINGS_EQUAL(q.get_description(), expect);
     }
 }
@@ -2639,7 +2668,7 @@ DEFINE_TESTCASE(qp_synonym2, synonyms) {
 	q = qp.parse_query(p->query,
 			   Xapian::QueryParser::FLAG_AUTO_MULTIWORD_SYNONYMS |
 			   Xapian::QueryParser::FLAG_DEFAULT);
-	tout << "Query: " << p->query << endl;
+	tout << "Query: " << p->query << '\n';
 	TEST_STRINGS_EQUAL(q.get_description(), expect);
     }
 }
@@ -2693,7 +2722,7 @@ DEFINE_TESTCASE(qp_synonym3, synonyms) {
 			   Xapian::QueryParser::FLAG_BOOLEAN |
 			   Xapian::QueryParser::FLAG_LOVEHATE |
 			   Xapian::QueryParser::FLAG_PHRASE);
-	tout << "Query: " << p->query << endl;
+	tout << "Query: " << p->query << '\n';
 	TEST_STRINGS_EQUAL(q.get_description(), expect);
     }
 }
@@ -3032,14 +3061,17 @@ static const test test_stopword_group_and_queries[] = {
 };
 
 // Regression test for bug fixed in 1.0.17 and 1.1.3.
-DEFINE_TESTCASE(qp_stopword_group1, writable) {
-    Xapian::WritableDatabase db = get_writable_database();
-    Xapian::Document doc;
-    doc.add_term("test");
-    doc.add_term("tester");
-    doc.add_term("testable");
-    doc.add_term("user");
-    db.add_document(doc);
+DEFINE_TESTCASE(qp_stopword_group1, backend) {
+    Xapian::Database db = get_database("qp_stopword_group1",
+				       [](Xapian::WritableDatabase& wdb,
+					  const string&) {
+					   Xapian::Document doc;
+					   doc.add_term("test");
+					   doc.add_term("tester");
+					   doc.add_term("testable");
+					   doc.add_term("user");
+					   wdb.add_document(doc);
+				       });
 
     Xapian::SimpleStopper stopper;
     stopper.add("this");
@@ -3094,7 +3126,7 @@ DEFINE_TESTCASE(qp_default_op2, !backend) {
 	Xapian::Query::OP_VALUE_LE
     };
     for (Xapian::Query::op op : ops) {
-	tout << op << endl;
+	tout << op << '\n';
 	TEST_EXCEPTION(Xapian::InvalidArgumentError,
 		       qp.set_default_op(op));
 	TEST_EQUAL(qp.get_default_op(), Xapian::Query::OP_OR);
@@ -3124,7 +3156,7 @@ DEFINE_TESTCASE(qp_default_op3, !backend) {
 	  "Query((a@1 SYNONYM b@2 SYNONYM c@3))" },
     };
     for (auto& test : tests) {
-	tout << test.op << endl;
+	tout << test.op << '\n';
 	qp.set_default_op(test.op);
 	// Check that get_default_op() returns what we just set.
 	TEST_EQUAL(qp.get_default_op(), test.op);
@@ -3154,7 +3186,7 @@ DEFINE_TESTCASE(qp_stemsomefullpos, !backend) {
  */
 DEFINE_TESTCASE(qp_synonymcrash1, synonyms) {
     Xapian::Database db = get_database("qp_synonymcrash1",
-				       [](Xapian::WritableDatabase &wdb,
+				       [](Xapian::WritableDatabase& wdb,
 					  const string &) {
 					   wdb.add_synonym("baa", "bar");
 				       });

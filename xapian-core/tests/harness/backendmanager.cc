@@ -84,12 +84,6 @@ BackendManager::create_dir_if_needed(const string &dirname)
 
 BackendManager::~BackendManager() { }
 
-std::string
-BackendManager::get_dbtype() const
-{
-    return "none";
-}
-
 string
 BackendManager::do_get_database_path(const vector<string> &)
 {
@@ -302,6 +296,13 @@ BackendManager::get_writable_database_path_again()
 void
 BackendManager::clean_up()
 {
+}
+
+void
+BackendManager::kill_remote(const Xapian::Database&)
+{
+    throw Xapian::InvalidOperationError("kill_remote() only supported for "
+					"remotetcp databases");
 }
 
 const char *

@@ -145,7 +145,7 @@ DEFINE_TESTCASE(exceed32bitcombineddb1, writable) {
 
 	// We can't usefully check the shard docid if the testharness backend
 	// is multi.
-	bool multi = startswith(get_dbtype(), "multi");
+	bool multi = (db1.size() > 1);
 	for (Xapian::MSetIterator i = mymset.begin(); i != mymset.end(); ++i) {
 	    doc = i.get_document();
 	    if (!multi)
@@ -1028,7 +1028,7 @@ DEFINE_TESTCASE(emptydb1, backend) {
 	Xapian::Query::OP_MAX
     };
     for (Xapian::Query::op op : ops) {
-	tout << op << endl;
+	tout << op << '\n';
 	Xapian::Enquire enquire(db);
 	Xapian::Query query(op, Xapian::Query("a"), Xapian::Query("b"));
 	enquire.set_query(query);
@@ -1334,7 +1334,7 @@ DEFINE_TESTCASE(retrylock1, writable && path) {
 	    result[0] = 'y';
 	} else {
 	    // Error.
-	    tout << "errno=" << errno << ": " << errno_to_string(errno) << endl;
+	    tout << "errno=" << errno << ": " << errno_to_string(errno) << '\n';
 	    result[0] = 'e';
 	}
 	r = 1;
@@ -1377,7 +1377,7 @@ retry:
 	    if (errno == EINTR || errno == EAGAIN)
 		goto retry;
 	    tout << "select() failed with errno=" << errno << ": "
-		 << errno_to_string(errno) << endl;
+		 << errno_to_string(errno) << '\n';
 	    result[0] = 'S';
 	    r = 1;
 	} else {
@@ -1385,7 +1385,7 @@ retry:
 	    if (r == -1) {
 		// Error.
 		tout << "read() failed with errno=" << errno << ": "
-		     << errno_to_string(errno) << endl;
+		     << errno_to_string(errno) << '\n';
 		result[0] = 'R';
 		r = 1;
 	    } else if (r == 0) {
@@ -1404,13 +1404,13 @@ retry:
 	if (errno != EINTR) break;
     }
 
-    tout << string(result, r) << endl;
+    tout << string(result, r) << '\n';
     TEST_EQUAL(result[0], 'y');
 #endif
 }
 
 // Opening a WritableDatabase with low fds available - it should avoid them.
-DEFINE_TESTCASE(dbfilefd012, glass) {
+DEFINE_TESTCASE(dbfilefd012, writable && !remote) {
 #if !defined __WIN32__ && !defined __CYGWIN__ && !defined __OS2__
     int oldfds[3];
     for (int i = 0; i < 3; ++i) {
@@ -1465,7 +1465,7 @@ DEFINE_TESTCASE(dbfilefd012, glass) {
 }
 
 /// Regression test for #675, fixed in 1.3.3 and 1.2.21.
-DEFINE_TESTCASE(cursorbug1, glass) {
+DEFINE_TESTCASE(cursorbug1, writable && path) {
     Xapian::WritableDatabase wdb = get_writable_database();
     Xapian::Database db = get_writable_database_as_database();
     Xapian::Enquire enq(db);
@@ -1474,7 +1474,7 @@ DEFINE_TESTCASE(cursorbug1, glass) {
     // The original problem triggered for chert and glass on repeat==7.
     for (int repeat = 0; repeat < 10; ++repeat) {
 	tout.str(string());
-	tout << "iteration #" << repeat << endl;
+	tout << "iteration #" << repeat << '\n';
 
 	const int ITEMS = 10;
 	int free_id = db.get_doccount();
@@ -1609,7 +1609,7 @@ DEFINE_TESTCASE(getrevision1, glass) {
 }
 
 /// Check get_revision() on an empty database reports 0.  (Since 1.5.0)
-DEFINE_TESTCASE(getrevision2, glass) {
+DEFINE_TESTCASE(getrevision2, !backend) {
     Xapian::Database db;
     TEST_EQUAL(db.get_revision(), 0);
     Xapian::Database wdb;
@@ -1750,21 +1750,20 @@ DEFINE_TESTCASE(checkatleast4, backend) {
     TEST_EQUAL(mset.size(), 0);
 }
 
-/// Regression test for glass bug fixed in 1.4.6 and 1.5.0.
-DEFINE_TESTCASE(nodocs1, transactions && !remote) {
-    {
-	Xapian::WritableDatabase db = get_named_writable_database("nodocs1");
-	db.set_metadata("foo", "bar");
-	db.commit();
-	Xapian::Document doc;
-	doc.add_term("baz");
-	db.add_document(doc);
-	db.commit();
-    }
-
+/// Regression test for glass freelist leak fixed in 1.4.6 and 1.5.0.
+DEFINE_TESTCASE(freelistleak1, check) {
+    auto path = get_database_path("freelistleak1",
+				  [](Xapian::WritableDatabase& wdb,
+				     const string&)
+				  {
+				      wdb.set_metadata("foo", "bar");
+				      wdb.commit();
+				      Xapian::Document doc;
+				      doc.add_term("baz");
+				      wdb.add_document(doc);
+				  });
     size_t check_errors =
-	Xapian::Database::check(get_named_writable_database_path("nodocs1"),
-				Xapian::DBCHECK_SHOW_STATS, &tout);
+	Xapian::Database::check(path, Xapian::DBCHECK_SHOW_STATS, &tout);
     TEST_EQUAL(check_errors, 0);
 }
 
@@ -2003,5 +2002,44 @@ DEFINE_TESTCASE(remoteportreuse1, remotetcp) {
 	    FAIL_TEST("bind() failed with unexpected error: " +
 		      errno_to_string(bind_errno));
 	}
+    }
+}
+
+// Test exception for check() on remote via stub.
+DEFINE_TESTCASE(unsupportedcheck1, path) {
+    mkdir(".stub", 0755);
+    const char* stubpath = ".stub/unsupportedcheck1";
+    ofstream out(stubpath);
+    TEST(out.is_open());
+    out << "remote :" << BackendManager::get_xapian_progsrv_command()
+	<< ' ' << get_database_path("apitest_simpledata") << '\n';
+    out.close();
+
+    TEST_EXCEPTION(Xapian::UnimplementedError,
+		   Xapian::Database::check(stubpath));
+}
+
+// Test exception for check() on inmemory via stub.
+DEFINE_TESTCASE(unsupportedcheck2, inmemory) {
+    mkdir(".stub", 0755);
+    const char* stubpath = ".stub/unsupportedcheck2";
+    ofstream out(stubpath);
+    TEST(out.is_open());
+    out << "inmemory\n";
+    out.close();
+
+    TEST_EXCEPTION(Xapian::UnimplementedError,
+		   Xapian::Database::check(stubpath));
+}
+
+// Test exception for passing empty filename to check().
+DEFINE_TESTCASE(unsupportedcheck3, !backend) {
+    // Regression test, exception was DatabaseOpeningError with description:
+    // Failed to rewind file descriptor -1 (Bad file descriptor)
+    try {
+	Xapian::Database::check(""s);
+    } catch (const Xapian::DatabaseOpeningError& e) {
+	string enoent_msg = errno_to_string(ENOENT);
+	TEST_EQUAL(e.get_error_string(), enoent_msg);
     }
 }

@@ -33,12 +33,11 @@
 using namespace std;
 
 /// Feature test simple valuestream iteration.
-DEFINE_TESTCASE(valuestream1, backend && !multi) {
-    // FIXME: enable for multi once support is in place.
+DEFINE_TESTCASE(valuestream1, backend) {
     Xapian::Database db = get_database("apitest_simpledata");
 
     for (Xapian::valueno slot = 0; slot < 15; ++slot) {
-	tout << "testing valuestream iteration for slot " << slot << endl;
+	tout << "testing valuestream iteration for slot " << slot << '\n';
 	Xapian::ValueIterator it = db.valuestream_begin(slot);
 	while (it != db.valuestream_end(slot)) {
 	    TEST_EQUAL(it.get_valueno(), slot);
@@ -62,7 +61,7 @@ DEFINE_TESTCASE(valuestream2, backend) {
 	while (interval < 1999) {
 	    tout.str(string());
 	    tout << "testing valuestream skip_to for slot " << slot
-		 << " with interval " << interval << endl;
+		 << " with interval " << interval << '\n';
 	    Xapian::docid did = 1;
 	    Xapian::ValueIterator it = db.valuestream_begin(slot);
 	    if (it == db.valuestream_end(slot)) break;
@@ -102,7 +101,7 @@ DEFINE_TESTCASE(valuestream3, backend) {
 	unsigned interval = 1;
 	while (interval < 1999) {
 	    tout << "testing valuestream check for slot " << slot
-		 << " with interval " << interval << endl;
+		 << " with interval " << interval << '\n';
 	    Xapian::docid did = 1;
 	    Xapian::ValueIterator it = db.valuestream_begin(slot);
 	    if (it == db.valuestream_end(slot)) break;
@@ -148,24 +147,30 @@ DEFINE_TESTCASE(valuestream3, backend) {
     }
 }
 
+static void
+gen_valueweightsource5_db(Xapian::WritableDatabase& db, const string&)
+{
+    Xapian::Document doc;
+    doc.add_value(1, Xapian::sortable_serialise(3.14));
+    db.replace_document(1, doc);
+    db.replace_document(0xffffffff, doc);
+}
+
 /** Check that valueweightsource handles last_docid of 0xffffffff.
  *
  *  The original implementation went into an infinite loop in this case.
  */
-DEFINE_TESTCASE(valueweightsource5, writable && valuestats) {
+DEFINE_TESTCASE(valueweightsource5, valuestats) {
     // inmemory's memory use is currently O(last_docid)!
     SKIP_TEST_FOR_BACKEND("inmemory");
     // remote's value slot iteration is very slow for this case currently
     // because it throws and catches DocNotFoundError across the link 2^32-3
     // times.
-    SKIP_TEST_FOR_BACKEND("remote");
-    Xapian::WritableDatabase db = get_writable_database();
-    Xapian::Document doc;
-    doc.add_value(1, Xapian::sortable_serialise(3.14));
-    db.replace_document(1, doc);
-    db.replace_document(0xffffffff, doc);
-    db.commit();
+    if (contains(get_dbtype(), "remote"))
+	SKIP_TEST("Testcase is too slow with remote shards");
 
+    Xapian::Database db = get_database("valueweightsource5",
+				       gen_valueweightsource5_db);
     Xapian::ValueWeightPostingSource src(1);
     src.init(db);
     src.next(0.0);
@@ -527,10 +532,9 @@ DEFINE_TESTCASE(decvalwtsource2, writable) {
     }
 }
 
-// Test DecreasingValueWeightPostingSource with an actual query.
-DEFINE_TESTCASE(decvalwtsource3, writable) {
-    Xapian::WritableDatabase db = get_writable_database();
-
+static void
+gen_decvalwtsource3_db(Xapian::WritableDatabase& db, const string&)
+{
     Xapian::Document doc;
     doc.add_term("foo");
     doc.add_value(1, Xapian::sortable_serialise(1));
@@ -542,7 +546,12 @@ DEFINE_TESTCASE(decvalwtsource3, writable) {
     db.add_document(doc);
     doc.add_value(1, Xapian::sortable_serialise(1));
     db.add_document(doc);
-    db.commit();
+}
+
+// Test DecreasingValueWeightPostingSource with an actual query.
+DEFINE_TESTCASE(decvalwtsource3, backend) {
+    Xapian::Database db = get_database("decvalwtsource3",
+				       gen_decvalwtsource3_db);
 
     Xapian::DecreasingValueWeightPostingSource ps(1, 2, 5);
     Xapian::Query q(&ps);
@@ -565,7 +574,8 @@ DEFINE_TESTCASE(decvalwtsource3, writable) {
 }
 
 // Test DecreasingValueWeightPostingSource with an actual query on a fixed
-// dataset (so we can cover the remote backend too).
+// dataset (this was to cover the remote backend before we supported generated
+// databases for remote databases).
 DEFINE_TESTCASE(decvalwtsource4, backend && !multi) {
     Xapian::Database db = get_database("apitest_declen");
 
@@ -589,17 +599,21 @@ DEFINE_TESTCASE(decvalwtsource4, backend && !multi) {
     TEST(mset_range_is_same(mset3, 0, mset4, 0, 3));
 }
 
-// Regression test - used to get segfaults if
-// DecreasingValueWeightPostingSource was pointed at an empty slot.
-DEFINE_TESTCASE(decvalwtsource5, writable) {
-    Xapian::WritableDatabase db = get_writable_database();
-
+static void
+gen_decvalwtsource5_db(Xapian::WritableDatabase& db, const string&)
+{
     Xapian::Document doc;
     doc.add_value(1, Xapian::sortable_serialise(1));
     db.add_document(doc);
     doc.add_value(2, Xapian::sortable_serialise(1));
     db.add_document(doc);
-    db.commit();
+}
+
+// Regression test - used to get segfaults if
+// DecreasingValueWeightPostingSource was pointed at an empty slot.
+DEFINE_TESTCASE(decvalwtsource5, writable) {
+    Xapian::Database db = get_database("decvalwtsource5",
+				       gen_decvalwtsource5_db);
 
     {
 	Xapian::DecreasingValueWeightPostingSource ps(1);
