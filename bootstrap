@@ -52,7 +52,7 @@ check_checksum() {
 	'${OPENSSL-openssl} sha256 2>/dev/null|sed "s/.* //"' \
 	'' ; do
       if [ -z "$SHA256SUM_TOOL" ] ; then
-	echo <<'END'
+	cat <<'END'
 Need sha256sum or shasum or openssl installed to check SHA256 checksums.
 Set environment variable SHA256SUM, SHASUM or OPENSSL if the tool isn't on
 your PATH.
@@ -64,13 +64,13 @@ END
       [ X"$r" != Xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 ] || break
     done
   fi
-  r=`< $tarball_ eval "$SHA256SUM_TOOL"`
+  r=`< "$tarball_" eval "$SHA256SUM_TOOL"`
   if [ X"$r" != X"$checksum_" ] ; then
     echo "$tarball_: computed SHA256 checksum did NOT match"
     echo "computed: $r with $SHA256SUM_TOOL"
     echo "expected: $checksum_"
-    ls -l $tarball_
-    file $tarball_ || true
+    ls -l "$tarball_"
+    file "$tarball_" || true
     mv "$tarball_" "$tarball_.$r"
     echo "Renamed $tarball_ to $tarball_.$r"
     exit 1
@@ -112,7 +112,7 @@ need_to_build() {
       return 1
       ;;
     *)
-      if [ -n $binary ] ; then
+      if [ -n "$binary" ] ; then
 	if [ -s "../patches/$package/series" ] ; then
 	  echo "There are patches to apply to $package so using private build"
 	else
@@ -209,7 +209,7 @@ lazy_build() {
 	  # curl --version exits with code 2 (~7.18.2) or 0 (7.35.0).
 	  # -L is needed to follow HTTP redirects.
 	  FETCH_URL_TOOL="${CURL-curl} -L"
-	elif ${LWP_REQUEST-lwp-request} -v > /dev/null 2>&1 || [ "$?" = 9 -o "$?" = 255 ] ; then
+	elif ${LWP_REQUEST-lwp-request} -v > /dev/null 2>&1 || [ "$?" = 9 ] || [ "$?" = 255 ] ; then
 	  # lwp-request -v exits with code 9 (5.810) or 255 (6.03)
 	  FETCH_URL_TOOL="${LWP_REQUEST-lwp-request} -mGET"
 	else
@@ -378,7 +378,7 @@ update_config() {
 update_bootstrap_sticky_opts() {
   arg=$1
   case $arg in
-    *[^-A-Za-z0-9_+=:@/.,]*)
+    *[!-A-Za-z0-9_+=:@/.,]*)
       # Quote for the shell and escape $ to $$ for make.
       bootstrap_sticky_opts="$bootstrap_sticky_opts '"`echo "$arg"|sed "s/'/'\\\\\\''/g;"'s/[$]/\\\\$\\\\$/g'`"'"
       ;;
@@ -691,7 +691,7 @@ for module in ${@:-xapian-core xapian-applications/omega swig xapian-bindings} ;
     fi
     handle_git_external swig "$swig_git_commit_hash" "$swig_origin_url"
   fi
-  if [ -f "$d/configure.ac" -o -f "$d/configure.in" ] ; then
+  if [ -f "$d/configure.ac" ] || [ -f "$d/configure.in" ] ; then
     :
   else
     # Skip any directories we can't bootstrap.
@@ -996,7 +996,6 @@ END_OF_CONFIGURE
 # We want to rerun bootstrap if a series file changes (patch added or removed)
 # or an existing patch changes.  Since we always have an series file (even if
 # it is empty), this also handles us adding the first patch for something.
-patches=
 for d in patches/* ; do
   series=$d/series
   echo "$series:" >> configure.tmp2
