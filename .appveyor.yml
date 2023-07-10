@@ -52,7 +52,7 @@ install:
   - if "%TOOLCHAIN%"=="mingw" bash -c "echo 'c:/mingw /mingw' >> /etc/fstab"
   - if "%TOOLCHAIN%"=="mingw" appveyor-retry bash -c 'mingw-get install libz-dev'
   - if "%TOOLCHAIN%"=="mingw" cd swig
-  - if "%TOOLCHAIN%"=="mingw" bash -c 'curl --retry 5 --retry-connrefused -L https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.42/pcre2-10.42.tar.bz2'
+  - if "%TOOLCHAIN%"=="mingw" bash -c 'curl --retry 5 --retry-connrefused -L https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.42/pcre2-10.42.tar.bz2 > pcre2-10.42.tar.bz2pcre2-10.42.tar.bz2'
   - if "%TOOLCHAIN%"=="mingw" bash -c 'Tools/pcre-build.sh'
   - if "%TOOLCHAIN%"=="mingw" cd ..
   - if "%TOOLCHAIN%"=="mingw64" appveyor-retry bash -c 'pacman -Sy --noconfirm zlib-devel mingw-w64-x86_64-pcre2'
@@ -76,7 +76,7 @@ install:
   - if "%TOOLCHAIN%"=="msvc" nmake -nologo -f win32\Makefile.msc
   - if "%TOOLCHAIN%"=="msvc" cd ..
   - if "%TOOLCHAIN%"=="msvc" cd swig
-  - if "%TOOLCHAIN%"=="msvc" bash -c 'curl --retry 5 --retry-connrefused -L https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.42/pcre2-10.42.tar.bz2'
+  - if "%TOOLCHAIN%"=="msvc" bash -c 'curl --retry 5 --retry-connrefused -L https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.42/pcre2-10.42.tar.bz2 > pcre2-10.42.tar.bz2pcre2-10.42.tar.bz2'
   - if "%TOOLCHAIN%"=="msvc" bash -c 'Tools/pcre-build.sh'
   - if "%TOOLCHAIN%"=="msvc" cd ..
   # Fetch pre-built unicode-data.cc to avoid having to get working tclsh.
