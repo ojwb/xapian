@@ -898,11 +898,11 @@ for d in $modules ; do
 	  esac
 	  swig_configure_args=$swig_configure_args\ `printf '%s' "$arg"|sed 's!\([^-A-Za-z0-9_+=:@/.,]\)!\\\\\\1!g'`
 	done
-	printf 'Result:\n'; printf '[%s]\n' $swig_configure_args
+	printf 'Result:\n'; eval printf '[%s]\n' $swig_configure_args
 	# Also handle compilers specified in environment variables.  We can
 	# just reassign them unconditionally as CC and CXX are ignored if
 	# empty.
-	cd "$d" && CC=$CC_FOR_BUILD CXX=$CXX_FOR_BUILD "$configure" $swig_configure_args
+	cd "$d" && CC=$CC_FOR_BUILD CXX=$CXX_FOR_BUILD eval "$configure" $swig_configure_args
 	;;
       *)
 	cd "$d" && "$configure" ${1+"$@"}
