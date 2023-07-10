@@ -61,7 +61,7 @@ install:
   - bash -c 'time ./bootstrap --fetch-url-command="curl --retry 5 --retry-connrefused -L" xapian-core swig xapian-bindings'
   - if "%TOOLCHAIN%"=="mingw" cd swig
   - if "%TOOLCHAIN%"=="mingw" bash -c 'curl --retry 5 --retry-connrefused -L https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.42/pcre2-10.42.tar.bz2 > pcre2-10.42.tar.bz2pcre2-10.42.tar.bz2'
-  - if "%TOOLCHAIN%"=="mingw" bash -c 'sed -i "s/^cd pcre.*/& ; sed -i 0s/^/#include\ \<config.h\>/ src/pcre2posix_test.c" Tools/pcre-build.sh'
+  - if "%TOOLCHAIN%"=="mingw" bash -c 'sed -i "s/^cd pcre.*/& ; sed -i 0s,^,#include\ \<config.h\>, src/pcre2posix_test.c" Tools/pcre-build.sh'
   - if "%TOOLCHAIN%"=="mingw" bash -c 'Tools/pcre-build.sh'
   - if "%TOOLCHAIN%"=="mingw" cd ..
   - if defined VCVARS_BAT call %VCVARS_BAT%
@@ -78,7 +78,7 @@ install:
   - if "%TOOLCHAIN%"=="msvc" cd ..
   - if "%TOOLCHAIN%"=="msvc" cd swig
   - if "%TOOLCHAIN%"=="msvc" bash -c 'curl --retry 5 --retry-connrefused -L https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.42/pcre2-10.42.tar.bz2 > pcre2-10.42.tar.bz2pcre2-10.42.tar.bz2'
-  - if "%TOOLCHAIN%"=="msvc" bash -c 'sed -i "s/^cd pcre.*/& ; sed -i 0s/^/#include\ \<config.h\>/ src/pcre2posix_test.c" Tools/pcre-build.sh'
+  - if "%TOOLCHAIN%"=="msvc" bash -c 'sed -i "s/^cd pcre.*/& ; sed -i 0s,^,#include\ \<config.h\>, src/pcre2posix_test.c" Tools/pcre-build.sh'
   - if "%TOOLCHAIN%"=="msvc" bash -c 'Tools/pcre-build.sh'
   - if "%TOOLCHAIN%"=="msvc" cd ..
   # Fetch pre-built unicode-data.cc to avoid having to get working tclsh.
