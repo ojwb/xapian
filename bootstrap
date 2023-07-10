@@ -871,7 +871,7 @@ for d in $modules ; do
 	echo "It seems we are cross-building, filtering configure args"
 	swig_configure_args=
 	skip=
-	for arg in "$@" ; do
+	for arg in "$@" "DUMMY='\'"; do
 	  echo "[$arg]"
 	  if [ -n "$skip" ] ; then
 	    skip=
@@ -902,10 +902,10 @@ for d in $modules ; do
 	# Also handle compilers specified in environment variables.  We can
 	# just reassign them unconditionally as CC and CXX are ignored if
 	# empty.
-	cd "$d" && CC=$CC_FOR_BUILD CXX=$CXX_FOR_BUILD "$configure" `eval echo $swig_configure_args` --without-pcre
+	cd "$d" && CC=$CC_FOR_BUILD CXX=$CXX_FOR_BUILD "$configure" $swig_configure_args
 	;;
       *)
-	cd "$d" && "$configure" ${1+"$@"} --without-pcre
+	cd "$d" && "$configure" ${1+"$@"}
 	;;
       esac
       ;;
