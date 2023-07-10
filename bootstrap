@@ -896,9 +896,9 @@ for d in $modules ; do
 	    # Drop SWIG=xxx - not useful and could cause problems.
 	    continue ;;
 	  esac
-	  swig_configure_args="$swig_configure_args "\'`echo "x$arg"|sed "s/^x//;s/'/'\\\\\\\\''/g"`\'
+	  swig_configure_args=$swig_configure_args\ `echo "x$arg"|sed "s/^x//;s/\([^A-Za-z0-9]\)/\\\1/g"`
 	done
-	echo "Result: [$swig_configure_args]"
+	printf 'Result:\n'; printf '[%s]\n' $swig_configure_args
 	# Also handle compilers specified in environment variables.  We can
 	# just reassign them unconditionally as CC and CXX are ignored if
 	# empty.
