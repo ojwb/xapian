@@ -60,7 +60,7 @@ install:
   - if "%TOOLCHAIN%"=="cygwin" appveyor-retry C:\cygwin64\setup-x86_64.exe -qnNdO -R C:/cygwin64 -s http://cygwin.mirror.constant.com -l C:/cygwin64/var/cache/setup -P zlib-devel -P pcre2-devel -P git -P patch
   - bash -c 'time ./bootstrap --fetch-url-command="curl --retry 5 --retry-connrefused -L" xapian-core swig xapian-bindings'
   - if "%TOOLCHAIN%"=="mingw" cd swig
-  - if "%TOOLCHAIN%"=="mingw" bash -c 'curl --retry 5 --retry-connrefused -L https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.42/pcre2-10.42.tar.bz2 > pcre2-10.42.tar.bz2pcre2-10.42.tar.bz2'
+  - if "%TOOLCHAIN%"=="mingw" bash -c 'curl --retry 5 --retry-connrefused -L https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.42/pcre2-10.42.tar.bz2 > pcre2-10.42.tar.bz2'
   - if "%TOOLCHAIN%"=="mingw" bash -c 'sed -i "s/^cd pcre.*/& ; sed -i 0s,^,#include\ \<config.h\>, src/pcre2posix_test.c/" Tools/pcre-build.sh'
   - if "%TOOLCHAIN%"=="mingw" bash -c 'Tools/pcre-build.sh'
   - if "%TOOLCHAIN%"=="mingw" cd ..
@@ -77,7 +77,7 @@ install:
   - if "%TOOLCHAIN%"=="msvc" nmake -nologo -f win32\Makefile.msc
   - if "%TOOLCHAIN%"=="msvc" cd ..
   - if "%TOOLCHAIN%"=="msvc" cd swig
-  - if "%TOOLCHAIN%"=="msvc" bash -c 'curl --retry 5 --retry-connrefused -L https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.42/pcre2-10.42.tar.bz2 > pcre2-10.42.tar.bz2pcre2-10.42.tar.bz2'
+  - if "%TOOLCHAIN%"=="msvc" bash -c 'curl --retry 5 --retry-connrefused -L https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.42/pcre2-10.42.tar.bz2 > pcre2-10.42.tar.bz2'
   - if "%TOOLCHAIN%"=="msvc" bash -c 'sed -i "s/^cd pcre.*/& ; sed -i 0s,^,#include\ \<config.h\>, src/pcre2posix_test.c/" Tools/pcre-build.sh'
   - if "%TOOLCHAIN%"=="msvc" bash -c 'Tools/pcre-build.sh'
   - if "%TOOLCHAIN%"=="msvc" cd ..
