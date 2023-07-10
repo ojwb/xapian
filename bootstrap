@@ -902,7 +902,7 @@ for d in $modules ; do
 	# Also handle compilers specified in environment variables.  We can
 	# just reassign them unconditionally as CC and CXX are ignored if
 	# empty.
-	cd "$d" && CC=$CC_FOR_BUILD CXX=$CXX_FOR_BUILD eval "$configure" $swig_configure_args
+	cd "$d" && env CC=$CC_FOR_BUILD CXX=$CXX_FOR_BUILD eval "$configure" $swig_configure_args
 	;;
       *)
 	cd "$d" && "$configure" ${1+"$@"}
