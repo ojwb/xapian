@@ -868,11 +868,9 @@ for d in $modules ; do
       case "$*" in
       *--host=*|*--host" "*)
 	# We're cross-building, but SWIG needs to be built natively.
-	echo "It seems we are cross-building, filtering configure args"
 	swig_configure_args=
 	skip=
 	for arg in "$@" ; do
-	  echo "[$arg]"
 	  if [ -n "$skip" ] ; then
 	    skip=
 	    continue
@@ -898,7 +896,6 @@ for d in $modules ; do
 	  esac
 	  swig_configure_args=$swig_configure_args\ `printf '%s' "$arg"|sed 's!\([^-A-Za-z0-9_+=:@/.,]\)!\\\\\\1!g'`
 	done
-	printf 'Result:\n'; eval printf '[%s]\\n' $swig_configure_args
 	# Also handle compilers specified in environment variables.  We can
 	# just reassign them unconditionally as CC and CXX are ignored if
 	# empty.
