@@ -50,7 +50,7 @@ install:
         $env:PATH="c:\msys64\usr\bin;$env:PATH"
       }
   - if "%TOOLCHAIN%"=="mingw" bash -c "echo 'c:/mingw /mingw' >> /etc/fstab"
-  - if "%TOOLCHAIN%"=="mingw" appveyor-retry bash -c 'mingw-get install libz-dev mingw-w64-x86_64-pcre2'
+  - if "%TOOLCHAIN%"=="mingw" appveyor-retry bash -c 'mingw-get install libz-dev libpcre2-dev'
   - if "%TOOLCHAIN%"=="mingw64" appveyor-retry bash -c 'pacman -Sy --noconfirm zlib-devel mingw-w64-x86_64-pcre2'
   # Work around odd ownership of directories in CI build image.
   - if "%TOOLCHAIN%"=="cygwin" bash -c 'git config --global --add safe.directory /cygdrive/c/projects/xapian'
