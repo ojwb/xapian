@@ -838,6 +838,12 @@ if [ -n "$vars" ] ; then
 fi
 
 cat <<'END_OF_CONFIGURE' >> configure.tmp
+echo "pcre2-config --cflags:"
+pcre2-config --cflags || true
+echo "pcre2-config --libs8:"
+pcre2-config --libs8 || true
+echo "ls -l /usr/include:"
+ls -l /usr/include || true
 dirs=
 revdirs=
 XAPIAN_CONFIG=$here/xapian-core/xapian-config
