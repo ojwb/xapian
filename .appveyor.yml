@@ -33,6 +33,8 @@ install:
   - ps: >-
       if ($env:TOOLCHAIN -eq "mingw") {
         $env:PATH="C:\Mingw\bin;C:\Mingw\MSYS\1.0\bin;$env:PATH"
+        # Need to avoid msys perl.
+        $env:CONFIGOPTS+="--with-lua --with-tcl"
       } elseif ($env:TOOLCHAIN -eq "mingw64") {
         if ($env:Platform -eq "x86") {
           $env:PATH="C:\mingw-w64\i686-8.1.0-posix-dwarf-rt_v6-rev0\mingw32\bin;C:\msys64\usr\bin;$env:PATH"
@@ -50,7 +52,7 @@ install:
         $env:PATH="c:\msys64\usr\bin;$env:PATH"
       }
   - if "%TOOLCHAIN%"=="mingw" bash -c "echo 'c:/mingw /mingw' >> /etc/fstab"
-  - if "%TOOLCHAIN%"=="mingw" appveyor-retry bash -c 'mingw-get install libz-dev'
+  - if "%TOOLCHAIN%"=="mingw" appveyor-retry bash -c 'mingw-get install libz-dev mingw32-lua mingw32-tcltk'
   - if "%TOOLCHAIN%"=="mingw64" appveyor-retry bash -c 'pacman -Sy --noconfirm pcre2-devel zlib-devel'
   # Work around odd ownership of directories in CI build image.
   - if "%TOOLCHAIN%"=="cygwin" bash -c 'git config --global --add safe.directory /cygdrive/c/projects/xapian'
