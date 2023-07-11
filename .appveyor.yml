@@ -34,7 +34,7 @@ install:
       if ($env:TOOLCHAIN -eq "mingw") {
         $env:PATH="C:\Mingw\bin;C:\Mingw\MSYS\1.0\bin;$env:PATH"
         # Need to avoid msys perl.
-        $env:CONFIGOPTS+="--with-lua --with-tcl"
+        $env:CONFIGOPTS+=" --with-lua --with-tcl"
       } elseif ($env:TOOLCHAIN -eq "mingw64") {
         if ($env:Platform -eq "x86") {
           $env:PATH="C:\mingw-w64\i686-8.1.0-posix-dwarf-rt_v6-rev0\mingw32\bin;C:\msys64\usr\bin;$env:PATH"
