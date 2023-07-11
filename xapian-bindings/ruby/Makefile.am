@@ -107,15 +107,17 @@ docs/rdocs/index.html: docs/xapian.rb
 	$(MKDIR_P) docs
 	cd docs && $(RDOC) --op rdocs `test -f xapian.rb||echo '$(abs_srcdir)/docs/'`xapian.rb
 
-if DOCUMENTATION_RULES
+if MAINTAINER_MODE
 docs/xapian.rb: generate-rdoc-stubs xapian.rb ../doxygen-xml/index.xml
 	$(PERL) $(srcdir)/generate-rdoc-stubs
 
+CLEANFILES += docs/xapian.rb
+endif
+
+if DOCUMENTATION_RULES
 BUILT_SOURCES += docs/index.html
 
 .rst.html:
 	-case "$@" in */*) d=`echo "$@"|sed 's,/[^/]*$$,,'`; $(MKDIR_P) "$$d" ;; esac
 	$(RST2HTML) --exit-status=warning $< $@
-
-CLEANFILES += docs/xapian.rb
 endif
