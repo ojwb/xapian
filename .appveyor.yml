@@ -77,10 +77,6 @@ install:
   - if "%TOOLCHAIN%-%Platform%"=="msvc-x64" sed -i 's/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
   - if "%TOOLCHAIN%"=="msvc" nmake -nologo -f win32\Makefile.msc
   - if "%TOOLCHAIN%"=="msvc" cd ..
-  - if "%TOOLCHAIN%"=="msvc" cd swig
-  - if "%TOOLCHAIN%"=="msvc" bash -c 'curl --retry 5 --retry-connrefused -L https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.41/pcre2-10.41.tar.bz2 > pcre2-10.41.tar.bz2'
-  - if "%TOOLCHAIN%"=="msvc" bash -c 'Tools/pcre-build.sh'
-  - if "%TOOLCHAIN%"=="msvc" cd ..
   # Fetch pre-built unicode-data.cc to avoid having to get working tclsh.
   - curl --retry 5 --retry-connrefused https://oligarchy.co.uk/xapian/patches/unicode-data15.cc > xapian-core\unicode\unicode-data.cc
   - ps: >-
@@ -91,6 +87,10 @@ install:
         $env:CPPFLAGS="-Ic:/projects/xapian/zlib"
         $env:AR="lib"
         $env:LDFLAGS="-Lc:/projects/xapian/zlib"
+        cd swig
+        bash -c 'curl --retry 5 --retry-connrefused -L https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.41/pcre2-10.41.tar.bz2 > pcre2-10.41.tar.bz2'
+        bash -c 'Tools/pcre-build.sh'
+        cd ..
       }
 build_script:
   - bash -c 'time ./configure $CONFIGOPTS'
