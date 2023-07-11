@@ -741,7 +741,7 @@ if test no != "$with_java" ; then
 	  ${JDK_HOME+"$JDK_HOME/include"} \
 	  "$rel_jnidir" \
 	  /System/Library/Frameworks/JavaVM.framework/Headers ; do
-	jnidir=`echo "$jnidir"|sed 's,\\,/,g'`
+	jnidir=`echo "$jnidir"|sed 's,\\\\,/,g'`
 	CPPFLAGS="$SAVE_CPPFLAGS -I$jnidir"
 	AC_MSG_CHECKING([for jni.h in $jnidir])
 	if test -f "$jnidir/jni.h" ; then
