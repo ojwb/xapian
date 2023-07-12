@@ -93,7 +93,7 @@ install:
         $env:LDFLAGS="-Lc:/projects/xapian/zlib"
         cd swig
         bash -c 'curl --retry 5 --retry-connrefused -L https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.41/pcre2-10.41.tar.bz2 > pcre2-10.41.tar.bz2'
-        bash -c 'Tools/pcre-build.sh'
+        bash -c 'Tools/pcre-build.sh CPPFLAGS=-DPCRE2_EXPORT='
         cd ..
       }
 build_script:
