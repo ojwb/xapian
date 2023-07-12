@@ -53,7 +53,7 @@ install:
       }
   - if "%TOOLCHAIN%"=="mingw" bash -c "echo 'c:/mingw /mingw' >> /etc/fstab"
   - if "%TOOLCHAIN%"=="mingw" appveyor-retry bash -c 'mingw-get install libz-dev mingw32-lua mingw32-tcltk'
-  - if "%TOOLCHAIN%"=="mingw64" appveyor-retry bash -c 'pacman -Sy --noconfirm mingw-w64-x86_64-pcre2 zlib-devel'
+  - if "%TOOLCHAIN%"=="mingw64" appveyor-retry bash -c 'pacman -Sy --noconfirm pcre2-devel mingw-w64-x86_64-pcre2 zlib-devel'
   # Work around odd ownership of directories in CI build image.
   - if "%TOOLCHAIN%"=="cygwin" bash -c 'git config --global --add safe.directory /cygdrive/c/projects/xapian'
   # Install cygwin git and patch packages since those installed in the image
