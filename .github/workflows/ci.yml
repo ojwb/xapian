@@ -32,7 +32,7 @@ jobs:
     - name: bootstrap source tree
       run: |
         echo verbose=off > ~/.wgetrc
-        ./bootstrap xapian-core
+        bash -c ./bootstrap xapian-core
     - name: configure
       run: bash -c ./configure CC='cl -nologo' CXX='ccache g++'
     - name: make
