@@ -46,7 +46,7 @@ install:
         }
       } elseif ($env:TOOLCHAIN -eq "cygwin") {
         $env:PATH="C:\cygwin64\bin;$env:PATH"
-        $env:CONFIGOPTS+=" --build=x86_64-pc-cygwin --with-lua --with-python"
+        $env:CONFIGOPTS+=" --build=x86_64-pc-cygwin --with-lua --with-python3"
         # --with-perl failing - need to link to libperl I think
         # ruby.h not found
         #--with-tcl --with-php 
