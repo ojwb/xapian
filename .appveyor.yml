@@ -100,11 +100,7 @@ install:
       }
 build_script:
   - bash -c 'time ./configure $CONFIGOPTS'
-  - ps: >-
-      if ($env:TOOLCHAIN -eq "cygwin") {
-        bash -c 'time make -j2 PERL_LIBS=-lperl' < nul
-      } else {
-        bash -c 'time make -j2' < nul
-      }
+  - if "%TOOLCHAIN%"=="cygwin" bash -c 'time make -j2 PERL_LIBS=-lperl' < nul
+  - if not "%TOOLCHAIN%"=="cygwin" bash -c 'time make -j2' < nul
 test_script:
   - bash -c 'time make check VERBOSE=1' < nul
