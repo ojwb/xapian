@@ -17,25 +17,119 @@ on:
   workflow_dispatch:
 
 jobs:
-  windows:
-    runs-on: 'windows-latest'
+  makedist:
+    name: 'make dist'
+    runs-on: 'ubuntu-latest'
+    env:
+      LIBEXTRACTOR_PREFIX: '/usr/lib/x86_64-linux-gnu/libextractor'
     steps:
     - name: Check out repository code
       uses: actions/checkout@v3
+    - name: Install CCache
+      uses: hendrikmuhs/ccache-action@v1
+      with:
+        key: makedist
+    - name: Install package dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install \
+            doxygen \
+            graphviz \
+            help2man \
+            python3-docutils \
+            pngcrush \
+            python3-sphinx \
+            uuid-dev \
+            libpcre2-dev \
+            libmagic-dev \
+            lua5.3 \
+            liblua5.3-dev \
+            mono-devel \
+            python3-dev \
+            tcl \
+            tcl-dev \
+            libpoppler-glib-dev \
+            libglib2.0-dev \
+            libe-book-dev \
+            libetonyek-dev \
+            libgepub-0.6-dev \
+            libgmime-2.6-dev \
+            libarchive-dev \
+            libabw-dev \
+            libcdr-dev \
+            libextractor-dev \
+            libmwaw-dev \
+            libreofficekit-dev libreoffice-calc libreoffice-draw libreoffice-impress libreoffice-writer \
+            libtesseract-dev \
+            tesseract-ocr-eng
+    - name: bootstrap source tree
+      run: |
+        echo verbose=off > ~/.wgetrc
+        ./bootstrap xapian-core xapian-applications/omega swig xapian-bindings xapian-letor
+    - name: configure
+      run: ./configure
+    - name: make
+      run: make -j2
+    - name: Run tests
+      run: make -j2 check VERBOSE=1 AUTOMATED_TESTING=1
+    - name: Check generated files are in .gitignore
+      # grep '^' passes through all input while giving a non-zero exit status
+      # if that input is empty.
+      run: git status --porcelain|grep '^' && { echo "The generated files listed above are not in .gitignore" ; exit 1; }; true
+    - name: Create distribution tarball
+      run: |
+        make dist
+    - uses: actions/upload-artifact@v3
+      with:
+        path: |
+          xapian-core/xapian-core-*.tar.xz
+          xapian-applications/omega/xapian-omega-*.tar.xz
+          xapian-bindings/xapian-bindings-*.tar.xz
+          xapian-letor/xapian-letor-*.tar.xz
+        retention-days: 1
+        if-no-files-found: error
+
+  windows:
+    runs-on: 'windows-latest'
+    needs: makedist
+    steps:
+    - name: Fetch distribution
+      uses: actions/download-artifact@v3
+    - name: Unpack distribution
+      run: |
+        cd xapian-core
+        tar --strip-components=1 -xf xapian-core-*.tar.xz
+        cd ../xapian-applications/omega
+        tar --strip-components=1 -xf xapian-omega-*.tar.xz
+        cd ../../xapian-bindings
+        tar --strip-components=1 -xf xapian-bindings-*.tar.xz
+        cd ../xapian-letor
+        tar --strip-components=1 -xf xapian-letor-*.tar.xz
     - name: Set up Visual Studio shell
       uses: egor-tensin/vs-shell@v2
       with:
         arch: x64
     - name: Install package dependencies
       run: |
-        choco install gnuwin32-m4 make wget
-    - name: bootstrap source tree
-      run: |
-        echo verbose=off > ~/.wgetrc
-        bash -c ./bootstrap xapian-core
+        choco install make
     - name: configure
-      run: bash -c ./configure CC='cl -nologo' CXX='ccache g++'
+      run: |
+        cd xapian-core
+        bash -c ./configure CC='cl -nologo' CXX='ccache g++'
+        cd ../xapian-applications/omega
+        bash -c ./configure CC='cl -nologo' CXX='ccache g++' XAPIAN_CONFIG=../../xapian-core/xapian-config
+        cd ../../xapian-bindings
+        bash -c ./configure CC='cl -nologo' CXX='ccache g++' XAPIAN_CONFIG=../xapian-core/xapian-config
+        cd ../xapian-letor
+        bash -c ./configure CC='cl -nologo' CXX='ccache g++' XAPIAN_CONFIG=../xapian-core/xapian-config
     - name: make
-      run: make -j2
+      run: |
+        make -j2 -C xapian-core
+        make -j2 -C xapian-applications/omega
+        make -j2 -C xapian-bindings
+        make -j2 -C xapian-letor
     - name: Run tests
-      run: make -j2 check VERBOSE=1 AUTOMATED_TESTING=1
+        make -j2 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1
+        make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1
+        make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1
+        make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1
