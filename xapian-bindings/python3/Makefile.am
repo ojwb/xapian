@@ -61,10 +61,7 @@ AM_CPPFLAGS = -I$(PYTHON3_INC)
 AM_CXXFLAGS = $(SWIG_CXXFLAGS) $(XAPIAN_CXXFLAGS)
 _xapian_la_LDFLAGS = -avoid-version -module -shrext "$(PYTHON3_EXT_SUFFIX)" $(NO_UNDEFINED)
 _xapian_la_SOURCES = xapian_wrap.cc
-_xapian_la_LIBADD = $(XAPIAN_LIBS) $(PYTHON3_LIBS) version.$(OBJEXT)
-
-version.$(OBJEXT): version.rc
-	$(WINDRES) -v $(XAPIAN_CPPFLAGS) -DPYTHON_VERSION=`$(PYTHON3) -c 'import platform; print(platform.python_version())'` version.rc version.$(OBJEXT)
+_xapian_la_LIBADD = $(XAPIAN_LIBS) $(PYTHON3_LIBS)
 
 # We want `xapian/__init__.py` rather than xapian.py so the module is treated
 # as a package.

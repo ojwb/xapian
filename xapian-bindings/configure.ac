@@ -1189,8 +1189,6 @@ AC_SUBST(SWIG_CXXFLAGS)
 dnl Restore CXXFLAGS to those the user specified or autoconf defaulted to.
 CXXFLAGS=$save_CXXFLAGS
 
-AC_CHECK_TOOLS([WINDRES], [windres], [:])
-
 dnl Required for auto regeneration to work in a combined maintainer-mode tree.
 : ${AUTOM4TE=autom4te}
 AC_SUBST([AUTOM4TE])
