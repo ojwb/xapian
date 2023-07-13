@@ -29,7 +29,6 @@ environment:
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
     VCVARS_BAT: "\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat\""
 install:
-  - echo "Toolchain: %TOOLCHAIN%"
   - ps: >-
       $env:CONFIGOPTS="--disable-documentation"
   - ps: >-
