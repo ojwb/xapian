@@ -11,9 +11,10 @@ environment:
   global:
     AUTOMATED_TESTING: 1
   matrix:
-  - TOOLCHAIN: mingw
-    platform: x86
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+# osdn.net seems to be unstable right now and downloads randomly fail
+#  - TOOLCHAIN: mingw
+#    platform: x86
+#    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
   - TOOLCHAIN: mingw64
     platform: x64
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
