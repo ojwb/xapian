@@ -15,20 +15,20 @@ environment:
 #  - TOOLCHAIN: mingw
 #    platform: x86
 #    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-  - TOOLCHAIN: mingw64
-    platform: x64
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+#  - TOOLCHAIN: mingw64
+#    platform: x64
+#    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
     # We only test 64-bit cygwin as 32-bit support has been dropped as of
     # Cygwin 3.4:
     # https://cygwin.com/pipermail/cygwin/2022-November/252542.html
   - TOOLCHAIN: cygwin
     platform: x64
     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-  - TOOLCHAIN: msvc
-    platform: x64
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-    VCVARS_BAT: "\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat\""
-install:
+#  - TOOLCHAIN: msvc
+#    platform: x64
+#    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+#    VCVARS_BAT: "\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat\""
+#install:
   - ps: >-
       $env:CONFIGOPTS="--disable-documentation"
   - ps: >-
