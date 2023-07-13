@@ -28,8 +28,7 @@ jobs:
         arch: x64
     - name: Install package dependencies
       run: |
-        pacman install make wget autoconf automake libtool
-        #choco install gnuwin32-m4 make wget
+        choco install gnuwin32-m4 make wget
     - name: bootstrap source tree
       run: |
         echo verbose=off > ~/.wgetrc
