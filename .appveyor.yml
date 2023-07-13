@@ -98,7 +98,8 @@ install:
         cd ..
       }
 build_script:
-  - bash -c 'time ./configure $CONFIGOPTS'
+  # --with-perl failing - need to link to libperl I think
+  - bash -c 'time ./configure $CONFIGOPTS --with-lua --with-php --with-tcl --with-ruby --with-python'
   - if "%TOOLCHAIN%"=="cygwin" bash -c 'time make -j2 PERL_LIBS=-lcygperl5_36' < nul
   - if not "%TOOLCHAIN%"=="cygwin" bash -c 'time make -j2' < nul
 test_script:
