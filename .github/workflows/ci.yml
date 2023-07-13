@@ -42,22 +42,25 @@ jobs:
             uuid-dev \
             libpcre2-dev \
             libmagic-dev \
-            lua5.3 \
-            liblua5.3-dev \
+            lua5.4 \
+            liblua5.4-dev \
             mono-devel \
             python3-dev \
             tcl \
             tcl-dev \
+            libicu-dev \
+            pkg-config \
             libpoppler-glib-dev \
             libglib2.0-dev \
             libe-book-dev \
             libetonyek-dev \
             libgepub-0.6-dev \
-            libgmime-2.6-dev \
+            libgmime-3.0-dev \
             libarchive-dev \
             libabw-dev \
             libcdr-dev \
             libextractor-dev \
+            libextractor-plugins-all \
             libmwaw-dev \
             libreofficekit-dev libreoffice-calc libreoffice-draw libreoffice-impress libreoffice-writer \
             libtesseract-dev \
