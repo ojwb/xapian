@@ -919,7 +919,7 @@ case $enable_backend_glass$enable_backend_honey in
     ], [ ])
 
   dnl Check for zlibVersion - normally it's in -lz but the mingw build needs -lzlib or -lzdll.
-  AC_SEARCH_LIBS([zlibVersion], [z zlib zdll z.dll], [], [
+  AC_SEARCH_LIBS([zlibVersion], [zdll z.dll z zlib], [], [
     AC_MSG_ERROR([zlibVersion() not found in -lz, -lzlib, or -lzdll - required for glass (you may need to install the zlib1g-dev or zlib-devel package)])
     ])
 
