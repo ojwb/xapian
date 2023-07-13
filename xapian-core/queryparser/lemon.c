@@ -1705,8 +1705,10 @@ int main(int argc, char **argv)
   lem.errsym = Symbol_new("error");
   lem.errsym->useCnt = 0;
 
+  printf("About to call Parse\n");
   /* Parse the input file */
   Parse(&lem);
+  printf("Called Parse\n");
   if( lem.errorcnt ) exit(lem.errorcnt);
   if( lem.nrule==0 ){
     fprintf(stderr,"Empty grammar.\n");
@@ -1718,6 +1720,7 @@ int main(int argc, char **argv)
   lem.nsymbol = Symbol_count();
   lem.symbols = Symbol_arrayof();
   for(i=0; i<lem.nsymbol; i++) lem.symbols[i]->index = i;
+  printf("about to qsort symbols\n");
   qsort(lem.symbols,lem.nsymbol,sizeof(struct symbol*), Symbolcmpp);
   for(i=0; i<lem.nsymbol; i++) lem.symbols[i]->index = i;
   while( lem.symbols[i-1]->type==MULTITERMINAL ){ i--; }
@@ -1739,54 +1742,69 @@ int main(int argc, char **argv)
   lem.startRule = lem.rule;
   lem.rule = Rule_sort(lem.rule);
 
+  printf("about to process rules\n");
   /* Generate a reprint of the grammar, if requested on the command line */
   if( rpflag ){
     Reprint(&lem);
   }else{
     /* Initialize the size for all follow and first sets */
+    printf("about to SetSize\n");
     SetSize(lem.nterminal+1);
 
     /* Find the precedence for every production rule (that has one) */
+    printf("about to FindRulePrecedences\n");
     FindRulePrecedences(&lem);
 
     /* Compute the lambda-nonterminals and the first-sets for every
     ** nonterminal */
+    printf("about to FindFirstSets\n");
     FindFirstSets(&lem);
 
     /* Compute all LR(0) states.  Also record follow-set propagation
     ** links so that the follow-set can be computed later */
     lem.nstate = 0;
+    printf("about to FindStates\n");
     FindStates(&lem);
     lem.sorted = State_arrayof();
 
+    printf("about to FindLinks\n");
     /* Tie up loose ends on the propagation links */
     FindLinks(&lem);
 
+    printf("about to FindFollowSets\n");
     /* Compute the follow set of every reducible configuration */
     FindFollowSets(&lem);
 
+    printf("about to FindActions\n");
     /* Compute the action tables */
     FindActions(&lem);
 
+    printf("about to CompressTables\n");
     /* Compress the action tables */
     if( compress==0 ) CompressTables(&lem);
 
+    printf("about to ResortStates\n");
+    /* Compress the action tables */
     /* Reorder and renumber the states so that states with fewer choices
     ** occur at the end.  This is an optimization that helps make the
     ** generated parser tables smaller. */
     if( noResort==0 ) ResortStates(&lem);
 
+    printf("about to ReportOutput\n");
     /* Generate a report of the parser generated.  (the "y.output" file) */
     if( !quiet ) ReportOutput(&lem);
 
+    printf("about to ReportTable\n");
     /* Generate the source code for the parser */
     ReportTable(&lem, mhflag);
 
+    printf("about to ReportHeader\n");
     /* Produce a header file for use by the scanner.  (This step is
     ** omitted if the "-m" option is used because makeheaders will
     ** generate the file for us.) */
     if( !mhflag ) ReportHeader(&lem);
   }
+  printf("about to report stats\n");
   if( statistics ){
     printf("Parser statistics:\n");
     stats_line("terminal symbols", lem.nterminal);
