@@ -98,6 +98,8 @@ jobs:
     steps:
     - name: Fetch distribution
       uses: actions/download-artifact@v3
+      with:
+        path: .
     - name: Unpack distribution
       run: |
         cd xapian-core
