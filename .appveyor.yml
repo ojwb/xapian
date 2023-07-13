@@ -54,7 +54,7 @@ install:
       }
   - if "%TOOLCHAIN%"=="mingw" bash -c "echo 'c:/mingw /mingw' >> /etc/fstab"
   - if "%TOOLCHAIN%"=="mingw" appveyor-retry bash -c 'mingw-get install libz-dev mingw32-lua mingw32-tcltk'
-  - if "%TOOLCHAIN%"=="mingw64" appveyor-retry bash -c 'pacman -Sy --noconfirm pcre2-devel mingw-w64-x86_64-pcre2 mingw-w64-x86_64-zlib'
+  - if "%TOOLCHAIN%"=="mingw64" appveyor-retry bash -c 'pacman -Sy --noconfirm pcre2-devel mingw-w64-x86_64-pcre2 mingw-w64-x86_64-tcl mingw-w64-x86_64-zlib'
   # Work around odd ownership of directories in CI build image.
   - if "%TOOLCHAIN%"=="cygwin" bash -c 'git config --global --add safe.directory /cygdrive/c/projects/xapian'
   # Install cygwin git and patch packages since those installed in the image
@@ -99,7 +99,9 @@ install:
       }
 build_script:
   # --with-perl failing - need to link to libperl I think
-  - bash -c 'time ./configure $CONFIGOPTS --with-lua --with-php --with-tcl --with-ruby --with-python'
+  # --with-tcl: checking for tclsh... no
+  # --with-php: checking for php-config... no
+  - bash -c 'time ./configure $CONFIGOPTS --with-lua --with-ruby --with-python'
   - if "%TOOLCHAIN%"=="cygwin" bash -c 'time make -j2 PERL_LIBS=-lcygperl5_36' < nul
   - if not "%TOOLCHAIN%"=="cygwin" bash -c 'time make -j2' < nul
 test_script:
