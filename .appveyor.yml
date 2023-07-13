@@ -46,7 +46,9 @@ install:
         }
       } elseif ($env:TOOLCHAIN -eq "cygwin") {
         $env:PATH="C:\cygwin64\bin;$env:PATH"
-        $env:CONFIGOPTS+=" --build=x86_64-pc-cygwin"
+        $env:CONFIGOPTS+=" --build=x86_64-pc-cygwin --with-tcl --with-php --with-lua --with-python"
+        # --with-perl failing - need to link to libperl I think
+        # ruby.h not found
       } elseif ($env:TOOLCHAIN -eq "llvm") {
         $env:PATH="C:\Program Files\LLVM\bin;c:\msys64\usr\bin;$env:PATH"
       } else {
@@ -98,10 +100,7 @@ install:
         cd ..
       }
 build_script:
-  # --with-perl failing - need to link to libperl I think
-  # --with-tcl: checking for tclsh... no
-  # --with-php: checking for php-config... no
-  - bash -c 'time ./configure $CONFIGOPTS --with-lua --with-ruby --with-python'
+  - bash -c 'time ./configure $CONFIGOPTS"
   - if "%TOOLCHAIN%"=="cygwin" bash -c 'time make -j2 PERL_LIBS=-lcygperl5_36' < nul
   - if not "%TOOLCHAIN%"=="cygwin" bash -c 'time make -j2' < nul
 test_script:
