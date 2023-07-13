@@ -107,4 +107,4 @@ build_script:
   - if "%TOOLCHAIN%"=="cygwin" bash -c 'time make -j2 PERL_LIBS=-lcygperl5_36' < nul
   - if not "%TOOLCHAIN%"=="cygwin" bash -c 'time make -j2' < nul
 test_script:
-  - bash -c 'time make check VERBOSE=1' < nul
+  - bash -c 'time make -C xapian-bindings check VERBOSE=1' < nul
