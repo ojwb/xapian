@@ -72,10 +72,6 @@ jobs:
       run: make -j2
     - name: Run tests
       run: make -j2 check VERBOSE=1 AUTOMATED_TESTING=1
-    - name: Check generated files are in .gitignore
-      # grep '^' passes through all input while giving a non-zero exit status
-      # if that input is empty.
-      run: git status --porcelain|grep '^' && { echo "The generated files listed above are not in .gitignore" ; exit 1; }; true
     - name: Create distribution tarball
       run: |
         make dist
@@ -88,6 +84,10 @@ jobs:
           xapian-letor/xapian-letor-*.tar.xz
         retention-days: 1
         if-no-files-found: error
+    - name: Check generated files are in .gitignore
+      # grep '^' passes through all input while giving a non-zero exit status
+      # if that input is empty.
+      run: git status --porcelain|grep '^' && { echo "The generated files listed above are not in .gitignore" ; exit 1; }; true
 
   windows:
     runs-on: 'windows-latest'
@@ -129,6 +129,7 @@ jobs:
         make -j2 -C xapian-bindings
         make -j2 -C xapian-letor
     - name: Run tests
+      run: |
         make -j2 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1
         make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1
         make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1
