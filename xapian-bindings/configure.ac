@@ -203,6 +203,7 @@ if test x$USE_MAINTAINER_MODE = xyes; then
   test -z "$DOXYGEN" && AC_MSG_ERROR([doxygen is required to build documentation])
 fi
 
+dnl FIXME: Support --with-python to avoid gotcha?
 AC_ARG_WITH(python3,
   AS_HELP_STRING([--with-python3], [enable Python 3 bindings]),
   [],
