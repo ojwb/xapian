@@ -40,7 +40,7 @@
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
-#include <ctime>
+#include <time.t> // Not <ctime> so we get strptime() on cygwin.
 
 #include "commonhelp.h"
 #include "datetime.h"
