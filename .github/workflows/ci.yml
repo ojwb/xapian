@@ -857,11 +857,9 @@ jobs:
         choco install make
     - name: Build zlib
       run: |
-
-    - name: configure
-      run: |
+        which link
         mkdir zlib
-        pushd zlib
+        cd zlib
         curl --retry 5 --retry-connrefused -L https://github.com/xapian/xapian-dev-deps/releases/download/current/zlib-1.2.13.tar.gz|tar --strip-components=1 -zxf -
         # Don't build zlib with -MD as it seems this flag needs to be used
         # consistently across the build.
@@ -869,8 +867,9 @@ jobs:
         # Don't build zlib with a fixed base address on x64 as that gives
         # linker warning LNK4281.  FIXME: only for x64
         sed -i 's/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
-        nmake -nologo -f 'win32\Makefile.msc'
-        popd
+        nmake -nologo -f 'win32\Makefile.msc' LD=cl
+    - name: configure
+      run: |
         export AR=lib
         export CC='cl -nologo'
         export CXX="$PWD/xapian-core/compile cl -nologo"
