@@ -68,8 +68,8 @@ install:
   # Install cygwin git and patch packages since those installed in the image
   # want the 32-bit cygwin1.dll which means they fail to work if the 64-bit
   # cygwin1.dll is first on PATH.
-  - if "%TOOLCHAIN%"=="cygwin" appveyor-retry C:\cygwin64\setup-x86_64.exe -qnNdO -R C:/cygwin64 -s http://cygwin.mirror.constant.com -l C:/cygwin64/var/cache/setup -P libpcre2-devel -P zlib-devel -P git -P patch -P liblua-devel -P lua -P python3-devel -P ruby-devel -P tcl-devel -P libcrypt-devel
-  # -P php-devel
+  - if "%TOOLCHAIN%"=="cygwin" appveyor-retry C:\cygwin64\setup-x86_64.exe -qnNdO -R C:/cygwin64 -s http://cygwin.mirror.constant.com -l C:/cygwin64/var/cache/setup -P libpcre2-devel -P zlib-devel -P git -P patch -P liblua-devel -P lua -P python3-devel -P ruby-devel -P libcrypt-devel
+  # -P php-devel -P tcl-devel
   - bash -c 'time ./bootstrap --fetch-url-command="curl --retry 5 --retry-connrefused -L" xapian-core swig xapian-bindings'
   - if "%TOOLCHAIN%"=="mingw" cd swig
   - if "%TOOLCHAIN%"=="mingw" bash -c 'curl --retry 5 --retry-connrefused -L https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.41/pcre2-10.41.tar.bz2 > pcre2-10.41.tar.bz2'
@@ -107,7 +107,7 @@ install:
         cd ..
       }
 build_script:
-  - bash -c 'time ./configure $CONFIGOPTS LIBS=-lssp'
+  - bash -c 'time ./configure $CONFIGOPTS'
   - touch xapian-bindings/{tcl8,lua,ruby,perl,python3,php}/docs/index.html
   - if "%TOOLCHAIN%"=="cygwin" bash -c 'time make -j2' < nul
   - if not "%TOOLCHAIN%"=="cygwin" bash -c 'time make -j2' < nul
