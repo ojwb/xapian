@@ -100,15 +100,20 @@ jobs:
       uses: actions/download-artifact@v3
     - name: Unpack distribution
       run: |
-        mv artifact/* .
+        pwd
+        mv -v artifact/* .
         rmdir artifact
         cd xapian-core
+        ls -l
         tar --strip-components=1 -xf xapian-core-*.tar.xz
         cd ../xapian-applications/omega
+        ls -l
         tar --strip-components=1 -xf xapian-omega-*.tar.xz
         cd ../../xapian-bindings
+        ls -l
         tar --strip-components=1 -xf xapian-bindings-*.tar.xz
         cd ../xapian-letor
+        ls -l
         tar --strip-components=1 -xf xapian-letor-*.tar.xz
     - name: Set up Visual Studio shell
       uses: egor-tensin/vs-shell@v2
