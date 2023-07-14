@@ -100,6 +100,9 @@ jobs:
   cygwin:
     runs-on: 'windows-latest'
     needs: makedist
+    env:
+      # For Cygwin's bash as GHA feeds it shell fragments with DOS EOLs.
+      BASHOPTS: 'igncr'
     steps:
     - name: Fetch distribution
       uses: actions/download-artifact@v3
@@ -190,7 +193,7 @@ jobs:
       run: |
         mkdir zlib
         pushd zlib
-        curl --retry 5 --retry-connrefused -L https://github.com/xapian/xapian-dev-deps/releases/download/current/zlib-1.2.13.tar.gz|tar --strip-components=1 -zxf -'
+        curl --retry 5 --retry-connrefused -L https://github.com/xapian/xapian-dev-deps/releases/download/current/zlib-1.2.13.tar.gz|tar --strip-components=1 -zxf -
         # Don't build zlib with -MD as it seems this flag needs to be used
         # consistently across the build.
         sed -i 's/\(^CFLAGS  *= *-nologo \)-MD /\1/' win32/Makefile.msc
