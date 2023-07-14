@@ -858,6 +858,10 @@ jobs:
     - name: Build zlib
       run: |
         which link
+        which link.exe
+        rm /usr/bin/link || true
+        rm /usr/bin/link.exe || true
+        echo "$PATH"
         mkdir zlib
         cd zlib
         curl --retry 5 --retry-connrefused -L https://github.com/xapian/xapian-dev-deps/releases/download/current/zlib-1.2.13.tar.gz|tar --strip-components=1 -zxf -
@@ -867,7 +871,7 @@ jobs:
         # Don't build zlib with a fixed base address on x64 as that gives
         # linker warning LNK4281.  FIXME: only for x64
         sed -i 's/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
-        nmake -nologo -f 'win32\Makefile.msc' LD=cl
+        nmake -nologo -f 'win32\Makefile.msc' LD=link.exe
     - name: configure
       run: |
         export AR=lib
