@@ -24,6 +24,12 @@
 
 #include <config.h>
 
+#ifdef __CUGWIN__
+// Needed to get strptime().  Restrict this to Cygwin to minimise unwanted
+// consequences.
+# define _XOPEN_SOURCE
+#endif
+
 #include <xapian.h>
 
 #include <algorithm>
@@ -40,7 +46,7 @@
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
-#include <time.h> // Not <ctime> so we get strptime() on cygwin.
+#include <ctime>
 
 #include "commonhelp.h"
 #include "datetime.h"
