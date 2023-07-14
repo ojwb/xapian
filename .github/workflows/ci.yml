@@ -98,10 +98,10 @@ jobs:
     steps:
     - name: Fetch distribution
       uses: actions/download-artifact@v3
-      with:
-        path: .
     - name: Unpack distribution
       run: |
+        mv artifact/* .
+        rmdir artifact
         cd xapian-core
         tar --strip-components=1 -xf xapian-core-*.tar.xz
         cd ../xapian-applications/omega
