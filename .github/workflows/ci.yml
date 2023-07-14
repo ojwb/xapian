@@ -1,5 +1,10 @@
 name: CI
 
+# Use bash by default on all platforms.
+defaults:
+  run:
+    shell: bash
+
 on:
   push:
     paths-ignore:
@@ -99,7 +104,6 @@ jobs:
     - name: Fetch distribution
       uses: actions/download-artifact@v3
     - name: Unpack distribution
-      shell: bash
       run: |
         mv artifact/* .
         rmdir artifact
@@ -123,29 +127,32 @@ jobs:
       run: |
         choco install make
     - name: configure
-      shell: bash
       run: |
+        export AR=lib
+        export CC='cl -nologo'
+        export CXX="$PWD/xapian-core/compile cl -nologo"
+        # Standard C++ stack unwinding; assume extern "C" functions never throw.
+        export CXXFLAGS=-EHsc
         pushd xapian-core
-        ./configure CC='cl -nologo' CXX='ccache g++'
+        ./configure
+        export XAPIAN_CONFIG=$PWD/xapian-config
         popd
         pushd xapian-applications/omega
-        ./configure CC='cl -nologo' CXX='ccache g++' XAPIAN_CONFIG=../../xapian-core/xapian-config
+        ./configure
         popd
         pushd xapian-bindings
-        ./configure CC='cl -nologo' CXX='ccache g++' XAPIAN_CONFIG=../xapian-core/xapian-config
+        ./configure
         popd
         pushd xapian-letor
-        ./configure CC='cl -nologo' CXX='ccache g++' XAPIAN_CONFIG=../xapian-core/xapian-config
+        ./configure
         popd
     - name: make
-      shell: bash
       run: |
         make -j2 -C xapian-core
         make -j2 -C xapian-applications/omega
         make -j2 -C xapian-bindings
         make -j2 -C xapian-letor
     - name: Run tests
-      shell: bash
       run: |
         make -j2 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1
         make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1
