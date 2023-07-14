@@ -199,7 +199,7 @@ jobs:
         # Don't build zlib with a fixed base address on x64 as that gives
         # linker warning LNK4281.  FIXME: only for x64
         sed -i 's/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
-        nmake -nologo -f win32\Makefile.msc
+        nmake -nologo -f 'win32\Makefile.msc'
         popd
         export AR=lib
         export CC='cl -nologo'
