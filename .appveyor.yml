@@ -46,12 +46,8 @@ install:
         }
       } elseif ($env:TOOLCHAIN -eq "cygwin") {
         $env:PATH="C:\cygwin64\bin;$env:PATH"
-        $env:CONFIGOPTS+=" --build=x86_64-pc-cygwin --with-lua --with-python3"
+        $env:CONFIGOPTS+=" --build=x86_64-pc-cygwin --with-lua --with-php --with-python3 --with-ruby --with-tcl"
         # --with-perl failing - need to link to libperl I think
-        # ruby.h not found
-        #--with-tcl --with-php 
-        #checking for php-config... no
-        #checking for tclsh... no
       } elseif ($env:TOOLCHAIN -eq "llvm") {
         $env:PATH="C:\Program Files\LLVM\bin;c:\msys64\usr\bin;$env:PATH"
       } else {
@@ -65,7 +61,7 @@ install:
   # Install cygwin git and patch packages since those installed in the image
   # want the 32-bit cygwin1.dll which means they fail to work if the 64-bit
   # cygwin1.dll is first on PATH.
-  - if "%TOOLCHAIN%"=="cygwin" appveyor-retry C:\cygwin64\setup-x86_64.exe -qnNdO -R C:/cygwin64 -s http://cygwin.mirror.constant.com -l C:/cygwin64/var/cache/setup -P libpcre2-devel -P zlib-devel -P git -P patch -P lua -P php -P python -P ruby -P libcrypt-devel
+  - if "%TOOLCHAIN%"=="cygwin" appveyor-retry C:\cygwin64\setup-x86_64.exe -qnNdO -R C:/cygwin64 -s http://cygwin.mirror.constant.com -l C:/cygwin64/var/cache/setup -P libpcre2-devel -P zlib-devel -P git -P patch -P liblua-devel -P php-devel -P python3-devel -P ruby-devel -P tcl-devel -P libcrypt-devel
   - bash -c 'time ./bootstrap --fetch-url-command="curl --retry 5 --retry-connrefused -L" xapian-core swig xapian-bindings'
   - if "%TOOLCHAIN%"=="mingw" cd swig
   - if "%TOOLCHAIN%"=="mingw" bash -c 'curl --retry 5 --retry-connrefused -L https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.41/pcre2-10.41.tar.bz2 > pcre2-10.41.tar.bz2'
