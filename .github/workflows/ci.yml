@@ -770,7 +770,6 @@ jobs:
     runs-on: 'macos-latest'
     env:
       LIBEXTRACTOR_PREFIX: '/usr/local/lib/libextractor'
-    steps:
     needs: makedist
     steps:
     - name: Install CCache
