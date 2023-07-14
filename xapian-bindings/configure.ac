@@ -930,6 +930,10 @@ if test no != "$with_ruby" ; then
 	fi
       fi
       RUBY_DLEXT=`$RUBY -rrbconfig -e 'print RbConfig::CONFIG[["DLEXT"]]'`
+      echo "RUBY_DLEXT=$RUBY_DLEXT"
+      RUBY_DLEXT=`$RUBY -rrbconfig -e 'print RbConfig::CONFIG[["SOEXT"]]'`
+      echo "RUBY_DLEXT=$RUBY_DLEXT"
+      RUBY_DLEXT=dll
       AC_SUBST(RUBY_DLEXT)
     fi
   fi
