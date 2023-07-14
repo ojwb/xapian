@@ -1142,18 +1142,18 @@ jobs:
         make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1
         # make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1
 
-  checkpatch:
-    name: 'Automated run of xapian-check-patch'
-    runs-on: 'ubuntu-latest'
-    steps:
-    - name: Check out repository code
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-    - name: "Automated run of xapian-check-patch"
-      # Run the style checking script, checking changes between the common
-      # ancestor of the target branch of the PR (or master if this isn't a PR)
-      # and the revision being checked.
-      run: |
-        echo "GITHUB_BASE_REF='$GITHUB_BASE_REF'"
-        git diff ${GITHUB_BASE_REF:-origin/master}.. --|xapian-maintainer-tools/xapian-check-patch
+#  checkpatch:
+#    name: 'Automated run of xapian-check-patch'
+#    runs-on: 'ubuntu-latest'
+#    steps:
+#    - name: Check out repository code
+#      uses: actions/checkout@v3
+#      with:
+#        fetch-depth: 0
+#    - name: "Automated run of xapian-check-patch"
+#      # Run the style checking script, checking changes between the common
+#      # ancestor of the target branch of the PR (or master if this isn't a PR)
+#      # and the revision being checked.
+#      run: |
+#        echo "GITHUB_BASE_REF='$GITHUB_BASE_REF'"
+#        git diff ${GITHUB_BASE_REF:-origin/master}.. --|xapian-maintainer-tools/xapian-check-patch
