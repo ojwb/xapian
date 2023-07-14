@@ -46,9 +46,15 @@ install:
         }
       } elseif ($env:TOOLCHAIN -eq "cygwin") {
         $env:PATH="C:\cygwin64\bin;$env:PATH"
-        $env:CONFIGOPTS+=" --build=x86_64-pc-cygwin --with-lua --with-python3 --with-ruby --with-tcl"
+        $env:CONFIGOPTS+=" --build=x86_64-pc-cygwin --with-lua --with-ruby --with-tcl"
         # --with-perl failing - need to link to libperl I think
         # --with-php: cygwin package is PHP 7 but we now require 8
+        # --with-python3 :
+        # /cygdrive/c/cygwin64/bin/python3 -O -c 'import os;os.chdir("xapian");import _xapian'
+        # Traceback (most recent call last):
+        #   File "<string>", line 1, in <module>
+        # ImportError: No such file or directory
+        # make[4]: *** [Makefile:1280: xapian/__pycache__/__init__.cpython-39.pyc] Error 1
       } elseif ($env:TOOLCHAIN -eq "llvm") {
         $env:PATH="C:\Program Files\LLVM\bin;c:\msys64\usr\bin;$env:PATH"
       } else {
