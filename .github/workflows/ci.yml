@@ -1092,11 +1092,10 @@ jobs:
         choco install make
     - name: Build zlib
       run: |
-        which link
-        which link.exe
-        rm /usr/bin/link || true
+        # MSVC gets added to PATH last, and we find "link" from coreutils
+        # instead.  That's not a useful tool to us, so just delete it
+        # rather than trying to reorder PATH.
         rm /usr/bin/link.exe || true
-        echo "$PATH"
         mkdir zlib
         cd zlib
         curl --retry 5 --retry-connrefused -L https://github.com/xapian/xapian-dev-deps/releases/download/current/zlib-1.2.13.tar.gz|tar --strip-components=1 -zxf -
