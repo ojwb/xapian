@@ -1115,6 +1115,7 @@ jobs:
         export CPPFLAGS="-I$PWD/zlib"
         export CXXFLAGS=-EHsc
         export LDFLAGS="-L$PWD/zlib"
+        export SHELL=/bin/sh
         pushd xapian-core
         ./configure
         export XAPIAN_CONFIG=$PWD/xapian-config
