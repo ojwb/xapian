@@ -108,8 +108,8 @@ install:
       }
 build_script:
   - bash -c 'time ./configure $CONFIGOPTS'
-  - if "%TOOLCHAIN%"=="cygwin" bash -c 'time make -j2 PERL_LIBS=-lcygperl5_36' < nul
   - touch xapian-bindings/{tcl8,lua,ruby,perl,python3,php}/docs/index.html
+  - if "%TOOLCHAIN%"=="cygwin" bash -c 'time make -j2' < nul
   - if not "%TOOLCHAIN%"=="cygwin" bash -c 'time make -j2' < nul
 test_script:
   - bash -c 'time make -C xapian-bindings check VERBOSE=1' < nul
