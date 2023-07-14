@@ -107,7 +107,7 @@ install:
         cd ..
       }
 build_script:
-  - bash -c 'time ./configure $CONFIGOPTS'
+  - bash -c 'time ./configure $CONFIGOPTS LIBS=-lssp'
   - touch xapian-bindings/{tcl8,lua,ruby,perl,python3,php}/docs/index.html
   - if "%TOOLCHAIN%"=="cygwin" bash -c 'time make -j2' < nul
   - if not "%TOOLCHAIN%"=="cygwin" bash -c 'time make -j2' < nul
