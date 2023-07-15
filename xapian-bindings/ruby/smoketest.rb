@@ -26,6 +26,9 @@
 
 require 'test/unit'
 require 'tmpdir'
+
+system("ls -l .libs")
+
 require 'xapian'
 
 class TestMatchDecider < Xapian::MatchDecider
