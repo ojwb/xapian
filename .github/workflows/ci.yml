@@ -1115,7 +1115,6 @@ jobs:
         export CPPFLAGS="-I$PWD/zlib"
         export CXXFLAGS=-EHsc
         export LDFLAGS="-L$PWD/zlib"
-        export CONFIG_SHELL=/bin/bash
         pushd xapian-core
         ./configure
         export XAPIAN_CONFIG=$PWD/xapian-config
@@ -1134,16 +1133,16 @@ jobs:
     - name: make
       run: |
         env|grep Program
-        make -j2 -C xapian-core
-        #make -j2 -C xapian-applications/omega
-        make -j2 -C xapian-binding
-        make -j2 -C xapian-letor
+        make -j2 -C xapian-core SHELL='"C:/Program Files/Git/usr/bin/sh.exe"'
+        #make -j2 -C xapian-applications/omega SHELL='"C:/Program Files/Git/usr/bin/sh.exe"'
+        make -j2 -C xapian-binding SHELL='"C:/Program Files/Git/usr/bin/sh.exe"'
+        make -j2 -C xapian-letor SHELL='"C:/Program Files/Git/usr/bin/sh.exe"'
     - name: Run tests
       run: |
-        make -j2 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1
-        #make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1
-        # make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1
+        make -j2 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1 SHELL='"C:/Program Files/Git/usr/bin/sh.exe"'
+        #make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1 SHELL='"C:/Program Files/Git/usr/bin/sh.exe"'
+        make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1 SHELL='"C:/Program Files/Git/usr/bin/sh.exe"'
+        # make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1 SHELL='"C:/Program Files/Git/usr/bin/sh.exe"'
 
 #  checkpatch:
 #    name: 'Automated run of xapian-check-patch'
