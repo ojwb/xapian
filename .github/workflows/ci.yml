@@ -1115,7 +1115,7 @@ jobs:
         export CPPFLAGS="-I$PWD/zlib"
         export CXXFLAGS=-EHsc
         export LDFLAGS="-L$PWD/zlib"
-        export SHELL=/bin/bash
+        export CONFIG_SHELL=/bin/bash
         pushd xapian-core
         ./configure
         export XAPIAN_CONFIG=$PWD/xapian-config
@@ -1130,18 +1130,19 @@ jobs:
         ./configure
         popd
         grep ^SHELL xapian-core/config.status xapian-core/Makefile
+        ls -l /usr/bin || true
     - name: make
       run: |
         env|grep Program
-        make -j2 -C xapian-core SHELL=/bin/sh
+        make -j2 -C xapian-core
         #make -j2 -C xapian-applications/omega
-        make -j2 -C xapian-bindings SHELL=/bin/sh
-        make -j2 -C xapian-letor SHELL=/bin/sh
+        make -j2 -C xapian-binding
+        make -j2 -C xapian-letor
     - name: Run tests
       run: |
-        make -j2 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1 SHELL=/bin/sh
+        make -j2 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1
         #make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1 SHELL=/bin/sh
+        make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1
         # make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1
 
 #  checkpatch:
