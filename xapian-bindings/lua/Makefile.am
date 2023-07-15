@@ -5,7 +5,7 @@ include ../generic/generic.mk
 ## Test programs to be run
 TESTS = smoketest.lua
 AM_TESTS_ENVIRONMENT = \
-	LUA_CPATH='.libs/?$(LUA_SO)' ;\
+	LUA_CPATH='$(_libs)/?$(LUA_SO)' ;\
 	export LUA_CPATH ;
 LOG_COMPILER = $(MACOS_SIP_HACK_ENV) $(LUA)
 
@@ -25,7 +25,7 @@ lualib_LTLIBRARIES = xapian.la
 # and LUA doesn't use libltdl.  Note that the library gets installed by
 # install-data, so that's where we need to hook.
 install-data-hook:
-	rm -f $(DESTDIR)$(lualibdir)/xapian.la
+	rm -f $(DESTDIR)$(lualibdir)/xapian.la $(DESTDIR)$(lualibdir)/xapian.dll.a
 
 # Because we don't install the .la file, "make uninstall" doesn't work and
 # we need to remove the file ourselves.

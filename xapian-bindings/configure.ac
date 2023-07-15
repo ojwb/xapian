@@ -23,6 +23,10 @@ dnl the bindings only have a use for dynamic ones.
 LT_PREREQ([2.2.6])
 LT_INIT([disable-static])
 
+dnl Make the name of libtool's `.libs`/`_libs` available in makefiles.
+_libs=$objdir
+AC_SUBST([_libs])
+
 dnl -no-undefined causes problems on macOS with at least some
 dnl MACOSX_DEPLOYMENT_TARGET settings, so only pass -no-undefined on
 dnl platforms where it is required in order to link a shared library at
@@ -526,8 +530,9 @@ if test no != "$with_tcl" ; then
 	TCLSH=
       fi
 
+      TCL_LIBS=
+      TCL_SHLIB_EXT=
       if test -n "$TCLSH" ; then
-	TCL_LIBS=
 	dnl ::tcl::pkgconfig was added in Tcl 8.5.  Prior to 8.6 it's only
 	dnl actually necessary to link against -ltclstub on platforms which
 	dnl don't allow libraries to have unresolved symbols (cygwin, mingw,
@@ -537,16 +542,18 @@ if test no != "$with_tcl" ; then
 	  for x in "/tcl$tcl_version" "" ; do
 	    TCLCONFIG_SH=$tcl_libdir_runtime$x/tclConfig.sh
 	    if test -r "$TCLCONFIG_SH" ; then
-	      eval "`sed 's/^TCL_STUB_LIB_SPEC=/TCL_LIBS=/p;d' $TCLCONFIG_SH`"
+	      TCL_LIBS=`. $TCLCONFIG_SH && echo "$TCL_STUB_LIB_SPEC"`
 	      break
 	    fi
 	  done
 	fi
 	TCL_CPPFLAGS="$TCL_CPPFLAGS -DUSE_TCL_STUBS"
+	TCL_SHLIB_EXT=`echo 'puts [info sharedlibextension]'|$TCLSH 2> /dev/null`
       fi
 
       AC_SUBST(TCL_CPPFLAGS)
       AC_SUBST(TCL_LIBS)
+      AC_SUBST(TCL_SHLIB_EXT)
     else
       AC_MSG_RESULT([< $tcl_min (too old)])
       if test yes = "$with_tcl" ; then
@@ -930,10 +937,6 @@ if test no != "$with_ruby" ; then
 	fi
       fi
       RUBY_DLEXT=`$RUBY -rrbconfig -e 'print RbConfig::CONFIG[["DLEXT"]]'`
-      echo "RUBY_DLEXT=$RUBY_DLEXT"
-      RUBY_DLEXT=`$RUBY -rrbconfig -e 'print RbConfig::CONFIG[["SOEXT"]]'`
-      echo "RUBY_DLEXT=$RUBY_DLEXT"
-      RUBY_DLEXT=dll
       AC_SUBST(RUBY_DLEXT)
     fi
   fi
