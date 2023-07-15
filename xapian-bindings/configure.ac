@@ -548,7 +548,7 @@ if test no != "$with_tcl" ; then
 	  done
 	fi
 	TCL_CPPFLAGS="$TCL_CPPFLAGS -DUSE_TCL_STUBS"
-	TCL_SHLIB_EXT=`echo 'puts [info sharedlibextension]'|$TCLSH 2> /dev/null`
+	[TCL_SHLIB_EXT=`echo 'puts [info sharedlibextension]'|$TCLSH 2> /dev/null`]
       fi
 
       AC_SUBST(TCL_CPPFLAGS)
