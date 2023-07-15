@@ -936,7 +936,12 @@ if test no != "$with_ruby" ; then
 	  AC_MSG_ERROR([ruby.h not found])
 	fi
       fi
-      RUBY_DLEXT=`$RUBY -rrbconfig -e 'print RbConfig::CONFIG[["DLEXT"]]'`
+      case $host_os in
+      mingw* | pw32* | cygwin*)
+	RUBY_DLEXT=dll ;;
+      *)
+	[RUBY_DLEXT=`$RUBY -rrbconfig -e 'print RbConfig::CONFIG["DLEXT"]'`] ;;
+      esac
       AC_SUBST(RUBY_DLEXT)
     fi
   fi
