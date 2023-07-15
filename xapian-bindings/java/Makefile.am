@@ -18,7 +18,7 @@ AM_TESTS_ENVIRONMENT = \
 	export LIBTOOL ;\
 	export JAVA ;\
 	export PATHSEP ;\
-	export _libs
+	export _libs ;
 LOG_COMPILER = $(srcdir)/run-java-test
 
 CLEANFILES = SmokeTest.class MyMatchDecider.class MyExpandDecider.class\

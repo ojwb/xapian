@@ -14,7 +14,7 @@ AM_TESTS_ENVIRONMENT = \
 	export LIBTOOL ;\
 	export TCLSH ;\
 	export TCL_SHLIB_EXT ;\
-	export _libs
+	export _libs ;
 
 LOG_COMPILER = $(srcdir)/run-tcl-test
 

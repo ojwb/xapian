@@ -1129,7 +1129,7 @@ jobs:
         pushd xapian-letor
         ./configure
         popd
-        grep ^SHELL config.status xapian-core/Makefile
+        grep ^SHELL xapian-core/config.status xapian-core/Makefile
     - name: make
       run: |
         make -j2 -C xapian-core SHELL=/bin/sh
