@@ -26,7 +26,7 @@
 
 #include <xapian.h>
 
-#ifdef __CUGWIN__
+#ifdef __CYGWIN__
 // Needed to get strptime().  Restrict this to Cygwin to minimise unwanted
 // consequences.
 # define _XOPEN_SOURCE
