@@ -1105,7 +1105,7 @@ jobs:
         # Don't build zlib with a fixed base address on x64 as that gives
         # linker warning LNK4281.  FIXME: only for x64
         sed -i 's/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
-        nmake -nologo -f 'win32\Makefile.msc' LD=link.exe
+        nmake -nologo -f 'win32\Makefile.msc'
     - name: configure
       run: |
         export AR=lib
@@ -1132,6 +1132,7 @@ jobs:
         grep ^SHELL xapian-core/config.status xapian-core/Makefile
     - name: make
       run: |
+        env|grep Program
         make -j2 -C xapian-core SHELL=/bin/sh
         #make -j2 -C xapian-applications/omega
         make -j2 -C xapian-bindings SHELL=/bin/sh
