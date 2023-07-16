@@ -753,7 +753,7 @@ jobs:
         tar --strip-components=1 -xf xapian-core-*.tar.xz
         popd
     - name: Use Node.js
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v3
     - name: configure
       run: |
         docker run -v "$GITHUB_WORKSPACE:/src" -w /src/xapian-core emscripten/emsdk emconfigure ./configure CPPFLAGS='-DFLINTLOCK_USE_FLOCK' CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti' --disable-shared
@@ -764,7 +764,6 @@ jobs:
       run: |
         docker run -v "$GITHUB_WORKSPACE:/src" -w /src/xapian-core emscripten/emsdk em++ -Oz -s USE_ZLIB=1 -std=c++11 -s WASM=1 -Iinclude emscripten/xapianjstest.cc .libs/libxapian-1.5.a -o emscripten/xapianjstest.js
         cd xapian-core/emscripten && node xapianjstest.js
-
 
   macos:
     runs-on: 'macos-latest'
