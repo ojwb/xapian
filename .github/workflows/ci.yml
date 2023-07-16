@@ -960,7 +960,7 @@ jobs:
     - name: Install package dependencies
       run: |
         dnf install -y --nodocs \
-        gcc-c++ file-devel libuuid-devel zlib-devel make pkg-config
+        gcc-c++ file-devel libuuid-devel perl zlib-devel make pkg-config
     - name: configure
       run: |
         export CC='ccache gcc'
