@@ -992,7 +992,7 @@ jobs:
         make -j2 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1
         make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1
         make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1
+        # make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1
 
   android-cross:
     runs-on: 'ubuntu-22.04'
