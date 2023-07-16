@@ -929,7 +929,7 @@ jobs:
         make -j2 -C xapian-core
       # FIXME: Run tests under wine?
 
-  mingw32-cross:
+  Fedora:
     runs-on: 'ubuntu-22.04'
     container: fedora:35
     needs: makedist
@@ -939,7 +939,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: mingw32-cross
+        key: fedora
     - name: Fetch distribution
       uses: actions/download-artifact@v3
     - name: Unpack distribution
@@ -949,21 +949,48 @@ jobs:
         pushd xapian-core
         tar --strip-components=1 -xf xapian-core-*.tar.xz
         popd
+        pushd xapian-applications/omega
+        tar --strip-components=1 -xf xapian-omega-*.tar.xz
+        popd
+        pushd xapian-bindings
+        tar --strip-components=1 -xf xapian-bindings-*.tar.xz
+        popd
+        pushd xapian-letor
+        tar --strip-components=1 -xf xapian-letor-*.tar.xz
+        popd
     - name: Install package dependencies
       run: |
         dnf install -y --nodocs \
-        gcc-c++ zlib-devel make pkg-config \
-        mingw32-gcc-c++ mingw32-win-iconv-static \
-        mingw32-winpthreads-static mingw32-zlib-static
+        gcc-c++ file-devel libuuid-devel zlib-devel make pkg-config
     - name: configure
       run: |
-        # FIXME: Use ccache if that isn't happening automatically
-        cd xapian-core
-        mingw32-configure
+        export CC='ccache gcc'
+        export CXX='ccache g++'
+        pushd xapian-core
+        ./configure
+        export XAPIAN_CONFIG=$PWD/xapian-config
+        popd
+        pushd xapian-applications/omega
+        ./configure
+        popd
+        pushd xapian-bindings
+        ./configure
+        popd
+        pushd xapian-letor
+        ./configure
+        popd
     - name: make
       run: |
         make -j2 -C xapian-core
-      # FIXME: Run tests under wine?
+        make -j2 -C xapian-applications/omega
+        make -j2 -C xapian-bindings
+        make -j2 -C xapian-letor
+    - name: Run tests
+      run: |
+        make -j2 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1
+        make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1
+        make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1
+        make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1
 
   android-cross:
     runs-on: 'ubuntu-22.04'
