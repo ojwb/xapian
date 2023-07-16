@@ -758,8 +758,9 @@ jobs:
     - name: configure
       run: |
         docker run -v "$GITHUB_WORKSPACE:/src" -w /src/xapian-core emscripten/emsdk apt-get update
+        docker run -v "$GITHUB_WORKSPACE:/src" -w /src/xapian-core emscripten/emsdk apt-cache show ccache
         docker run -v "$GITHUB_WORKSPACE:/src" -w /src/xapian-core emscripten/emsdk apt-get install ccache
-        docker run -v "$github_workspace:/src" -w /src/xapian-core emscripten/emsdk env em_compiler_wrapper=ccache emconfigure ./configure CPPFLAGS='-DFLINTLOCK_USE_FLOCK' CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti' --disable-shared
+        docker run -v "$GITHUB_WORKSPACE:/src" -w /src/xapian-core emscripten/emsdk env EM_COMPILER_WRAPPER=ccache emconfigure ./configure CPPFLAGS='-DFLINTLOCK_USE_FLOCK' CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti' --disable-shared
     - name: make
       run: |
         docker run -v "$GITHUB_WORKSPACE:/src" -w /src/xapian-core emscripten/emsdk env EM_COMPILER_WRAPPER=ccache emmake make
