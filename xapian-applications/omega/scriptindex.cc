@@ -25,7 +25,7 @@
 #include <config.h>
 
 #ifdef __CYGWIN__
-# define _DEFAULT_SOURCE
+# define _GNU_SOURCE
 #endif
 
 #include <xapian.h>
