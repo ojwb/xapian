@@ -29,7 +29,11 @@ require 'tmpdir'
 
 system("ls -l .libs")
 
-require 'xapian'
+if (/cygwin|mswin|mingw|bccwin|wince|emx/ =~ RUBY_PLATFORM) != nil
+  require 'xapian.dll'
+else
+  require 'xapian'
+end
 
 class TestMatchDecider < Xapian::MatchDecider
   def __call__(doc)
