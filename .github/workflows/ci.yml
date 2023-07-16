@@ -1015,13 +1015,12 @@ jobs:
         popd
     - name: configure
       run: |
-        # FIXME: Use ccache if that isn't happening automatically
         PATH=$PATH:$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin
         cd xapian-core
         ./configure \
             --host=$host_triplet \
-            CC=${host_triplet}-clang \
-            CXX=${host_triplet}-clang++ \
+            CC='ccache ${host_triplet}-clang' \
+            CXX='ccache ${host_triplet}-clang++' \
             PKG_CONFIG=/bin/false
     - name: make
       run: |
