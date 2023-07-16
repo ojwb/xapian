@@ -72,6 +72,7 @@ jobs:
             tesseract-ocr-eng
     - name: bootstrap source tree
       run: |
+        export PATH=/usr/lib/ccache:$PATH
         echo verbose=off > ~/.wgetrc
         ./bootstrap xapian-core xapian-applications/omega swig xapian-bindings xapian-letor
     - name: configure
