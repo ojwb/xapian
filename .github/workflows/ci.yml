@@ -75,7 +75,7 @@ jobs:
         echo verbose=off > ~/.wgetrc
         ./bootstrap xapian-core xapian-applications/omega swig xapian-bindings xapian-letor
     - name: configure
-      run: ./configure
+      run: ./configure CC='ccache gcc' CXX='ccache g++'
     - name: make
       run: make -j2
 #    - name: Run tests
