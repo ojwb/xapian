@@ -1133,16 +1133,17 @@ jobs:
     - name: make
       run: |
         env|grep Program
-        make -j2 -C xapian-core SHELL='"C:/Program Files/Git/usr/bin/sh.exe"'
-        #make -j2 -C xapian-applications/omega SHELL='"C:/Program Files/Git/usr/bin/sh.exe"'
-        make -j2 -C xapian-binding SHELL='"C:/Program Files/Git/usr/bin/sh.exe"'
-        make -j2 -C xapian-letor SHELL='"C:/Program Files/Git/usr/bin/sh.exe"'
+        echo "::: SHELL = $SHELL"
+        make -j2 -C xapian-core SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
+        #make -j2 -C xapian-applications/omega SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
+        make -j2 -C xapian-binding SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
+        make -j2 -C xapian-letor SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
     - name: Run tests
       run: |
-        make -j2 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1 SHELL='"C:/Program Files/Git/usr/bin/sh.exe"'
-        #make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1 SHELL='"C:/Program Files/Git/usr/bin/sh.exe"'
-        make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1 SHELL='"C:/Program Files/Git/usr/bin/sh.exe"'
-        # make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1 SHELL='"C:/Program Files/Git/usr/bin/sh.exe"'
+        make -j2 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1 SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
+        #make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1 SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
+        make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1 SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
+        # make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1 SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
 
 #  checkpatch:
 #    name: 'Automated run of xapian-check-patch'
