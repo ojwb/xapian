@@ -1018,8 +1018,8 @@ jobs:
         cd xapian-core
         ./configure \
             --host=$host_triplet \
-            CC='ccache ${host_triplet}-clang' \
-            CXX='ccache ${host_triplet}-clang++' \
+            CC="ccache ${host_triplet}-clang" \
+            CXX="ccache ${host_triplet}-clang++" \
             PKG_CONFIG=/bin/false
     - name: make
       run: |
