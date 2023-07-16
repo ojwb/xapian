@@ -883,11 +883,12 @@ jobs:
             mingw-w64-tools
     - name: configure
       run: |
-        # FIXME: Use ccache if that isn't happening automatically
+        export PATH=/usr/lib/ccache:$PATH
         cd xapian-core
         ./configure --host i686-w64-mingw32
     - name: make
       run: |
+        export PATH=/usr/lib/ccache:$PATH
         make -j2 -C xapian-core
       # FIXME: Run tests under wine?
 
@@ -919,11 +920,12 @@ jobs:
             mingw-w64-tools
     - name: configure
       run: |
-        # FIXME: Use ccache if that isn't happening automatically
+        export PATH=/usr/lib/ccache:$PATH
         cd xapian-core
         ./configure --host x86_64-w64-mingw32
     - name: make
       run: |
+        export PATH=/usr/lib/ccache:$PATH
         make -j2 -C xapian-core
       # FIXME: Run tests under wine?
 
