@@ -738,6 +738,8 @@ jobs:
       emscripten:
         image: emscripten/emsdk
     needs: makedist
+    env:
+      EM_COMPILER_WRAPPER: 'ccache'
     steps:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
