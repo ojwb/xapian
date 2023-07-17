@@ -735,9 +735,6 @@ jobs:
 
   Emscripten:
     runs-on: 'ubuntu-20.04'
-    services:
-      emscripten:
-        image: emscripten/emsdk
     needs: makedist
     steps:
     - name: Install CCache
@@ -753,21 +750,37 @@ jobs:
         pushd xapian-core
         tar --strip-components=1 -xf xapian-core-*.tar.xz
         popd
+    - name: Install package dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install ccache
+    - name: Setup emsdk
+      uses: mymindstorm/setup-emsdk@v11
+      with:
+        version: latest
+        # This is the name of the cache folder.
+        # The cache folder will be placed in the build directory,
+        #  so make sure it doesn't conflict with anything!
+        actions-cache-folder: 'emsdk-cache'
     - name: Use Node.js
       uses: actions/setup-node@v3
     - name: configure
       run: |
-        docker run -v "$GITHUB_WORKSPACE:/src" -w /src/xapian-core emscripten/emsdk apt-get update
-        docker run -v "$GITHUB_WORKSPACE:/src" -w /src/xapian-core emscripten/emsdk apt-cache show ccache
-        docker run -v "$GITHUB_WORKSPACE:/src" -w /src/xapian-core emscripten/emsdk apt-get install ccache
-        docker run -v "$GITHUB_WORKSPACE:/src" -w /src/xapian-core emscripten/emsdk env EM_COMPILER_WRAPPER=ccache emconfigure ./configure CPPFLAGS='-DFLINTLOCK_USE_FLOCK' CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti' --disable-shared
+        cd xapian-core
+        export EM_COMPILER_WRAPPER=ccache
+        emconfigure ./configure CPPFLAGS='-DFLINTLOCK_USE_FLOCK' CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti' --disable-shared
     - name: make
       run: |
-        docker run -v "$GITHUB_WORKSPACE:/src" -w /src/xapian-core emscripten/emsdk env EM_COMPILER_WRAPPER=ccache emmake make
+        cd xapian-core
+        export EM_COMPILER_WRAPPER=ccache
+        emmake make
     - name: Run tests
       run: |
-        docker run -v "$GITHUB_WORKSPACE:/src" -w /src/xapian-core emscripten/emsdk env EM_COMPILER_WRAPPER=ccache em++ -Oz -s USE_ZLIB=1 -std=c++11 -s WASM=1 -Iinclude emscripten/xapianjstest.cc .libs/libxapian-1.5.a -o emscripten/xapianjstest.js
-        cd xapian-core/emscripten && node xapianjstest.js
+        cd xapian-core
+        export EM_COMPILER_WRAPPER=ccache
+        em++ -Oz -s USE_ZLIB=1 -std=c++11 -s WASM=1 -Iinclude emscripten/xapianjstest.cc .libs/libxapian-1.5.a -o emscripten/xapianjstest.js
+        cd emscripten
+        node xapianjstest.js
 
   macos:
     runs-on: 'macos-latest'
