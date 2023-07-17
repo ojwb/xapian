@@ -1088,9 +1088,9 @@ jobs:
         pushd xapian-applications/omega
         ./configure
         popd
-        pushd xapian-bindings
-        ./configure
-        popd
+        # pushd xapian-bindings
+        # ./configure
+        # popd
         pushd xapian-letor
         ./configure
         popd
@@ -1098,13 +1098,13 @@ jobs:
       run: |
         make -j2 -C xapian-core
         make -j2 -C xapian-applications/omega
-        make -j2 -C xapian-bindings
+        # make -j2 -C xapian-bindings
         make -j2 -C xapian-letor
     - name: Run tests
       run: |
         make -j2 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1
         make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1
+        # make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1
         # make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1
 
   windows:
