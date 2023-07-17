@@ -542,7 +542,7 @@ if test no != "$with_tcl" ; then
 	  for x in "/tcl$tcl_version" "" ; do
 	    TCLCONFIG_SH=$tcl_libdir_runtime$x/tclConfig.sh
 	    if test -r "$TCLCONFIG_SH" ; then
-	      TCL_LIBS=`. $TCLCONFIG_SH && echo "$TCL_STUB_LIB_SPEC"`
+	      TCL_LIBS=`. $TCLCONFIG_SH && printf '%s' "$TCL_STUB_LIB_SPEC"`
 	      break
 	    fi
 	  done
