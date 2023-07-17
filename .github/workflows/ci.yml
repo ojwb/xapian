@@ -841,6 +841,8 @@ jobs:
         # tesseract
     - name: configure
       run: |
+        eatmydata ls -l || true
+        export EATMYDATA=
         export CC='ccache gcc'
         export CXX='ccache g++'
         export PKG_CONFIG_PATH=/usr/local/opt/icu4c/lib/pkgconfig
