@@ -25,10 +25,7 @@
 #include <config.h>
 
 #ifdef __CYGWIN__
-// Needed to get strptime().  Restrict this to Cygwin to minimise unwanted
-// consequences.
-# define _XOPEN_SOURCE
-# include <time.h>
+# define _GNU_SOURCE
 #endif
 
 #include <xapian.h>

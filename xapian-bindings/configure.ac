@@ -493,7 +493,7 @@ if test no != "$with_tcl" ; then
 
       AC_ARG_VAR(TCL_LIB, [Directory to install Tcl files into])
       if test -z "$TCL_LIB" ; then
-	[TCL_LIB=`echo 'foreach d $tcl_pkgPath {if {![regexp {/share(/|$)} $d]} {break}};puts $d'|$TCLSH`]
+	[TCL_LIB=`echo 'if {[info exists tcl_pkgPath]} {foreach d $tcl_pkgPath {if {![regexp {/share(/|$)} $d]} {break}};puts $d}else{foreach d $auto_path {if {![regexp {/share(/|$)} $d]} {break}};puts $d}'|$TCLSH`]
       fi
       AC_SUBST(TCL_LIB)
 
@@ -936,12 +936,7 @@ if test no != "$with_ruby" ; then
 	  AC_MSG_ERROR([ruby.h not found])
 	fi
       fi
-      case $host_os in
-      mingw* | pw32* | cygwin*)
-	RUBY_DLEXT=dll ;;
-      *)
-	[RUBY_DLEXT=`$RUBY -rrbconfig -e 'print RbConfig::CONFIG["DLEXT"]'`] ;;
-      esac
+      [RUBY_DLEXT=`$RUBY -rrbconfig -e 'print RbConfig::CONFIG["DLEXT"]'`]
       AC_SUBST(RUBY_DLEXT)
     fi
   fi
