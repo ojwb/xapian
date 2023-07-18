@@ -1102,6 +1102,8 @@ jobs:
     - name: configure
       run: |
         export PERL_LIBS=`perl -MConfig -e 'print "-L$Config{archlib}/CORE" -lperl'`
+        export CC='ccache gcc'
+        export CC='ccache g++'
         pushd xapian-core
         ./configure
         export XAPIAN_CONFIG=$PWD/xapian-config
