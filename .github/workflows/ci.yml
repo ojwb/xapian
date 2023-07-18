@@ -851,9 +851,8 @@ jobs:
         # tesseract
     - name: configure
       run: |
-        which eatmydata
-        eatmydata ls -l || true
-        export EATMYDATA=
+        # Work around weird bug in eatmydata wrapper in homebrew.
+        export EATMYDATA=`which eatmydata`
         export CC='ccache gcc'
         export CXX='ccache g++'
         export PKG_CONFIG_PATH=/usr/local/opt/icu4c/lib/pkgconfig
