@@ -162,6 +162,8 @@ jobs:
       run: |
         export CC='ccache gcc'
         export CXX='ccache g++'
+        export CFLAGS='-Werror'
+        export CXXFLAGS='-Werror'
         export CPPFLAGS='-D_GLIBCXX_DEBUG'
         pushd xapian-core
         ./configure
@@ -258,6 +260,8 @@ jobs:
       run: |
         export CC='ccache gcc-12'
         export CXX='ccache g++-12'
+        export CFLAGS='-Werror'
+        export CXXFLAGS='-Werror'
         # Ubuntu's GCC packages define _FORTIFY_SOURCE=2 by default, so we need
         # to undefine it before we define it to avoid a warning (which becomes
         # an error with -Werror).
@@ -353,6 +357,8 @@ jobs:
       run: |
         export CC='ccache gcc'
         export CXX='ccache g++'
+        export CFLAGS='-Werror'
+        export CXXFLAGS='-Werror'
         pushd xapian-core
         ./configure --enable-assertions
         export XAPIAN_CONFIG=$PWD/xapian-config
@@ -444,6 +450,8 @@ jobs:
       run: |
         export CC='ccache gcc'
         export CXX='ccache g++'
+        export CFLAGS='-Werror'
+        export CXXFLAGS='-Werror'
         pushd xapian-core
         ./configure --enable-log
         export XAPIAN_CONFIG=$PWD/xapian-config
@@ -535,6 +543,8 @@ jobs:
         export CC='ccache clang'
         # Build with the llvm c++ library to catch more portability issues.
         export CXX='ccache clang++ -stdlib=libc++'
+        export CFLAGS='-Werror'
+        export CXXFLAGS='-Werror'
         pushd xapian-core
         ./configure
         export XAPIAN_CONFIG=$PWD/xapian-config
@@ -625,6 +635,8 @@ jobs:
       run: |
         export CC='ccache clang-6.0'
         export CXX='ccache clang++-6.0'
+        export CFLAGS='-Werror'
+        export CXXFLAGS='-Werror'
         pushd xapian-core
         ./configure
         export XAPIAN_CONFIG=$PWD/xapian-config
@@ -719,6 +731,8 @@ jobs:
       run: |
         export CC='ccache gcc-7'
         export CXX='ccache g++-7'
+        export CFLAGS='-Werror'
+        export CXXFLAGS='-Werror'
         pushd xapian-core
         ./configure
         export XAPIAN_CONFIG=$PWD/xapian-config
@@ -778,7 +792,10 @@ jobs:
       run: |
         cd xapian-core
         export EM_COMPILER_WRAPPER=ccache
-        emconfigure ./configure CPPFLAGS='-DFLINTLOCK_USE_FLOCK' CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti' --disable-shared
+        export CFLAGS='-Werror'
+        export CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti -Werror'
+        export CPPFLAGS='-DFLINTLOCK_USE_FLOCK'
+        emconfigure ./configure --disable-shared
     - name: make
       run: |
         cd xapian-core
@@ -851,11 +868,10 @@ jobs:
         # tesseract
     - name: configure
       run: |
-        eatmydata "`which ls`"||true
-        cat "`which eatmydata`"
-        export EATMYDATA=
         export CC='ccache gcc'
         export CXX='ccache g++'
+        export CFLAGS='-Werror'
+        export CXXFLAGS='-Werror'
         export PKG_CONFIG_PATH=/usr/local/opt/icu4c/lib/pkgconfig
         pushd xapian-core
         ./configure --prefix='${{ runner.temp }}/XapianInstall'
@@ -879,6 +895,8 @@ jobs:
         make -j3 -C xapian-letor
     - name: Run tests
       run: |
+        # Workaround for https://github.com/Homebrew/homebrew-core/issues/136873
+        export PATH="$(brew --prefix libeatmydata)/bin:$PATH"
         export VERBOSE=1
         export AUTOMATED_TESTING=1
         make -j3 -C xapian-core check
@@ -915,6 +933,8 @@ jobs:
     - name: configure
       run: |
         export PATH=/usr/lib/ccache:$PATH
+        export CFLAGS='-Werror'
+        export CXXFLAGS='-Werror'
         cd xapian-core
         ./configure --host i686-w64-mingw32
     - name: make
@@ -952,6 +972,8 @@ jobs:
     - name: configure
       run: |
         export PATH=/usr/lib/ccache:$PATH
+        export CFLAGS='-Werror'
+        export CXXFLAGS='-Werror'
         cd xapian-core
         ./configure --host x86_64-w64-mingw32
     - name: make
@@ -1000,6 +1022,8 @@ jobs:
       run: |
         export CC='ccache gcc'
         export CXX='ccache g++'
+        export CFLAGS='-Werror'
+        export CXXFLAGS='-Werror'
         pushd xapian-core
         ./configure
         export XAPIAN_CONFIG=$PWD/xapian-config
@@ -1052,6 +1076,8 @@ jobs:
     - name: configure
       run: |
         PATH=$PATH:$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin
+        export CFLAGS='-Werror'
+        export CXXFLAGS='-Werror'
         cd xapian-core
         ./configure \
             --host=$host_triplet \
@@ -1103,6 +1129,8 @@ jobs:
         export PERL_LIBS=`perl -MConfig -e 'print "-L$Config{archlib}/CORE" -lperl'`
         export CC='ccache gcc'
         export CXX='ccache g++'
+        export CFLAGS='-Werror'
+        export CXXFLAGS='-Werror'
         pushd xapian-core
         ./configure
         export XAPIAN_CONFIG=$PWD/xapian-config
