@@ -994,7 +994,7 @@ jobs:
         dnf install -y --nodocs \
         gcc-c++ file-devel libuuid-devel pcre2-devel perl zlib-devel make pkg-config \
         python3-devel python3-setuptools python3-sphinx \
-        ruby ruby-devel rubygems rubygem-rdoc rubygem-json \
+        ruby ruby-devel rubygems rubygem-rdoc rubygem-json rubygem-test-unit \
         tcl-devel
     - name: configure
       run: |
