@@ -184,10 +184,12 @@ jobs:
         make -j2 -C xapian-letor
     - name: Run tests
       run: |
-        make -j2 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1
+        export VERBOSE=1
+        export AUTOMATED_TESTING=1
+        make -j2 -C xapian-core check
+        make -j2 -C xapian-applications/omega check
+        make -j2 -C xapian-bindings check
+        make -j2 -C xapian-letor check
 
   FORTIFY_SOURCE_3:
     # _FORTIFY_SOURCE level 3 requires GCC 12, so currently we need to use
@@ -281,10 +283,12 @@ jobs:
         make -j2 -C xapian-letor
     - name: Run tests
       run: |
-        make -j2 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1
+        export VERBOSE=1
+        export AUTOMATED_TESTING=1
+        make -j2 -C xapian-core check
+        make -j2 -C xapian-applications/omega check
+        make -j2 -C xapian-bindings check
+        make -j2 -C xapian-letor check
 
   assertions:
     runs-on: 'ubuntu-22.04'
@@ -370,10 +374,12 @@ jobs:
         make -j2 -C xapian-letor
     - name: Run tests
       run: |
-        make -j2 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1
+        export VERBOSE=1
+        export AUTOMATED_TESTING=1
+        make -j2 -C xapian-core check
+        make -j2 -C xapian-applications/omega check
+        make -j2 -C xapian-bindings check
+        make -j2 -C xapian-letor check
 
   debug-log:
     runs-on: 'ubuntu-22.04'
@@ -459,10 +465,12 @@ jobs:
         make -j2 -C xapian-letor
     - name: Run tests
       run: |
-        make -j2 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1
+        export VERBOSE=1
+        export AUTOMATED_TESTING=1
+        make -j2 -C xapian-core check
+        make -j2 -C xapian-applications/omega check
+        make -j2 -C xapian-bindings check
+        make -j2 -C xapian-letor check
 
   clang:
     runs-on: 'ubuntu-20.04'
@@ -548,10 +556,12 @@ jobs:
         make -j2 -C xapian-letor
     - name: Run tests
       run: |
-        make -j2 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1
+        export VERBOSE=1
+        export AUTOMATED_TESTING=1
+        make -j2 -C xapian-core check
+        make -j2 -C xapian-applications/omega check
+        make -j2 -C xapian-bindings check
+        make -j2 -C xapian-letor check
 
   # Test with the oldest clang version we easily can.
   clang6:
@@ -636,10 +646,12 @@ jobs:
         make -j2 -C xapian-letor
     - name: Run tests
       run: |
-        make -j2 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1
+        export VERBOSE=1
+        export AUTOMATED_TESTING=1
+        make -j2 -C xapian-core check
+        make -j2 -C xapian-applications/omega check
+        make -j2 -C xapian-bindings check
+        make -j2 -C xapian-letor check
 
   # GCC 7 is the oldest GCC we currently aim to support.
   # Ubuntu 20.04 has GCC 7.5.0.
@@ -728,10 +740,12 @@ jobs:
         make -j2 -C xapian-letor
     - name: Run tests
       run: |
-        make -j2 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1
+        export VERBOSE=1
+        export AUTOMATED_TESTING=1
+        make -j2 -C xapian-core check
+        make -j2 -C xapian-applications/omega check
+        make -j2 -C xapian-bindings check
+        make -j2 -C xapian-letor check
 
   Emscripten:
     runs-on: 'ubuntu-20.04'
@@ -750,10 +764,6 @@ jobs:
         pushd xapian-core
         tar --strip-components=1 -xf xapian-core-*.tar.xz
         popd
-    - name: Install package dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install ccache
     - name: Setup emsdk
       uses: mymindstorm/setup-emsdk@v12
       with:
@@ -841,6 +851,7 @@ jobs:
         # tesseract
     - name: configure
       run: |
+        which eatmydata
         eatmydata ls -l || true
         export EATMYDATA=
         export CC='ccache gcc'
@@ -868,10 +879,12 @@ jobs:
         make -j3 -C xapian-letor
     - name: Run tests
       run: |
-        make -j3 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j3 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j3 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j3 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1
+        export VERBOSE=1
+        export AUTOMATED_TESTING=1
+        make -j3 -C xapian-core check
+        make -j3 -C xapian-applications/omega check
+        make -j3 -C xapian-bindings check
+        make -j3 -C xapian-letor check
 
   mingw64-i686-cross:
     runs-on: 'ubuntu-22.04'
@@ -1005,10 +1018,12 @@ jobs:
         make -j2 -C xapian-letor
     - name: Run tests
       run: |
-        make -j2 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1
+        export VERBOSE=1
+        export AUTOMATED_TESTING=1
+        make -j2 -C xapian-core check
+        make -j2 -C xapian-applications/omega check
+        make -j2 -C xapian-bindings check
+        make -j2 -C xapian-letor check
 
   android-cross:
     runs-on: 'ubuntu-22.04'
@@ -1044,7 +1059,7 @@ jobs:
       run: |
         PATH=$PATH:$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin
         make -j2 -C xapian-core
-      # FIXME: Run tests under wine?
+      # FIXME: Run tests under android emulator?
 
   cygwin:
     runs-on: 'windows-latest'
