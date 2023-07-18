@@ -1065,6 +1065,9 @@ jobs:
       # FIXME: Run tests under android emulator?
 
   cygwin:
+    # We only test 64-bit cygwin as 32-bit support has been dropped as of
+    # Cygwin 3.4:
+    # https://cygwin.com/pipermail/cygwin/2022-November/252542.html
     runs-on: 'windows-latest'
     needs: makedist
     defaults:

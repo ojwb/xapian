@@ -25,6 +25,7 @@
 #include <config.h>
 
 #ifdef __CYGWIN__
+// Needed to get setenv() and strptime() declared.
 # define _GNU_SOURCE
 #endif
 
