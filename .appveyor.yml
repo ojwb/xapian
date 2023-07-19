@@ -49,7 +49,7 @@ install:
           $env:PATH="C:\mingw-w64\i686-8.1.0-posix-dwarf-rt_v6-rev0\mingw32\bin;C:\msys64\usr\bin;$env:PATH"
           $env:CONFIGOPTS+=" --host=i686-pc-mingw32"
         } else {
-          $env:PATH="C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\ucrt64\bin;C:\msys64\usr\bin;$env:PATH"
+          $env:PATH="C:\mingw-w64\x86_64-8.1.0-posix-seh-rt_v6-rev0\mingw64\bin;C:\msys64\usr\bin;$env:PATH"
           $env:CONFIGOPTS+=" --host=x86_64-w64-mingw32"
         }
       } elseif ($env:TOOLCHAIN -eq "llvm") {
