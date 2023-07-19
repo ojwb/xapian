@@ -1158,14 +1158,15 @@ jobs:
   mingw64-i686:
     runs-on: 'windows-latest'
     needs: makedist
+    defaults:
+      run:
+        shell: msys2 {0}
     steps:
-    - name: Set up MinGW
-      id: mingw
-      uses: egor-tensin/setup-mingw@v2
+    - uses: msys2/setup-msys2@v2
       with:
-        platform: x86
-        static: 0
-        cc: 0
+        msystem: mingw32
+        pacboy: >-
+          zlib-devel:p
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
