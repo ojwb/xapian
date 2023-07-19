@@ -855,6 +855,8 @@ jobs:
       run: |
         export CC='ccache gcc'
         export CXX='ccache g++'
+        # Workaround for https://github.com/Homebrew/homebrew-core/issues/136873
+        export EATMYDATA=$(brew --prefix libeatmydata)/bin/eatmydata
         export PKG_CONFIG_PATH=/usr/local/opt/icu4c/lib/pkgconfig
         pushd xapian-core
         ./configure --enable-werror --prefix='${{ runner.temp }}/XapianInstall'
@@ -878,8 +880,6 @@ jobs:
         make -j3 -C xapian-letor
     - name: Run tests
       run: |
-        # Workaround for https://github.com/Homebrew/homebrew-core/issues/136873
-        export PATH="$(brew --prefix libeatmydata)/bin:$PATH"
         export VERBOSE=1
         export AUTOMATED_TESTING=1
         make -j3 -C xapian-core check
