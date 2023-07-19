@@ -162,21 +162,19 @@ jobs:
       run: |
         export CC='ccache gcc'
         export CXX='ccache g++'
-        export CFLAGS='-Werror'
-        export CXXFLAGS='-Werror'
         export CPPFLAGS='-D_GLIBCXX_DEBUG'
         pushd xapian-core
-        ./configure
+        ./configure --enable-werror
         export XAPIAN_CONFIG=$PWD/xapian-config
         popd
         pushd xapian-applications/omega
-        ./configure
+        ./configure --enable-werror
         popd
         pushd xapian-bindings
-        ./configure
+        ./configure --enable-werror
         popd
         pushd xapian-letor
-        ./configure
+        ./configure --enable-werror
         popd
     - name: make
       run: |
@@ -260,24 +258,22 @@ jobs:
       run: |
         export CC='ccache gcc-12'
         export CXX='ccache g++-12'
-        export CFLAGS='-Werror'
-        export CXXFLAGS='-Werror'
         # Ubuntu's GCC packages define _FORTIFY_SOURCE=2 by default, so we need
         # to undefine it before we define it to avoid a warning (which becomes
         # an error with -Werror).
         export CPPFLAGS='-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3'
         pushd xapian-core
-        ./configure
+        ./configure --enable-werror
         export XAPIAN_CONFIG=$PWD/xapian-config
         popd
         pushd xapian-applications/omega
-        ./configure
+        ./configure --enable-werror
         popd
         pushd xapian-bindings
-        ./configure
+        ./configure --enable-werror
         popd
         pushd xapian-letor
-        ./configure
+        ./configure --enable-werror
         popd
     - name: make
       run: |
@@ -357,20 +353,18 @@ jobs:
       run: |
         export CC='ccache gcc'
         export CXX='ccache g++'
-        export CFLAGS='-Werror'
-        export CXXFLAGS='-Werror'
         pushd xapian-core
-        ./configure --enable-assertions
+        ./configure --enable-werror --enable-assertions
         export XAPIAN_CONFIG=$PWD/xapian-config
         popd
         pushd xapian-applications/omega
-        ./configure
+        ./configure --enable-werror
         popd
         pushd xapian-bindings
-        ./configure
+        ./configure --enable-werror
         popd
         pushd xapian-letor
-        ./configure
+        ./configure --enable-werror
         popd
     - name: make
       run: |
@@ -450,20 +444,18 @@ jobs:
       run: |
         export CC='ccache gcc'
         export CXX='ccache g++'
-        export CFLAGS='-Werror'
-        export CXXFLAGS='-Werror'
         pushd xapian-core
-        ./configure --enable-log
+        ./configure --enable-werror --enable-log
         export XAPIAN_CONFIG=$PWD/xapian-config
         popd
         pushd xapian-applications/omega
-        ./configure
+        ./configure --enable-werror
         popd
         pushd xapian-bindings
-        ./configure
+        ./configure --enable-werror
         popd
         pushd xapian-letor
-        ./configure
+        ./configure --enable-werror
         popd
     - name: make
       run: |
@@ -543,20 +535,18 @@ jobs:
         export CC='ccache clang'
         # Build with the llvm c++ library to catch more portability issues.
         export CXX='ccache clang++ -stdlib=libc++'
-        export CFLAGS='-Werror'
-        export CXXFLAGS='-Werror'
         pushd xapian-core
-        ./configure
+        ./configure --enable-werror
         export XAPIAN_CONFIG=$PWD/xapian-config
         popd
         pushd xapian-applications/omega
-        ./configure
+        ./configure --enable-werror
         popd
         pushd xapian-bindings
-        ./configure --with-python3 --with-tcl
+        ./configure --enable-werror --with-python3 --with-tcl
         popd
         pushd xapian-letor
-        ./configure
+        ./configure --enable-werror
         popd
     - name: make
       run: |
@@ -635,20 +625,18 @@ jobs:
       run: |
         export CC='ccache clang-6.0'
         export CXX='ccache clang++-6.0'
-        export CFLAGS='-Werror'
-        export CXXFLAGS='-Werror'
         pushd xapian-core
-        ./configure
+        ./configure --enable-werror
         export XAPIAN_CONFIG=$PWD/xapian-config
         popd
         pushd xapian-applications/omega
-        ./configure
+        ./configure --enable-werror
         popd
         pushd xapian-bindings
-        ./configure --with-python3 --with-tcl
+        ./configure --enable-werror --with-python3 --with-tcl
         popd
         pushd xapian-letor
-        ./configure
+        ./configure --enable-werror
         popd
     - name: make
       run: |
@@ -731,20 +719,18 @@ jobs:
       run: |
         export CC='ccache gcc-7'
         export CXX='ccache g++-7'
-        export CFLAGS='-Werror'
-        export CXXFLAGS='-Werror'
         pushd xapian-core
-        ./configure
+        ./configure --enable-werror
         export XAPIAN_CONFIG=$PWD/xapian-config
         popd
         pushd xapian-applications/omega
-        ./configure
+        ./configure --enable-werror
         popd
         pushd xapian-bindings
-        ./configure
+        ./configure --enable-werror
         popd
         pushd xapian-letor
-        ./configure
+        ./configure --enable-werror
         popd
     - name: make
       run: |
@@ -791,11 +777,10 @@ jobs:
     - name: configure
       run: |
         cd xapian-core
-        export EM_COMPILER_WRAPPER=ccache
-        export CFLAGS='-Werror'
-        export CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti -Werror'
         export CPPFLAGS='-DFLINTLOCK_USE_FLOCK'
-        emconfigure ./configure --disable-shared
+        export CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti'
+        export EM_COMPILER_WRAPPER=ccache
+        emconfigure ./configure --enable-werror --disable-shared
     - name: make
       run: |
         cd xapian-core
@@ -870,21 +855,19 @@ jobs:
       run: |
         export CC='ccache gcc'
         export CXX='ccache g++'
-        export CFLAGS='-Werror'
-        export CXXFLAGS='-Werror'
         export PKG_CONFIG_PATH=/usr/local/opt/icu4c/lib/pkgconfig
         pushd xapian-core
-        ./configure --prefix='${{ runner.temp }}/XapianInstall'
+        ./configure --enable-werror --prefix='${{ runner.temp }}/XapianInstall'
         export XAPIAN_CONFIG=$PWD/xapian-config
         popd
         pushd xapian-applications/omega
-        ./configure --with-libiconv-prefix=/usr/local/opt/libiconv
+        ./configure --enable-werror --with-libiconv-prefix=/usr/local/opt/libiconv
         popd
         pushd xapian-bindings
-        ./configure
+        ./configure --enable-werror
         popd
         pushd xapian-letor
-        ./configure
+        ./configure --enable-werror
         popd
     - name: make
       run: |
@@ -933,10 +916,8 @@ jobs:
     - name: configure
       run: |
         export PATH=/usr/lib/ccache:$PATH
-        export CFLAGS='-Werror'
-        export CXXFLAGS='-Werror'
         cd xapian-core
-        ./configure --host i686-w64-mingw32
+        ./configure --enable-werror --host i686-w64-mingw32
     - name: make
       run: |
         export PATH=/usr/lib/ccache:$PATH
@@ -972,10 +953,8 @@ jobs:
     - name: configure
       run: |
         export PATH=/usr/lib/ccache:$PATH
-        export CFLAGS='-Werror'
-        export CXXFLAGS='-Werror'
         cd xapian-core
-        ./configure --host x86_64-w64-mingw32
+        ./configure --enable-werror --host x86_64-w64-mingw32
     - name: make
       run: |
         export PATH=/usr/lib/ccache:$PATH
@@ -1022,20 +1001,18 @@ jobs:
       run: |
         export CC='ccache gcc'
         export CXX='ccache g++'
-        export CFLAGS='-Werror'
-        export CXXFLAGS='-Werror'
         pushd xapian-core
-        ./configure
+        ./configure --enable-werror
         export XAPIAN_CONFIG=$PWD/xapian-config
         popd
         pushd xapian-applications/omega
-        ./configure
+        ./configure --enable-werror
         popd
         pushd xapian-bindings
-        ./configure
+        ./configure --enable-werror
         popd
         pushd xapian-letor
-        ./configure
+        ./configure --enable-werror
         popd
     - name: make
       run: |
@@ -1076,10 +1053,8 @@ jobs:
     - name: configure
       run: |
         PATH=$PATH:$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin
-        export CFLAGS='-Werror'
-        export CXXFLAGS='-Werror'
         cd xapian-core
-        ./configure \
+        ./configure --enable-werror \
             --host=$host_triplet \
             CC="ccache ${host_triplet}-clang" \
             CXX="ccache ${host_triplet}-clang++" \
@@ -1129,20 +1104,18 @@ jobs:
         export PERL_LIBS=`perl -MConfig -e 'print "-L$Config{archlib}/CORE" -lperl'`
         export CC='ccache gcc'
         export CXX='ccache g++'
-        export CFLAGS='-Werror'
-        export CXXFLAGS='-Werror'
         pushd xapian-core
-        ./configure
+        ./configure --enable-werror
         export XAPIAN_CONFIG=$PWD/xapian-config
         popd
         pushd xapian-applications/omega
-        ./configure
+        ./configure --enable-werror
         popd
         # pushd xapian-bindings
-        # ./configure
+        # ./configure --enable-werror
         # popd
         pushd xapian-letor
-        ./configure
+        ./configure --enable-werror
         popd
     - name: make
       run: |
@@ -1213,17 +1186,17 @@ jobs:
         export CXXFLAGS=-EHsc
         export LDFLAGS="-L$PWD/zlib"
         pushd xapian-core
-        ./configure
+        ./configure --enable-werror
         export XAPIAN_CONFIG=$PWD/xapian-config
         popd
         #pushd xapian-applications/omega
-        #./configure
+        #./configure --enable-werror
         #popd
         #pushd xapian-bindings
-        #./configure
+        #./configure --enable-werror
         #popd
         #pushd xapian-letor
-        #./configure
+        #./configure --enable-werror
         #popd
     - name: make
       run: |
