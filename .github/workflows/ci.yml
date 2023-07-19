@@ -1157,6 +1157,7 @@ jobs:
     needs: makedist
     steps:
     - name: Set up MinGW
+      id: mingw
       uses: egor-tensin/setup-mingw@v2
       with:
         platform: x86
@@ -1186,8 +1187,8 @@ jobs:
         popd
     - name: configure
       run: |
-        export CC="ccache $gcc"
-        export CXX="ccache $gxx"
+        export CC="ccache ${{ steps.mingw.gcc }}"
+        export CXX="ccache ${{ steps.mingw.gxx }}"
         pushd xapian-core
         ./configure --enable-werror
         export XAPIAN_CONFIG=$PWD/xapian-config
