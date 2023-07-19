@@ -1098,9 +1098,11 @@ jobs:
     - name: Install Cygwin
       uses: egor-tensin/setup-cygwin@v4
       with:
-        packages: ccache gcc-g++ make file-devel libpcre2-devel zlib-devel perl
+        packages: gcc-g++ make file-devel libpcre2-devel zlib-devel perl
       # liblua-devel lua python3-devel ruby-devel ruby-test-unit tcl-devel libcrypt-devel
       # php-devel is PHP7 still (2023-07-14)
+      # ccache from cygwin doesn't work with ccache-action:
+      # ccache: unknown option -- set-config=cache_dir=D:\a\xapian\xapian\.ccache
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
@@ -1126,8 +1128,8 @@ jobs:
     - name: configure
       run: |
         export PERL_LIBS=`perl -MConfig -e 'print "-L$Config{archlib}/CORE" -lperl'`
-        export CC='ccache gcc'
-        export CXX='ccache g++'
+        #export CC='ccache gcc'
+        #export CXX='ccache g++'
         pushd xapian-core
         ./configure --enable-werror
         export XAPIAN_CONFIG=$PWD/xapian-config
@@ -1280,7 +1282,7 @@ jobs:
         export CPPFLAGS="-I$PWD/zlib"
         # Standard C++ stack unwinding; assume extern "C" functions never throw.
         export CXXFLAGS=-EHsc
-        export LDFLAGS="-L $PWD/zlib"
+        export LDFLAGS="-Ld:/a/xapian/xapian/zlib"
         echo "[$LDFLAGS] [$CPPFLAGS]"
         pushd xapian-core
         ./configure --enable-werror || { cat config.log ; exit 1; }
