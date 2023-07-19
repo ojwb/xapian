@@ -1095,15 +1095,17 @@ jobs:
         # `-o incr` needed as GHA supplies shell fragments with DOS EOLs.
         shell: 'C:\tools\cygwin\bin\bash.EXE --noprofile --norc -e -o igncr -o pipefail {0}'
     steps:
+    - run: choco install ccache
+    - name: Install Cygwin
+      uses: egor-tensin/setup-cygwin@v4
+      with:
+        packages: ccache gcc-g++ make file-devel libpcre2-devel zlib-devel perl
+      # liblua-devel lua python3-devel ruby-devel ruby-test-unit tcl-devel libcrypt-devel
+      # php-devel is PHP7 still (2023-07-14)
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
         key: cygwin
-    - name: Install Cygwin
-      uses: egor-tensin/setup-cygwin@v4
-      with:
-        packages: gcc-g++ make file-devel libpcre2-devel zlib-devel liblua-devel lua perl python3-devel ruby-devel ruby-test-unit tcl-devel libcrypt-devel
-      # php-devel is PHP7 still (2023-07-14)
     - name: Fetch distribution
       uses: actions/download-artifact@v3
     - name: Unpack distribution
