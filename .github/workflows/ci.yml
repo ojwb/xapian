@@ -1095,7 +1095,7 @@ jobs:
         # `-o incr` needed as GHA supplies shell fragments with DOS EOLs.
         shell: 'C:\tools\cygwin\bin\bash.EXE --noprofile --norc -e -o igncr -o pipefail {0}'
     steps:
-    - run: choco uninstall ccache
+    - run: choco uninstall all
     - name: Install Cygwin
       uses: egor-tensin/setup-cygwin@v4
       with:
@@ -1280,6 +1280,7 @@ jobs:
         # Standard C++ stack unwinding; assume extern "C" functions never throw.
         export CXXFLAGS=-EHsc
         export LDFLAGS="-L$PWD/zlib"
+        ls -l "$PWD/zlib"
         pushd xapian-core
         ./configure --enable-werror
         export XAPIAN_CONFIG=$PWD/xapian-config
