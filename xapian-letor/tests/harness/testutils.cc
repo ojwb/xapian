@@ -79,6 +79,35 @@ mset_range_is_same(const Xapian::MSet &mset1, unsigned int first1,
 }
 
 bool
+mset_range_is_same(const Xapian::MSet& mset, unsigned int first,
+		   const pair<Xapian::docid, double> to_compare[],
+		   unsigned int count)
+{
+    TEST_AND_EXPLAIN(mset.size() >= first + count - 1,
+		     "mset is too small: expected at least " <<
+		     (first + count - 1) << " items, got " <<
+		     mset.size() << ".");
+
+    Xapian::MSetIterator i = mset[first];
+
+    for (unsigned int l = 0; l < count; ++l) {
+	if (*i != to_compare[l].first) {
+	    tout << "docids differ at item " << (l + 1) << " in range: "
+		    << *i << " != " << to_compare[l].first << "\n";
+	    return false;
+	}
+	// FIXME: don't use internal macro here...
+	if (!TEST_EQUAL_DOUBLE_(i.get_weight(), to_compare[l].second)) {
+	    tout << "weights differ at item " << (l + 1) << " in range: "
+		    << i.get_weight() << " != " << to_compare[l].second << "\n";
+	    return false;
+	}
+	++i;
+    }
+    return true;
+}
+
+bool
 mset_range_is_same_weights(const Xapian::MSet &mset1, unsigned int first1,
 			   const Xapian::MSet &mset2, unsigned int first2,
 			   unsigned int count)
@@ -171,14 +200,14 @@ mset_expect_order_(const Xapian::MSet &A, bool beginning,
 	TEST_AND_EXPLAIN(A.size() >= expect.size(),
 			 "Mset is of wrong size (" << A.size()
 			 << " < " << expect.size() << "):\n"
-			 << "Full mset was: " << A << endl
-			 << "Expected order to start: {" << expect << "}");
+			    "Full mset was: " << A << "\n"
+			    "Expected order to start: {" << expect << "}");
     } else {
 	TEST_AND_EXPLAIN(A.size() == expect.size(),
 			 "Mset is of wrong size (" << A.size()
 			 << " != " << expect.size() << "):\n"
-			 << "Full mset was: " << A << endl
-			 << "Expected order: {" << expect << "}");
+			    "Full mset was: " << A << "\n"
+			    "Expected order: {" << expect << "}");
     }
 
     Xapian::MSetIterator j = A.begin();
@@ -186,9 +215,9 @@ mset_expect_order_(const Xapian::MSet &A, bool beginning,
 	TEST_AND_EXPLAIN(*j == expect[i],
 			 "Mset didn't contain expected result:\n"
 			 << "Item " << i << " was " << *j
-			 << ", expected " << expect[i] << endl
-			 << "Full mset was: " << A << endl
-			 << "Expected: {" << expect << "}");
+			 << ", expected " << expect[i] << "\n"
+			    "Full mset was: " << A << "\n"
+			    "Expected: {" << expect << "}");
     }
 }
 

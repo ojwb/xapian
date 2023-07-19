@@ -3,7 +3,7 @@
  */
 /* Copyright 1999,2000,2001 BrightStation PLC
  * Copyright 2002 Ananova Ltd
- * Copyright 2002,2003,2004,2005,2006,2007,2008,2009,2010,2012,2013,2015,2016,2017 Olly Betts
+ * Copyright 2002-2023 Olly Betts
  * Copyright 2007 Richard Boulton
  *
  * This program is free software; you can redistribute it and/or
@@ -120,7 +120,7 @@ bool test_driver::use_cr = false;
 static const double SLOW_TEST_THRESHOLD = 10.00;
 
 // vector to store the slow tests
-static vector<pair<string, double>> slow_tests;
+static vector<pair<const char*, double>> slow_tests;
 
 void
 test_driver::write_and_clear_tout()
@@ -167,8 +167,8 @@ test_driver::get_srcdir()
     if (!file_exists(srcdir + '/' + srcfile + ".cc")) {
 	cout << argv0
 	     << ": srcdir is not in the environment and I can't guess it!\n"
-		"Run test programs using the runtest script - see HACKING for details"
-	     << endl;
+		"Run test programs using the runtest script - see HACKING "
+		"for details\n";
 	exit(1);
     }
     return srcdir;
@@ -321,7 +321,18 @@ test_driver::runtest(const test_desc *test)
 
     while (true) {
 	tout.str(string());
+#ifdef _MSC_VER
+// Suppress warning about _setjmp and C++ object destruction.  It's not ideal
+// that some destructors may not get called, but this is in the test harness
+// rather than production code, and overall it's more helpful for the test
+// harness to be able to report clearly which testcase triggered a signal.
+# pragma warning(push)
+# pragma warning(disable:4611)
+#endif
 	if (SIGSETJMP(jb, 1) == 0) {
+#ifdef _MSC_VER
+# pragma warning(pop)
+#endif
 	    SignalRedirector sig; // use object so signal handlers are reset
 	    static bool catch_signals =
 		(getenv("XAPIAN_TESTSUITE_SIG_DFL") == NULL);
@@ -469,13 +480,13 @@ test_driver::runtest(const test_desc *test)
 		    }
 		    if (vg_reachable > 0) {
 			// C++ STL implementations often "horde" released
-			// memory - for GCC 3.4 and newer the runtest script
-			// sets GLIBCXX_FORCE_NEW=1 which will disable this
-			// behaviour so we avoid this issue, but for older
-			// GCC and other compilers this may be an issue.
+			// memory - the runtest script sets GLIBCXX_FORCE_NEW=1
+			// which under GCC will disable this behaviour and so
+			// we avoid this issue, but for other compilers this
+			// may be an issue.
 			//
 			// See also:
-			// http://valgrind.org/docs/FAQ/#faq.reports
+			// https://valgrind.org/docs/manual/faq.html#faq.reports
 			//
 			// For now, just use runcount to rerun the test and see
 			// if more is leaked - hopefully this shouldn't give
@@ -713,7 +724,7 @@ test_driver::do_run_tests(vector<string>::const_iterator b,
 		    }
 
 		    if (verbose || !use_cr) {
-			out << col_green << " ok" << col_reset << endl;
+			out << col_green << " ok" << col_reset << '\n';
 		    } else {
 			out << "\r                                        "
 			       "                                       \r";
@@ -721,25 +732,25 @@ test_driver::do_run_tests(vector<string>::const_iterator b,
 		    break;
 		case XFAIL:
 		    ++res.xfailed;
-		    out << endl;
+		    out << '\n';
 		    break;
 		case FAIL:
 		    ++res.failed;
-		    out << endl;
+		    out << '\n';
 		    if (abort_on_error) {
 			throw "Test failed - aborting further tests";
 		    }
 		    break;
 		case XPASS:
 		    ++res.xpassed;
-		    out << endl;
+		    out << '\n';
 		    if (abort_on_error) {
 			throw "Test marked as XFAIL passed - aborting further tests";
 		    }
 		    break;
 		case SKIP:
 		    ++res.skipped;
-		    out << endl;
+		    out << '\n';
 		    // ignore the result of this test.
 		    break;
 	    }
@@ -751,9 +762,9 @@ test_driver::do_run_tests(vector<string>::const_iterator b,
 void
 test_driver::usage()
 {
-    cout << "Usage: " << argv0 << " [-v|--verbose] [-o|--abort-on-error] " << opt_help
-	 << "[TESTNAME]..." << endl;
-    cout << "       " << argv0 << " [-h|--help]" << endl;
+    cout << "Usage: " << argv0 << " [-v|--verbose] [-o|--abort-on-error] "
+	 << opt_help << "[TESTNAME]...\n"
+	    "       " << argv0 << " [-h|--help]\n";
     exit(1);
 }
 
@@ -794,22 +805,18 @@ test_driver::report(const test_driver::result &r, const string &desc)
 
 	if (r.skipped) {
 	    cout << ", " << col_yellow << r.skipped << col_reset
-		 << " skipped." << endl;
+		 << " skipped.\n";
 	} else {
-	    cout << "." << endl;
+	    cout << ".\n";
 	}
 
 	if (!slow_tests.empty()) {
-	    cout << "Slow tests: ";
-	    for (auto test = slow_tests.begin();
-		 test != slow_tests.end(); ++test) {
-		cout << test->first << " (" << test->second
-		     << " s)";
-		if (test + 1 != slow_tests.end()) {
-		    cout << ", ";
-		}
+	    const char* sep = "Slow tests: ";
+	    for (auto& test : slow_tests) {
+		cout << sep << test.first << " (" << test.second << " s)";
+		sep = ", ";
 	    }
-	    cout << "." << endl;
+	    cout << ".\n";
 	    slow_tests.clear();
 	}
     }
@@ -903,7 +910,7 @@ test_driver::parse_command_line(int argc, char **argv)
 	if (p && *p) {
 	    unsigned int temp;
 	    if (!parse_unsigned(p, temp)) {
-		throw "Verbose must be a non-negative integer";
+		throw "VERBOSE must be a non-negative integer";
 	    }
 	    verbose = temp;
 	}

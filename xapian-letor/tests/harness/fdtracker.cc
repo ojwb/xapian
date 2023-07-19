@@ -31,7 +31,6 @@
 #include <cerrno>
 #include <cstdlib>
 #include <cstring> // For memcmp().
-#include <set>
 
 #include "errno_to_string.h"
 #include "str.h"
@@ -91,7 +90,7 @@ FDTracker::init()
 	if (!entry) {
 	    if (errno == 0)
 		break;
-	    cout << "readdir failed: " << errno_to_string(errno) << endl;
+	    cout << "readdir failed: " << errno_to_string(errno) << '\n';
 	    exit(1);
 	}
 
@@ -121,7 +120,7 @@ FDTracker::check()
 	if (!entry) {
 	    if (errno == 0)
 		break;
-	    cout << "readdir failed: " << errno_to_string(errno) << endl;
+	    cout << "readdir failed: " << errno_to_string(errno) << '\n';
 	    exit(1);
 	}
 
