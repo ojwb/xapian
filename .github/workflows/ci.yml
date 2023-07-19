@@ -1294,7 +1294,7 @@ jobs:
       run: |
         # Avoid issues due to having a space in the pathname of the shell.
         #export PATH=${PATH//Program Files/Progra~1}
-        echo 'PATH is $PATH'
+        echo "PATH is $PATH"
         make -j2 -C xapian-core SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
         #make -j2 -C xapian-applications/omega SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
         #make -j2 -C xapian-binding SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
