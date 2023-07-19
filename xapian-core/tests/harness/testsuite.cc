@@ -71,6 +71,7 @@
 #endif
 #include "errno_to_string.h"
 #include "filetests.h"
+#include "str.h"
 #include "stringutils.h"
 
 using namespace std;
