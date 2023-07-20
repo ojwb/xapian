@@ -1170,6 +1170,7 @@ jobs:
         pacboy: >-
           file:p
           gcc:p
+          pcre2:p
           zlib:p
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
@@ -1228,6 +1229,14 @@ jobs:
     runs-on: 'windows-latest'
     needs: makedist
     steps:
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+    - uses: msys2/setup-msys2@v2
+      with:
+        msystem: mingw32
+        install: base-devel ccache
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
