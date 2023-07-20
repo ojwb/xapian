@@ -24,6 +24,10 @@
 #include <string>
 #include <sys/types.h>
 
+#ifdef __WIN32__
+# include "safewindows.h"
+#endif
+
 /** An object to communicate with the assistant process
  *
  *  It is possible that an external library contain errors that can cause omindex
@@ -38,7 +42,11 @@ class Worker {
     static bool ignoring_sigpipe;
 
     /// PID of the assistant process.
+#ifndef __WIN32__
     pid_t child;
+#else
+    HANDLE child;
+#endif
 
     /** Socket for supporting communication between the worker
      *  and its assistant.
