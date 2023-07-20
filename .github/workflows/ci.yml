@@ -1228,7 +1228,6 @@ jobs:
   msvc:
     runs-on: 'windows-latest'
     needs: makedist
-    steps:
     defaults:
       run:
         shell: msys2 {0}
