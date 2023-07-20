@@ -76,7 +76,7 @@ jobs:
         echo verbose=off > ~/.wgetrc
         ./bootstrap xapian-core xapian-applications/omega swig xapian-bindings xapian-letor
     - name: configure
-      run: ./configure CC='ccache gcc' CXX='ccache g++' CFLAGS=-O0 CXXFLAGS=-O0
+      run: ./configure CC='ccache gcc' CXX='ccache g++'
     - name: make
       run: make -j2
 #    - name: Run tests
@@ -1199,17 +1199,17 @@ jobs:
         export CC='ccache gcc'
         export CXX='ccache g++'
         pushd xapian-core
-        ./configure --enable-werror
+        ./configure --enable-werror < /dev/null
         export XAPIAN_CONFIG=$PWD/xapian-config
         popd
         pushd xapian-applications/omega
-        ./configure --enable-werror
+        ./configure --enable-werror < /dev/null
         popd
         # pushd xapian-bindings
-        # ./configure --enable-werror
+        # ./configure --enable-werror < /dev/null
         # popd
         pushd xapian-letor
-        ./configure --enable-werror
+        ./configure --enable-werror < /dev/null
         popd
     - name: make
       run: |
@@ -1278,7 +1278,7 @@ jobs:
       run: |
         export AR=lib
         export CC='ccache cl -nologo'
-        export CXX="$PWD/xapian-core/compile ccache cl -nologo"
+        export CXX="$PWD/xapian-core/compile ccache `which cl` -nologo"
         export CPPFLAGS="-I$PWD/zlib"
         # Standard C++ stack unwinding; assume extern "C" functions never throw.
         export CXXFLAGS=-EHsc
