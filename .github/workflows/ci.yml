@@ -1264,6 +1264,7 @@ jobs:
       with:
         arch: x64
     - name: Build zlib
+      shell: bash
       run: |
         # MSVC gets added to PATH last, and we find "link" from coreutils
         # instead.  That's not a useful tool to us, so just delete it
