@@ -25,6 +25,7 @@
 #include "worker.h"
 #include "worker_comms.h"
 
+#include <cinttypes>
 #include <csignal>
 #include <cstring>
 #include <cerrno>
@@ -278,7 +279,6 @@ Worker::extract(const std::string& filename,
 #elif defined __WIN32__
 	// Check if the worker process is still alive by trying to wait for it
 	// with a timeout of 0ms.
-	int status;
 	if (WaitForSingleObject(child, 0) != WAIT_TIMEOUT) {
 	    fclose(sockt);
 	    sockt = NULL;

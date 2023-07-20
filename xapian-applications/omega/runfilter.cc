@@ -29,6 +29,7 @@
 #include <sys/types.h>
 #include "safefcntl.h"
 #include <cerrno>
+#include <cinttypes>
 #include <cstdio>
 #include <cstring>
 #ifdef HAVE_SYS_TIME_H
@@ -456,21 +457,6 @@ run_filter(int fd_in, const string& cmd, bool use_shell, string* out,
 	    throw ReadError("wait pid failed");
     }
     pid_to_kill_on_signal = 0;
-#else
-    (void)use_shell;
-    FILE * fh = popen(cmd.c_str(), "r");
-    if (fh == NULL) throw ReadError("popen failed");
-    while (!feof(fh)) {
-	char buf[4096];
-	size_t len = fread(buf, 1, 4096, fh);
-	if (ferror(fh)) {
-	    (void)pclose(fh);
-	    throw ReadError("fread failed");
-	}
-	if (out) out->append(buf, len);
-    }
-    int status = pclose(fh);
-#endif
 
     if (WIFEXITED(status)) {
 	int exit_status = WEXITSTATUS(status);
@@ -483,6 +469,101 @@ run_filter(int fd_in, const string& cmd, bool use_shell, string* out,
     if (WIFSIGNALED(status) && WTERMSIG(status) == SIGXCPU) {
 	cerr << "Filter process consumed too much CPU time" << endl;
     }
+#endif
+#else
+    (void)use_shell;
+    LARGE_INTEGER counter;
+    // QueryPerformanceCounter() will always succeed on XP and later
+    // and gives us a counter which increments each CPU clock cycle
+    // on modern hardware (Pentium or newer).
+    QueryPerformanceCounter(&counter);
+    char pipename[256];
+    snprintf(pipename, sizeof(pipename),
+	     "\\\\.\\pipe\\xapian-omega-worker-%lx-%lx_%" PRIx64,
+	     static_cast<unsigned long>(GetCurrentProcessId()),
+	     static_cast<unsigned long>(GetCurrentThreadId()),
+	     static_cast<unsigned long long>(counter.QuadPart));
+    pipename[sizeof(pipename) - 1] = '\0';
+    // Create a pipe so we can read stdout from the child process.
+    HANDLE hPipe = CreateNamedPipe(pipename,
+				   PIPE_ACCESS_DUPLEX|FILE_FLAG_OVERLAPPED,
+				   0,
+				   1, 4096, 4096, NMPWAIT_USE_DEFAULT_WAIT,
+				   NULL);
+
+    if (hPipe == INVALID_HANDLE_VALUE) {
+	throw ReadError("CreateNamedPipe failed");
+    }
+
+    HANDLE hClient = CreateFile(pipename,
+				GENERIC_READ|GENERIC_WRITE, 0, NULL,
+				OPEN_EXISTING,
+				FILE_FLAG_OVERLAPPED, NULL);
+
+    if (hClient == INVALID_HANDLE_VALUE) {
+	throw ReadError("CreateFile failed");
+    }
+
+    if (!ConnectNamedPipe(hPipe, NULL) &&
+	GetLastError() != ERROR_PIPE_CONNECTED) {
+	throw ReadError("ConnectNamedPipe failed");
+    }
+
+    // Set the appropriate handles to be inherited by the child process.
+    SetHandleInformation(hClient, HANDLE_FLAG_INHERIT, 1);
+
+    // Create the child process.
+    PROCESS_INFORMATION procinfo;
+    memset(&procinfo, 0, sizeof(PROCESS_INFORMATION));
+
+    STARTUPINFO startupinfo;
+    memset(&startupinfo, 0, sizeof(STARTUPINFO));
+    startupinfo.cb = sizeof(STARTUPINFO);
+    startupinfo.hStdError = GetStdHandle(STD_ERROR_HANDLE);
+    startupinfo.hStdOutput = hClient;
+    // FIXME: Is NULL the way to say "/dev/null"?
+    // It's what GetStdHandle() is documented to return if "an application does
+    // not have associated standard handles"...
+    startupinfo.hStdInput = fd_in >= 0 ? (HANDLE) _get_osfhandle(fd_in) : NULL;
+    startupinfo.dwFlags |= STARTF_USESTDHANDLES;
+
+    string cmdline{cmd};
+    // For some reason Windows wants a modifiable command line so we
+    // pass `&cmdline[0]` rather than `cmdline.c_str()`.
+    if (!CreateProcess(NULL, &cmdline[0],
+		       0, 0, TRUE, 0, 0, 0,
+		       &startupinfo, &procinfo)) {
+	if (GetLastError() == ERROR_FILE_NOT_FOUND)
+	    throw NoSuchFilter();
+	throw ReadError("CreateProcess failed");
+    }
+
+    CloseHandle(hClient);
+    CloseHandle(procinfo.hThread);
+    child = procinfo.hProcess;
+
+    while (true) {
+	char buf[4096];
+	DWORD received;
+	if (!ReadFile(hPipe, buf, sizeof(buf), &received, NULL)) {
+	    throw ReadError("ReadFile failed");
+	}
+	if (received == 0) break;
+
+	if (out) out->append(buf, received);
+    }
+    CloseHandle(hPipe);
+
+    WaitForSingleObject(child, INFINITE);
+    DWORD rc;
+    while (GetExitCodeProcess(child, &rc) && rc == STILL_ACTIVE) {
+	Sleep(100);
+    }
+    CloseHandle(child);
+    int exit_status = int(rc);
+    if (exit_status == 0 || exit_status == alt_status)
+	return;
+
 #endif
     throw ReadError(status);
 }
