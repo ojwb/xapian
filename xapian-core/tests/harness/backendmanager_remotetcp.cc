@@ -119,8 +119,8 @@ class ServerData {
 
     bool kill_remote(const void* dbi) {
 #ifdef __WIN32__
-	cout << "ServerData::kill_remote(" << (unsigned long)(dbi) << ")\n";
-	cout << "  pid = " << pid << ", db_internal = " << (unsigned long)db_internal << '\n';
+	cout << "ServerData::kill_remote(" << (unsigned long long)(dbi) << ")\n";
+	cout << "  pid = " << pid << ", db_internal = " << (unsigned long long)db_internal << '\n';
 #endif
 	if (pid == UNUSED_PID || dbi != db_internal) return false;
 #ifdef HAVE_FORK
@@ -454,7 +454,7 @@ BackendManagerRemoteTcp::kill_remote(const Xapian::Database& db)
 {
     const void* db_internal = db.internal.get();
 #ifdef __WIN32__
-    cout << "BackendManagerRemoteTcp::kill_remote(" << (unsigned long)(db_internal) << ")\n";
+    cout << "BackendManagerRemoteTcp::kill_remote(" << (unsigned long long)(db_internal) << ")\n";
 #endif
     for (unsigned i = 0; i != first_unused_server_data; ++i) {
 	if (server_data[i].kill_remote(db_internal)) {
