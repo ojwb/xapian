@@ -62,4 +62,6 @@ for subdir in opendoc staroffice msxml ; do
     --worker=application/vnd.sun.xml.writer.template:omindex_libreofficekit \
     --url="/lok-$subdir" "$TEST_FILES/$subdir"
 done
+../../xapian-core/bin/xapian-delve "$TEST_DB"
+../../xapian-core/bin/xapian-delve "$TEST_DB" -1AU
 ./omindexcheck "$TEST_DB"
