@@ -1268,8 +1268,8 @@ jobs:
       run: |
         # MSVC gets added to PATH last, and we find "link" from coreutils
         # instead.  That's not a useful tool to us, so just delete it
-        # rather than trying to reorder PATH.
-        rm /usr/bin/link.exe || true
+        # rather than trying to reorder PATH.  FIXME still true?
+        #rm /usr/bin/link.exe || true
         mkdir zlib
         cd zlib
         curl --retry 5 --retry-connrefused -L https://github.com/xapian/xapian-dev-deps/releases/download/current/zlib-1.2.13.tar.gz|tar --strip-components=1 -zxf -
@@ -1280,12 +1280,22 @@ jobs:
         # linker warning LNK4281.  FIXME: only for x64
         sed -i 's/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
         nmake -nologo -f 'win32\Makefile.msc'
+        # First entry in PATH should be the MSVC bin directory - grab this,
+        # convert to MSYS2 format and store to add back to PATH in the next
+        # step.
+        first_path_entry=${PATH%%;*}
+        echo "X $first_path_entry"
+        first_path_entry=${first_path_entry://\\/\/}
+        echo "Y $first_path_entry"
+        printf '%s' "$first_path_entry" > first_path_entry.tmp
         echo "====="
         env|sort
         echo "====="
     - name: configure
       run: |
         # FIXME: Need to add directory with cl, etc to PATH here (action above just does it for powershell it seems)
+        export PATH=`cat first_path_entry.tmp`:$PATH
+        rm first_path_entry.tmp
         echo "====="
         env|sort
         echo "====="
