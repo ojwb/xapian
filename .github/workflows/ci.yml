@@ -1427,15 +1427,14 @@ jobs:
         echo "X $first_path_entry"
         first_path_entry=${first_path_entry://\\/\/}
         echo "Y $first_path_entry"
-        printf '%s' "$first_path_entry" > first_path_entry.tmp
+        printf '%s' "$first_path_entry" > /tmp/first_path_entry.tmp
         echo "====="
         env|sort
         echo "====="
     - name: configure
       run: |
         # FIXME: Need to add directory with cl, etc to PATH here (action above just does it for powershell it seems)
-        export PATH=`cat first_path_entry.tmp`:$PATH
-        rm first_path_entry.tmp
+        export PATH=`cat /tmp/first_path_entry.tmp`:$PATH
         echo "====="
         env|sort
         echo "====="
