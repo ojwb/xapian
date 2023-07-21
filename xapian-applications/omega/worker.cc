@@ -428,9 +428,6 @@ comms_error:
     }
 #elif defined __WIN32__
     int result = WaitForSingleObject(child, 0);
-	fclose(sockt);
-	sockt = NULL;
-    }
 
     fclose(sockt);
     sockt = NULL;
