@@ -119,15 +119,15 @@ test_scriptindex_error() {
   rc=0
   case $input in
   "")
-    out=`$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" < /dev/null 2>&1|| perl -pe 's/\r//g'` || rc=$?
+    out=`$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" < /dev/null 2>&1` || rc=$?
     ;;
   *%*)
     # Escape any % by doubling.
     input=`printf '%s' "$input"|sed 's/%/%%/g'`
-    out=`printf "$input"|$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" 2>&1|| perl -pe 's/\r//g'` || rc=$?
+    out=`printf "$input"|$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" 2>&1` || rc=$?
     ;;
   *)
-    out=`printf "$input"|$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" 2>&1|| perl -pe 's/\r//g'` || rc=$?
+    out=`printf "$input"|$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" 2>&1` || rc=$?
     ;;
   esac
   if [ $rc -eq 0 ] ; then
@@ -135,6 +135,7 @@ test_scriptindex_error() {
     printf 'Output: %s\n' "$out"
     failed=`expr $failed + 1`
   else
+    out=`printf '%s' "$out"|perl -pe 's/\r//g'`
     case $out in
       $expect) ;; # OK
       *)
@@ -218,15 +219,15 @@ $SUMMARY_GLOB"
   rc=0
   case $input in
   "")
-    out=`$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" < /dev/null 2>&1|| perl -pe 's/\r//g'` || rc=$?
+    out=`$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" < /dev/null 2>&1` || rc=$?
     ;;
   *%*)
     # Escape any % by doubling.
     input=`printf '%s' "$input"|sed 's/%/%%/g'`
-    out=`printf "$input"|$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" 2>&1|| perl -pe 's/\r//g'` || rc=$?
+    out=`printf "$input"|$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" 2>&1` || rc=$?
     ;;
   *)
-    out=`printf "$input"|$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" 2>&1|| perl -pe 's/\r//g'` || rc=$?
+    out=`printf "$input"|$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" 2>&1` || rc=$?
     ;;
   esac
   if [ $rc -ne 0 ] ; then
@@ -234,6 +235,7 @@ $SUMMARY_GLOB"
     printf 'Output: %s\n' "$out"
     failed=`expr $failed + 1`
   else
+    out=`printf '%s' "$out"|perl -pe 's/\r//g'`
     case $out in
       $expect) ;; # OK
       *)
@@ -261,15 +263,15 @@ test_scriptindex() {
   rc=0
   case $input in
   "")
-    out=`$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" < /dev/null 2>&1|| perl -pe 's/\r//g'` || rc=$?
+    out=`$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" < /dev/null 2>&1` || rc=$?
     ;;
   *%*)
     # Escape any % by doubling.
     input=`printf '%s' "$input"|sed 's/%/%%/g'`
-    out=`printf "$input"|$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" 2>&1|| perl -pe 's/\r//g'` || rc=$?
+    out=`printf "$input"|$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" 2>&1` || rc=$?
     ;;
   *)
-    out=`printf "$input"|$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" 2>&1|| perl -pe 's/\r//g'` || rc=$?
+    out=`printf "$input"|$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" 2>&1` || rc=$?
     ;;
   esac
   if [ $rc -ne 0 ] ; then
@@ -277,6 +279,7 @@ test_scriptindex() {
     printf 'Output: %s\n' "$out"
     failed=`expr $failed + 1`
   else
+    out=`printf '%s' "$out"|perl -pe 's/\r//g'`
     case $out in
       $SUMMARY_GLOB) ;; # OK
       *)
