@@ -1465,6 +1465,7 @@ jobs:
         #popd
     - name: make
       run: |
+        export PATH=`cat msvc_path_entries.tmp`$PATH
         # Avoid issues due to having a space in the pathname of the shell.
         #export PATH=${PATH//Program Files/Progra~1}
         echo "PATH is $PATH"
@@ -1474,7 +1475,8 @@ jobs:
         #make -j2 -C xapian-letor SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
     - name: Run tests
       run: |
-        export PATH=${PATH//Program Files/Progra~1}
+        export PATH=`cat msvc_path_entries.tmp`$PATH
+        #export PATH=${PATH//Program Files/Progra~1}
         make -j2 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1 SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
         #make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1 SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
         #make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1 SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
