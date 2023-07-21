@@ -1643,6 +1643,7 @@ static void stats_line(const char *zLabel, int iValue){
 /* The main program.  Parse the command line and do it... */
 int main(int argc, char **argv)
 {
+  printf("main()\n");
   static int version = 0;
   static int rpflag = 0;
   static int basisflag = 0;
@@ -1682,6 +1683,7 @@ int main(int argc, char **argv)
 
   (void)argc; /* Suppress "unused argument" warning. */
   OptInit(argv,options,stderr);
+  printf("OptInit() OK\n");
   if( version ){
      printf("Lemon version 1.0 (patched for Xapian)\n");
      exit(0);
@@ -1691,12 +1693,16 @@ int main(int argc, char **argv)
     exit(1);
   }
   memset(&lem, 0, sizeof(lem));
+  printf("memset() OK\n");
   lem.errorcnt = 0;
 
   /* Initialize the machine */
   Strsafe_init();
+  printf("Strsafe_init() OK\n");
   Symbol_init();
+  printf("Symbol_init() OK\n");
   State_init();
+  printf("State_init() OK\n");
   lem.argv0 = argv[0];
   lem.filename = OptArg(0);
   lem.basisflag = basisflag;
