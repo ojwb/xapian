@@ -135,9 +135,7 @@ class ServerData {
 	    throw Xapian::DatabaseError("Couldn't kill remote server",
 					-GetLastError());
 	}
-#ifdef __WIN32__
 	cout << "  killed!\n";
-#endif
 #endif
 	clean_up();
 	pid = UNUSED_PID;

@@ -1318,6 +1318,9 @@ jobs:
         key: msys2-ucrt64
     - name: Fetch distribution
       uses: actions/download-artifact@v3
+    - run: |
+        g++ -O2 ucrttest.cpp -o foo.exe
+        ./foo.exe
     - name: Unpack distribution
       run: |
         mv artifact/* .
@@ -1336,10 +1339,6 @@ jobs:
         popd
     - name: configure
       run: |
-        printf '%s\n' '#include <stdlib.h>' 'int main() {}' > foo.cc
-        g++ -O2 foo.cc -o foo.exe
-        ./foo.exe
-        echo "== OK =="
         #echo "PATH is $PATH"
         #export CC='ccache gcc'
         #export CXX='ccache g++'
