@@ -1378,7 +1378,7 @@ jobs:
     - uses: msys2/setup-msys2@v2
       with:
         msystem: ucrt64
-        path-type: inherit
+        # path-type: inherit
         install: base-devel ccache
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
@@ -1434,8 +1434,7 @@ jobs:
         echo "====="
     - name: configure
       run: |
-        # FIXME: Need to add directory with cl, etc to PATH here (action above just does it for powershell it seems)
-        #export PATH=`cat /tmp/first_path_entry.tmp`:$PATH
+        export PATH=`cat /tmp/first_path_entry.tmp`:$PATH
         echo "====="
         env|sort
         echo "====="
