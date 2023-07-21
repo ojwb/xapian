@@ -1202,17 +1202,17 @@ jobs:
         #export CC='ccache gcc'
         #export CXX='ccache g++'
         pushd xapian-core
-        ./configure --enable-werror < /dev/null
+        ./configure --enable-werror
         export XAPIAN_CONFIG=$PWD/xapian-config
         popd
         pushd xapian-applications/omega
-        ./configure --enable-werror < /dev/null
+        ./configure --enable-werror
         popd
         # pushd xapian-bindings
-        # ./configure --enable-werror < /dev/null
+        # ./configure --enable-werror
         # popd
         pushd xapian-letor
-        ./configure --enable-werror < /dev/null
+        ./configure --enable-werror
         popd
     - name: make
       run: |
@@ -1340,17 +1340,17 @@ jobs:
         #export CC='ccache gcc'
         #export CXX='ccache g++'
         pushd xapian-core
-        ./configure --enable-werror < /dev/null
+        ./configure --enable-werror || { cat config.log; exit 1; }
         export XAPIAN_CONFIG=$PWD/xapian-config
         popd
         pushd xapian-applications/omega
-        ./configure --enable-werror < /dev/null
+        ./configure --enable-werror
         popd
         # pushd xapian-bindings
-        # ./configure --enable-werror < /dev/null
+        # ./configure --enable-werror
         # popd
         pushd xapian-letor
-        ./configure --enable-werror < /dev/null
+        ./configure --enable-werror
         popd
     - name: make
       run: |
