@@ -540,7 +540,7 @@ run_filter(int fd_in, const string& cmd, bool use_shell, string* out,
 
     CloseHandle(hClient);
     CloseHandle(procinfo.hThread);
-    child = procinfo.hProcess;
+    HANDLE child = procinfo.hProcess;
 
     while (true) {
 	char buf[4096];
@@ -560,8 +560,8 @@ run_filter(int fd_in, const string& cmd, bool use_shell, string* out,
 	Sleep(100);
     }
     CloseHandle(child);
-    int exit_status = int(rc);
-    if (exit_status == 0 || exit_status == alt_status)
+    int status = int(rc);
+    if (status == 0 || status == alt_status)
 	return;
 
 #endif
