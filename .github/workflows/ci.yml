@@ -1375,6 +1375,7 @@ jobs:
     - uses: msys2/setup-msys2@v2
       with:
         msystem: ucrt64
+        path-type: inherit
         install: base-devel ccache
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
@@ -1409,6 +1410,7 @@ jobs:
         # We find "link" from coreutils rather than from MSVC.  The coreutils
         # "link" is not a useful tool to us, so just delete it rather than
         # trying to reorder PATH.
+        which link
         rm /usr/bin/link.exe || true
         mkdir zlib
         cd zlib
@@ -1423,18 +1425,14 @@ jobs:
         # First entry in PATH should be the MSVC bin directory - grab this,
         # convert to MSYS2 format and store to add back to PATH in the next
         # step.
-        first_path_entry=${PATH%%;*}
-        echo "X $first_path_entry"
-        first_path_entry=${first_path_entry://\\/\/}
-        echo "Y $first_path_entry"
-        printf '%s' "$first_path_entry" > /tmp/first_path_entry.tmp
+        printf '%s' "${PATH%%:*}" | tee /tmp/first_path_entry.tmp
         echo "====="
         env|sort
         echo "====="
     - name: configure
       run: |
         # FIXME: Need to add directory with cl, etc to PATH here (action above just does it for powershell it seems)
-        export PATH=`cat /tmp/first_path_entry.tmp`:$PATH
+        #export PATH=`cat /tmp/first_path_entry.tmp`:$PATH
         echo "====="
         env|sort
         echo "====="
