@@ -1435,9 +1435,7 @@ jobs:
           esac
         done | tee msvc_path_entries.tmp
         IFS=$save_IFS
-        echo "====="
-        env|sort
-        echo "====="
+        echo
     - name: configure
       run: |
         export PATH=`cat msvc_path_entries.tmp`$PATH
@@ -1445,7 +1443,7 @@ jobs:
         env|sort
         echo "====="
         export AR=lib
-        export CC='ccache cl -nologo'
+        export CC='cl -nologo'
         # FIXME: work out how to specify ccache with the compile wrapper - another wrapper called "cl"?
         export CXX="$PWD/xapian-core/compile cl -nologo"
         export CPPFLAGS="-I$PWD/zlib"
