@@ -1318,15 +1318,14 @@ jobs:
         key: msys2-ucrt64
     - name: Fetch distribution
       uses: actions/download-artifact@v3
-    - run: |
-        g++ -O2 ucrttest.cpp -o foo.exe
-        ./foo.exe
     - name: Unpack distribution
       run: |
         mv artifact/* .
         rmdir artifact
         pushd xapian-core
         tar --strip-components=1 -xf xapian-core-*.tar.xz
+        g++ -O2 ucrttest.cpp -o foo.exe
+        ./foo.exe
         popd
         pushd xapian-applications/omega
         tar --strip-components=1 -xf xapian-omega-*.tar.xz
