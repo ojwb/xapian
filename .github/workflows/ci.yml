@@ -1336,6 +1336,10 @@ jobs:
         popd
     - name: configure
       run: |
+        printf '%s\n' '#include <stdlib.h>' 'int main() {}' > foo.cc
+        g++ -O2 foo.cc -o foo.exe
+        ./foo.exe
+        echo "== OK =="
         #echo "PATH is $PATH"
         #export CC='ccache gcc'
         #export CXX='ccache g++'
