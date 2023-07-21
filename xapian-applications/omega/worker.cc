@@ -232,6 +232,11 @@ Worker::start_worker_subprocess()
 			    0, 0, TRUE, 0, 0, 0,
 			    &startupinfo, &procinfo);
     if (!ok) {
+	if (GetLastError() == ERROR_FILE_NOT_FOUND) {
+	    error = error_prefix + "failed to run helper";
+	    filter_module = string();
+	    return -1;
+	}
 	error = "CreateProcess failed: " + str(GetLastError());
 	return 1;
     }
