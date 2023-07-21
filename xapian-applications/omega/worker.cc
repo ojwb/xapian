@@ -427,7 +427,7 @@ comms_error:
 	error += str(WTERMSIG(status));
     }
 #elif defined __WIN32__
-    int result = WaitForSingleObject(child, 0);
+    DWORD result = WaitForSingleObject(child, 0);
 
     fclose(sockt);
     sockt = NULL;
