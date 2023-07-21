@@ -1425,15 +1425,22 @@ jobs:
         sed -i 's/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
         nmake -nologo -f 'win32\Makefile.msc'
         popd
-        # First entry in PATH should be the MSVC bin directory - grab this,
-        # and store to add back to PATH in the next step.
-        printf '%s' "${PATH%%:*}" | tee first_path_entry.tmp
+        # Find entries in PATH for MSVC and store to add back to PATH in
+        # the next step.
+        save_IFS=$IFS
+        IFS=:
+        for d in $PATH ; do
+          case $d in
+            *Visual*) printf '%s:' "$d" ;;
+          esac
+        done | tee msvc_path_entries.tmp
+        IFS=$save_IFS
         echo "====="
         env|sort
         echo "====="
     - name: configure
       run: |
-        export PATH=`cat first_path_entry.tmp`:$PATH
+        export PATH=`cat msvc_path_entries.tmp`$PATH
         echo "====="
         env|sort
         echo "====="
