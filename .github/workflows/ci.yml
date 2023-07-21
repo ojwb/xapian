@@ -1427,7 +1427,7 @@ jobs:
         popd
         # First entry in PATH should be the MSVC bin directory - grab this,
         # and store to add back to PATH in the next step.
-        printf '%s' "${PATH%%:*}" | tee /tmp/first_path_entry.tmp
+        printf '%s' "${PATH%%:*}" | tee first_path_entry.tmp
         echo "====="
         env|sort
         echo "====="
