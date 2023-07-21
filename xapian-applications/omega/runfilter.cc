@@ -60,7 +60,9 @@
 
 using namespace std;
 
+#ifndef __WIN32__
 static int devnull = -1;
+#endif
 
 #if defined HAVE_FORK && defined HAVE_SOCKETPAIR
 bool
@@ -235,6 +237,7 @@ void
 runfilter_init()
 {
     runfilter_init_signal_handlers_();
+#ifndef __WIN32__
     devnull = open("/dev/null", O_WRONLY);
     if (devnull < 0) {
 	cerr << "Failed to open /dev/null: " << strerror(errno) << endl;
@@ -247,6 +250,7 @@ runfilter_init()
     while (devnull <= 2) {
 	devnull = dup(devnull);
     }
+#endif
 }
 
 void

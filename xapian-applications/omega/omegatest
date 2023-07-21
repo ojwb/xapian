@@ -115,15 +115,15 @@ test_scriptindex_error() {
   rc=0
   case $input in
   "")
-    out=`$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" < /dev/null 2>&1` || rc=$?
+    out=`$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" < /dev/null 2>&1|| perl -pe 's/\r//g'` || rc=$?
     ;;
   *%*)
     # Escape any % by doubling.
     input=`printf '%s' "$input"|sed 's/%/%%/g'`
-    out=`printf "$input"|$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" 2>&1` || rc=$?
+    out=`printf "$input"|$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" 2>&1|| perl -pe 's/\r//g'` || rc=$?
     ;;
   *)
-    out=`printf "$input"|$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" 2>&1` || rc=$?
+    out=`printf "$input"|$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" 2>&1|| perl -pe 's/\r//g'` || rc=$?
     ;;
   esac
   if [ $rc -eq 0 ] ; then
@@ -214,15 +214,15 @@ $SUMMARY_GLOB"
   rc=0
   case $input in
   "")
-    out=`$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" < /dev/null 2>&1` || rc=$?
+    out=`$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" < /dev/null 2>&1|| perl -pe 's/\r//g'` || rc=$?
     ;;
   *%*)
     # Escape any % by doubling.
     input=`printf '%s' "$input"|sed 's/%/%%/g'`
-    out=`printf "$input"|$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" 2>&1` || rc=$?
+    out=`printf "$input"|$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" 2>&1|| perl -pe 's/\r//g'` || rc=$?
     ;;
   *)
-    out=`printf "$input"|$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" 2>&1` || rc=$?
+    out=`printf "$input"|$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" 2>&1|| perl -pe 's/\r//g'` || rc=$?
     ;;
   esac
   if [ $rc -ne 0 ] ; then
@@ -257,15 +257,15 @@ test_scriptindex() {
   rc=0
   case $input in
   "")
-    out=`$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" < /dev/null 2>&1` || rc=$?
+    out=`$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" < /dev/null 2>&1|| perl -pe 's/\r//g'` || rc=$?
     ;;
   *%*)
     # Escape any % by doubling.
     input=`printf '%s' "$input"|sed 's/%/%%/g'`
-    out=`printf "$input"|$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" 2>&1` || rc=$?
+    out=`printf "$input"|$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" 2>&1|| perl -pe 's/\r//g'` || rc=$?
     ;;
   *)
-    out=`printf "$input"|$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" 2>&1` || rc=$?
+    out=`printf "$input"|$SCRIPTINDEX "$TEST_DB" "$TEST_INDEXSCRIPT" 2>&1|| perl -pe 's/\r//g'` || rc=$?
     ;;
   esac
   if [ $rc -ne 0 ] ; then
@@ -944,6 +944,7 @@ testcase 'A list of <b>words</b>' list="words" text="A list of words" open="<b>"
 testcase 'A list of <span>words</span>' list="words" text="A list of words" open="<span>"
 
 printf '$highlight{$cgi{text},$cgi{list},$cgi{open},$cgi{close}}' > "$TEST_TEMPLATE"
+MSYS2_ARG_CONV_EXCL='close=' \
 testcase 'A list of <b>words</b>' list="words" text="A list of words" open="<b>" close="</b>"
 testcase 'A *list* of *words*' list="words${tab}list" text="A list of words" open="*" close="*"
 
