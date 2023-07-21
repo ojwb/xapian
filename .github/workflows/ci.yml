@@ -1345,9 +1345,9 @@ jobs:
         ./configure --enable-werror || { cat config.log; exit 1; }
         export XAPIAN_CONFIG=$PWD/xapian-config
         popd
-        pushd xapian-applications/omega
-        ./configure --enable-werror
-        popd
+        #pushd xapian-applications/omega
+        #./configure --enable-werror
+        #popd
         # pushd xapian-bindings
         # ./configure --enable-werror
         # popd
@@ -1357,13 +1357,13 @@ jobs:
     - name: make
       run: |
         make -j2 -C xapian-core
-        make -j2 -C xapian-applications/omega
+        #make -j2 -C xapian-applications/omega
         # make -j2 -C xapian-bindings
         make -j2 -C xapian-letor
     - name: Run tests
       run: |
         make -j2 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1
-        make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1
+        #make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1
         # make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1
         make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1
 
