@@ -1376,8 +1376,8 @@ jobs:
     steps:
     - uses: msys2/setup-msys2@v2
       with:
-        msystem: ucrt64
-        # path-type: inherit
+        release: true # Use the pre-installed MSYS2
+        path-type: inherit
         install: base-devel ccache
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
@@ -1427,21 +1427,21 @@ jobs:
         popd
         # Find entries in PATH for MSVC and store to add back to PATH in
         # the next step.
-        save_IFS=$IFS
-        IFS=:
-        for d in $PATH ; do
-          case $d in
-            *Visual*) printf '%s:' "$d" ;;
-          esac
-        done | tee msvc_path_entries.tmp
-        IFS=$save_IFS
-        echo
+#        save_IFS=$IFS
+#        IFS=:
+#        for d in $PATH ; do
+#          case $d in
+#            *Visual*) printf '%s:' "$d" ;;
+#          esac
+#        done | tee msvc_path_entries.tmp
+#        IFS=$save_IFS
+#        echo
     - name: configure
       run: |
-        export PATH=`cat msvc_path_entries.tmp`$PATH
-        echo "====="
+        #export PATH=`cat msvc_path_entries.tmp`$PATH
+        #echo "====="
         env|sort
-        echo "====="
+        #echo "====="
         export AR=lib
         export CC='cl -nologo'
         # FIXME: work out how to specify ccache with the compile wrapper - another wrapper called "cl"?
@@ -1465,17 +1465,17 @@ jobs:
         #popd
     - name: make
       run: |
-        export PATH=`cat msvc_path_entries.tmp`$PATH
+        #export PATH=`cat msvc_path_entries.tmp`$PATH
         # Avoid issues due to having a space in the pathname of the shell.
         #export PATH=${PATH//Program Files/Progra~1}
-        echo "PATH is $PATH"
+        #echo "PATH is $PATH"
         make -j2 -C xapian-core SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
         #make -j2 -C xapian-applications/omega SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
         #make -j2 -C xapian-binding SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
         #make -j2 -C xapian-letor SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
     - name: Run tests
       run: |
-        export PATH=`cat msvc_path_entries.tmp`$PATH
+        #export PATH=`cat msvc_path_entries.tmp`$PATH
         #export PATH=${PATH//Program Files/Progra~1}
         make -j2 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1 SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
         #make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1 SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
