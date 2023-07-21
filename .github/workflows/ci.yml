@@ -1176,7 +1176,8 @@ jobs:
       uses: hendrikmuhs/ccache-action@v1
       with:
         key: msys2-mingw32
-        restore-keys: [mingw64-i686]
+        restore-keys: |
+          mingw64-i686
     - name: Fetch distribution
       uses: actions/download-artifact@v3
     - name: Unpack distribution
