@@ -400,7 +400,6 @@ main(int argc, char** argv)
 	}
 	Xapian::docid did = *p;
 	Xapian::Document doc = db.get_document(did);
-	cerr << "URL " << url << " from term " << term << " in docid #" << did << '\n';
 	auto iter = tests.find(url);
 	if (iter != tests.end()) {
 	    test_result individual_result = compare_test(iter->second, doc,

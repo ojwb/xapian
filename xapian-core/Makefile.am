@@ -95,8 +95,6 @@ EXTRA_DIST += \
  emscripten/README.md \
  emscripten/xapianjstest.cc
 
-EXTRA_DIST += ucrttest.cpp
-
 cmakedir = $(libdir)/cmake/xapian
 cmake_DATA = cmake/xapian-config.cmake cmake/xapian-config-version.cmake
 

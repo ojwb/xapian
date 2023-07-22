@@ -1267,7 +1267,6 @@ jobs:
         popd
     - name: configure
       run: |
-        #echo "PATH is $PATH"
         #export CC='ccache gcc'
         #export CXX='ccache g++'
         pushd xapian-core
@@ -1324,8 +1323,6 @@ jobs:
         rmdir artifact
         pushd xapian-core
         tar --strip-components=1 -xf xapian-core-*.tar.xz
-        g++ -O2 ucrttest.cpp -o foo.exe
-        ./foo.exe
         popd
         #pushd xapian-applications/omega
         #tar --strip-components=1 -xf xapian-omega-*.tar.xz
@@ -1338,7 +1335,6 @@ jobs:
         popd
     - name: configure
       run: |
-        #echo "PATH is $PATH"
         #export CC='ccache gcc'
         #export CXX='ccache g++'
         pushd xapian-core
@@ -1412,7 +1408,6 @@ jobs:
         # We find "link" from coreutils rather than from MSVC.  The coreutils
         # "link" is not a useful tool to us, so just delete it rather than
         # trying to reorder PATH.
-        which link
         rm /usr/bin/link.exe || true
         mkdir zlib
         pushd zlib
@@ -1425,23 +1420,8 @@ jobs:
         sed -i 's/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
         nmake -nologo -f 'win32\Makefile.msc'
         popd
-        # Find entries in PATH for MSVC and store to add back to PATH in
-        # the next step.
-#        save_IFS=$IFS
-#        IFS=:
-#        for d in $PATH ; do
-#          case $d in
-#            *Visual*) printf '%s:' "$d" ;;
-#          esac
-#        done | tee msvc_path_entries.tmp
-#        IFS=$save_IFS
-#        echo
     - name: configure
       run: |
-        #export PATH=`cat msvc_path_entries.tmp`$PATH
-        #echo "====="
-        env|sort
-        #echo "====="
         export AR=lib
         export CC='cl -nologo'
         # FIXME: work out how to specify ccache with the compile wrapper - another wrapper called "cl"?
@@ -1465,10 +1445,6 @@ jobs:
         popd
     - name: make
       run: |
-        #export PATH=`cat msvc_path_entries.tmp`$PATH
-        # Avoid issues due to having a space in the pathname of the shell.
-        #export PATH=${PATH//Program Files/Progra~1}
-        #echo "PATH is $PATH"
         make -j2 -C xapian-core
         #make -j2 -C xapian-applications/omega SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
         #make -j2 -C xapian-binding SHELL='C:/Progra~1/Git/usr/bin/sh.exe'

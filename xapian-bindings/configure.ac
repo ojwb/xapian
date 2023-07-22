@@ -722,13 +722,11 @@ if test no != "$with_java" ; then
     dnl So we could check for one of these if we want to check for a particular
     dnl JDK version...
     java_ok=no
-    env|grep '^JAVA\|^JNI'
     AC_CHECK_HEADER([jni.h], [java_ok=yes], [
       SAVE_CPPFLAGS=$CPPFLAGS
       real_javac=$JAVAC
       dnl Avoid endlessly traversing if there's a symlink loop.
       for count in 1 2 3 4 5 6 7 8 9 ; do
-	echo "real_javac=$real_javac"
 	r=`readlink "$real_javac"`
 	test -n "$r" || break
 	real_javac=$r
@@ -742,7 +740,6 @@ if test no != "$with_java" ; then
 	  ${JDK_HOME+"$JDK_HOME/include"} \
 	  "$rel_jnidir" \
 	  /System/Library/Frameworks/JavaVM.framework/Headers ; do
-	jnidir=`echo "$jnidir"|sed 's,\\\\,/,g'`
 	CPPFLAGS="$SAVE_CPPFLAGS -I$jnidir"
 	AC_MSG_CHECKING([for jni.h in $jnidir])
 	if test -f "$jnidir/jni.h" ; then

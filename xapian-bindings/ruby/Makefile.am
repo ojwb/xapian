@@ -100,14 +100,12 @@ dist_docdata_DATA = docs/index.html
 
 EXTRA_DIST += generate-rdoc-stubs docs/xapian.rb
 
-if !MAINTAINER_NO_DOCS
 BUILT_SOURCES += docs/rdocs/index.html
 
 docs/rdocs/index.html: docs/xapian.rb
 	rm -rf docs/rdocs
 	$(MKDIR_P) docs
 	cd docs && $(RDOC) --op rdocs `test -f xapian.rb||echo '$(abs_srcdir)/docs/'`xapian.rb
-endif
 
 if DOCUMENTATION_RULES
 docs/xapian.rb: generate-rdoc-stubs xapian.rb ../doxygen-xml/index.xml
