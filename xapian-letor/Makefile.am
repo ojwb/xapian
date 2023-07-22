@@ -151,6 +151,7 @@ noinst_HEADERS +=\
 	common/safesyssocket.h\
 	common/safesysstat.h\
 	common/safeunistd.h\
+	common/safewindows.h\
 	common/str.h\
 	common/stringutils.h\
 	common/wordaccess.h
