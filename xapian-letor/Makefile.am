@@ -145,6 +145,7 @@ noinst_HEADERS +=\
 	common/output.h\
 	common/overflow.h\
 	common/parseint.h\
+	common/realtime.h\
 	common/safedirent.h\
 	common/safefcntl.h\
 	common/safesyssocket.h\
