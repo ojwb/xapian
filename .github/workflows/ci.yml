@@ -1451,7 +1451,7 @@ jobs:
         export CXXFLAGS=-EHsc
         export LDFLAGS="-L$PWD/zlib"
         pushd xapian-core
-        ./configure --enable-werror || { cat config.log ; exit 1; }
+        ./configure --enable-werror --disable-shared || { cat config.log ; exit 1; }
         export XAPIAN_CONFIG=$PWD/xapian-config
         popd
         #pushd xapian-applications/omega
