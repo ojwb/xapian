@@ -127,12 +127,17 @@ class ServerData {
 	}
 	clean_up();
 #elif defined __WIN32__
+	cout << endl << endl;
+	system("procps fux");
+	cout << "\nAbout to terminate process " << (unsigned long long)pid << endl;
 	if (!TerminateProcess(pid, 0)) {
 	    throw Xapian::DatabaseError("Couldn't kill remote server",
 					-int(GetLastError()));
 	}
 	clean_up();
-	system("procps ux");
+	cout << endl;
+	system("procps fux");
+	cout << endl;
 #endif
 	pid = UNUSED_PID;
 	return true;
