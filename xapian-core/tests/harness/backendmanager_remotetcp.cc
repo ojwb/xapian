@@ -129,7 +129,7 @@ class ServerData {
 	clean_up();
 #elif defined __WIN32__
 	cout << endl << endl;
-	system("procps fux");
+	system("procps faux");
 	cout << "\nAbout to terminate process " << (unsigned long long)pid << endl;
 	if (!TerminateProcess(pid, 0)) {
 	    throw Xapian::DatabaseError("Couldn't kill remote server",
@@ -137,7 +137,7 @@ class ServerData {
 	}
 	clean_up();
 	cout << endl;
-	system("procps fux");
+	system("procps faux");
 	cout << endl;
 #endif
 	pid = UNUSED_PID;
@@ -335,6 +335,10 @@ try_next_port:
 	win32_throw_error_string("Couldn't create child process");
     }
 
+    cout << "\nStarting xapian-tcpsrv process PID " << procinfo.dwProcessId << " handle "
+	<< (unsigned long long)process.hProcess << ":" << endl;
+	system("procps faux");
+	cout << endl;
     CloseHandle(hWrite);
     CloseHandle(procinfo.hThread);
 
