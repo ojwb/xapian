@@ -336,9 +336,9 @@ try_next_port:
     }
 
     cout << "\nStarting xapian-tcpsrv process PID " << procinfo.dwProcessId << " handle "
-	<< (unsigned long long)process.hProcess << ":" << endl;
-	system("procps faux");
-	cout << endl;
+	<< (unsigned long long)procinfo.hProcess << ":" << endl;
+    system("procps faux");
+    cout << endl;
     CloseHandle(hWrite);
     CloseHandle(procinfo.hThread);
 
