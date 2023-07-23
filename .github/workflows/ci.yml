@@ -1457,7 +1457,8 @@ jobs:
         #make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1 SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
 
   freebsd:
-    runs-on: linux-latest
+    runs-on: 'linux-latest'
+    steps:
     - name: Fetch distribution
       uses: actions/download-artifact@v3
     - name: Unpack distribution
@@ -1476,7 +1477,6 @@ jobs:
         #pushd xapian-letor
         #tar --strip-components=1 -xf xapian-letor-*.tar.xz
         #popd
-    steps:
     - name: Run in FreeBSD VM
       uses: vmactions/freebsd-vm@v0
       with:
