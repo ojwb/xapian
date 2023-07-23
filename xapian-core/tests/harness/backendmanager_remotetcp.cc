@@ -28,6 +28,7 @@
 #include <stdio.h> // For fdopen().
 #include <cerrno>
 #include <cstring>
+#include <iostream>
 
 #ifdef HAVE_FORK
 # include <signal.h>
