@@ -29,6 +29,10 @@ BackendManagerInMemory::do_get_database(const vector<string>& files)
 {
     Xapian::WritableDatabase wdb(string(), Xapian::DB_BACKEND_INMEMORY);
     index_files_to_database(wdb, files);
+    // This cast avoids a -Wreturn-std-move warning from older clang (seen
+    // with clang 8 and 11; not seen with clang 13).  We can't address this
+    // by adding the suggested std::move() because GCC 13 -Wredundant-move
+    // then warns that the std::move() is redundant!
     return std::move(wdb);
 }
 
