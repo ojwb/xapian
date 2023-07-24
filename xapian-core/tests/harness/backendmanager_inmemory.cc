@@ -33,7 +33,7 @@ BackendManagerInMemory::do_get_database(const vector<string>& files)
     // with clang 8 and 11; not seen with clang 13).  We can't address this
     // by adding the suggested std::move() because GCC 13 -Wredundant-move
     // then warns that the std::move() is redundant!
-    return std::move(wdb);
+    return static_cast<Xapian::Database>(wdb);
 }
 
 Xapian::WritableDatabase
