@@ -1489,37 +1489,30 @@ jobs:
         #pushd xapian-bindings
         #tar --strip-components=1 -xf xapian-bindings-*.tar.xz
         #popd
-        #pushd xapian-letor
-        #tar --strip-components=1 -xf xapian-letor-*.tar.xz
-        #popd
+        pushd xapian-letor
+        tar --strip-components=1 -xf xapian-letor-*.tar.xz
+        popd
     - name: Run in FreeBSD VM
       uses: cross-platform-actions/action@v0.15.0
       with:
         operating_system: freebsd
         version: '13.2'
-        usesh: true
+        shell: bash
         run: |
-          uname -a
-          echo "$SHELL"
-          pwd
-          ls -lah
-          whoami
-          env|sort
-          freebsd-version
-    - name: configure
-      run: |
-        pushd xapian-core
-        ./configure --enable-werror
-        export XAPIAN_CONFIG=$PWD/xapian-config
-        popd
-    - name: make
-      run: |
-        make -j2 -C xapian-core
-    - name: Run tests
-      run: |
-        export VERBOSE=1
-        export AUTOMATED_TESTING=1
-        make -j2 -C xapian-core check
+          pushd xapian-core
+          ./configure --enable-werror
+          export XAPIAN_CONFIG=$PWD/xapian-config
+          popd
+          pushd xapian-letor
+          ./configure --enable-werror
+          export XAPIAN_CONFIG=$PWD/xapian-config
+          popd
+          make -j2 -C xapian-core
+          make -j2 -C xapian-letor
+          export VERBOSE=1
+          export AUTOMATED_TESTING=1
+          make -j2 -C xapian-core check
+          make -j2 -C xapian-letor check
 
 #  checkpatch:
 #    name: 'Automated run of xapian-check-patch'
