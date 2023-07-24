@@ -1517,8 +1517,18 @@ jobs:
           ccache --set-config=cache_dir='/Users/runner/work/xapian/xapian/.ccache'
           ccache --set-config=max_size='500M'
           ccache --set-config=compression=true
+          pwd
+        run: |
+          CC='ccache cc'
+          export CC
+          CXX='ccache c++'
+          export CXX
           cd xapian-core
           tar --strip-components=1 -xvf xapian-core-*.tar.xz
+          ls -l
+          ./configure --enable-werror
+          XAPIAN_CONFIG=$PWD/xapian-config
+          export XAPIAN_CONFIG
           cd ..
           #cd xapian-applications/omega
           #tar --strip-components=1 -xf xapian-omega-*.tar.xz
@@ -1528,21 +1538,6 @@ jobs:
           #cd ..
           cd xapian-letor
           tar --strip-components=1 -xvf xapian-letor-*.tar.xz
-          cd ..
-          pwd
-        run: |
-          pwd
-          CC='ccache cc'
-          export CC
-          CXX='ccache c++'
-          export CXX
-          cd xapian-core
-          ls -l
-          ./configure --enable-werror
-          XAPIAN_CONFIG=$PWD/xapian-config
-          export XAPIAN_CONFIG
-          cd ..
-          cd xapian-letor
           ls -l
           ./configure --enable-werror
           export XAPIAN_CONFIG=$PWD/xapian-config
