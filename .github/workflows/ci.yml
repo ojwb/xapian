@@ -1479,14 +1479,18 @@ jobs:
         #tar --strip-components=1 -xf xapian-letor-*.tar.xz
         #popd
     - name: Run in FreeBSD VM
-      uses: vmactions/freebsd-vm@v0
+      uses: cross-platform-actions/action@v0.15.0
       with:
+        operating_system: freebsd
+        version: '13.2'
         usesh: true
         run: |
+          uname -a
+          echo "$SHELL"
           pwd
           ls -lah
           whoami
-          env
+          env|sort
           freebsd-version
     - name: configure
       run: |
