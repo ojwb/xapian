@@ -886,100 +886,114 @@ jobs:
 ##        make -j3 -C xapian-applications/omega check
 ##        make -j3 -C xapian-bindings check
 ##        make -j3 -C xapian-letor check
-#
-#  mingw64-i686-cross:
-#    runs-on: 'ubuntu-22.04'
-#    needs: makedist
-#    steps:
-#    - name: Install CCache
-#      uses: hendrikmuhs/ccache-action@v1
-#      with:
-#        key: mingw64-i686-cross
-#    - name: Fetch distribution
-#      uses: actions/download-artifact@v3
-#    - name: Unpack distribution
-#      run: |
-#        mv artifact/* .
-#        rmdir artifact
-#        pushd xapian-core
-#        tar --strip-components=1 -xf xapian-core-*.tar.xz
-#        popd
-#        pushd xapian-letor
-#        tar --strip-components=1 -xf xapian-letor-*.tar.xz
-#        popd
-#    - name: Install package dependencies
-#      run: |
-#        sudo apt-get update
-#        sudo apt-get install \
-#            g++-mingw-w64-i686-win32 \
-#            mingw-w64-i686-dev \
-#            binutils-mingw-w64-i686 \
-#            libz-mingw-w64-dev \
-#            mingw-w64-tools
-#    - name: configure
-#      run: |
-#        export PATH=/usr/lib/ccache:$PATH
-#        pushd xapian-core
-#        ./configure --enable-werror --host i686-w64-mingw32
-#        export XAPIAN_CONFIG=$PWD/xapian-config
-#        popd
-#        pushd xapian-letor
-#        ./configure --enable-werror --host i686-w64-mingw32
-#        popd
-#    - name: make
-#      run: |
-#        export PATH=/usr/lib/ccache:$PATH
-#        make -j2 -C xapian-core
-#        make -j2 -C xapian-letor
-#      # FIXME: Run tests under wine?
-#
-#  mingw64-x86-64-cross:
-#    runs-on: 'ubuntu-22.04'
-#    needs: makedist
-#    steps:
-#    - name: Install CCache
-#      uses: hendrikmuhs/ccache-action@v1
-#      with:
-#        key: mingw64-x86-64-cross
-#    - name: Fetch distribution
-#      uses: actions/download-artifact@v3
-#    - name: Unpack distribution
-#      run: |
-#        mv artifact/* .
-#        rmdir artifact
-#        pushd xapian-core
-#        tar --strip-components=1 -xf xapian-core-*.tar.xz
-#        export XAPIAN_CONFIG=$PWD/xapian-config
-#        popd
-#        pushd xapian-letor
-#        tar --strip-components=1 -xf xapian-letor-*.tar.xz
-#        popd
-#    - name: Install package dependencies
-#      run: |
-#        sudo apt-get update
-#        sudo apt-get install \
-#            g++-mingw-w64-x86-64-win32 \
-#            mingw-w64-x86-64-dev \
-#            binutils-mingw-w64-x86-64 \
-#            libz-mingw-w64-dev \
-#            mingw-w64-tools
-#    - name: configure
-#      run: |
-#        export PATH=/usr/lib/ccache:$PATH
-#        pushd xapian-core
-#        ./configure --enable-werror --host x86_64-w64-mingw32
-#        export XAPIAN_CONFIG=$PWD/xapian-config
-#        popd
-#        pushd xapian-letor
-#        ./configure --enable-werror --host x86_64-w64-mingw32
-#        popd
-#    - name: make
-#      run: |
-#        export PATH=/usr/lib/ccache:$PATH
-#        make -j2 -C xapian-core
-#        make -j2 -C xapian-letor
-#      # FIXME: Run tests under wine?
-#
+
+  mingw64-i686-cross:
+    runs-on: 'ubuntu-22.04'
+    needs: makedist
+    steps:
+    - name: Install CCache
+      uses: hendrikmuhs/ccache-action@v1
+      with:
+        key: mingw64-i686-cross
+    - name: Fetch distribution
+      uses: actions/download-artifact@v3
+    - name: Unpack distribution
+      run: |
+        mv artifact/* .
+        rmdir artifact
+        pushd xapian-core
+        tar --strip-components=1 -xf xapian-core-*.tar.xz
+        popd
+        pushd xapian-letor
+        tar --strip-components=1 -xf xapian-letor-*.tar.xz
+        popd
+    - name: Install package dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install \
+            g++-mingw-w64-i686-win32 \
+            mingw-w64-i686-dev \
+            binutils-mingw-w64-i686 \
+            libz-mingw-w64-dev \
+            mingw-w64-tools \
+            wine-binfmt \
+            wine32
+    - name: configure
+      run: |
+        export PATH=/usr/lib/ccache:$PATH
+        pushd xapian-core
+        ./configure --enable-werror --host i686-w64-mingw32
+        export XAPIAN_CONFIG=$PWD/xapian-config
+        popd
+        pushd xapian-letor
+        ./configure --enable-werror --host i686-w64-mingw32
+        popd
+    - name: make
+      run: |
+        export PATH=/usr/lib/ccache:$PATH
+        make -j2 -C xapian-core
+        make -j2 -C xapian-letor
+    - name: Run tests
+      run: |
+        export VERBOSE=1
+        export AUTOMATED_TESTING=1
+        make -j2 -C xapian-core check
+        make -j2 -C xapian-letor check
+
+  mingw64-x86-64-cross:
+    runs-on: 'ubuntu-22.04'
+    needs: makedist
+    steps:
+    - name: Install CCache
+      uses: hendrikmuhs/ccache-action@v1
+      with:
+        key: mingw64-x86-64-cross
+    - name: Fetch distribution
+      uses: actions/download-artifact@v3
+    - name: Unpack distribution
+      run: |
+        mv artifact/* .
+        rmdir artifact
+        pushd xapian-core
+        tar --strip-components=1 -xf xapian-core-*.tar.xz
+        export XAPIAN_CONFIG=$PWD/xapian-config
+        popd
+        pushd xapian-letor
+        tar --strip-components=1 -xf xapian-letor-*.tar.xz
+        popd
+    - name: Install package dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install \
+            g++-mingw-w64-x86-64-win32 \
+            mingw-w64-x86-64-dev \
+            binutils-mingw-w64-x86-64 \
+            libz-mingw-w64-dev \
+            mingw-w64-tools \
+            wine-binfmt \
+            wine64
+    - name: configure
+      run: |
+        export PATH=/usr/lib/ccache:$PATH
+        pushd xapian-core
+        ./configure --enable-werror --host x86_64-w64-mingw32
+        export XAPIAN_CONFIG=$PWD/xapian-config
+        popd
+        pushd xapian-letor
+        ./configure --enable-werror --host x86_64-w64-mingw32
+        popd
+    - name: make
+      run: |
+        export PATH=/usr/lib/ccache:$PATH
+        make -j2 -C xapian-core
+        make -j2 -C xapian-letor
+    - name: Run tests
+      run: |
+        export VERBOSE=1
+        export AUTOMATED_TESTING=1
+        make -j2 -C xapian-core check
+        make -j2 -C xapian-letor check
+
 #  Fedora:
 #    runs-on: 'ubuntu-22.04'
 #    container: fedora:35
