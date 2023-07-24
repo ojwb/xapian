@@ -129,7 +129,7 @@ class ServerData {
 	clean_up();
 #elif defined __WIN32__
 	cout << endl << endl;
-	system("procps faux");
+	system("procps -efH");
 	cout << "\nAbout to terminate process " << (unsigned long long)pid << endl;
 	if (!TerminateProcess(pid, 9)) {
 	    throw Xapian::DatabaseError("Couldn't kill remote server",
@@ -137,8 +137,9 @@ class ServerData {
 	}
 	clean_up();
 	cout << endl;
-	system("procps faux");
+	system("procps -efH");
 	cout << endl;
+	sleep(10);
 #endif
 	pid = UNUSED_PID;
 	return true;
@@ -337,7 +338,7 @@ try_next_port:
 
     cout << "\nStarting xapian-tcpsrv process PID " << procinfo.dwProcessId << " handle "
 	<< (unsigned long long)procinfo.hProcess << ":" << endl;
-    system("procps faux");
+    system("procps -efH");
     cout << endl;
     CloseHandle(hWrite);
     CloseHandle(procinfo.hThread);
