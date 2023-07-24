@@ -36,7 +36,7 @@ using namespace std;
     try { \
 	CODE; \
     } catch (const Xapian::EXCEPTION&) { \
-	tout << "Counting exception " #EXCEPTION " from {" #CODE "}\n"; \
+	cout << "Counting exception " #EXCEPTION " from {" #CODE "}\n"; \
 	++exception_count; \
     }
 
