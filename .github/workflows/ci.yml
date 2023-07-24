@@ -1373,7 +1373,7 @@ jobs:
         #make -j2 -C xapian-letor
     - name: Run tests
       run: |
-        make -j2 -C xapian-core/tests apitest
+        make -j2 -C xapian-core/tests apitest.exe
         export VERBOSE=1
         export AUTOMATED_TESTING=1
         cd xapian-core/tests
@@ -1472,7 +1472,7 @@ jobs:
       run: |
         #export PATH=`cat msvc_path_entries.tmp`$PATH
         #export PATH=${PATH//Program Files/Progra~1}
-        make -j2 -C xapian-core/tests apitest
+        make -j2 -C xapian-core/tests apitest.exe
         export VERBOSE=1
         export AUTOMATED_TESTING=1
         cd xapian-core/tests
