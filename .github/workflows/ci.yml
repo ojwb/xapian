@@ -1518,7 +1518,7 @@ jobs:
         version: '13.2'
         shell: bash
         run: |
-          pkg install -y ccache
+          sudo pkg install -y ccache
           export CC='ccache cc'
           export CXX='ccache c++'
           pushd xapian-core
@@ -1569,20 +1569,25 @@ jobs:
         prepare: |
           pkg install -y ccache
         run: |
-          export CC='ccache cc'
-          export CXX='ccache c++'
-          pushd xapian-core
+          CC='ccache cc'
+          export CC
+          CXX='ccache c++'
+          export CXX
+          cd xapian-core
+          ./configure --enable-werror
+          XAPIAN_CONFIG=$PWD/xapian-config
+          export XAPIAN_CONFIG
+          cd ..
+          cd xapian-letor
           ./configure --enable-werror
           export XAPIAN_CONFIG=$PWD/xapian-config
-          popd
-          pushd xapian-letor
-          ./configure --enable-werror
-          export XAPIAN_CONFIG=$PWD/xapian-config
-          popd
+          cd ..
           make -j2 -C xapian-core
           make -j2 -C xapian-letor
-          export VERBOSE=1
-          export AUTOMATED_TESTING=1
+          VERBOSE=1
+          export VERBOSE
+          AUTOMATED_TESTING=1
+          export AUTOMATED_TESTING
           make -j2 -C xapian-core check
           make -j2 -C xapian-letor check
 
