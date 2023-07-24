@@ -911,6 +911,8 @@ jobs:
       run: |
         sudo dpkg --add-architecture i386
         sudo apt-get update
+        # Stop mono binfmt trying to run .exe files.
+        sudo apt-get purge mono-runtime
         sudo apt-get install \
             g++-mingw-w64-i686-win32 \
             mingw-w64-i686-dev \
@@ -966,6 +968,8 @@ jobs:
     - name: Install package dependencies
       run: |
         sudo apt-get update
+        # Stop mono binfmt trying to run .exe files.
+        sudo apt-get purge mono-runtime
         sudo apt-get install \
             g++-mingw-w64-x86-64-win32 \
             mingw-w64-x86-64-dev \
