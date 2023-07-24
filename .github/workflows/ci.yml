@@ -1394,8 +1394,8 @@ jobs:
         # make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1
         #make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1
 
-  msvc:
-    runs-on: 'windows-latest'
+  msvc2019:
+    runs-on: 'windows-2019'
     needs: makedist
     defaults:
       run:
@@ -1409,7 +1409,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: msvc
+        key: msvc2019
     - name: Fetch distribution
       uses: actions/download-artifact@v3
     - name: Unpack distribution
@@ -1471,27 +1471,23 @@ jobs:
         #pushd xapian-bindings
         #./configure --enable-werror
         #popd
-        #pushd xapian-letor
-        #./configure --enable-werror
-        #popd
+        pushd xapian-letor
+        ./configure --enable-werror
+        popd
     - name: make
       run: |
         make -j2 -C xapian-core
-        #make -j2 -C xapian-applications/omega SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
-        #make -j2 -C xapian-binding SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
-        #make -j2 -C xapian-letor SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
+        #make -j2 -C xapian-applications/omega
+        #make -j2 -C xapian-binding
+        make -j2 -C xapian-letor
     - name: Run tests
       run: |
-        #export PATH=`cat msvc_path_entries.tmp`$PATH
-        #export PATH=${PATH//Program Files/Progra~1}
-        make -j2 -C xapian-core/tests apitest.exe
         export VERBOSE=1
         export AUTOMATED_TESTING=1
-        cd xapian-core/tests
-        ./runtest ./apitest -v remotefailure
-        #make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1 SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
-        #make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1 SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
-        #make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1 SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
+        make -j2 -C xapian-core check
+        #make -j2 -C xapian-applications/omega check
+        #make -j2 -C xapian-bindings check
+        make -j2 -C xapian-letor check
 
   freebsd:
     runs-on: 'macos-12'
