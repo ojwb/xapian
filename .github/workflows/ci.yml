@@ -1474,7 +1474,7 @@ jobs:
         #./configure --enable-werror
         #popd
         pushd xapian-letor
-        ./configure --enable-werror
+        ./configure --enable-werror --disable-shared
         popd
     - name: make
       run: |
