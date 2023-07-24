@@ -918,6 +918,7 @@ jobs:
             mingw-w64-tools
     - name: configure
       run: |
+        export EATMYDATA=
         export PATH=/usr/lib/ccache:$PATH
         pushd xapian-core
         ./configure --enable-werror --host i686-w64-mingw32
@@ -940,8 +941,8 @@ jobs:
         sudo apt-get install wine32 wine-binfmt:amd64 wine:amd64
         export VERBOSE=1
         export AUTOMATED_TESTING=1
-        export EATMYDATA=
         export WINEDLLPATH=$PWD/xapian-core/.libs:/usr/lib/gcc/i686-w64-mingw32/`i686-w64-mingw32-g++ --version 2>/dev/null|head -n1|sed 's/.* //;s/\..*//'`-`i686-w64-mingw32-g++ -v 2>&1|sed -n 's/^Thread model: *//p'`
+        echo "WINEDLLPATH=$WINEDLLPATH"
         make -j2 -C xapian-core check
         export WINEDLLPATH=$PWD/xapian-letor/.libs:$WINEDLLPATH
         make -j2 -C xapian-letor check
@@ -986,6 +987,7 @@ jobs:
         sudo apt-get install wine32
     - name: configure
       run: |
+        export EATMYDATA=
         export PATH=/usr/lib/ccache:$PATH
         pushd xapian-core
         ./configure --enable-werror --host x86_64-w64-mingw32
@@ -1003,8 +1005,8 @@ jobs:
       run: |
         export VERBOSE=1
         export AUTOMATED_TESTING=1
-        export EATMYDATA=
         export WINEDLLPATH=$PWD/xapian-core/.libs:/usr/lib/gcc/x86_64-w64-mingw32/`x86_64-w64-mingw32-g++ --version 2>/dev/null|head -n1|sed 's/.* //;s/\..*//'`-`x86_64-w64-mingw32-g++ -v 2>&1|sed -n 's/^Thread model: *//p'`
+        echo "WINEDLLPATH=$WINEDLLPATH"
         make -j2 -C xapian-core check
         export WINEDLLPATH=$PWD/xapian-letor/.libs:$WINEDLLPATH
         make -j2 -C xapian-letor check
