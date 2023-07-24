@@ -139,7 +139,7 @@ class ServerData {
 	cout << endl;
 	system("procps -efH");
 	cout << endl;
-	sleep(10);
+	Sleep(10000);
 #endif
 	pid = UNUSED_PID;
 	return true;
