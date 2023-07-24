@@ -909,6 +909,7 @@ jobs:
         popd
     - name: Install package dependencies
       run: |
+        dpkg --add-architecture i386
         sudo apt-get update
         sudo apt-get install \
             g++-mingw-w64-i686-win32 \
@@ -917,7 +918,8 @@ jobs:
             libz-mingw-w64-dev \
             mingw-w64-tools \
             wine-binfmt \
-            wine
+            wine \
+            wine32
     - name: configure
       run: |
         export PATH=/usr/lib/ccache:$PATH
@@ -971,6 +973,7 @@ jobs:
             libz-mingw-w64-dev \
             mingw-w64-tools \
             wine-binfmt \
+            wine \
             wine64
     - name: configure
       run: |
