@@ -135,6 +135,7 @@ class ServerData {
 	    throw Xapian::DatabaseError("Couldn't kill remote server",
 					-int(GetLastError()));
 	}
+	Sleep(10000);
 	clean_up();
 	cout << endl;
 	system("procps -efH");
@@ -374,7 +375,7 @@ try_next_port:
     }
     fclose(fh);
 
-    cout << "Server startup:\n" << output << "\n" << endl;
+    cout << "Server startup:\n" << output << endl;
     if (first_unused_server_data >= std::size(server_data)) {
 	// We used to quietly ignore not finding a slot, but it's helpful to
 	// know if we haven't allocated enough.

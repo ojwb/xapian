@@ -36,6 +36,7 @@ using namespace std;
     try { \
 	CODE; \
     } catch (const Xapian::EXCEPTION&) { \
+	tout << "Counting exception " #EXCEPTION " from {" #CODE "}\n"; \
 	++exception_count; \
     }
 
@@ -562,9 +563,6 @@ struct remotefailure1_iterators {
 
 // Test for a remote server failing.
 DEFINE_TESTCASE(remotefailure1, remotetcp) {
-#ifdef __MINGW32__
-    XFAIL("Remote failure handling or testing is buggy on __MINGW32__");
-#endif
     Xapian::Database db(get_database("apitest_simpledata"));
     remotefailure1_iterators iters;
 
@@ -579,12 +577,14 @@ DEFINE_TESTCASE(remotefailure1, remotetcp) {
     // Simulate remote server failure.
     kill_remote(db);
 
+#if 0
     // Dup stdout to the fds which the database was using, to try to catch
     // issues with lingering references to closed fds.
     vector<int> fds;
     for (int i = 0; i != 6; ++i) {
 	fds.push_back(dup(1));
     }
+#endif
 
     // Run the test again, checking that we get some "NetworkError" exceptions.
     exception_count = iters.perform();
@@ -595,9 +595,11 @@ DEFINE_TESTCASE(remotefailure1, remotetcp) {
     // future.
     TEST(!db.get_description().empty());
 
+#if 0
     for (int fd : fds) {
 	close(fd);
     }
+#endif
 }
 
 // There's no remotefailure2 plus other gaps in the numbering - these testcases
@@ -606,9 +608,6 @@ DEFINE_TESTCASE(remotefailure1, remotetcp) {
 
 /// Check API methods which might either work or throw an exception.
 DEFINE_TESTCASE(remotefailure3, remotetcp) {
-#ifdef __MINGW32__
-    XFAIL("Remote failure handling or testing is buggy on __MINGW32__");
-#endif
     Xapian::Database db(get_database("etext"));
     const string & uuid = db.get_uuid();
     kill_remote(db);
@@ -645,9 +644,6 @@ DEFINE_TESTCASE(remotefailure3, remotetcp) {
 
 /// Test the effects of remote server failure on transactions
 DEFINE_TESTCASE(remotefailure5, remotetcp) {
-#ifdef __MINGW32__
-    XFAIL("Remote failure handling or testing is buggy on __MINGW32__");
-#endif
     {
 	Xapian::WritableDatabase wdb = get_writable_database();
 	kill_remote(wdb);
@@ -697,9 +693,6 @@ DEFINE_TESTCASE(remotefailure5, remotetcp) {
 
 // Test WritableDatabase methods.
 DEFINE_TESTCASE(remotefailure7, remotetcp) {
-#ifdef __MINGW32__
-    XFAIL("Remote failure handling or testing is buggy on __MINGW32__");
-#endif
     Xapian::WritableDatabase db(get_writable_database());
     db.add_document(Xapian::Document());
     kill_remote(db);
@@ -721,9 +714,6 @@ DEFINE_TESTCASE(remotefailure7, remotetcp) {
 
 // Test spelling related methods.
 DEFINE_TESTCASE(remotefailure8, remotetcp) {
-#ifdef __MINGW32__
-    XFAIL("Remote failure handling or testing is buggy on __MINGW32__");
-#endif
     Xapian::WritableDatabase db(get_writable_database());
     db.add_spelling("pneumatic");
     db.add_spelling("pneumonia");
@@ -744,9 +734,6 @@ DEFINE_TESTCASE(remotefailure8, remotetcp) {
 
 // Test synonym related methods.
 DEFINE_TESTCASE(remotefailure9, remotetcp) {
-#ifdef __MINGW32__
-    XFAIL("Remote failure handling or testing is buggy on __MINGW32__");
-#endif
     Xapian::WritableDatabase db(get_writable_database());
     db.add_synonym("color", "colour");
     db.add_synonym("honor", "honour");
@@ -766,9 +753,6 @@ DEFINE_TESTCASE(remotefailure9, remotetcp) {
 
 // Test metadata related methods.
 DEFINE_TESTCASE(remotefailure10, remotetcp) {
-#ifdef __MINGW32__
-    XFAIL("Remote failure handling or testing is buggy on __MINGW32__");
-#endif
     Xapian::WritableDatabase db(get_writable_database());
     db.set_metadata("foo", "FOO");
     db.set_metadata("bar", "BAR");
