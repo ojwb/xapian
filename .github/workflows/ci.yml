@@ -917,7 +917,7 @@ jobs:
             libz-mingw-w64-dev \
             mingw-w64-tools \
             wine-binfmt \
-            wine32
+            wine
     - name: configure
       run: |
         export PATH=/usr/lib/ccache:$PATH
