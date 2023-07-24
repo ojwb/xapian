@@ -324,7 +324,7 @@ try_next_port:
     STARTUPINFO startupinfo;
     memset(&startupinfo, 0, sizeof(STARTUPINFO));
     startupinfo.cb = sizeof(STARTUPINFO);
-    startupinfo.hStdError = hWrite;
+    startupinfo.hStdError = GetStdHandle(STD_ERROR_HANDLE);
     startupinfo.hStdOutput = hWrite;
     startupinfo.hStdInput = INVALID_HANDLE_VALUE;
     startupinfo.dwFlags |= STARTF_USESTDHANDLES;
@@ -374,6 +374,7 @@ try_next_port:
     }
     fclose(fh);
 
+    cout << "Server startup:\n" << output << "\n" << endl;
     if (first_unused_server_data >= std::size(server_data)) {
 	// We used to quietly ignore not finding a slot, but it's helpful to
 	// know if we haven't allocated enough.
