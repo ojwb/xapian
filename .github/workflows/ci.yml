@@ -1373,7 +1373,11 @@ jobs:
         #make -j2 -C xapian-letor
     - name: Run tests
       run: |
-        make -j2 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1
+        make -j2 -C xapian-core/tests apitest
+        export VERBOSE=1
+        export AUTOMATED_TESTING=1
+        cd xapian-core/tests
+        ./runtest ./apitest -v remotefailure
         #make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1
         # make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1
         #make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1
@@ -1468,7 +1472,11 @@ jobs:
       run: |
         #export PATH=`cat msvc_path_entries.tmp`$PATH
         #export PATH=${PATH//Program Files/Progra~1}
-        make -j2 -C xapian-core check VERBOSE=1 AUTOMATED_TESTING=1
+        make -j2 -C xapian-core/tests apitest
+        export VERBOSE=1
+        export AUTOMATED_TESTING=1
+        cd xapian-core/tests
+        ./runtest ./apitest -v remotefailure
         #make -j2 -C xapian-applications/omega check VERBOSE=1 AUTOMATED_TESTING=1 SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
         #make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1 SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
         #make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1 SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
