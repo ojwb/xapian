@@ -1457,7 +1457,8 @@ jobs:
         #make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1 SHELL='C:/Progra~1/Git/usr/bin/sh.exe'
 
   freebsd:
-    runs-on: 'linux-latest'
+    runs-on: 'ubuntu-latest'
+    needs: makedist
     steps:
     - name: Fetch distribution
       uses: actions/download-artifact@v3
