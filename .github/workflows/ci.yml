@@ -910,19 +910,12 @@ jobs:
     - name: Install package dependencies
       run: |
         sudo apt-get update
-        # Stop mono binfmt trying to run .exe files.
-        sudo apt-get purge mono-runtime
         sudo apt-get install \
             g++-mingw-w64-i686-win32 \
             mingw-w64-i686-dev \
             binutils-mingw-w64-i686 \
             libz-mingw-w64-dev \
-            mingw-w64-tools \
-            wine-binfmt \
-            wine
-        sudo dpkg --add-architecture i386
-        sudo apt-get update
-        sudo apt-get install wine32
+            mingw-w64-tools
     - name: configure
       run: |
         export PATH=/usr/lib/ccache:$PATH
@@ -940,10 +933,17 @@ jobs:
         make -j2 -C xapian-letor
     - name: Run tests
       run: |
+        # Stop mono binfmt trying to run .exe files.
+        sudo apt-get purge mono-runtime
+        sudo dpkg --add-architecture i386
+        sudo apt-get update
+        sudo apt-get install wine32 wine-binfmt:amd64 wine:amd64
         export VERBOSE=1
         export AUTOMATED_TESTING=1
-        export WINEDLLPATH=/usr/lib/gcc/i686-w64-mingw32/`i686-w64-mingw32-g++ --version 2>/dev/null|head -n1|sed 's/.* //;s/\..*//'`-`i686-w64-mingw32-g++ -v 2>&1|sed -n 's/^Thread model: *//p'`
+        export EATMYDATA=
+        export WINEDLLPATH=$PWD/xapian-core/.libs:/usr/lib/gcc/i686-w64-mingw32/`i686-w64-mingw32-g++ --version 2>/dev/null|head -n1|sed 's/.* //;s/\..*//'`-`i686-w64-mingw32-g++ -v 2>&1|sed -n 's/^Thread model: *//p'`
         make -j2 -C xapian-core check
+        export WINEDLLPATH=$PWD/xapian-letor/.libs:$WINEDLLPATH
         make -j2 -C xapian-letor check
 
   mingw64-x86-64-cross:
@@ -1003,8 +1003,10 @@ jobs:
       run: |
         export VERBOSE=1
         export AUTOMATED_TESTING=1
-        export WINEDLLPATH=/usr/lib/gcc/x86_64-w64-mingw32/`x86_64-w64-mingw32-g++ --version 2>/dev/null|head -n1|sed 's/.* //;s/\..*//'`-`x86_64-w64-mingw32-g++ -v 2>&1|sed -n 's/^Thread model: *//p'`
+        export EATMYDATA=
+        export WINEDLLPATH=$PWD:xapian-core/.libs:/usr/lib/gcc/x86_64-w64-mingw32/`x86_64-w64-mingw32-g++ --version 2>/dev/null|head -n1|sed 's/.* //;s/\..*//'`-`x86_64-w64-mingw32-g++ -v 2>&1|sed -n 's/^Thread model: *//p'`
         make -j2 -C xapian-core check
+        export WINEDLLPATH=$PWD/xapian-letor/.libs:$WINEDLLPATH
         make -j2 -C xapian-letor check
 
 #  Fedora:
