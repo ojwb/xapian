@@ -131,7 +131,7 @@ class ServerData {
 	cout << endl << endl;
 	system("procps faux");
 	cout << "\nAbout to terminate process " << (unsigned long long)pid << endl;
-	if (!TerminateProcess(pid, 0)) {
+	if (!TerminateProcess(pid, 9)) {
 	    throw Xapian::DatabaseError("Couldn't kill remote server",
 					-int(GetLastError()));
 	}

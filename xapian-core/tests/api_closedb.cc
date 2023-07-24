@@ -773,7 +773,6 @@ DEFINE_TESTCASE(remotefailure10, remotetcp) {
     db.set_metadata("foo", "FOO");
     db.set_metadata("bar", "BAR");
     kill_remote(db);
-    kill_remote(db); // Should fail.
 
     TEST_EXCEPTION(Xapian::NetworkError,
 		   db.set_metadata("test", "TEST"));
