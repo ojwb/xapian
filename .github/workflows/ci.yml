@@ -1004,7 +1004,7 @@ jobs:
         export VERBOSE=1
         export AUTOMATED_TESTING=1
         export EATMYDATA=
-        export WINEDLLPATH=$PWD:xapian-core/.libs:/usr/lib/gcc/x86_64-w64-mingw32/`x86_64-w64-mingw32-g++ --version 2>/dev/null|head -n1|sed 's/.* //;s/\..*//'`-`x86_64-w64-mingw32-g++ -v 2>&1|sed -n 's/^Thread model: *//p'`
+        export WINEDLLPATH=$PWD/xapian-core/.libs:/usr/lib/gcc/x86_64-w64-mingw32/`x86_64-w64-mingw32-g++ --version 2>/dev/null|head -n1|sed 's/.* //;s/\..*//'`-`x86_64-w64-mingw32-g++ -v 2>&1|sed -n 's/^Thread model: *//p'`
         make -j2 -C xapian-core check
         export WINEDLLPATH=$PWD/xapian-letor/.libs:$WINEDLLPATH
         make -j2 -C xapian-letor check
