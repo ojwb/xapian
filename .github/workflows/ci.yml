@@ -1518,7 +1518,7 @@ jobs:
         version: '13.2'
         shell: bash
         run: |
-          pkg_add -r ccache
+          pkg install -y ccache
           export CC='ccache cc'
           export CXX='ccache c++'
           pushd xapian-core
