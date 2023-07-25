@@ -105,6 +105,9 @@ dnl AC_CHECK_DECLS fails to detect them when the compiler is clang.
 AC_CHECK_DECLS([__builtin_add_overflow(int, int, int*),
 		__builtin_sub_overflow(int, int, int*),
 		__builtin_mul_overflow(int, int, int*)], [], [], [ ])
+dnl Some platforms (e.g. FreeBSD) provide bswap32.
+AC_CHECK_DECLS([bswap32(uint32_t)], [], [],
+	       [#include <sys/endian.h>])
 AC_CHECK_DECLS([__builtin_bswap32(uint32_t)], [], [],
 	       [#include <stdint.h>])
 AC_CHECK_DECLS([_byteswap_ulong], [], [],
