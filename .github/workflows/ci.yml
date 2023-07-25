@@ -941,11 +941,9 @@ jobs:
         sudo apt-get install wine32 wine-binfmt:amd64 wine:amd64
         export VERBOSE=1
         export AUTOMATED_TESTING=1
-        export WINEDLLPATH=$PWD/xapian-core/.libs:/usr/lib/gcc/i686-w64-mingw32/`i686-w64-mingw32-g++ --version 2>/dev/null|head -n1|sed 's/.*) //;s/ .*//'`
-        echo "WINEDLLPATH=$WINEDLLPATH"
-        ls -l /usr/lib/gcc/i686-w64-mingw32/10-win32
+        export WINEPATH="$PWD/xapian-core/.libs;/usr/lib/gcc/i686-w64-mingw32/`i686-w64-mingw32-g++ --version 2>/dev/null|head -n1|sed 's/.*) //;s/ .*//'`"
         make -j2 -C xapian-core check
-        export WINEDLLPATH=$PWD/xapian-letor/.libs:$WINEDLLPATH
+        export WINEPATH="$PWD/xapian-letor/.libs;$WINEPATH"
         make -j2 -C xapian-letor check
 
   mingw64-x86-64-cross:
@@ -1006,11 +1004,9 @@ jobs:
       run: |
         export VERBOSE=1
         export AUTOMATED_TESTING=1
-        export WINEDLLPATH=$PWD/xapian-core/.libs:/usr/lib/gcc/x86_64-w64-mingw32/`x86_64-w64-mingw32-g++ --version 2>/dev/null|head -n1|sed 's/.*) //;s/ .*//'`
-        echo "WINEDLLPATH=$WINEDLLPATH"
-        ls -l /usr/lib/gcc/x86_64-w64-mingw32/10-win32
+        export WINEPATH="$PWD/xapian-core/.libs;/usr/lib/gcc/x86_64-w64-mingw32/`x86_64-w64-mingw32-g++ --version 2>/dev/null|head -n1|sed 's/.*) //;s/ .*//'`"
         make -j2 -C xapian-core check
-        export WINEDLLPATH=$PWD/xapian-letor/.libs:$WINEDLLPATH
+        export WINEPATH="$PWD/xapian-letor/.libs;$WINEPATH"
         make -j2 -C xapian-letor check
 
 #  Fedora:
