@@ -1655,7 +1655,7 @@ jobs:
           AUTOMATED_TESTING=1
           export AUTOMATED_TESTING
           make -j2 -C xapian-core check
-          sed -i 's,^#!,^#!/usr/local,' xapian-applications/omega/omegatest
+          perl -pi -e 's,^#!,^#!/usr/local,' xapian-applications/omega/omegatest
           make -j2 -C xapian-applications/omega check
           make -j2 -C xapian-letor check
 
