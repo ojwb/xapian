@@ -1405,7 +1405,7 @@ jobs:
       with:
         release: true # Use the pre-installed MSYS2
         path-type: inherit
-        install: base-devel ccache
+        install: base-devel
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
@@ -1502,7 +1502,7 @@ jobs:
       with:
         release: true # Use the pre-installed MSYS2
         path-type: inherit
-        install: base-devel ccache
+        install: base-devel
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
