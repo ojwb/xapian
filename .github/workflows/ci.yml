@@ -1394,8 +1394,8 @@ jobs:
 #         # make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1
 #         #make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1
  
-  msvc2019-x86:
-    runs-on: 'windows-2019'
+  msvc-2022-x86:
+    runs-on: 'windows-2022'
     needs: makedist
     defaults:
       run:
@@ -1409,7 +1409,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: msvc2019-x86
+        key: msvc2022-x86
     - name: Fetch distribution
       uses: actions/download-artifact@v3
     - name: Unpack distribution
