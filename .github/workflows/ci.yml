@@ -1405,7 +1405,7 @@ jobs:
       with:
         release: true # Use the pre-installed MSYS2
         path-type: inherit
-        install: base-devel
+        install: base-devel ccache
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
@@ -1436,9 +1436,11 @@ jobs:
     - name: Build zlib
       shell: bash
       run: |
-        # Setup ccache in symlink mode for cl.
+        # Setup ccache for cl.  I couldn't get specifying "ccache cl" to work.
+        which ccache
+        ccache --version
         mkdir bin
-        ln -s "`which ccache`" bin/cl
+        cp "`which ccache`" bin/cl
         # We find "link" from coreutils rather than from MSVC.  The coreutils
         # "link" is not a useful tool to us, so just delete it rather than
         # trying to reorder PATH.
@@ -1502,7 +1504,7 @@ jobs:
       with:
         release: true # Use the pre-installed MSYS2
         path-type: inherit
-        install: base-devel
+        install: base-devel ccache
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
@@ -1533,9 +1535,11 @@ jobs:
     - name: Build zlib
       shell: bash
       run: |
-        # Setup ccache in symlink mode for cl.
+        # Setup ccache for cl.  I couldn't get specifying "ccache cl" to work.
+        which ccache
+        ccache --version
         mkdir bin
-        ln -s "`which ccache`" bin/cl
+        cp "`which ccache`" bin/cl
         # We find "link" from coreutils rather than from MSVC.  The coreutils
         # "link" is not a useful tool to us, so just delete it rather than
         # trying to reorder PATH.
@@ -1555,6 +1559,7 @@ jobs:
       run: |
         export AR=lib
         export CC="$PWD/bin/cl -nologo"
+        export CCACHE_DEBUG=1
         export CXX="$PWD/xapian-core/compile $PWD/bin/cl -nologo"
         export CPPFLAGS="-I$PWD/zlib"
         # Standard C++ stack unwinding; assume extern "C" functions never throw.
