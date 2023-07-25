@@ -1394,7 +1394,7 @@ jobs:
 #         # make -j2 -C xapian-bindings check VERBOSE=1 AUTOMATED_TESTING=1
 #         #make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1
  
-  msvc2019-x86:
+  msvc2019:
     runs-on: 'windows-2019'
     needs: makedist
     defaults:
@@ -1409,7 +1409,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: msvc2019-x86
+        key: msvc2019
     - name: Fetch distribution
       uses: actions/download-artifact@v3
     - name: Unpack distribution
@@ -1432,10 +1432,13 @@ jobs:
     - name: Set up Visual Studio shell
       uses: egor-tensin/vs-shell@v2
       with:
-        arch: x86
+        arch: x64
     - name: Build zlib
       shell: bash
       run: |
+        # Setup ccache in symlink mode for cl.
+        mkdir bin
+        ln -s "`which ccache`" bin/cl
         # We find "link" from coreutils rather than from MSVC.  The coreutils
         # "link" is not a useful tool to us, so just delete it rather than
         # trying to reorder PATH.
@@ -1448,15 +1451,14 @@ jobs:
         sed -i 's/\(^CFLAGS  *= *-nologo \)-MD /\1/' win32/Makefile.msc
         # Don't build zlib with a fixed base address on x64 as that gives
         # linker warning LNK4281.  FIXME: only for x64
-        #sed -i 's/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
-        nmake -nologo -f 'win32\Makefile.msc'
+        sed -i 's/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
+        nmake -nologo -f 'win32\Makefile.msc' CC="$PWD\\..\\bin\\cl"
         popd
     - name: configure
       run: |
         export AR=lib
-        export CC='cl -nologo'
-        # FIXME: work out how to specify ccache with the compile wrapper - another wrapper called "cl"?
-        export CXX="$PWD/xapian-core/compile cl -nologo"
+        export CC="$PWD/bin/cl -nologo"
+        export CXX="$PWD/xapian-core/compile $PWD/bin/cl -nologo"
         export CPPFLAGS="-I$PWD/zlib"
         # Standard C++ stack unwinding; assume extern "C" functions never throw.
         export CXXFLAGS=-EHsc
@@ -1489,7 +1491,7 @@ jobs:
         #make -j2 -C xapian-bindings check
         make -j2 -C xapian-letor check
 
-  msvc-2022-x86:
+  msvc2022:
     runs-on: 'windows-2022'
     needs: makedist
     defaults:
@@ -1504,7 +1506,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: msvc2022-x86
+        key: msvc2022
     - name: Fetch distribution
       uses: actions/download-artifact@v3
     - name: Unpack distribution
@@ -1527,10 +1529,13 @@ jobs:
     - name: Set up Visual Studio shell
       uses: egor-tensin/vs-shell@v2
       with:
-        arch: x86
+        arch: x64
     - name: Build zlib
       shell: bash
       run: |
+        # Setup ccache in symlink mode for cl.
+        mkdir bin
+        ln -s "`which ccache`" bin/cl
         # We find "link" from coreutils rather than from MSVC.  The coreutils
         # "link" is not a useful tool to us, so just delete it rather than
         # trying to reorder PATH.
@@ -1543,15 +1548,14 @@ jobs:
         sed -i 's/\(^CFLAGS  *= *-nologo \)-MD /\1/' win32/Makefile.msc
         # Don't build zlib with a fixed base address on x64 as that gives
         # linker warning LNK4281.  FIXME: only for x64
-        #sed -i 's/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
-        nmake -nologo -f 'win32\Makefile.msc'
+        sed -i 's/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
+        nmake -nologo -f 'win32\Makefile.msc' CC="$PWD\\..\\bin\\cl"
         popd
     - name: configure
       run: |
         export AR=lib
-        export CC='cl -nologo'
-        # FIXME: work out how to specify ccache with the compile wrapper - another wrapper called "cl"?
-        export CXX="$PWD/xapian-core/compile cl -nologo"
+        export CC="$PWD/bin/cl -nologo"
+        export CXX="$PWD/xapian-core/compile $PWD/bin/cl -nologo"
         export CPPFLAGS="-I$PWD/zlib"
         # Standard C++ stack unwinding; assume extern "C" functions never throw.
         export CXXFLAGS=-EHsc
