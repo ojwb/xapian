@@ -1440,7 +1440,7 @@ jobs:
         which ccache
         ccache --version
         mkdir bin
-        cp "`which ccache`" bin/cl
+        ln "`which ccache`" bin/cl.exe
         # We find "link" from coreutils rather than from MSVC.  The coreutils
         # "link" is not a useful tool to us, so just delete it rather than
         # trying to reorder PATH.
@@ -1460,6 +1460,7 @@ jobs:
       run: |
         export AR=lib
         export CC="$PWD/bin/cl -nologo"
+        export CCACHE_DEBUG=1
         export CXX="$PWD/xapian-core/compile $PWD/bin/cl -nologo"
         export CPPFLAGS="-I$PWD/zlib"
         # Standard C++ stack unwinding; assume extern "C" functions never throw.
@@ -1539,7 +1540,7 @@ jobs:
         which ccache
         ccache --version
         mkdir bin
-        cp "`which ccache`" bin/cl
+        ln "`which ccache`" bin/cl.exe
         # We find "link" from coreutils rather than from MSVC.  The coreutils
         # "link" is not a useful tool to us, so just delete it rather than
         # trying to reorder PATH.
