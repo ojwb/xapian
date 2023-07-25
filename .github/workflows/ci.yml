@@ -1436,11 +1436,13 @@ jobs:
     - name: Build zlib
       shell: bash
       run: |
+        env | grep -i msys | sort
+        echo "==="
+        ls -l /usr/bin || true
+        echo "==="
         # Setup ccache for cl.  I couldn't get specifying "ccache cl" to work.
-        which ccache
-        ccache --version
         mkdir bin
-        ln "`which ccache`" bin/cl.exe
+        ln /c/Users/runneradmin/.cargo/bin/ccache.exe bin/cl.exe
         # We find "link" from coreutils rather than from MSVC.  The coreutils
         # "link" is not a useful tool to us, so just delete it rather than
         # trying to reorder PATH.
@@ -1454,7 +1456,7 @@ jobs:
         # Don't build zlib with a fixed base address on x64 as that gives
         # linker warning LNK4281.  FIXME: only for x64
         sed -i 's/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
-        nmake -nologo -f 'win32\Makefile.msc' #CC="$PWD\\..\\bin\\cl"
+        nmake -nologo -f 'win32\Makefile.msc' CC="$PWD\\..\\bin\\cl"
         popd
     - name: configure
       run: |
@@ -1536,11 +1538,13 @@ jobs:
     - name: Build zlib
       shell: bash
       run: |
+        env | grep -i msys | sort
+        echo "==="
+        ls -l /usr/bin || true
+        echo "==="
         # Setup ccache for cl.  I couldn't get specifying "ccache cl" to work.
-        which ccache
-        ccache --version
         mkdir bin
-        ln "`which ccache`" bin/cl.exe
+        ln /c/Users/runneradmin/.cargo/bin/ccache.exe bin/cl.exe
         # We find "link" from coreutils rather than from MSVC.  The coreutils
         # "link" is not a useful tool to us, so just delete it rather than
         # trying to reorder PATH.
@@ -1554,7 +1558,7 @@ jobs:
         # Don't build zlib with a fixed base address on x64 as that gives
         # linker warning LNK4281.  FIXME: only for x64
         sed -i 's/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
-        nmake -nologo -f 'win32\Makefile.msc' #CC="$PWD\\..\\bin\\cl"
+        nmake -nologo -f 'win32\Makefile.msc' CC="$PWD\\..\\bin\\cl"
         popd
     - name: configure
       run: |
