@@ -619,9 +619,29 @@ if test "$GXX" = yes; then
 fi
 
 AH_BOTTOM(
-[/* Disable stupid MSVC "performance" warning for converting int to bool. */
+[/* Disable stupid MSVC warnings. */
 #ifdef _MSC_VER
+/* Passing an empty parameter to a single parameter macro. */
+# pragma warning(disable:4003)
+/* Assignment in conditional expression; other compilers suppress with extra parentheses but not MSVC. */
+# pragma warning(disable:4706)
+/* A "performance" warning for converting int to bool. */
 # pragma warning(disable:4800)
+
+/* POSIX get to deprecate POSIX things, not Microsoft. */
+# define _CRT_NONSTDC_NO_WARNINGS
+# define _CRT_SECURE_NO_WARNINGS
+
+#endif
+
+/* MSVC defines _WIN32 but not __WIN32__. */
+#if !defined __WIN32__ && defined _WIN32
+# define __WIN32__
+#endif
+
+/* MSVC defines _WIN64 but not __WIN64__. */
+#if !defined __WIN64__ && defined _WIN64
+# define __WIN64__
 #endif
 
 /* Default to enabling _FORTIFY_SOURCE at level 2 for GCC-like compilers.  It
