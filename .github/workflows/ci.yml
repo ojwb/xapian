@@ -1452,7 +1452,7 @@ jobs:
         # Don't build zlib with a fixed base address on x64 as that gives
         # linker warning LNK4281.  FIXME: only for x64
         sed -i 's/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
-        nmake -nologo -f 'win32\Makefile.msc' CC="$PWD\\..\\bin\\cl"
+        nmake -nologo -f 'win32\Makefile.msc' #CC="$PWD\\..\\bin\\cl"
         popd
     - name: configure
       run: |
@@ -1549,7 +1549,7 @@ jobs:
         # Don't build zlib with a fixed base address on x64 as that gives
         # linker warning LNK4281.  FIXME: only for x64
         sed -i 's/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
-        nmake -nologo -f 'win32\Makefile.msc' CC="$PWD\\..\\bin\\cl"
+        nmake -nologo -f 'win32\Makefile.msc' #CC="$PWD\\..\\bin\\cl"
         popd
     - name: configure
       run: |
@@ -1610,7 +1610,7 @@ jobs:
         usesh: true
         prepare: |
           set -e
-          pkg install -y ccache perl5 pcre2
+          pkg install -y bash ccache perl5 pcre2
           ccache --set-config=cache_dir='/Users/runner/work/xapian/xapian/.ccache'
           ccache --set-config=max_size='500M'
           ccache --set-config=compression=true
