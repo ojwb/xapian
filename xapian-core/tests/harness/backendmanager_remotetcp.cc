@@ -28,7 +28,6 @@
 #include <stdio.h> // For fdopen().
 #include <cerrno>
 #include <cstring>
-#include <iostream>
 
 #ifdef HAVE_FORK
 # include <signal.h>
@@ -126,22 +125,13 @@ class ServerData {
 	    throw Xapian::DatabaseError("Couldn't kill remote server",
 					errno);
 	}
-	clean_up();
 #elif defined __WIN32__
-	cout << endl << endl;
-	system("procps -efH");
-	cout << "\nAbout to terminate process " << (unsigned long long)pid << endl;
-	if (!TerminateProcess(pid, 9)) {
+	if (!TerminateProcess(pid, 0)) {
 	    throw Xapian::DatabaseError("Couldn't kill remote server",
 					-int(GetLastError()));
 	}
-	Sleep(10000);
-	clean_up();
-	cout << endl;
-	system("procps -efH");
-	cout << endl;
-	Sleep(10000);
 #endif
+	clean_up();
 	pid = UNUSED_PID;
 	return true;
     }
@@ -325,7 +315,7 @@ try_next_port:
     STARTUPINFO startupinfo;
     memset(&startupinfo, 0, sizeof(STARTUPINFO));
     startupinfo.cb = sizeof(STARTUPINFO);
-    startupinfo.hStdError = GetStdHandle(STD_ERROR_HANDLE);
+    startupinfo.hStdError = hWrite;
     startupinfo.hStdOutput = hWrite;
     startupinfo.hStdInput = INVALID_HANDLE_VALUE;
     startupinfo.dwFlags |= STARTF_USESTDHANDLES;
@@ -337,10 +327,6 @@ try_next_port:
 	win32_throw_error_string("Couldn't create child process");
     }
 
-    cout << "\nStarting xapian-tcpsrv process PID " << procinfo.dwProcessId << " handle "
-	<< (unsigned long long)procinfo.hProcess << ":" << endl;
-    system("procps -efH");
-    cout << endl;
     CloseHandle(hWrite);
     CloseHandle(procinfo.hThread);
 
@@ -375,7 +361,6 @@ try_next_port:
     }
     fclose(fh);
 
-    cout << "Server startup:\n" << output << endl;
     if (first_unused_server_data >= std::size(server_data)) {
 	// We used to quietly ignore not finding a slot, but it's helpful to
 	// know if we haven't allocated enough.
