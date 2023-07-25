@@ -30,6 +30,8 @@
 #include "apitest.h"
 #include "testutils.h"
 
+#include <iostream>
+
 using namespace std;
 
 #define COUNT_EXCEPTION(CODE, EXCEPTION) \
