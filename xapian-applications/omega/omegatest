@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # omegatest: Test omega CGI
 #
 # Copyright (C) 2015-2022 Olly Betts
