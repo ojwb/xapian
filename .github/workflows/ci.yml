@@ -1456,13 +1456,12 @@ jobs:
         # Don't build zlib with a fixed base address on x64 as that gives
         # linker warning LNK4281.  FIXME: only for x64
         sed -i 's/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
-        nmake -nologo -f 'win32\Makefile.msc' CC="$PWD\\..\\bin\\cl"
+        nmake -nologo -f 'win32\Makefile.msc' #CC="$PWD\\..\\bin\\cl"
         popd
     - name: configure
       run: |
         export AR=lib
         export CC="$PWD/bin/cl -nologo"
-        export CCACHE_DEBUG=1
         export CXX="$PWD/xapian-core/compile $PWD/bin/cl -nologo"
         export CPPFLAGS="-I$PWD/zlib"
         # Standard C++ stack unwinding; assume extern "C" functions never throw.
@@ -1544,7 +1543,7 @@ jobs:
         echo "==="
         # Setup ccache for cl.  I couldn't get specifying "ccache cl" to work.
         mkdir bin
-        cp /c/Users/runneradmin/.cargo/bin/ccache.exe bin/cl.exe
+        cp "`which ccache.exe`" bin/cl.exe
         # We find "link" from coreutils rather than from MSVC.  The coreutils
         # "link" is not a useful tool to us, so just delete it rather than
         # trying to reorder PATH.
@@ -1558,13 +1557,12 @@ jobs:
         # Don't build zlib with a fixed base address on x64 as that gives
         # linker warning LNK4281.  FIXME: only for x64
         sed -i 's/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
-        nmake -nologo -f 'win32\Makefile.msc' CC="$PWD\\..\\bin\\cl"
+        nmake -nologo -f 'win32\Makefile.msc' #CC="$PWD\\..\\bin\\cl"
         popd
     - name: configure
       run: |
         export AR=lib
         export CC="$PWD/bin/cl -nologo"
-        export CCACHE_DEBUG=1
         export CXX="$PWD/xapian-core/compile $PWD/bin/cl -nologo"
         export CPPFLAGS="-I$PWD/zlib"
         # Standard C++ stack unwinding; assume extern "C" functions never throw.
