@@ -1442,7 +1442,7 @@ jobs:
         echo "==="
         # Setup ccache for cl.  I couldn't get specifying "ccache cl" to work.
         mkdir bin
-        ln /c/Users/runneradmin/.cargo/bin/ccache.exe bin/cl.exe
+        cp /c/Users/runneradmin/.cargo/bin/ccache.exe bin/cl.exe
         # We find "link" from coreutils rather than from MSVC.  The coreutils
         # "link" is not a useful tool to us, so just delete it rather than
         # trying to reorder PATH.
@@ -1544,7 +1544,7 @@ jobs:
         echo "==="
         # Setup ccache for cl.  I couldn't get specifying "ccache cl" to work.
         mkdir bin
-        ln /c/Users/runneradmin/.cargo/bin/ccache.exe bin/cl.exe
+        cp /c/Users/runneradmin/.cargo/bin/ccache.exe bin/cl.exe
         # We find "link" from coreutils rather than from MSVC.  The coreutils
         # "link" is not a useful tool to us, so just delete it rather than
         # trying to reorder PATH.
@@ -1655,7 +1655,7 @@ jobs:
           AUTOMATED_TESTING=1
           export AUTOMATED_TESTING
           make -j2 -C xapian-core check
-          perl -pi -e 's,^#!,^#!/usr/local,' xapian-applications/omega/omegatest
+          perl -pi -e 's,^#!,#!/usr/local,' xapian-applications/omega/omegatest
           make -j2 -C xapian-applications/omega check
           make -j2 -C xapian-letor check
 
