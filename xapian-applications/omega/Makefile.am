@@ -171,12 +171,14 @@ TESTS =	atomparsertest$(EXEEXT)\
 	htmlparsertest$(EXEEXT)\
 	jsonesctest$(EXEEXT)\
 	md5test$(EXEEXT)\
-	omegatest\
+	omegatest.pl\
 	omindextest\
 	sdbntest$(EXEEXT)\
 	sourcetest\
 	urlenctest$(EXEEXT)\
 	utf8converttest$(EXEEXT)
+TEST_EXTENSIONS = .pl
+PL_LOG_COMPILER = $(PERL)
 
 omegadatadir = $(datadir)/omega
 dist_omegadata_DATA = mbox2omega.script
