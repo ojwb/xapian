@@ -898,7 +898,7 @@ jobs:
         make -j3 -C xapian-letor check
 
   mingw64-i686-cross:
-    #if: false
+    if: false
     runs-on: 'ubuntu-22.04'
     needs: makedist
     steps:
@@ -958,7 +958,7 @@ jobs:
         make -j2 -C xapian-letor check
 
   mingw64-x86-64-cross:
-    #if: false
+    if: false
     runs-on: 'ubuntu-22.04'
     needs: makedist
     steps:
