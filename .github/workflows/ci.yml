@@ -755,9 +755,11 @@ jobs:
         make -j2 -C xapian-letor check
 
   Emscripten:
-    if: false
+    #if: false
     runs-on: 'ubuntu-20.04'
     needs: makedist
+    env:
+      EM_COMPILER_WRAPPER: ccache
     steps:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
@@ -787,20 +789,20 @@ jobs:
         cd xapian-core
         export CPPFLAGS='-DFLINTLOCK_USE_FLOCK'
         export CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti'
-        export EM_COMPILER_WRAPPER=ccache
         emconfigure ./configure --enable-werror --disable-shared
     - name: make
       run: |
         cd xapian-core
-        export EM_COMPILER_WRAPPER=ccache
         emmake make
     - name: Run tests
       run: |
         cd xapian-core
-        export EM_COMPILER_WRAPPER=ccache
         em++ -Oz -s USE_ZLIB=1 -std=c++11 -s WASM=1 -Iinclude emscripten/xapianjstest.cc .libs/libxapian-1.5.a -o emscripten/xapianjstest.js
         cd emscripten
         node xapianjstest.js
+        cd ../tests
+        emmake apitest
+        node apitest
 
   macos:
     if: false
@@ -897,7 +899,7 @@ jobs:
         make -j3 -C xapian-letor check
 
   mingw64-i686-cross:
-    if: false
+    #if: false
     runs-on: 'ubuntu-22.04'
     needs: makedist
     steps:
@@ -957,7 +959,7 @@ jobs:
         make -j2 -C xapian-letor check
 
   mingw64-x86-64-cross:
-    if: false
+    #if: false
     runs-on: 'ubuntu-22.04'
     needs: makedist
     steps:
@@ -1127,7 +1129,7 @@ jobs:
       # FIXME: Run tests under android emulator?
 
   cygwin:
-    if: false
+    #if: false
     # We only test 64-bit cygwin as 32-bit support has been dropped as of
     # Cygwin 3.4:
     # https://cygwin.com/pipermail/cygwin/2022-November/252542.html
@@ -1274,7 +1276,7 @@ jobs:
         make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1
 
   msys2-mingw64:
-    if: false
+    #if: false
     runs-on: 'windows-latest'
     needs: makedist
     defaults:
@@ -1347,7 +1349,7 @@ jobs:
         make -j2 -C xapian-letor check VERBOSE=1 AUTOMATED_TESTING=1
 
   msys2-ucrt64:
-    if: false
+    #if: false
     runs-on: 'windows-latest'
     needs: makedist
     defaults:
