@@ -39,7 +39,7 @@ enum value_slot {
 };
 
 #ifndef WORDS_BIGENDIAN
-inline std::uint32_t reverse_endianness_32(std::uint32_t v) {
+inline std::uint32_t swap_endianness_32(std::uint32_t v) {
 # if HAVE_DECL___BUILTIN_BSWAP32
     return __builtin_bswap32(v);
 # elif HAVE_DECL__BYTESWAP_ULONG
@@ -56,7 +56,7 @@ inline std::uint32_t binary_string_to_int(const std::string &s)
     std::uint32_t v;
     std::memcpy(&v, s.data(), 4);
 #ifndef WORDS_BIGENDIAN
-    v = reverse_endianness_32(v);
+    v = swap_endianness_32(v);
 #endif
     return v;
 }
@@ -64,7 +64,7 @@ inline std::uint32_t binary_string_to_int(const std::string &s)
 inline std::string int_to_binary_string(std::uint32_t v)
 {
 #ifndef WORDS_BIGENDIAN
-    v = reverse_endianness_32(v);
+    v = swap_endianness_32(v);
 #endif
     return std::string(reinterpret_cast<const char*>(&v), 4);
 }
