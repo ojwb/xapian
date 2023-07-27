@@ -22,6 +22,7 @@ use strict;
 use warnings;
 
 use File::Path qw(make_path remove_tree);
+use IPC::Open2;
 
 sub print_to_file {
   my ($filename, $contents) = @_;
@@ -58,6 +59,8 @@ my $test_indexscript = 'test-indexscript';
 
 my $test_log = 'test-log';
 
+open my $devnull, '>', ($^O eq 'MSWin32' ? 'nul' : '/dev/null') or die $!;
+
 my $OMEGA_CONFIG_FILE = 'test-omega.conf';
 $ENV{OMEGA_CONFIG_FILE} = $OMEGA_CONFIG_FILE;
 print_to_file $OMEGA_CONFIG_FILE, <<__END__ ;
@@ -90,28 +93,37 @@ my $have_32bit_time_t = 0;
 
 my $failed = 0;
 
-sub shell_escape {
-  local $_ = shift;
-  if (/[^-A-Za-z0-9_+=:@.,]/) {
-    # If it needs quoting, wrap in single quotes, and escape any literal single
-    # quote by temporarily dropping out of single quotes and backslash escaping
-    # it.
-    s/'/'\\''/g;
-    $_ = "'$_'";
+sub run_scriptindex {
+  my $input = shift;
+  remove_tree($test_db);
+  my $pid = open2($devnull, my $in, $scriptindex, $test_db, $test_indexscript) or die $!;
+  print $in $input;
+  close $in or die $!;
+  waitpid($pid, 0);
+  if ($?) {
+    print "omega exit status $?\n";
+    ++$failed;
   }
-  return $_;
 }
 
 sub testcase {
   my $expected = shift;
-  # If there are no positional parameters, pass one as otherwise omega will
-  # wait for parameters on stdin.
-  my $args = @_ > 0 ? join(' ', map &shell_escape, @_) : 'dummy';
 
-  chomp(my $output=`$omega $args`);
+  my $output;
+  {
+    # If there are no positional parameters, pass one as otherwise omega will
+    # wait for parameters on stdin.
+    my $args = @_ > 0 ? \@_ : ['dummy'];
+    my $pid = open my $out, '-|', ref $omega ? @$omega : $omega, @$args
+      or die $!;
+    local $/ = undef;
+    $output = <$out>;
+    close $out;
+  }
+  chomp($output);
 
   if ($output ne $expected) {
-    print "$omega $args:\n";
+    print "$omega @_:\n";
     print "  expected: «${expected}»\n";
     print "  received: «${output}»\n";
     ++$failed;
@@ -559,7 +571,7 @@ if ($faketime ne '') {
     # We have faketime and it seems to work so use it to run test cases where
     # the output depends on the current time.
     my $save_omega = $omega;
-    $omega = "$faketime -f '2015-11-28 06:07:08' $omega";
+    $omega = [$faketime, '-f', '2015-11-28 06:07:08', $omega];
 
     my $save_TZ = $ENV{TZ};
     $ENV{TZ} = 'UTC';
@@ -592,16 +604,11 @@ if ($faketime ne '') {
 
 # Check clamping of out of range dates:
 print_to_file $test_indexscript, "DATE : field valuepacked=0\n";
-remove_tree($test_db);
-{
-  open my $fh, "|$scriptindex '$test_db' '$test_indexscript' > /dev/null" or die $!;
-  print $fh <<'END';
+run_scriptindex(<<'END');
 DATE=0
 
 DATE=1617069804
 END
-  close $fh or die $!;
-}
 qtestcase('VALUE_LE 0 V\x84o\xff', 'START.0=10010101', 'END.0=20151230');
 if (!$have_32bit_time_t) {
   qtestcase('VALUE_RANGE 0 V\x83\x1e\x80 \xff\xff\xff\xff', 'START.0=20151230', 'END.0=21060301');
@@ -827,16 +834,11 @@ remove_tree($test_log);
 
 # Feature tests for $terms.
 print_to_file $test_indexscript, "text : index\nhost : boolean=H\nfoo : boolean=XFOO";
-remove_tree($test_db);
-{
-  open my $fh, "|$scriptindex '$test_db' '$test_indexscript' > /dev/null" or die $!;
-  print $fh <<'END';
+run_scriptindex(<<'END');
 text=This is some text.
 host=example.org
 foo=bar
 END
-  close $fh or die $!;
-}
 print_to_file $test_template, '$hitlist{$list{$if{$eq{$cgi{prefix},null},$terms,$terms{$cgi{prefix}}},|}}';
 testcase('Ztext', 'P=text', 'B=Hexample.org', 'B=Hexample.com', 'prefix=null');
 testcase('Hexample.org|Ztext', 'P=text', 'B=Hexample.org', 'B=Hexample.com', 'prefix=');
@@ -1010,14 +1012,9 @@ testcase('Exception: too few arguments to $map');
 
 # Feature tests for $snippet{}.
 print_to_file $test_indexscript, 'text : index field';
-remove_tree($test_db);
-{
-  open my $fh, "|$scriptindex '$test_db' '$test_indexscript' > /dev/null" or die $!;
-  print $fh <<'END';
+run_scriptindex(<<'END');
 text=A sentence is more than just a list of words - there is structure to it.
 END
-  close $fh or die $!;
-}
 
 print_to_file $test_template, '$hitlist{$snippet{$field{text},20}}';
 testcase('...just a <strong>list</strong> of <strong>words</strong>...', 'P=word listing');
@@ -1028,14 +1025,9 @@ testcase('a <b>list of words</b> - there is', 'P="list of words"');
 
 # Feature tests for $snippet{}.
 print_to_file $test_indexscript, 'text : index field';
-remove_tree($test_db);
-{
-  open my $fh, "|$scriptindex '$test_db' '$test_indexscript' > /dev/null" or die $!;
-  # Omit trailing \n on dump file as regression test for bug fixed in 1.4.20
-  # where a final line without a newline was ignored.
-  print $fh "dummy=\ntext=A sentence is more than just a list of words - there is structure to it.";
-  close $fh or die $!;
-}
+# Omit trailing \n on dump file as regression test for bug fixed in 1.4.20
+# where a final line without a newline was ignored.
+run_scriptindex("dummy=\ntext=A sentence is more than just a list of words - there is structure to it.");
 
 print_to_file $test_template, '$hitlist{$snippet{$field{text},20}}';
 testcase('...just a <strong>list</strong> of <strong>words</strong>...', 'P=word listing');
@@ -1046,10 +1038,7 @@ testcase('a <b>list of words</b> - there is', 'P="list of words"');
 
 # Test MORELIKE CGI parameter.
 print_to_file $test_indexscript, "id : boolean=Q\ntext : index field\n";
-remove_tree($test_db);
-{
-  open my $fh, "|$scriptindex '$test_db' '$test_indexscript' > /dev/null" or die $!;
-  print $fh <<'END';
+run_scriptindex(<<'END');
 id=a1
 text=First document
 
@@ -1063,8 +1052,6 @@ id=dummy
 text=Inflating termfreqs since Omega excludes terms with termfreq of one
 =first document second piece of writing three
 END
-  close $fh or die $!;
-}
 print_to_file $test_template, '$querydescription|$query';
 testcase('Query((Zfirst@1 OR Zdocument@2))|first document', 'MORELIKE=Qa1', 'DEFAULTOP=or');
 testcase('Query((Zfirst@1 OR Zdocument@2))|first OR document', 'MORELIKE=Qa1');
@@ -1446,12 +1433,7 @@ remove_tree("${test_db}2","${test_db}3");
 
 # Feature tests for $field.
 print_to_file $test_indexscript, 'in : field="zer\0byte" hextobin field="field28\x02\x08"';
-remove_tree($test_db);
-{
-  open my $fh, "|$scriptindex '$test_db' '$test_indexscript' > /dev/null" or die $!;
-  print $fh "in=4071004f3456\n";
-  close $fh or die $!;
-}
+run_scriptindex("in=4071004f3456\n");
 print_to_file $test_template, '$json{$field{zer$chr{0}byte,1}}|$json{$field{field28$chr{2}$chr{8},1}}|$error';
 testcase('4071004f3456|@q\u0000O4V|');
 
