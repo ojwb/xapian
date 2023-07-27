@@ -801,8 +801,7 @@ jobs:
         cd emscripten
         node xapianjstest.js
         cd ../tests
-        emmake apitest
-        node apitest
+        emmake check EATMYDATA=node
 
   macos:
     if: false
