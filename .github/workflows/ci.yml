@@ -1426,7 +1426,7 @@ jobs:
         # make -j2 -C xapian-bindings check
         make -j2 -C xapian-letor check
 
-  msvc2019:
+  msvc2019-x86:
     runs-on: 'windows-2019'
     needs: makedist
     defaults:
@@ -1441,7 +1441,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: msvc2019
+        key: msvc2019-x86
         variant: sccache
     - name: Fetch distribution
       uses: actions/download-artifact@v3
@@ -1465,7 +1465,7 @@ jobs:
     - name: Set up Visual Studio shell
       uses: egor-tensin/vs-shell@v2
       with:
-        arch: x64
+        arch: x86
     - name: Build zlib
       shell: bash
       run: |
@@ -1482,10 +1482,7 @@ jobs:
         # Don't build zlib with -MD as it seems this flag needs to be used
         # consistently across the build.  Don't use -Zi -Fd"zlib" as
         # ccache/sccache don't seem to be able to handle that.
-        #
-        # Don't build zlib with a fixed base address on x64 as that gives
-        # linker warning LNK4281.
-        sed -i 's/\(^CFLAGS  *= *-nologo \)-MD \(.* \)-Zi -Fd"zlib" /\1\2/;s/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
+        sed -i 's/\(^CFLAGS  *= *-nologo \)-MD \(.* \)-Zi -Fd"zlib" /\1\2/' win32/Makefile.msc
         # Only build the shared library.
         nmake -nologo -f 'win32\Makefile.msc' zlib1.dll
         popd
@@ -1529,7 +1526,7 @@ jobs:
         #make -j2 -C xapian-bindings check
         make -j2 -C xapian-letor check
 
-  msvc2022:
+  msvc2022-x86:
     runs-on: 'windows-2022'
     needs: makedist
     defaults:
@@ -1544,7 +1541,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: msvc2022
+        key: msvc2022-x86
         variant: sccache
     - name: Fetch distribution
       uses: actions/download-artifact@v3
@@ -1568,7 +1565,7 @@ jobs:
     - name: Set up Visual Studio shell
       uses: egor-tensin/vs-shell@v2
       with:
-        arch: x64
+        arch: x86
     - name: Build zlib
       shell: bash
       run: |
@@ -1585,10 +1582,7 @@ jobs:
         # Don't build zlib with -MD as it seems this flag needs to be used
         # consistently across the build.  Don't use -Zi -Fd"zlib" as
         # ccache/sccache don't seem to be able to handle that.
-        #
-        # Don't build zlib with a fixed base address on x64 as that gives
-        # linker warning LNK4281.
-        sed -i 's/\(^CFLAGS  *= *-nologo \)-MD \(.* \)-Zi -Fd"zlib" /\1\2/;s/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
+        sed -i 's/\(^CFLAGS  *= *-nologo \)-MD \(.* \)-Zi -Fd"zlib" /\1\2/' win32/Makefile.msc
         # Only build the shared library.
         nmake -nologo -f 'win32\Makefile.msc' zlib1.dll
         popd
