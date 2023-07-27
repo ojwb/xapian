@@ -1315,6 +1315,7 @@ if test yes = "$GXX"; then
     fi
   fi
 elif test yes = "$msvc"; then
+  AM_CXXFLAGS="$AM_CXXFLAGS -W2"
   WERROR=-WX
 fi
 
