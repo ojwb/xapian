@@ -2,6 +2,8 @@ name: CI
 
 # Use bash by default on all platforms.
 defaults:
+  env:
+    AUTOMATED_TESTING: 1
   run:
     shell: bash
 
@@ -79,8 +81,8 @@ jobs:
       run: ./configure CC='ccache gcc' CXX='ccache g++'
     - name: make
       run: make -j2
-#    - name: Run tests
-#      run: make -j2 check VERBOSE=1 AUTOMATED_TESTING=1
+    - name: Run tests
+      run: make -j2 check VERBOSE=1
     - name: Create distribution tarball
       run: |
         make dist
@@ -185,7 +187,6 @@ jobs:
         make -j2 -C xapian-letor
     - name: Run tests
       run: |
-        export AUTOMATED_TESTING=1
         export VERBOSE=1
         make -j2 -C xapian-core check
         make -j2 -C xapian-applications/omega check
@@ -285,7 +286,6 @@ jobs:
         make -j2 -C xapian-letor
     - name: Run tests
       run: |
-        export AUTOMATED_TESTING=1
         export VERBOSE=1
         make -j2 -C xapian-core check
         make -j2 -C xapian-applications/omega check
@@ -377,7 +377,6 @@ jobs:
         make -j2 -C xapian-letor
     - name: Run tests
       run: |
-        export AUTOMATED_TESTING=1
         export VERBOSE=1
         make -j2 -C xapian-core check
         make -j2 -C xapian-applications/omega check
@@ -469,7 +468,6 @@ jobs:
         make -j2 -C xapian-letor
     - name: Run tests
       run: |
-        export AUTOMATED_TESTING=1
         export VERBOSE=1
         make -j2 -C xapian-core check
         make -j2 -C xapian-applications/omega check
@@ -561,7 +559,6 @@ jobs:
         make -j2 -C xapian-letor
     - name: Run tests
       run: |
-        export AUTOMATED_TESTING=1
         export VERBOSE=1
         make -j2 -C xapian-core check
         make -j2 -C xapian-applications/omega check
@@ -652,7 +649,6 @@ jobs:
         make -j2 -C xapian-letor
     - name: Run tests
       run: |
-        export AUTOMATED_TESTING=1
         export VERBOSE=1
         make -j2 -C xapian-core check
         make -j2 -C xapian-applications/omega check
@@ -747,7 +743,6 @@ jobs:
         make -j2 -C xapian-letor
     - name: Run tests
       run: |
-        export AUTOMATED_TESTING=1
         export VERBOSE=1
         make -j2 -C xapian-core check
         make -j2 -C xapian-applications/omega check
@@ -890,7 +885,6 @@ jobs:
         make -j3 -C xapian-letor
     - name: Run tests
       run: |
-        export AUTOMATED_TESTING=1
         export VERBOSE=1
         make -j3 -C xapian-core check
         make -j3 -C xapian-applications/omega check
@@ -950,7 +944,6 @@ jobs:
         sudo dpkg --add-architecture i386
         sudo apt-get update
         sudo apt-get install wine32 wine-binfmt:amd64 wine:amd64
-        export AUTOMATED_TESTING=1
         export VERBOSE=1
         export WINEPATH="$PWD/xapian-core/.libs;/usr/lib/gcc/i686-w64-mingw32/`i686-w64-mingw32-g++ --version 2>/dev/null|head -n1|sed 's/.*) //;s/ .*//'`"
         make -j2 -C xapian-core check
@@ -1014,7 +1007,6 @@ jobs:
         make -j2 -C xapian-letor
     - name: Run tests
       run: |
-        export AUTOMATED_TESTING=1
         export VERBOSE=1
         export WINEPATH="$PWD/xapian-core/.libs;/usr/lib/gcc/x86_64-w64-mingw32/`x86_64-w64-mingw32-g++ --version 2>/dev/null|head -n1|sed 's/.*) //;s/ .*//'`"
         make -j2 -C xapian-core check
@@ -1083,7 +1075,6 @@ jobs:
         make -j2 -C xapian-letor
     - name: Run tests
       run: |
-        export AUTOMATED_TESTING=1
         export VERBOSE=1
         make -j2 -C xapian-core check
         make -j2 -C xapian-applications/omega check
@@ -1196,7 +1187,6 @@ jobs:
         make -j2 -C xapian-letor
     - name: Run tests
       run: |
-        export AUTOMATED_TESTING=1
         export VERBOSE=1
         make -j2 -C xapian-core check
         make -j2 -C xapian-applications/omega check
@@ -1271,7 +1261,6 @@ jobs:
     - name: Run tests
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
-        export AUTOMATED_TESTING=1
         export VERBOSE=1
         make -j2 -C xapian-core check
         make -j2 -C xapian-applications/omega check
@@ -1346,7 +1335,6 @@ jobs:
     - name: Run tests
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
-        export AUTOMATED_TESTING=1
         export VERBOSE=1
         make -j2 -C xapian-core check
         make -j2 -C xapian-applications/omega check
@@ -1419,7 +1407,6 @@ jobs:
     - name: Run tests
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
-        export AUTOMATED_TESTING=1
         export VERBOSE=1
         make -j2 -C xapian-core check
         make -j2 -C xapian-applications/omega check
@@ -1519,7 +1506,6 @@ jobs:
     - name: Run tests
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
-        export AUTOMATED_TESTING=1
         export VERBOSE=1
         make -j2 -C xapian-core check
         #make -j2 -C xapian-applications/omega check
@@ -1619,7 +1605,6 @@ jobs:
     - name: Run tests
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
-        export AUTOMATED_TESTING=1
         export VERBOSE=1
         make -j2 -C xapian-core check
         # make -j2 -C xapian-applications/omega check
@@ -1675,7 +1660,6 @@ jobs:
           make -j2 -C xapian-core V=0 || make -C xapian-core
           make -j2 -C xapian-applications/omega V=0 || make -C xapian-core
           make -j2 -C xapian-letor V=0 || make -C xapian-letor
-          export AUTOMATED_TESTING=1
           export VERBOSE=1
           make -j2 -C xapian-core check V=0
           make -j2 -C xapian-applications/omega check V=0
