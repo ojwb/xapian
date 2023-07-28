@@ -829,11 +829,17 @@ if (-f $test_log) {
 }
 print_to_file $test_template, '$log{' . $test_log . ',$lower{TEST}}';
 testcase('');
-if (`cat "$test_log"` ne "test\n") {
-  print "log entry not written correctly\n";
-  ++$failed;
+{
+    open my $log, '<', $test_log or die $!;
+    local $/ = undef;
+    my $log_entry = <>;
+    close $log;
+    if ($log_entry =~ /^test\r?\n$/) {
+      print "log entry not written correctly\n";
+      ++$failed;
+    }
 }
-remove_tree($test_log);
+unlink $test_log or die $!;
 
 # Feature tests for $terms.
 print_to_file $test_indexscript, "text : index\nhost : boolean=H\nfoo : boolean=XFOO";
