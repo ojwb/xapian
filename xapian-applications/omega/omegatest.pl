@@ -567,7 +567,7 @@ qtestcase('(VALUE_RANGE 0 2015 201501~ AND_NOT Len)', 'DATEVALUE=0', 'START=2015
 if ($faketime ne '') {
   my $out = `$faketime -f '1980-12-08 00:00:00' date +%Y 2>&1`;
   chomp($out);
-  my $rc = $?;
+  my $rc = $? >> 8;
   if ($rc == 127) {
     print "Skipping testcases which need 'faketime' tool installed\n";
   } elsif ($rc != 0) {
