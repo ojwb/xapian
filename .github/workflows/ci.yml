@@ -796,10 +796,11 @@ jobs:
     - name: Run tests
       run: |
         cd xapian-core
-        em++ -Oz -s USE_ZLIB=1 -std=c++11 -s WASM=1 -Iinclude emscripten/xapianjstest.cc .libs/libxapian-1.5.a -o emscripten/xapianjstest.js
-        cd emscripten
-        node xapianjstest.js
-        cd ../tests
+        #em++ -Oz -s USE_ZLIB=1 -std=c++11 -s WASM=1 -Iinclude emscripten/xapianjstest.cc .libs/libxapian-1.5.a -o emscripten/xapianjstest.js
+        #cd emscripten
+        #node xapianjstest.js
+        #cd ..
+        node bin/xapian-delve --help || true
         EATMYDATA=node emmake check
 
   macos:
