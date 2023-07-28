@@ -1561,16 +1561,16 @@ print_to_file $test_template, '$field{DATE,1}|$unpack{$value{13,1}}|$date{$unpac
 testcase '19891204|628732800|1989-12-04', 'P=text';
 
 # Feature tests for scriptindex `parsedate` action.
-print_to_file $test_indexscript, 'DATE: parsedate="%Y%m%d %T" field=time';
+print_to_file $test_indexscript, 'DATE: parsedate="%Y%m%d %H:%M:%S" field=time';
 test_scriptindex_warning 'PARSEDATE action',
-  '<stdin>:1: warning: "20161202 12:04:22.000000" not fully matched by format "%Y%m%d %T" (".000000" left over) but indexing anyway',
+  '<stdin>:1: warning: "20161202 12:04:22.000000" not fully matched by format "%Y%m%d %H:%M:%S" (".000000" left over) but indexing anyway',
   'DATE=20161202 12:04:22.000000';
 print_to_file $test_template, '$field{time,$cgi{id}}';
 # Test format which contains a space.
 testcase '1480680262', 'id=1';
 
 # Feature tests for scriptindex `parsedate` action.
-print_to_file $test_indexscript, 'DATE: parsedate="%Y%m%d %T %z" field=time';
+print_to_file $test_indexscript, 'DATE: parsedate="%Y%m%d %H:%M:%S %z" field=time';
 if (test_scriptindex_optional_error 'PARSEDATE action with %z',
   'test-indexscript:1:28: error: Parsing timezone offsets with %z is not supported on this platform',
   'DATE=20161202 21:34:24 +0930') {
