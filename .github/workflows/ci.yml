@@ -801,7 +801,7 @@ jobs:
         #node xapianjstest.js
         #cd ..
         node bin/xapian-delve --help || true
-        EATMYDATA=node emmake check
+        EATMYDATA=node emmake make check
 
   macos:
     if: false
