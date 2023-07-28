@@ -528,7 +528,7 @@ static void test_strbool1()
 
 static void test_closefrom1()
 {
-#ifndef __WIN32__
+#if !defined __WIN32__ && !defined __EMSCRIPTEN__
     // Simple test.  Start from 13 as on macOS the FDTracker seems to get fd
     // 10 and we don't want to collide with that.
     closefrom(13);
