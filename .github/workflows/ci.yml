@@ -1634,10 +1634,7 @@ jobs:
         make -j2 -C xapian-letor check
 
   freebsd:
-<<<<<<< HEAD
     if: false
-=======
->>>>>>> more-ci
     runs-on: 'macos-12'
     needs: makedist
     steps:
