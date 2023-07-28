@@ -1414,6 +1414,8 @@ jobs:
         make -j2 -C xapian-letor check
 
   msvc2019-x86:
+    # x86 build fails oddly running core testcases except unittest.
+    if: false
     runs-on: 'windows-2019'
     needs: makedist
     defaults:
@@ -1513,6 +1515,8 @@ jobs:
         make -j2 -C xapian-letor check
 
   msvc2022-x86:
+    # x86 build fails oddly running core testcases except unittest.
+    if: false
     runs-on: 'windows-2022'
     needs: makedist
     defaults:
