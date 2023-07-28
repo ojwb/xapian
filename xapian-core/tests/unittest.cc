@@ -957,7 +957,7 @@ static void test_ioblock1()
 	SKIP_TEST("Skipping rest of testcase - off_t not 64-bit");
     }
 
-#ifndef __WIN32__
+#if !defined __WIN32__ && !defined __CYGWIN__
     struct stat statbuf;
     TEST(fstat(fd, &statbuf) == 0);
     TEST_REL(statbuf.st_blocks, >=, BLOCK_SIZE / 512 * 2);
