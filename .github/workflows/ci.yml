@@ -1366,7 +1366,9 @@ jobs:
         msystem: ucrt64
         install: base-devel
         pacboy: >-
+          file:p
           gcc:p
+          pcre2:p
           zlib:p
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
