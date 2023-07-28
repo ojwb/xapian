@@ -121,6 +121,7 @@ sub testcase {
     close $out;
   }
   chomp($output);
+  $output =~ s/\r//g;
 
   if ($output ne $expected) {
     print "$omega @_:\n";
@@ -156,7 +157,7 @@ __END__`;
   }
   my $rc = $? >> 8;
   chomp($out);
-  # $out =~ s/\r//g;
+  $out =~ s/\r//g;
   if ($rc == 0) {
     print "scriptindex didn't exit with non-zero return code for $what\n";
     print "Output: $out\n";
@@ -192,7 +193,7 @@ __END__`;
   }
   my $rc = $? >> 8;
   chomp($out);
-  # $out =~ s/\r//g;
+  $out =~ s/\r//g;
   if ($rc == 0) {
     if ($out !~ $summary_re) {
       print "scriptindex gave unexpected output for $what\n";
@@ -231,7 +232,7 @@ __END__`;
   }
   my $rc = $? >> 8;
   chomp($out);
-  # $out =~ s/\r//g;
+  $out =~ s/\r//g;
   if ($out !~ s/$summary_re//) {
     print "scriptindex output lacked summary line for $what\n";
     print "Output: $out\n";
@@ -271,7 +272,7 @@ __END__`;
   }
   my $rc = $? >> 8;
   chomp($out);
-  # $out =~ s/\r//g;
+  $out =~ s/\r//g;
   if ($rc != 0) {
     print "scriptindex gave an error for $what\n";
     print "Output: $out\n";
