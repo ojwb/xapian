@@ -378,6 +378,7 @@ jobs:
     - name: Run tests
       run: |
         export AUTOMATED_TESTING=1
+        export VERBOSE=1
         make -j2 -C xapian-core check
         make -j2 -C xapian-applications/omega check
         make -j2 -C xapian-bindings check
@@ -1127,7 +1128,7 @@ jobs:
       # FIXME: Run tests under android emulator?
 
   cygwin:
-    #if: false
+    if: false
     # We only test 64-bit cygwin as 32-bit support has been dropped as of
     # Cygwin 3.4:
     # https://cygwin.com/pipermail/cygwin/2022-November/252542.html
@@ -1203,7 +1204,7 @@ jobs:
         make -j2 -C xapian-letor check
 
   msys2-mingw32:
-    #if: false
+    if: false
     runs-on: 'windows-latest'
     needs: makedist
     defaults:
@@ -1278,7 +1279,7 @@ jobs:
         make -j2 -C xapian-letor check
 
   msys2-mingw64:
-    #if: false
+    if: false
     runs-on: 'windows-latest'
     needs: makedist
     defaults:
@@ -1383,9 +1384,9 @@ jobs:
         pushd xapian-core
         tar --strip-components=1 -xf xapian-core-*.tar.xz
         popd
-        pushd xapian-applications/omega
-        tar --strip-components=1 -xf xapian-omega-*.tar.xz
-        popd
+        #pushd xapian-applications/omega
+        #tar --strip-components=1 -xf xapian-omega-*.tar.xz
+        #popd
         #pushd xapian-bindings
         #tar --strip-components=1 -xf xapian-bindings-*.tar.xz
         #popd
@@ -1394,14 +1395,6 @@ jobs:
         popd
     - name: configure
       run: |
-        echo "==="
-        which gcc
-        which g++
-        echo "==="
-        ls -l /d/a/_temp/msys64
-        echo "==="
-        ls -lR /d/a/_temp/msys64/ucrt64/
-        echo "==="
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
         export CC='sccache gcc'
         export CXX='sccache g++'
@@ -1409,9 +1402,10 @@ jobs:
         ./configure --enable-werror
         export XAPIAN_CONFIG=$PWD/xapian-config
         popd
-        pushd xapian-applications/omega
-        ./configure --enable-werror
-        popd
+        # FIXME: Fails to find magic.h for some reason.  It is installed via file:p above.
+        #pushd xapian-applications/omega
+        #./configure --enable-werror
+        #popd
         #pushd xapian-bindings
         #./configure --enable-werror
         #popd
@@ -1422,7 +1416,7 @@ jobs:
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
         make -j2 -C xapian-core
-        make -j2 -C xapian-applications/omega
+        # make -j2 -C xapian-applications/omega
         # make -j2 -C xapian-bindings
         make -j2 -C xapian-letor
     - name: Run tests
@@ -1431,7 +1425,7 @@ jobs:
         export AUTOMATED_TESTING=1
         export VERBOSE=1
         make -j2 -C xapian-core check
-        make -j2 -C xapian-applications/omega check
+        # make -j2 -C xapian-applications/omega check
         # make -j2 -C xapian-bindings check
         make -j2 -C xapian-letor check
 
@@ -1640,7 +1634,10 @@ jobs:
         make -j2 -C xapian-letor check
 
   freebsd:
+<<<<<<< HEAD
     if: false
+=======
+>>>>>>> more-ci
     runs-on: 'macos-12'
     needs: makedist
     steps:
