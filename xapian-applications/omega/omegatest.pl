@@ -1571,9 +1571,9 @@ testcase '1480680262', 'id=1';
 
 # Feature tests for scriptindex `parsedate` action.
 print_to_file $test_indexscript, 'DATE: parsedate="%Y%m%d %H:%M:%S %z" field=time';
-if (test_scriptindex_optional_error 'PARSEDATE action with %z',
-  'test-indexscript:1:28: error: Parsing timezone offsets with %z is not supported on this platform',
-  'DATE=20161202 21:34:24 +0930') {
+if (test_scriptindex_optional_error('PARSEDATE action with %z',
+  'test-indexscript:1:34: error: Parsing timezone offsets with %z is not supported on this platform',
+  'DATE=20161202 21:34:24 +0930') == 0) {
   print_to_file $test_template, '$field{time,$cgi{id}}';
   # Test that timezone adjustment is applied.
   testcase '1480680264', 'id=1';
