@@ -796,7 +796,7 @@ jobs:
         cd emscripten
         node xapianjstest.js
         cd ../tests
-        emmake check EATMYDATA=node
+        EATMYDATA=node emmake check
 
   macos:
     if: false
