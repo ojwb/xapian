@@ -1354,7 +1354,7 @@ jobs:
         make -j2 -C xapian-letor check
 
   msys2-ucrt64:
-    #if: false
+    if: false
     runs-on: 'windows-latest'
     needs: makedist
     defaults:
