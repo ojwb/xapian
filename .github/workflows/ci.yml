@@ -799,7 +799,7 @@ jobs:
         cd xapian-core
         emmake make -C tests unittest
         cd tests
-        ./runtest ./unittest
+        ./runtest node ./unittest
         cd ..
         # Run a simple emscripten-specific test.
         em++ -Oz -s USE_ZLIB=1 -std=c++11 -s WASM=1 -Iinclude emscripten/xapianjstest.cc .libs/libxapian-1.5.a -o emscripten/xapianjstest.js
