@@ -1224,6 +1224,8 @@ jobs:
           pcre2:p
           zlib:p
           python:p
+          python-sphinx:p
+          ruby:p
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
@@ -1300,6 +1302,8 @@ jobs:
           pcre2:p
           zlib:p
           python:p
+          python-sphinx:p
+          ruby:p
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
@@ -1376,6 +1380,8 @@ jobs:
           pcre2:p
           zlib:p
           python:p
+          python-sphinx:p
+          ruby:p
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
@@ -1414,7 +1420,7 @@ jobs:
         # ./configure --enable-werror
         # popd
         pushd xapian-bindings
-        ./configure --enable-werror
+        ./configure --enable-werror --without-perl
         popd
         pushd xapian-letor
         ./configure --enable-werror
