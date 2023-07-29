@@ -1,7 +1,7 @@
 /** @file
  * @brief Run an external filter and capture its output in a std::string.
  */
-/* Copyright (C) 2003,2006,2007,2009,2010,2011,2013,2015,2017,2018 Olly Betts
+/* Copyright (C) 2003-2023 Olly Betts
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,9 +39,7 @@
 # include <sys/resource.h>
 #endif
 #include "safesysselect.h"
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif
+#include "safesyssocket.h"
 #include "safesyswait.h"
 #include "safeunistd.h"
 
@@ -469,11 +467,11 @@ run_filter(int fd_in, const string& cmd, bool use_shell, string* out,
 	if (exit_status == 127)
 	    throw NoSuchFilter();
     }
-#ifdef SIGXCPU
+# ifdef SIGXCPU
     if (WIFSIGNALED(status) && WTERMSIG(status) == SIGXCPU) {
 	cerr << "Filter process consumed too much CPU time" << endl;
     }
-#endif
+# endif
 #else
     (void)use_shell;
     LARGE_INTEGER counter;

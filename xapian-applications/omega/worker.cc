@@ -33,9 +33,7 @@
 #include "safeunistd.h"
 #include "safesyssocket.h"
 #include "safesyswait.h"
-#ifdef HAVE_SYSEXIT_H
-# include <sysexits.h>
-#endif
+#include "safesysexits.h"
 #include <utility>
 
 #include "closefrom.h"
@@ -47,16 +45,6 @@
 
 #ifdef __WIN32__
 # include "safewindows.h"
-#endif
-
-#ifndef EX_UNAVAILABLE
-# define EX_UNAVAILABLE 69
-#endif
-#ifndef EX_OSERR
-# define EX_OSERR 71
-#endif
-#ifndef EX_TEMPFAIL
-# define EX_TEMPFAIL 75
 #endif
 
 using namespace std;

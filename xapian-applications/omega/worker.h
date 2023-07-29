@@ -1,7 +1,7 @@
 /** @file
  * @brief Class representing worker process.
  */
-/* Copyright (C) 2011,2019,2022 Olly Betts
+/* Copyright (C) 2011,2019,2022,2023 Olly Betts
  * Copyright (C) 2019 Bruno Baruffaldi
  *
  * This program is free software; you can redistribute it and/or

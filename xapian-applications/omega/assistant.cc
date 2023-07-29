@@ -30,19 +30,7 @@
 #include <csignal>
 #include <iostream>
 
-#ifdef HAVE_SYSEXITS_H
-# include <sysexits.h>
-#endif
-
-#ifndef EX_UNAVAILABLE
-# define EX_UNAVAILABLE 69
-#endif
-#ifndef EX_OSERR
-# define EX_OSERR 71
-#endif
-#ifndef EX_TEMPFAIL
-# define EX_TEMPFAIL 75
-#endif
+#include "safesysexits.h"
 
 using namespace std;
 

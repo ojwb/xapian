@@ -1402,13 +1402,14 @@ jobs:
         ./configure --enable-werror
         export XAPIAN_CONFIG=$PWD/xapian-config
         popd
-        # FIXME: Fails to find magic.h for some reason.  It is installed via file:p above.
-        #pushd xapian-applications/omega
-        #./configure --enable-werror
-        #popd
-        #pushd xapian-bindings
-        #./configure --enable-werror
-        #popd
+        # FIXME: Fails to find magic.h for some reason even though it is
+        # installed via file:p above.
+        # pushd xapian-applications/omega
+        # ./configure --enable-werror
+        # popd
+        pushd xapian-bindings
+        ./configure --enable-werror
+        popd
         pushd xapian-letor
         ./configure --enable-werror
         popd
