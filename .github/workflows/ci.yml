@@ -788,23 +788,24 @@ jobs:
       run: |
         cd xapian-core
         export CPPFLAGS='-DFLINTLOCK_USE_FLOCK'
-        export CXXFLAGS='-Oz -flto -s USE_ZLIB=1 -fno-rtti'
+        export CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti'
         emconfigure ./configure --enable-werror --disable-shared
     - name: make
       run: |
         cd xapian-core
-        emmake make
+        emmake make CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti -flto'
     - name: Run tests
       run: |
         cd xapian-core
-        emmake make -C tests unittest
+        emmake make -C tests unittest CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti -flto'
         cd tests
         ./runtest node ./unittest
         cd ..
         # Run a simple emscripten-specific test.
-        em++ -Oz -s USE_ZLIB=1 -std=c++11 -s WASM=1 -Iinclude emscripten/xapianjstest.cc .libs/libxapian-1.5.a -o emscripten/xapianjstest.js
+        em++ -Oz -s USE_ZLIB=1 -flto -std=c++11 -s WASM=1 -Iinclude emscripten/xapianjstest.cc .libs/libxapian-1.5.a -o emscripten/xapianjstest.js
         cd emscripten
         node xapianjstest.js
+        ls -l xapianjstest.js
 
   macos:
     if: false
