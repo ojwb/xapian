@@ -756,7 +756,7 @@ jobs:
         make -j2 -C xapian-letor check
 
   Emscripten:
-    if: false
+    #if: false
     runs-on: 'ubuntu-20.04'
     needs: makedist
     env:
