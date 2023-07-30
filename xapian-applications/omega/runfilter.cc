@@ -481,7 +481,7 @@ run_filter(int fd_in, const string& cmd, bool use_shell, string* out,
     QueryPerformanceCounter(&counter);
     char pipename[256];
     snprintf(pipename, sizeof(pipename),
-	     "\\\\.\\pipe\\xapian-omega-worker-%lx-%lx_%" PRIx64,
+	     "\\\\.\\pipe\\xapian-omega-filter-%lx-%lx_%" PRIx64,
 	     static_cast<unsigned long>(GetCurrentProcessId()),
 	     static_cast<unsigned long>(GetCurrentThreadId()),
 	     static_cast<unsigned long long>(counter.QuadPart));

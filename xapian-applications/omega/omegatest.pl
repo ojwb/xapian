@@ -120,8 +120,8 @@ sub testcase {
     $output = <$out>;
     close $out;
   }
+  $output =~ s/\r\n/\n/g;
   chomp($output);
-  $output =~ s/\r//g;
 
   if ($output ne $expected) {
     print "$omega @_:\n";
@@ -156,8 +156,8 @@ $input
 __END__`;
   }
   my $rc = $? >> 8;
+  $out =~ s/\r\n/\n/g;
   chomp($out);
-  $out =~ s/\r//g;
   if ($rc == 0) {
     print "scriptindex didn't exit with non-zero return code for $what\n";
     print "Output: $out\n";
@@ -192,8 +192,8 @@ $input
 __END__`;
   }
   my $rc = $? >> 8;
+  $out =~ s/\r\n/\n/g;
   chomp($out);
-  $out =~ s/\r//g;
   if ($rc == 0) {
     if ($out !~ $summary_re) {
       print "scriptindex gave unexpected output for $what\n";
@@ -231,8 +231,8 @@ $input
 __END__`;
   }
   my $rc = $? >> 8;
+  $out =~ s/\r\n/\n/g;
   chomp($out);
-  $out =~ s/\r//g;
   if ($out !~ s/$summary_re//) {
     print "scriptindex output lacked summary line for $what\n";
     print "Output: $out\n";
@@ -271,8 +271,8 @@ $input
 __END__`;
   }
   my $rc = $? >> 8;
+  $out =~ s/\r\n/\n/g;
   chomp($out);
-  $out =~ s/\r//g;
   if ($rc != 0) {
     print "scriptindex gave an error for $what\n";
     print "Output: $out\n";
@@ -1018,19 +1018,6 @@ testcase('x:y:z:y|x:y:z', 'text=x y z z y');
 # Regression test - $map with one argument wasn't rejected cleanly.
 print_to_file $test_template, '$map{foo}';
 testcase('Exception: too few arguments to $map');
-
-# Feature tests for $snippet{}.
-print_to_file $test_indexscript, 'text : index field';
-run_scriptindex(<<'END');
-text=A sentence is more than just a list of words - there is structure to it.
-END
-
-print_to_file $test_template, '$hitlist{$snippet{$field{text},20}}';
-testcase('...just a <strong>list</strong> of <strong>words</strong>...', 'P=word listing');
-
-print_to_file $test_template, '$hitlist{$snippet{$field{text},30,,<b>,</b>,}}';
-testcase('<b>words</b> - there is structure to', 'P=words');
-testcase('a <b>list of words</b> - there is', 'P="list of words"');
 
 # Feature tests for $snippet{}.
 print_to_file $test_indexscript, 'text : index field';
