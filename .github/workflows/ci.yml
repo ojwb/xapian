@@ -39,7 +39,6 @@ jobs:
         # from the target branch (if this is a PR) or from master (if not).
         restore-keys: |
           ${{ github.baseref != '' && github.baseref || 'refs/heads/master' }}-${{ github.job }}
-        append-timestamp: false
     - name: Install package dependencies
       run: |
         sudo apt-get update
