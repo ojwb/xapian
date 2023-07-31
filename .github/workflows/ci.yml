@@ -816,11 +816,11 @@ jobs:
     - name: make
       run: |
         cd xapian-core
-        emmake make CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti -flto'
+        emmake make
     - name: Run tests
       run: |
         cd xapian-core
-        emmake make -C tests unittest CXXFLAGS='-Oz -s USE_ZLIB=1 -fno-rtti -flto'
+        emmake make -C tests unittest
         cd tests
         ./runtest node ./unittest
         cd ..
