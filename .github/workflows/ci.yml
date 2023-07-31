@@ -33,12 +33,14 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        # Use a separate ccache for each branch+job.
-        key: ${{ github.ref }}-${{ github.job }}
-        # If there's no existing specific ccache, start from this job's ccache
-        # from the target branch (if this is a PR) or from master (if not).
-        restore-keys: |
-          ${{ github.baseref != '' && github.baseref || 'refs/heads/master' }}-${{ github.job }}
+        key: ${{ github.job }}
+    - name: Cache bootstrap tools
+      uses: actions/cache@v3
+      with:
+        path: |
+          BUILD
+          INST
+        key: ${{ github.job }}-$${ runner.os }}-${{ hashFiles( 'bootstrap', 'patches/**' ) }}
     - name: Install package dependencies
       run: |
         sudo apt-get update
@@ -113,9 +115,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ github.ref }}-${{ github.job }}
-        restore-keys: |
-          ${{ github.baseref != '' && github.baseref || 'refs/heads/master' }}-${{ github.job }}
+        key: ${{ github.job }}
     - name: Fetch distribution
       uses: actions/download-artifact@v3
     - name: Unpack distribution
@@ -211,9 +211,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ github.ref }}-${{ github.job }}
-        restore-keys: |
-          ${{ github.baseref != '' && github.baseref || 'refs/heads/master' }}-${{ github.job }}
+        key: ${{ github.job }}
     - name: Fetch distribution
       uses: actions/download-artifact@v3
     - name: Unpack distribution
@@ -311,9 +309,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ github.ref }}-${{ github.job }}
-        restore-keys: |
-          ${{ github.baseref != '' && github.baseref || 'refs/heads/master' }}-${{ github.job }}
+        key: ${{ github.job }}
     - name: Fetch distribution
       uses: actions/download-artifact@v3
     - name: Unpack distribution
@@ -405,9 +401,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ github.ref }}-${{ github.job }}
-        restore-keys: |
-          ${{ github.baseref != '' && github.baseref || 'refs/heads/master' }}-${{ github.job }}
+        key: ${{ github.job }}
     - name: Fetch distribution
       uses: actions/download-artifact@v3
     - name: Unpack distribution
@@ -499,9 +493,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ github.ref }}-${{ github.job }}
-        restore-keys: |
-          ${{ github.baseref != '' && github.baseref || 'refs/heads/master' }}-${{ github.job }}
+        key: ${{ github.job }}
     - name: Fetch distribution
       uses: actions/download-artifact@v3
     - name: Unpack distribution
@@ -595,9 +587,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ github.ref }}-${{ github.job }}
-        restore-keys: |
-          ${{ github.baseref != '' && github.baseref || 'refs/heads/master' }}-${{ github.job }}
+        key: ${{ github.job }}
     - name: Fetch distribution
       uses: actions/download-artifact@v3
     - name: Unpack distribution
@@ -690,9 +680,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ github.ref }}-${{ github.job }}
-        restore-keys: |
-          ${{ github.baseref != '' && github.baseref || 'refs/heads/master' }}-${{ github.job }}
+        key: ${{ github.job }}
     - name: Fetch distribution
       uses: actions/download-artifact@v3
     - name: Unpack distribution
@@ -784,9 +772,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ github.ref }}-${{ github.job }}
-        restore-keys: |
-          ${{ github.baseref != '' && github.baseref || 'refs/heads/master' }}-${{ github.job }}
+        key: ${{ github.job }}
     - name: Fetch distribution
       uses: actions/download-artifact@v3
     - name: Unpack distribution
@@ -839,9 +825,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ github.ref }}-${{ github.job }}
-        restore-keys: |
-          ${{ github.baseref != '' && github.baseref || 'refs/heads/master' }}-${{ github.job }}
+        key: ${{ github.job }}
     - name: Fetch distribution
       uses: actions/download-artifact@v3
     - name: Unpack distribution
@@ -933,9 +917,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ github.ref }}-${{ github.job }}
-        restore-keys: |
-          ${{ github.baseref != '' && github.baseref || 'refs/heads/master' }}-${{ github.job }}
+        key: ${{ github.job }}
     - name: Fetch distribution
       uses: actions/download-artifact@v3
     - name: Unpack distribution
@@ -995,9 +977,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ github.ref }}-${{ github.job }}
-        restore-keys: |
-          ${{ github.baseref != '' && github.baseref || 'refs/heads/master' }}-${{ github.job }}
+        key: ${{ github.job }}
     - name: Fetch distribution
       uses: actions/download-artifact@v3
     - name: Unpack distribution
@@ -1064,9 +1044,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ github.ref }}-${{ github.job }}
-        restore-keys: |
-          ${{ github.baseref != '' && github.baseref || 'refs/heads/master' }}-${{ github.job }}
+        key: ${{ github.job }}
     - name: Fetch distribution
       uses: actions/download-artifact@v3
     - name: Unpack distribution
@@ -1136,9 +1114,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ github.ref }}-${{ github.job }}
-        restore-keys: |
-          ${{ github.baseref != '' && github.baseref || 'refs/heads/master' }}-${{ github.job }}
+        key: ${{ github.job }}
     - name: Fetch distribution
       uses: actions/download-artifact@v3
     - name: Unpack distribution
@@ -1186,9 +1162,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ github.ref }}-${{ github.job }}
-        restore-keys: |
-          ${{ github.baseref != '' && github.baseref || 'refs/heads/master' }}-${{ github.job }}
+        key: ${{ github.job }}
     - name: Fetch distribution
       uses: actions/download-artifact@v3
     - name: Unpack distribution
@@ -1264,9 +1238,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ github.ref }}-${{ github.job }}
-        restore-keys: |
-          ${{ github.baseref != '' && github.baseref || 'refs/heads/master' }}-${{ github.job }}
+        key: ${{ github.job }}
         variant: sccache
     - name: Fetch distribution
       uses: actions/download-artifact@v3
@@ -1344,9 +1316,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ github.ref }}-${{ github.job }}
-        restore-keys: |
-          ${{ github.baseref != '' && github.baseref || 'refs/heads/master' }}-${{ github.job }}
+        key: ${{ github.job }}
         variant: sccache
     - name: Fetch distribution
       uses: actions/download-artifact@v3
@@ -1428,9 +1398,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ github.ref }}-${{ github.job }}
-        restore-keys: |
-          ${{ github.baseref != '' && github.baseref || 'refs/heads/master' }}-${{ github.job }}
+        key: ${{ github.job }}
         variant: sccache
     - name: Fetch distribution
       uses: actions/download-artifact@v3
@@ -1504,9 +1472,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ github.ref }}-${{ github.job }}
-        restore-keys: |
-          ${{ github.baseref != '' && github.baseref || 'refs/heads/master' }}-${{ github.job }}
+        key: ${{ github.job }}
         variant: sccache
     - name: Fetch distribution
       uses: actions/download-artifact@v3
@@ -1608,9 +1574,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ github.ref }}-${{ github.job }}
-        restore-keys: |
-          ${{ github.baseref != '' && github.baseref || 'refs/heads/master' }}-${{ github.job }}
+        key: ${{ github.job }}
         variant: sccache
     - name: Fetch distribution
       uses: actions/download-artifact@v3
@@ -1703,9 +1667,7 @@ jobs:
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
-        key: ${{ github.ref }}-${{ github.job }}
-        restore-keys: |
-          ${{ github.baseref != '' && github.baseref || 'refs/heads/master' }}-${{ github.job }}
+        key: ${{ github.job }}
     - name: Fetch distribution
       uses: actions/download-artifact@v3
     - name: Unpack distribution
