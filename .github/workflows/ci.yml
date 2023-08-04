@@ -815,6 +815,7 @@ jobs:
         cd emscripten
         node xapianjstest.js
         ls -l xapianjstest.js
+        cd ..
         emmake make -C tests unittest
         cd tests
         head unittest
