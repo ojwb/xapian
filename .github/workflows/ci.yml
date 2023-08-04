@@ -1553,8 +1553,7 @@ jobs:
         make -j2 -C xapian-bindings check
         make -j2 -C xapian-letor check
 
-  msvc2019-x86:
-    # x86 build fails oddly running core testcases except unittest.
+  msvc2019:
     #if: false
     runs-on: 'windows-2019'
     needs: makedist
@@ -1594,7 +1593,7 @@ jobs:
     - name: Set up Visual Studio shell
       uses: egor-tensin/vs-shell@v2
       with:
-        arch: x86
+        arch: x64
     - name: Build zlib
       shell: bash
       run: |
@@ -1611,9 +1610,12 @@ jobs:
         # Don't build zlib with -MD as it seems this flag needs to be used
         # consistently across the build.  Don't use -Zi -Fd"zlib" as
         # ccache/sccache don't seem to be able to handle that.
-        sed -i 's/\(^CFLAGS  *= *-nologo \)-MD \(.* \)-Zi -Fd"zlib" /\1\2/' win32/Makefile.msc
-        # Only build the static library.
-        nmake -nologo -f 'win32\Makefile.msc' zlib.lib
+        #
+        # Don't build zlib with a fixed base address on x64 as that gives
+        # linker warning LNK4281.
+        sed -i 's/\(^CFLAGS  *= *-nologo \)-MD \(.* \)-Zi -Fd"zlib" /\1\2/;s/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
+        # Only build the shared library.
+        nmake -nologo -f 'win32\Makefile.msc' zlib1.dll
         popd
     - name: configure
       run: |
@@ -1655,8 +1657,7 @@ jobs:
         # make -j2 -C xapian-bindings check
         make -j2 -C xapian-letor check
 
-  msvc2022-x86:
-    # x86 build fails oddly running core testcases except unittest.
+  msvc2022:
     #if: false
     runs-on: 'windows-2022'
     needs: makedist
@@ -1696,7 +1697,7 @@ jobs:
     - name: Set up Visual Studio shell
       uses: egor-tensin/vs-shell@v2
       with:
-        arch: x86
+        arch: x64
     - name: Build zlib
       shell: bash
       run: |
@@ -1713,9 +1714,12 @@ jobs:
         # Don't build zlib with -MD as it seems this flag needs to be used
         # consistently across the build.  Don't use -Zi -Fd"zlib" as
         # ccache/sccache don't seem to be able to handle that.
-        sed -i 's/\(^CFLAGS  *= *-nologo \)-MD \(.* \)-Zi -Fd"zlib" /\1\2/' win32/Makefile.msc
-        # Only build the static library.
-        nmake -nologo -f 'win32\Makefile.msc' zlib.lib
+        #
+        # Don't build zlib with a fixed base address on x64 as that gives
+        # linker warning LNK4281.
+        sed -i 's/\(^CFLAGS  *= *-nologo \)-MD \(.* \)-Zi -Fd"zlib" /\1\2/;s/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
+        # Only build the shared library.
+        nmake -nologo -f 'win32\Makefile.msc' zlib1.dll
         popd
     - name: configure
       run: |
