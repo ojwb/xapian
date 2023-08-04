@@ -1190,8 +1190,8 @@ jobs:
       run: |
         ccache --version
         export PERL_LIBS=`perl -MConfig -e 'print "-L$Config{archlib}/CORE" -lperl'`
-        #export CC='ccache gcc'
-        #export CXX='ccache g++'
+        export CC='ccache gcc'
+        export CXX='ccache g++'
         pushd xapian-core
         ./configure --enable-werror
         export XAPIAN_CONFIG=$PWD/xapian-config
