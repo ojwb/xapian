@@ -821,7 +821,7 @@ jobs:
         ls -l xapianjstest.js
 
   macos:
-    if: false
+    #if: false
     runs-on: 'macos-latest'
     env:
       LIBEXTRACTOR_PREFIX: '/usr/local/lib/libextractor'
@@ -882,8 +882,6 @@ jobs:
       run: |
         export CC='ccache gcc'
         export CXX='ccache g++'
-        # Workaround for https://github.com/Homebrew/homebrew-core/issues/136873
-        export EATMYDATA=$(brew --prefix libeatmydata)/bin/eatmydata
         export PKG_CONFIG_PATH=/usr/local/opt/icu4c/lib/pkgconfig
         pushd xapian-core
         ./configure --enable-werror --prefix='${{ runner.temp }}/XapianInstall'
