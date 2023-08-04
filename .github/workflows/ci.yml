@@ -1519,8 +1519,8 @@ jobs:
         # consistently across the build.  Don't use -Zi -Fd"zlib" as
         # ccache/sccache don't seem to be able to handle that.
         sed -i 's/\(^CFLAGS  *= *-nologo \)-MD \(.* \)-Zi -Fd"zlib" /\1\2/' win32/Makefile.msc
-        # Only build the shared library.
-        nmake -nologo -f 'win32\Makefile.msc' zlib1.dll
+        # Only build the static library.
+        nmake -nologo -f 'win32\Makefile.msc' zlib.lib
         popd
     - name: configure
       run: |
@@ -1621,8 +1621,8 @@ jobs:
         # consistently across the build.  Don't use -Zi -Fd"zlib" as
         # ccache/sccache don't seem to be able to handle that.
         sed -i 's/\(^CFLAGS  *= *-nologo \)-MD \(.* \)-Zi -Fd"zlib" /\1\2/' win32/Makefile.msc
-        # Only build the shared library.
-        nmake -nologo -f 'win32\Makefile.msc' zlib1.dll
+        # Only build the static library.
+        nmake -nologo -f 'win32\Makefile.msc' zlib.lib
         popd
     - name: configure
       run: |
