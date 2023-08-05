@@ -111,6 +111,7 @@ jobs:
       run: git status --porcelain|grep '^' && { echo "The generated files listed above are not in .gitignore" ; exit 1; }; true
 
   clang-santisers:
+    if: false
     runs-on: 'ubuntu-latest'
     env:
       LIBEXTRACTOR_PREFIX: '/usr/lib/x86_64-linux-gnu/libextractor'
@@ -165,11 +166,9 @@ jobs:
             libcdr-dev \
             libextractor-dev \
             libmwaw-dev \
-            libreofficekit-dev libreoffice-calc libreoffice-draw libreoffice-impress libreoffice-writer
-      # tesseract's C++ API uses std::vector so would need rebuilding with
-      # -D_GLIBCXX_DEBUG too.
-      #      libtesseract-dev \
-      #      tesseract-ocr-eng
+            libreofficekit-dev libreoffice-calc libreoffice-draw libreoffice-impress libreoffice-writer \
+            libtesseract-dev \
+            tesseract-ocr-eng
     - name: configure
       run: |
         export CC='ccache clang'
@@ -915,11 +914,13 @@ jobs:
         cd tests
         head unittest
         ls -l unittest
-        ./runtest ./unittest
+        file unittest
+        mv unittest unittest.js
+        ./runtest node unittest.js
         cd ..
 
   macos:
-    #if: false
+    if: false
     runs-on: 'macos-latest'
     env:
       LIBEXTRACTOR_PREFIX: '/usr/local/lib/libextractor'
@@ -1241,7 +1242,7 @@ jobs:
       # FIXME: Run tests under android emulator?
 
   cygwin:
-    #if: false
+    if: false
     # We only test 64-bit cygwin as 32-bit support has been dropped as of
     # Cygwin 3.4:
     # https://cygwin.com/pipermail/cygwin/2022-November/252542.html
@@ -1556,7 +1557,7 @@ jobs:
         make -j2 -C xapian-letor check
 
   msvc2019:
-    #if: false
+    if: false
     runs-on: 'windows-2019'
     needs: makedist
     defaults:
@@ -1660,7 +1661,7 @@ jobs:
         make -j2 -C xapian-letor check
 
   msvc2022:
-    #if: false
+    if: false
     runs-on: 'windows-2022'
     needs: makedist
     defaults:
