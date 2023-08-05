@@ -183,7 +183,9 @@ jobs:
         ./configure --enable-werror
         popd
         pushd xapian-bindings
-        ./configure --enable-werror
+        # PHP calls dlopen() with "RTLD_DEEPBIND flag which is incompatible
+        # with sanitizer runtime".
+        ./configure --enable-werror --without-php
         popd
         pushd xapian-letor
         ./configure --enable-werror
