@@ -112,6 +112,7 @@ jobs:
 
   clang-santisers:
     runs-on: 'ubuntu-latest'
+    container: debian:12
     env:
       LIBEXTRACTOR_PREFIX: '/usr/lib/x86_64-linux-gnu/libextractor'
     needs: makedist
@@ -142,6 +143,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install \
+            clang-15 \
             python3-sphinx \
             uuid-dev \
             libpcre2-dev \
@@ -172,8 +174,8 @@ jobs:
       run: |
         # We use clang here because (at least currently) it supports a few
         # extra sanitiser checks compared to GCC.
-        export CC='ccache clang'
-        export CXX='ccache clang++'
+        export CC='ccache clang-15'
+        export CXX='ccache clang++-15'
         # float-divide-by-zero, nullability and unsigned-overflow aren't
         # undefined behaviour checks, but they catch for things we don't expect
         # our code to do.
