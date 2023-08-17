@@ -120,7 +120,7 @@ jobs:
     - name: Install package dependencies
       run: |
         apt-get update
-        apt-get install \
+        apt-get install -y \
             clang-15 \
             ccache \
             xz-utils \
