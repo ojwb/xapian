@@ -123,7 +123,7 @@ jobs:
         apt-get install \
             clang-15 \
             ccache \
-            xz \
+            xz-utils \
             python3-sphinx \
             uuid-dev \
             libpcre2-dev \
@@ -140,7 +140,7 @@ jobs:
             libglib2.0-dev \
             libe-book-dev \
             libetonyek-dev \
-            libgepub-0.6-dev \
+            libgepub-0.7-dev \
             libgmime-3.0-dev \
             libarchive-dev \
             libabw-dev \
