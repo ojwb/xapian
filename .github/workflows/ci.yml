@@ -216,10 +216,6 @@ jobs:
       LIBEXTRACTOR_PREFIX: '/usr/lib/x86_64-linux-gnu/libextractor'
     needs: makedist
     steps:
-    - name: Install CCache
-      uses: hendrikmuhs/ccache-action@v1
-      with:
-        key: ${{ github.job }}
     - name: Fetch distribution
       uses: actions/download-artifact@v3
     - name: Unpack distribution
@@ -270,6 +266,10 @@ jobs:
             libreofficekit-dev libreoffice-calc libreoffice-draw libreoffice-impress libreoffice-writer \
             libtesseract-dev \
             tesseract-ocr-eng
+    - name: Install CCache
+      uses: hendrikmuhs/ccache-action@v1
+      with:
+        key: ${{ github.job }}
     - name: configure
       run: |
         # We use clang here because (at least currently) it supports a few
