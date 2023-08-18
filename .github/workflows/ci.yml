@@ -112,7 +112,7 @@ jobs:
 
   clang-santisers-debian:
     runs-on: 'ubuntu-latest'
-    container: debian:testing
+    container: debian:experimental
     env:
       LIBEXTRACTOR_PREFIX: '/usr/lib/x86_64-linux-gnu/libextractor'
     needs: makedist
@@ -121,7 +121,7 @@ jobs:
       run: |
         apt-get update
         apt-get install -y \
-            clang-16 \
+            clang-17 \
             ccache \
             xz-utils \
             python3-sphinx \
@@ -176,8 +176,8 @@ jobs:
       run: |
         # We use clang here because (at least currently) it supports a few
         # extra sanitiser checks compared to GCC.
-        export CC='ccache clang-16'
-        export CXX='ccache clang++-16'
+        export CC='ccache clang-17'
+        export CXX='ccache clang++-17'
         # float-divide-by-zero, nullability and unsigned-overflow aren't
         # undefined behaviour checks, but they catch for things we don't expect
         # our code to do.
