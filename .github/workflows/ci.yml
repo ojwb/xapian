@@ -195,7 +195,7 @@ jobs:
         #
         # With Lua, Python and Tcl we fail to find the symbol
         # __ubsan_handle_function_type_mismatch when the module is loaded.
-        ./configure --enable-werror --without-lua --without-php --without-python --without-tcl
+        ./configure --enable-werror --without-lua --without-php --without-python3 --without-tcl
         popd
         pushd xapian-letor
         ./configure --enable-werror
