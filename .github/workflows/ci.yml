@@ -190,9 +190,12 @@ jobs:
         ./configure --enable-werror
         popd
         pushd xapian-bindings
+        # Skip unsigned-integer-overflow for bindings for now as it is causing
+        # problems and isn't undefined behaviour.
+        #
         # PHP calls dlopen() with "RTLD_DEEPBIND flag which is incompatible
         # with sanitizer runtime".
-        ./configure --enable-werror --without-php
+        ./configure --enable-werror --without-php CXXFLAGS='-fsanitize=address,undefined,float-divide-by-zero,local-bounds,nullability -fsanitize-address-use-after-scope -fno-sanitize-recover=all -g -O2 -fno-omit-frame-pointer'
         popd
         pushd xapian-letor
         ./configure --enable-werror
