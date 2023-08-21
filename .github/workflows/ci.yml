@@ -195,7 +195,7 @@ jobs:
         #
         # -fsanitize=functions seems to fail at the dynamic link step for some
         # reason so just turn that off here for now.
-        ./configure --enable-werror --without-php CXXFLAGS="$CXXFLAGS -fno-sanitize=functions"
+        ./configure --enable-werror --without-php CXXFLAGS="$CXXFLAGS -fno-sanitize=function"
         popd
         pushd xapian-letor
         ./configure --enable-werror
