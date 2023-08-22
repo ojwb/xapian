@@ -42,9 +42,6 @@ export srcdir
 # harmless.
 UBSAN_OPTIONS=suppressions=$srcdir/ubsan.supp
 export UBSAN_OPTIONS
-echo "UBSAN_OPTIONS=$UBSAN_OPTIONS"
-ls -l "$srcdir/ubsan.supp"
-cat -n "$srcdir/ubsan.supp"
 
 case $1 in
   *test|*test@EXEEXT@) ;;
