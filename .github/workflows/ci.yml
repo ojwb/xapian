@@ -1696,6 +1696,9 @@ jobs:
         export CXXFLAGS=-EHsc
         export LDFLAGS="-L$PWD/zlib"
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
+        # We find this "ld" when looking for the linker, rather than "link"
+        # from MSVC so delete it rather than trying to reorder PATH.
+        rm /c/Strawberry/c/bin/ld.exe || true
         pushd xapian-core
         ./configure --enable-werror --disable-shared
         export XAPIAN_CONFIG=$PWD/xapian-config
@@ -1799,6 +1802,9 @@ jobs:
         export CXXFLAGS=-EHsc
         export LDFLAGS="-L$PWD/zlib"
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
+        # We find this "ld" when looking for the linker, rather than "link"
+        # from MSVC so delete it rather than trying to reorder PATH.
+        rm /c/Strawberry/c/bin/ld.exe || true
         pushd xapian-core
         ./configure --enable-werror --disable-shared
         export XAPIAN_CONFIG=$PWD/xapian-config
@@ -1899,6 +1905,9 @@ jobs:
         export CXXFLAGS=-EHsc
         export LDFLAGS="-L$PWD/zlib"
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
+        # We find this "ld" when looking for the linker, rather than "link"
+        # from MSVC so delete it rather than trying to reorder PATH.
+        rm /c/Strawberry/c/bin/ld.exe || true
         pushd xapian-core
         ./configure --enable-werror --disable-shared
         export XAPIAN_CONFIG=$PWD/xapian-config
@@ -1999,6 +2008,9 @@ jobs:
         export CXXFLAGS=-EHsc
         export LDFLAGS="-L$PWD/zlib"
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
+        # We find this "ld" when looking for the linker, rather than "link"
+        # from MSVC so delete it rather than trying to reorder PATH.
+        rm /c/Strawberry/c/bin/ld.exe || true
         pushd xapian-core
         ./configure --enable-werror --disable-shared
         export XAPIAN_CONFIG=$PWD/xapian-config
