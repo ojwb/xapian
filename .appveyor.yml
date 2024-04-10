@@ -33,7 +33,7 @@ environment:
     VCVARS_BAT: "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat\""
 install:
   - ps: >-
-      $env:CONFIGOPTS="--disable-documentation"
+      $env:CONFIGOPTS="--disable-documentation --disable-static --enable-shared"
   - ps: >-
       if ($env:TOOLCHAIN -eq "mingw") {
         $env:PATH="C:\Mingw\bin;C:\Mingw\MSYS\1.0\bin;$env:PATH"
