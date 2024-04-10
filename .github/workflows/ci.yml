@@ -1700,7 +1700,7 @@ jobs:
         # from MSVC so delete it rather than trying to reorder PATH.
         rm /c/Strawberry/c/bin/ld.exe || true
         pushd xapian-core
-        ./configure --enable-werror --disable-shared
+        ./configure --enable-werror # --disable-shared
         export XAPIAN_CONFIG=$PWD/xapian-config
         popd
         # pushd xapian-applications/omega
@@ -1710,7 +1710,7 @@ jobs:
         # ./configure --enable-werror
         # popd
         pushd xapian-letor
-        ./configure --enable-werror --disable-shared
+        ./configure --enable-werror # --disable-shared
         popd
     - name: make
       run: |
@@ -1806,7 +1806,7 @@ jobs:
         # from MSVC so delete it rather than trying to reorder PATH.
         rm /c/Strawberry/c/bin/ld.exe || true
         pushd xapian-core
-        ./configure --enable-werror --disable-shared
+        ./configure --enable-werror # --disable-shared
         export XAPIAN_CONFIG=$PWD/xapian-config
         popd
         # pushd xapian-applications/omega
@@ -1816,7 +1816,7 @@ jobs:
         # ./configure --enable-werror
         # popd
         pushd xapian-letor
-        ./configure --enable-werror --disable-shared
+        ./configure --enable-werror # --disable-shared
         popd
     - name: make
       run: |
@@ -1909,7 +1909,7 @@ jobs:
         # from MSVC so delete it rather than trying to reorder PATH.
         rm /c/Strawberry/c/bin/ld.exe || true
         pushd xapian-core
-        ./configure --enable-werror --disable-shared
+        ./configure --enable-werror # --disable-shared
         export XAPIAN_CONFIG=$PWD/xapian-config
         popd
         # pushd xapian-applications/omega
@@ -1919,7 +1919,7 @@ jobs:
         # ./configure --enable-werror
         # popd
         pushd xapian-letor
-        ./configure --enable-werror --disable-shared
+        ./configure --enable-werror # --disable-shared
         popd
     - name: make
       run: |
@@ -2012,7 +2012,7 @@ jobs:
         # from MSVC so delete it rather than trying to reorder PATH.
         rm /c/Strawberry/c/bin/ld.exe || true
         pushd xapian-core
-        ./configure --enable-werror --disable-shared
+        ./configure --enable-werror # --disable-shared
         export XAPIAN_CONFIG=$PWD/xapian-config
         popd
         # pushd xapian-applications/omega
@@ -2022,7 +2022,7 @@ jobs:
         # ./configure --enable-werror
         # popd
         pushd xapian-letor
-        ./configure --enable-werror --disable-shared
+        ./configure --enable-werror # --disable-shared
         popd
     - name: make
       run: |
