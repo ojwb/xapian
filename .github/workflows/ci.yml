@@ -1893,7 +1893,7 @@ jobs:
         # ccache/sccache don't seem to be able to handle that.
         sed -i 's/\(^CFLAGS  *= *-nologo \)-MD \(.* \)-Zi -Fd"zlib" /\1\2/' win32/Makefile.msc
         # Only build the static library.
-        nmake -nologo -f 'win32\Makefile.msc' zlib.lib
+        nmake -nologo -f 'win32\Makefile.msc' zlib1.dll
         popd
     - name: configure
       run: |
@@ -1996,7 +1996,7 @@ jobs:
         # ccache/sccache don't seem to be able to handle that.
         sed -i 's/\(^CFLAGS  *= *-nologo \)-MD \(.* \)-Zi -Fd"zlib" /\1\2/' win32/Makefile.msc
         # Only build the static library.
-        nmake -nologo -f 'win32\Makefile.msc' zlib.lib
+        nmake -nologo -f 'win32\Makefile.msc' zlib1.dll
         popd
     - name: configure
       run: |
