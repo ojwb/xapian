@@ -615,6 +615,8 @@ jobs:
     - name: make
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
+        make -j2 -C xapian-core libxapian-1.5.la
+        more .libs/*.{def,exp}|cat
         make -j2 -C xapian-core
         # make -j2 -C xapian-applications/omega
         # make -j2 -C xapian-binding
@@ -719,6 +721,8 @@ jobs:
     - name: make
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
+        make -j2 -C xapian-core libxapian-1.5.la
+        more .libs/*.{def,exp}|cat
         make -j2 -C xapian-core
         # make -j2 -C xapian-applications/omega
         # make -j2 -C xapian-binding
@@ -820,6 +824,8 @@ jobs:
     - name: make
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
+        make -j2 -C xapian-core libxapian-1.5.la
+        more .libs/*.{def,exp}|cat
         make -j2 -C xapian-core
         # make -j2 -C xapian-applications/omega
         # make -j2 -C xapian-binding
@@ -921,6 +927,8 @@ jobs:
     - name: make
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
+        make -j2 -C xapian-core libxapian-1.5.la
+        more .libs/*.{def,exp}|cat
         make -j2 -C xapian-core
         # make -j2 -C xapian-applications/omega
         # make -j2 -C xapian-binding
