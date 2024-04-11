@@ -176,11 +176,9 @@ jobs:
     - name: make
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
-        make -j2 -C xapian-core libxapian-1.5.la
+        make -j2 -C xapian-core
         echo XYZZY
         ls -l xapian-core/.libs
-        more xapian-core/.libs/*.{def,exp}|cat
-        make -j2 -C xapian-core
         # make -j2 -C xapian-applications/omega
         # make -j2 -C xapian-binding
         make -j2 -C xapian-letor
@@ -285,11 +283,9 @@ jobs:
     - name: make
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
-        make -j2 -C xapian-core libxapian-1.5.la
+        make -j2 -C xapian-core
         echo XYZZY
         ls -l xapian-core/.libs
-        more xapian-core/.libs/*.{def,exp}|cat
-        make -j2 -C xapian-core
         # make -j2 -C xapian-applications/omega
         # make -j2 -C xapian-binding
         make -j2 -C xapian-letor
@@ -391,11 +387,9 @@ jobs:
     - name: make
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
-        make -j2 -C xapian-core libxapian-1.5.la
+        make -j2 -C xapian-core
         echo XYZZY
         ls -l xapian-core/.libs
-        more xapian-core/.libs/*.{def,exp}|cat
-        make -j2 -C xapian-core
         # make -j2 -C xapian-applications/omega
         # make -j2 -C xapian-binding
         make -j2 -C xapian-letor
@@ -497,11 +491,9 @@ jobs:
     - name: make
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
-        make -j2 -C xapian-core libxapian-1.5.la
+        make -j2 -C xapian-core
         echo XYZZY
         ls -l xapian-core/.libs
-        more xapian-core/.libs/*.{def,exp}|cat
-        make -j2 -C xapian-core
         # make -j2 -C xapian-applications/omega
         # make -j2 -C xapian-binding
         make -j2 -C xapian-letor
@@ -514,3 +506,30 @@ jobs:
         # make -j2 -C xapian-applications/omega check
         # make -j2 -C xapian-bindings check
         make -j2 -C xapian-letor check
+
+  msvctest:
+    runs-on: 'windows-2022'
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+    - uses: msys2/setup-msys2@v2
+      with:
+        release: true # Use the pre-installed MSYS2
+        path-type: inherit
+        install: base-devel
+    - name: Set up Visual Studio shell
+      uses: egor-tensin/vs-shell@v2
+      with:
+        arch: x64
+    - name: Try it
+      shell: bash
+      run: |
+        # We find "link" from coreutils rather than from MSVC.  The coreutils
+        # "link" is not a useful tool to us, so just delete it rather than
+        # trying to reorder PATH.
+        rm /usr/bin/link.exe || true
+        echo 'int main() {return 0;}' > test.c
+        cl -nologo -Wl,-Bsymbolic-functions test.c || true
+        cl -nologo -fno-semantic-interposition test.c || true
+        cl -nologo -Wc,-fno-semantic-interposition test.c || true

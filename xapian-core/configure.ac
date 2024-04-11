@@ -1324,8 +1324,6 @@ if test x$enable_werror != xyes; then
 fi
 
 XAPIAN_TEST_LDFLAGS([-Wl,-Bsymbolic-functions], [XAPIAN_LDFLAGS])
-echo XYZZY
-more conftest.err|cat
 
 dnl New in GCC 5.  Sort of like -Bsymbolic-functions, but for the compiler
 dnl rather than the linker.
