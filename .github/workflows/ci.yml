@@ -147,6 +147,7 @@ jobs:
         sed -i 's/\(^CFLAGS  *= *-nologo \)-MD \(.* \)-Zi -Fd"zlib" /\1\2/;s/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
         # Only build the shared library.
         nmake -nologo -f 'win32\Makefile.msc' zlib1.dll
+        ls -lrt
         popd
     - name: configure
       run: |
@@ -256,6 +257,7 @@ jobs:
         sed -i 's/\(^CFLAGS  *= *-nologo \)-MD \(.* \)-Zi -Fd"zlib" /\1\2/;s/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
         # Only build the static library.
         nmake -nologo -f 'win32\Makefile.msc' zlib.lib
+        ls -lrt
         popd
     - name: configure
       run: |
@@ -362,6 +364,7 @@ jobs:
         sed -i 's/\(^CFLAGS  *= *-nologo \)-MD \(.* \)-Zi -Fd"zlib" /\1\2/' win32/Makefile.msc
         # Only build the static library.
         nmake -nologo -f 'win32\Makefile.msc' zdll.lib
+        ls -lrt
         popd
     - name: configure
       run: |
@@ -374,7 +377,7 @@ jobs:
         export LD=link
         export LDFLAGS="-L$PWD/zlib"
         export NM=dumpbin
-        PATH=/c/Users/runneradmin/.cargo/bin:$PATH
+        PATH=/c/Users/runneradmin/.cargo/bin:$PATH:$PWD/zlib
         pushd xapian-core
         ./configure --enable-werror
         export XAPIAN_CONFIG=$PWD/xapian-config
@@ -465,7 +468,8 @@ jobs:
         # ccache/sccache don't seem to be able to handle that.
         sed -i 's/\(^CFLAGS  *= *-nologo \)-MD \(.* \)-Zi -Fd"zlib" /\1\2/' win32/Makefile.msc
         # Only build the static library.
-        nmake -nologo -f 'win32\Makefile.msc' zlib1.dll
+        nmake -nologo -f 'win32\Makefile.msc' zlib.lib
+        ls -lrt
         popd
     - name: configure
       run: |
