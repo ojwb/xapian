@@ -180,26 +180,6 @@ dnl variable $2.  If the test passes, also do $3; if it fails, also do $4.
 AC_DEFUN([XAPIAN_TEST_LDFLAGS],
   [XAPIAN_TEST_FLAGS_([LDFLAGS], [AC_LINK_IFELSE], [$1], [$2], [$3], [$4])])
 
-ldflags=
-dnl if test yesyes = "$GXX$enable_shared" ; then
-dnl   case $host_os in
-dnl     cygwin* | mingw* | msys*)
-dnl       XAPIAN_TEST_LDFLAGS(
-dnl 	[-Wl,--enable-runtime-pseudo-reloc],
-dnl 	[ldflags],
-dnl 	[],
-dnl 	[
-dnl 	dnl Can't use AC_DISABLE_SHARED after AC_PROG_LIBTOOL, but
-dnl 	dnl this test needs to be after AC_PROG_LIBTOOL, so we can't
-dnl 	dnl just disable the shared build automatically...
-dnl 	AC_MSG_ERROR([ld version too old to support a shared build - configure with --disable-shared, or install binutils 2.13.90-20030111-1 or later])
-dnl 	])
-dnl     ;;
-dnl   esac
-dnl fi
-dnl Only works for ldflags which can be specified anywhere on the link line.
-AC_SUBST([ldflags])
-
 dnl Preserve the default CXXFLAGS.
 save_CXXFLAGS=$CXXFLAGS
 
