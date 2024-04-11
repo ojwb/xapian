@@ -171,13 +171,15 @@ jobs:
         # ./configure --enable-werror
         # popd
         pushd xapian-letor
-        ./configure --enable-werror # --disable-shared
+        ./configure --enable-werror
         popd
     - name: make
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
         make -j2 -C xapian-core libxapian-1.5.la
-        more .libs/*.{def,exp}|cat
+        echo XYZZY
+        ls -l xapian-core/.libs
+        more xapian-core/.libs/*.{def,exp}|cat
         make -j2 -C xapian-core
         # make -j2 -C xapian-applications/omega
         # make -j2 -C xapian-binding
@@ -278,13 +280,15 @@ jobs:
         # ./configure --enable-werror
         # popd
         pushd xapian-letor
-        ./configure --enable-werror # --disable-shared
+        ./configure --enable-werror
         popd
     - name: make
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
         make -j2 -C xapian-core libxapian-1.5.la
-        more .libs/*.{def,exp}|cat
+        echo XYZZY
+        ls -l xapian-core/.libs
+        more xapian-core/.libs/*.{def,exp}|cat
         make -j2 -C xapian-core
         # make -j2 -C xapian-applications/omega
         # make -j2 -C xapian-binding
@@ -382,13 +386,15 @@ jobs:
         # ./configure --enable-werror
         # popd
         pushd xapian-letor
-        ./configure --enable-werror # --disable-shared
+        ./configure --enable-werror
         popd
     - name: make
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
         make -j2 -C xapian-core libxapian-1.5.la
-        more .libs/*.{def,exp}|cat
+        echo XYZZY
+        ls -l xapian-core/.libs
+        more xapian-core/.libs/*.{def,exp}|cat
         make -j2 -C xapian-core
         # make -j2 -C xapian-applications/omega
         # make -j2 -C xapian-binding
@@ -486,13 +492,15 @@ jobs:
         # ./configure --enable-werror
         # popd
         pushd xapian-letor
-        ./configure --enable-werror # --disable-shared
+        ./configure --enable-werror
         popd
     - name: make
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
         make -j2 -C xapian-core libxapian-1.5.la
-        more .libs/*.{def,exp}|cat
+        echo XYZZY
+        ls -l xapian-core/.libs
+        more xapian-core/.libs/*.{def,exp}|cat
         make -j2 -C xapian-core
         # make -j2 -C xapian-applications/omega
         # make -j2 -C xapian-binding
