@@ -53,32 +53,7 @@ jobs:
             python3-docutils \
             pngcrush \
             python3-sphinx \
-            uuid-dev \
-            libpcre2-dev \
-            libmagic-dev \
-            lua5.4 \
-            liblua5.4-dev \
-            mono-devel \
-            python3-dev \
-            tcl \
-            tcl-dev \
-            libicu-dev \
-            pkg-config \
-            libpoppler-glib-dev \
-            libglib2.0-dev \
-            libe-book-dev \
-            libetonyek-dev \
-            libgepub-0.6-dev \
-            libgmime-3.0-dev \
-            libarchive-dev \
-            libabw-dev \
-            libcdr-dev \
-            libextractor-dev \
-            libextractor-plugins-all \
-            libmwaw-dev \
-            libreofficekit-dev libreoffice-calc libreoffice-draw libreoffice-impress libreoffice-writer \
-            libtesseract-dev \
-            tesseract-ocr-eng
+            uuid-dev
     - name: bootstrap source tree
       run: |
         # If we restored cached bootstrap tools their timestamps will be older
@@ -88,7 +63,7 @@ jobs:
         touch --no-create INST/*.stamp
         export PATH=/usr/lib/ccache:$PATH
         echo verbose=off > ~/.wgetrc
-        ./bootstrap xapian-core xapian-applications/omega swig xapian-bindings xapian-letor
+        ./bootstrap xapian-core xapian-letor
     - name: configure
       run: ./configure CC='ccache gcc' CXX='ccache g++' CFLAGS=-O0 CXXFLAGS=-O0
     - name: make
@@ -100,8 +75,6 @@ jobs:
       with:
         path: |
           xapian-core/xapian-core-*.tar.xz
-          xapian-applications/omega/xapian-omega-*.tar.xz
-          xapian-bindings/xapian-bindings-*.tar.xz
           xapian-letor/xapian-letor-*.tar.xz
         # Files are already compressed so don't try to compress again.
         compression-level: 0
