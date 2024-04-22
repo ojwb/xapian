@@ -33,6 +33,16 @@ dnl 0:0:0 1.5.0 Reset as library renamed
 LIBRARY_VERSION_INFO=0:0:0
 AC_SUBST([LIBRARY_VERSION_INFO])
 
+case $CC in
+*cl|*cl\ *)
+  set x $CC
+  cc_with_path=`which "$2"`
+  msvc_bin_dir=`AS_ECHO_N("$cc_with_path")|sed 's![^/\\]*$!!'`
+  : ${LD="$msvc_bin_dir/link"}
+  : ${NM="$msvc_bin_dir/dumpbin"}
+  ;;
+esac
+
 LIBRARY_VERSION_SUFFIX=
 dnl Where xapian.h, etc go.
 incdir=$includedir
