@@ -39,7 +39,8 @@ case $CC in
   cc_with_path=`which "$2"`
   msvc_bin_dir=`AS_ECHO_N("$cc_with_path")|sed 's![^/\\]*$!!'`
   : ${LD="$msvc_bin_dir/link"}
-  : ${NM="$msvc_bin_dir/dumpbin"}
+  : ${NM=no}
+  : ${DUMPBIN="$msvc_bin_dir/dumpbin"}
   ;;
 esac
 
