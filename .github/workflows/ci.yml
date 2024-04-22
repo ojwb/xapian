@@ -142,7 +142,7 @@ jobs:
         # linker warning LNK4281.
         sed -i 's/\(^CFLAGS  *= *-nologo \)-MD \(.* \)-Zi -Fd"zlib" /\1\2/;s/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
         # Only build the shared library.
-        nmake -nologo -f 'win32\Makefile.msc' zlib1.dll
+        nmake -nologo -f 'win32\Makefile.msc' LD="`which cl`|sed 's!cl$!link!'`" zlib1.dll
         ls -lrt
         popd
     - name: configure
@@ -246,7 +246,7 @@ jobs:
         # linker warning LNK4281.
         sed -i 's/\(^CFLAGS  *= *-nologo \)-MD \(.* \)-Zi -Fd"zlib" /\1\2/;s/-base:0x[0-9A-Fa-f]* //' win32/Makefile.msc
         # Only build the static library.
-        nmake -nologo -f 'win32\Makefile.msc' zlib.lib
+        nmake -nologo -f 'win32\Makefile.msc' LD="`which cl`|sed 's!cl$!link!'`" zlib.lib
         ls -lrt
         popd
     - name: configure
@@ -347,7 +347,7 @@ jobs:
         # ccache/sccache don't seem to be able to handle that.
         sed -i 's/\(^CFLAGS  *= *-nologo \)-MD \(.* \)-Zi -Fd"zlib" /\1\2/' win32/Makefile.msc
         # Only build the static library.
-        nmake -nologo -f 'win32\Makefile.msc' zdll.lib
+        nmake -nologo -f 'win32\Makefile.msc' LD="`which cl`|sed 's!cl$!link!'`" zdll.lib
         ls -lrt
         popd
     - name: configure
@@ -446,7 +446,7 @@ jobs:
         # ccache/sccache don't seem to be able to handle that.
         sed -i 's/\(^CFLAGS  *= *-nologo \)-MD \(.* \)-Zi -Fd"zlib" /\1\2/' win32/Makefile.msc
         # Only build the static library.
-        nmake -nologo -f 'win32\Makefile.msc' zlib.lib
+        nmake -nologo -f 'win32\Makefile.msc' LD="`which cl`|sed 's!cl$!link!'`" zlib.lib
         ls -lrt
         popd
     - name: configure
