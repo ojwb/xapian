@@ -38,6 +38,10 @@ case $CC in
   set x $CC
   cc_with_path=`which "$2"`
   msvc_bin_dir=`AS_ECHO_N("$cc_with_path")|sed 's![^/\\]*$!!'`
+  echo
+  echo "+ $msvc_bin_dir :"
+  ls -l "$msvc_bin_dir"
+  echo
   : ${LD="$msvc_bin_dir/link"}
   : ${NM=no}
   : ${DUMPBIN="$msvc_bin_dir/dumpbin"}
