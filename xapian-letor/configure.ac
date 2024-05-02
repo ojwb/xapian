@@ -151,6 +151,23 @@ AC_PREPROC_IFELSE([AC_LANG_SOURCE([[
 #endif
 ]])], [win32=no], [win32=yes])
 
+xo_fn_unknown_option_check() {
+  dnl Some compilers don't error out on unknown options which unhelpfully
+  dnl means we would think the option is supported, use it, and end up
+  dnl with a warning or note diagnostic every time we use the option.
+  dnl
+  dnl Check compiler stderr for known strings:
+  dnl * MSVC: Command line warning D9002 : ignoring unknown option '...'
+  dnl * MSVC: LINK : warning LNK4044: unrecognized option '...'; ignored
+  dnl * icc strings cribbed from automake's depend.m4
+  $GREP 'ignoring unknown option' conftest.err >/dev/null 2>&1 ||
+      $GREP 'unrecognized option' conftest.err >/dev/null 2>&1 ||
+      $GREP 'ignoring option' conftest.err >/dev/null 2>&1 ||
+      $GREP 'not supported' conftest.err >/dev/null 2>&1 ||
+      return 1
+  return 0
+}
+
 AC_DEFUN([XAPIAN_TEST_FLAGS_],
   [
   m4_define([cachevar],
@@ -160,13 +177,19 @@ AC_DEFUN([XAPIAN_TEST_FLAGS_],
     XTF_save_$1=${$1}
     $1="${$1} $3"
     $2([AC_LANG_PROGRAM([], [])],
-      [cachevar=yes
-       $1=$XTF_save_$1
-       $4="${$4} $3"
-       $5],
-      [cachevar=no
-       $1=$XTF_save_$1
-       $6])
+      [if xo_fn_unknown_option_check ; then
+	 cachevar=no
+       else
+	 cachevar=yes
+       fi],
+      [cachevar=no])
+    $1=$XTF_save_$1
+    if test "$cachevar" = yes ; then
+      $4="${$4} $3"
+      $5
+    else :
+      $6
+    fi
     ])
   ])
 
@@ -218,6 +241,9 @@ AC_CHECK_DECLS([_addcarry_u32(unsigned char, unsigned, unsigned, unsigned*),
 		_subborrow_u64(unsigned char, unsigned __int64, unsigned __int64, unsigned __int64*)],
 	       [], [], [#include <intrin.h>])
 
+dnl Check for time functions.
+AC_CHECK_FUNCS([clock_gettime sleep nanosleep gettimeofday ftime])
+
 dnl Used by tests/harness/testsuite.cc
 AC_CHECK_FUNCS([sigaction])
 dnl These can be macros (and sigsetjmp is with glibc at least).
@@ -267,7 +293,7 @@ if test x"$enable_documentation" = xyes ; then
 fi
 
 dnl Checks for header files.
-AC_CHECK_HEADERS([fcntl.h limits.h sys/errno.h sys/select.h sysexits.h],
+AC_CHECK_HEADERS([fcntl.h limits.h sys/select.h sysexits.h],
 		 [], [], [ ])
 
 dnl cxxabi.h was added in GCC 3.1, but clang lies and defines __GNUC__ yet
@@ -342,9 +368,11 @@ AC_CACHE_CHECK([for sys_errlist and sys_nerr], xo_cv_sys_errlist_and_sys_nerr, [
   AC_LINK_IFELSE([AC_LANG_PROGRAM(
 dnl On Linux, sys_errlist and sys_nerr need <stdio.h>, though the man page
 dnl says <errno.h>.  The man page seems to match other platforms such as
-dnl NetBSD, so include both headers to ensure we get them.
+dnl NetBSD, so include both headers to ensure we get them.  With mingw and MSVC
+dnl they're provided by <stdlib.h>.
 [[#include <errno.h>
-#include <stdio.h>]],
+#include <stdio.h>
+#include <stdlib.h>]],
 [[  printf("%s", sys_errlist[sys_nerr - 1]);]])],
   [ xo_cv_sys_errlist_and_sys_nerr=yes ],
   [ xo_cv_sys_errlist_and_sys_nerr=no ])
@@ -356,7 +384,8 @@ fi
 AC_CACHE_CHECK([for _sys_errlist and _sys_nerr], xo_cv__sys_errlist_and__sys_nerr, [
   AC_LINK_IFELSE([AC_LANG_PROGRAM(
 [[#include <errno.h>
-#include <stdio.h>]],
+#include <stdio.h>
+#include <stdlib.h>]],
 [[  printf("%s", _sys_errlist[_sys_nerr - 1]);]])],
   [ xo_cv__sys_errlist_and__sys_nerr=yes ],
   [ xo_cv__sys_errlist_and__sys_nerr=no
@@ -386,12 +415,12 @@ if true ; then
       dnl On Unix, we need fork and socketpair for the remotebackend.
       SAVE_LIBS=$LIBS
       AC_CHECK_FUNCS([fork], [], [
-	AC_MSG_ERROR([fork() required for the remote backend - if an extra library is needed, pass LIBS=-lfoo to configure.  Or --disable-backend-remote to disable it.)])
+	AC_MSG_ERROR([fork() required for the remote backend - if an extra library is needed, pass LIBS=-lfoo to configure.  Or --disable-backend-remote to disable it.])
       ])
       dnl Check if -lsocket is required for socketpair (Solaris needs it).
       dnl And on Haiku it's in -lnetwork.
       AC_SEARCH_LIBS([socketpair], [socket network], [], [
-	AC_MSG_ERROR([socketpair() required for the remote backend - if an extra library is needed, pass LIBS=-lfoo to configure.  Or --disable-backend-remote to disable it.)])
+	AC_MSG_ERROR([socketpair() required for the remote backend - if an extra library is needed, pass LIBS=-lfoo to configure.  Or --disable-backend-remote to disable it.])
       ])
       AC_DEFINE([HAVE_SOCKETPAIR], [1],
 		[Define to 1 if you have the 'socketpair' function.])
@@ -425,7 +454,7 @@ AM_CONDITIONAL([USE_ZLIB_VG], [test yes = "$use_zlib_vg"])
 
 AC_MSG_CHECKING([for directory separator(s)])
 case $host_os-$win32 in
-  *-yes | cygwin* | os2* | *djgpp* | *msdos* )
+  *-yes | cygwin* | msys* | os2* | *djgpp* | *msdos* )
     AC_MSG_RESULT([/ and \\])
     AC_DEFINE([DIR_SEPS], ["/\\"], [directory separator(s) as a character or string literal])
     AC_DEFINE([DIR_SEPS_LIST], [{ '/', '\\' }], [directory separator(s) as an initialiser list])
