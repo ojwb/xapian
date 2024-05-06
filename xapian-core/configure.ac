@@ -885,10 +885,10 @@ case $enable_backend_glass$enable_backend_honey in
     ], [ ])
 
   dnl Check for zlibVersion - normally it's in -lz but the mingw build needs -lzlib or -lzdll.
-dnl  AC_SEARCH_LIBS([zlibVersion], [z zdll zlib zlib1], [], [
-dnl    AC_MSG_ERROR([zlibVersion() not found in -lz, -lzlib, or -lzdll - required for glass (you may need to install the zlib1g-dev or zlib-devel package)])
-dnl    ])
-  LIBS="$LIBS c:/vcpkg/installed/x64-windows/zlib1.dll"
+  AC_SEARCH_LIBS([zlibVersion], [z zdll zlib zlib1], [], [
+    dnl AC_MSG_ERROR([zlibVersion() not found in -lz, -lzlib, or -lzdll - required for glass (you may need to install the zlib1g-dev or zlib-devel package)])
+    LIBS="$LIBS c:/vcpkg/installed/x64-windows/zlib1.dll"
+    ])
 
   dnl Find a way to generate UUIDs.
 
