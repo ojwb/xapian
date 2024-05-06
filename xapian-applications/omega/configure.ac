@@ -162,8 +162,8 @@ dnl Check for zlibVersion in -lz.
 SAVE_LIBS=$LIBS
 LIBS=
 dnl mingw build needs -lzlib or -lzdll.
-AC_SEARCH_LIBS([zlibVersion], [z zlib zdll], [], [
-  AC_MSG_ERROR([zlibVersion() not found in -lz, -lzlib, or -lzdll (you  may need to install the zlib1g-dev or zlib-devel package)])
+AC_SEARCH_LIBS([zlibVersion], [z zlib zdll zlib1], [], [
+    LIBS="$LIBS c:/vcpkg/installed/x64-windows/zlib1.dll"
   ])
 ZLIB_LIBS=$LIBS
 AC_SUBST([ZLIB_LIBS])
