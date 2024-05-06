@@ -131,7 +131,7 @@ jobs:
         c:/vcpkg/vcpkg install libmagic pcre2 zlib
     - name: configure
       run: |
-        ls -lR c:/vcpkg
+        file c:/vcpkg/installed/x64-windows/lib/*.lib
         export AR=lib
         export CC="cl -nologo"
         export CXX="$PWD/xapian-core/compile cl -nologo"
