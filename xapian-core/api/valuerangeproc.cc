@@ -23,7 +23,7 @@
 #include <xapian/queryparser.h>
 
 #include <cerrno>
-#ifdef __cpp_lib_to_chars
+#ifdef HAVE_STD_FROM_CHARS_DOUBLE
 # include <charconv>
 #else
 # include <cstdlib> // For strtod().
@@ -253,7 +253,7 @@ NumberRangeProcessor::operator()(const string& b, const string& e)
     double num_b, num_e;
 
     if (!b.empty()) {
-#ifdef __cpp_lib_to_chars
+#ifdef HAVE_STD_FROM_CHARS_DOUBLE
 	const char* startptr = b.data();
 	const char* endptr = startptr + b.size();
 	const auto& r = from_chars(startptr, endptr, num_b);
@@ -277,7 +277,7 @@ NumberRangeProcessor::operator()(const string& b, const string& e)
     }
 
     if (!e.empty()) {
-#ifdef __cpp_lib_to_chars
+#ifdef HAVE_STD_FROM_CHARS_DOUBLE
 	const char* startptr = e.data();
 	const char* endptr = startptr + e.size();
 	const auto& r = from_chars(startptr, endptr, num_e);
@@ -338,7 +338,7 @@ UnitRangeProcessor::operator()(const string& b, const string& e)
     bool b_has_unit = false;
 
     if (!b.empty()) {
-#ifdef __cpp_lib_to_chars
+#ifdef HAVE_STD_FROM_CHARS_DOUBLE
 	const char* startptr = b.data();
 	const char* endptr = startptr + b.size();
 	const auto& r = from_chars(startptr, endptr, num_b);
@@ -375,7 +375,7 @@ UnitRangeProcessor::operator()(const string& b, const string& e)
     }
 
     if (!e.empty()) {
-#ifdef __cpp_lib_to_chars
+#ifdef HAVE_STD_FROM_CHARS_DOUBLE
 	const char* startptr = e.data();
 	const char* endptr = startptr + e.size();
 	const auto& r = from_chars(startptr, endptr, num_e);

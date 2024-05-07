@@ -36,7 +36,8 @@
 #include <cstdlib>
 #include <map>
 #include <string>
-#ifdef __cpp_lib_to_chars
+#ifdef HAVE_STD_FROM_CHARS_DOUBLE
+# include <cstring>
 # include <charconv>
 #endif
 
@@ -261,9 +262,9 @@ class Weight::Internal {
     std::string get_description() const;
 
     static bool double_param(const char ** p, double * ptr_val) {
-#ifdef __cpp_lib_to_chars
+#ifdef HAVE_STD_FROM_CHARS_DOUBLE
 	const char* startptr = *p;
-	const char* endptr = startptr + strlen(startptr);
+	const char* endptr = startptr + std::strlen(startptr);
 	double v;
 	const auto& r = std::from_chars(startptr, endptr, v);
 	if (r.ec != std::errc()) {
