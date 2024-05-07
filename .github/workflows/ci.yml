@@ -53,7 +53,10 @@ jobs:
             python3-docutils \
             pngcrush \
             python3-sphinx \
-            uuid-dev
+            uuid-dev \
+            libpcre2-dev \
+            libmagic-dev \
+            pkg-config
     - name: bootstrap source tree
       run: |
         # If we restored cached bootstrap tools their timestamps will be older
