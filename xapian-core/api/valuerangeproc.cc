@@ -342,10 +342,11 @@ UnitRangeProcessor::operator()(const string& b, const string& e)
 	const char* startptr = b.data();
 	const char* endptr = startptr + b.size();
 	const auto& r = from_chars(startptr, endptr, num_b);
-	if (r.ec != std::errc() || r.ptr != endptr) {
+	if (r.ec != std::errc()) {
 	    // Invalid characters in string || overflow or underflow.
 	    goto not_our_range;
 	}
+	endptr = r.ptr;
 #else
 	errno = 0;
 	const char * startptr = b.c_str();
@@ -378,10 +379,11 @@ UnitRangeProcessor::operator()(const string& b, const string& e)
 	const char* startptr = e.data();
 	const char* endptr = startptr + e.size();
 	const auto& r = from_chars(startptr, endptr, num_e);
-	if (r.ec != std::errc() || r.ptr != endptr) {
+	if (r.ec != std::errc()) {
 	    // Invalid characters in string || overflow or underflow.
 	    goto not_our_range;
 	}
+	endptr = r.ptr;
 #else
 	errno = 0;
 	const char * startptr = e.c_str();
