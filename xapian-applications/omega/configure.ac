@@ -434,8 +434,11 @@ AC_ARG_VAR(PCRE2_CONFIG, [Location of pcre2-config])
 if test -z "$PCRE2_CONFIG" ; then
   if test -n "$PKG_CONFIG" ; then
     pcre_try="$PKG_CONFIG libpcre2-8"
-    if $pcre_try 2>/dev/null ; then
+    if $pcre_try 2>&AS_MESSAGE_LOG_FD ; then
       PCRE2_CONFIG=$pcre_try
+      PCRE2_LIBS_FLAG=--libs
+    elif $PKG_CONFIG libpcre2 2>&AS_MESSAGE_LOG_FD ; then
+      PCRE2_CONFIG="$PKG_CONFIG libpcre2"
       PCRE2_LIBS_FLAG=--libs
     else
       if pcre_runtime_installed ; then
