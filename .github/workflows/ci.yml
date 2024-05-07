@@ -134,12 +134,20 @@ jobs:
         vcpkg install libmagic pcre2 zlib
     - name: configure
       run: |
-        PKG_CONFIG_PATH=$VCPKG_INSTALLATION_ROOT/installed/x64-windows/pkg-config
+        PKG_CONFIG_PATH=$VCPKG_INSTALLATION_ROOT/installed/x64-windows/pkgconfig
         pkg-config --list-all
+        echo "==="
+        pkg-config --cflags zlib || true
+        echo "==="
+        pkg-config --libs zlib || true
+        echo "==="
+        pkg-config --cflags libmagic || true
+        echo "==="
+        pkg-config --libs libmagic || true
         echo "==="
         ls -l /c/vcpkg/installed/x64-windows/lib
         ls -l /c/vcpkg/installed/x64-windows/bin
-        ls -l /c/vcpkg/installed/x64-windows/pkg-config
+        ls -l /c/vcpkg/installed/x64-windows/pkgconfig
         export AR=lib
         export CC="cl -nologo"
         export CXX="$PWD/xapian-core/compile cl -nologo"
