@@ -2,7 +2,7 @@
  * @brief Xapian::Weight::Internal class, holding database and term statistics.
  */
 /* Copyright (C) 2007 Lemur Consulting Ltd
- * Copyright (C) 2009,2010,2011,2013,2014,2015,2020 Olly Betts
+ * Copyright (C) 2009,2010,2011,2013,2014,2015,2020,2024 Olly Betts
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -36,6 +36,9 @@
 #include <cstdlib>
 #include <map>
 #include <string>
+#ifdef __cpp_lib_to_chars
+# include <charconv>
+#endif
 
 namespace Xapian {
 
@@ -258,12 +261,24 @@ class Weight::Internal {
     std::string get_description() const;
 
     static bool double_param(const char ** p, double * ptr_val) {
+#ifdef __cpp_lib_to_chars
+	const char* startptr = *p;
+	const char* endptr = startptr + strlen(startptr);
+	double v;
+	const auto& r = std::from_chars(startptr, endptr, v);
+	if (r.ec != std::errc()) {
+	    return false;
+	}
+	*p = r.ptr;
+	*ptr_val = v;
+#else
 	char *end;
 	errno = 0;
 	double v = strtod(*p, &end);
 	if (*p == end || errno) return false;
 	*p = end;
 	*ptr_val = v;
+#endif
 	return true;
     }
 
