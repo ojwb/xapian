@@ -220,7 +220,8 @@ jobs:
         vcpkg install libmagic pcre2 zlib
     - name: configure
       run: |
-        export PKG_CONFIG_LIBDIR=$VCPKG_INSTALLATION_ROOT/installed/x64-windows/lib/pkgconfig
+        export PKG_CONFIG_LIBDIR=/c/vcpkg/installed/x64-windows/lib/pkgconfig:/c/vcpkg/installed/x64-windows/share/pkgconfig
+        export PKG_CONFIG_PATH=/c/vcpkg/installed/x64-windows/lib/pkgconfig:/c/vcpkg/installed/x64-windows/share/pkgconfig
         pkg-config --list-all
         echo "==="
         pkg-config --cflags zlib || true
@@ -235,9 +236,18 @@ jobs:
         echo "==="
         pkg-config --libs libpcre2-8 || true
         echo "==="
+        ls -l /c/vcpkg/installed
+        echo "==="
+        ls -l /c/vcpkg/installed/x64-windows
+        echo "==="
         ls -l /c/vcpkg/installed/x64-windows/lib
+        echo "==="
         ls -l /c/vcpkg/installed/x64-windows/lib/pkgconfig
+        echo "==="
+        ls -l /c/vcpkg/installed/x64-windows/share/pkgconfig
+        echo "==="
         ls -l /c/vcpkg/installed/x64-windows/bin
+        echo "==="
         export AR=lib
         export CC="cl -nologo"
         export CXX="$PWD/xapian-core/compile cl -nologo"
