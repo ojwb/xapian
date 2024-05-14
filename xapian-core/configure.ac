@@ -895,16 +895,24 @@ case $enable_backend_glass$enable_backend_honey in
   dnl
   dnl Similarly for uuid support.
 
-  dnl Check for zlib.h.
-  AC_CHECK_HEADERS([zlib.h], [], [
-    AC_MSG_ERROR([zlib.h not found - required for glass (you may need to install the zlib1g-dev or zlib-devel package)])
-    ], [ ])
+  ZLIB_LIBS=
+  if test -n "$PKG_CONFIG" ; then
+    CXXFLAGS="$CXXFLAGS `$PKG_CONFIG zlib --cflags`"
+    ZLIB_LIBS=`$PKG_CONFIG zlib --libs`
+  fi
+  if test -n "$ZLIB_LIBS" ; then
+    LIBS="$LIBS $ZLIB_LIBS"
+  else
+    dnl Check for zlib.h.
+    AC_CHECK_HEADERS([zlib.h], [], [
+      AC_MSG_ERROR([zlib.h not found - required for glass (you may need to install the zlib1g-dev or zlib-devel package)])
+      ], [ ])
 
-  dnl Check for zlibVersion - normally it's in -lz but the mingw build needs -lzlib or -lzdll.
-  AC_SEARCH_LIBS([zlibVersion], [z zdll zlib zlib1], [], [
-    dnl AC_MSG_ERROR([zlibVersion() not found in -lz, -lzlib, or -lzdll - required for glass (you may need to install the zlib1g-dev or zlib-devel package)])
-    LIBS="$LIBS c:/vcpkg/installed/x64-windows/zlib1.dll"
-    ])
+    dnl Check for zlibVersion - normally it's in -lz but the mingw build needs -lzlib or -lzdll.
+    AC_SEARCH_LIBS([zlibVersion], [z zdll zlib zlib1], [], [
+      AC_MSG_ERROR([zlibVersion() not found in -lz, -lzlib, or -lzdll - required for glass (you may need to install the zlib1g-dev or zlib-devel package)])
+      ])
+  fi
 
   dnl Find a way to generate UUIDs.
 

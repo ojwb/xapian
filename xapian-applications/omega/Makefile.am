@@ -259,6 +259,7 @@ if NEED_MKDTEMP
 omindex_SOURCES += portability/mkdtemp.cc
 endif
 omindex_LDADD = $(MAGIC_LIBS) $(XAPIAN_LIBS) $(ZLIB_LIBS) libutf8convert.la
+omindex_CXXFLAGS = $(AM_CXXFLAGS) $(ZLIB_CFLAGS)
 
 omindex_poppler_SOURCES = assistant.cc worker_comms.cc common/str.cc handler_poppler.cc
 omindex_poppler_LDADD = $(POPPLER_LIBS)

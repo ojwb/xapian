@@ -153,21 +153,33 @@ AC_CHECK_HEADERS([sysexits.h sys/time.h]dnl
 		 [sys/vmmeter.h sys/sysmp.h sys/sysinfo.h sys/pstat.h],
 		 [], [], [#include <sys/types.h>])
 
-dnl Check for zlib.h.
-AC_CHECK_HEADERS([zlib.h], [], [
-  AC_MSG_ERROR([zlib.h not found])
-  ], [ ])
+AC_ARG_VAR(PKG_CONFIG, [Location of pkg-config])
+AC_PATH_TOOL(PKG_CONFIG, [pkg-config], [])
 
-dnl Check for zlibVersion in -lz.
-SAVE_LIBS=$LIBS
-LIBS=
-dnl mingw build needs -lzlib or -lzdll.
-AC_SEARCH_LIBS([zlibVersion], [z zlib zdll zlib1], [], [
-    LIBS="$LIBS c:/vcpkg/installed/x64-windows/zlib1.dll"
-  ])
-ZLIB_LIBS=$LIBS
+ZLIB_CFLAGS=
+ZLIB_LIBS=
+if test -n "$PKG_CONFIG" ; then
+  CXXFLAGS="$CXXFLAGS `$PKG_CONFIG zlib --cflags`"
+  ZLIB_LIBS=`$PKG_CONFIG zlib --libs`
+fi
+if test -z "$ZLIB_LIBS" ; then
+  dnl Check for zlib.h.
+  AC_CHECK_HEADERS([zlib.h], [], [
+    AC_MSG_ERROR([zlib.h not found])
+    ], [ ])
+
+  dnl Check for zlibVersion in -lz.
+  SAVE_LIBS=$LIBS
+  LIBS=
+  dnl mingw build needs -lzlib or -lzdll.
+  AC_SEARCH_LIBS([zlibVersion], [z zlib zdll], [], [
+    AC_MSG_ERROR([zlibVersion() not found in -lz, -lzlib, or -lzdll (you  may need to install the zlib1g-dev or zlib-devel package)])
+    ])
+  ZLIB_LIBS=$LIBS
+  LIBS=$SAVE_LIBS
+fi
 AC_SUBST([ZLIB_LIBS])
-LIBS=$SAVE_LIBS
+AC_SUBST([ZLIB_CFLAGS])
 
 dnl POSIX requires setenv().  The final Unix-like platform without it seems
 dnl to have been Solaris 9, which is now out of support.
@@ -380,9 +392,6 @@ if test x"$enable_documentation" = xyes; then
   AC_ARG_VAR([RST2HTML], [reST to HTML convertor])
   test -z "$RST2HTML" && AC_MSG_ERROR([rst2html is required to build documentation])
 fi
-
-AC_ARG_VAR(PKG_CONFIG, [Location of pkg-config])
-AC_PATH_TOOL(PKG_CONFIG, [pkg-config], [])
 
 dnl libmagic used to detect MIME types for files we don't detect by extension.
 MAGIC_LIBS=
