@@ -266,6 +266,7 @@ jobs:
         export NM=dumpbin
         export CPPFLAGS=-I/usr/include
         export LDFLAGS=-I/usr/lib
+        find /c/ -name zlib.h -ls || true
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
         pushd xapian-core
         ./configure --enable-werror --disable-shared
