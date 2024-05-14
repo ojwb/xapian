@@ -62,8 +62,14 @@ Languages Supported Elsewhere
 Erlang		Available from:
 		https://github.com/arcusfelis/xapian-erlang-bindings/#readme
 
+Guile		Available from:
+		https://guile-xapian.systemreboot.net/
+
 Node.js		Available from:
 		https://github.com/mtibeica/node-xapian#readme
+
+R		Available from:
+		https://github.com/amandaJayanetti/RXapian#readme
 
 If you're interest in getting other languages supported, see the "Adding
 support for other programming languages" section in the file HACKING.
