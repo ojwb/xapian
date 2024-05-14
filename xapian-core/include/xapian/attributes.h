@@ -81,7 +81,7 @@
  *  appear to be documented.  For confirmation see:
  *  https://gcc.gnu.org/bugzilla/show_bug.cgi?id=79961
  */
-# define XAPIAN_NONNULL(LIST)
+# define XAPIAN_NONNULL(...)
 #endif
 
 #endif // XAPIAN_INCLUDED_ATTRIBUTES_H
