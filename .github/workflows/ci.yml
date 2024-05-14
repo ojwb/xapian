@@ -263,9 +263,8 @@ jobs:
         export CXXFLAGS=-EHsc
         export LD=link
         export NM=dumpbin
-        export CPPFLAGS=-I/usr/include
-        export LDFLAGS=-I/usr/lib
-        find /c/ -name zlib.h -ls || true
+        export CPPFLAGS=-I/c/mingw64/x86_64-w64-mingw32/include
+        export LDFLAGS=-I/c/mingw64/x86_64-w64-mingw32/lib
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
         pushd xapian-core
         ./configure --enable-werror --disable-shared
