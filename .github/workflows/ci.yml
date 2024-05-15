@@ -134,6 +134,12 @@ jobs:
         vcpkg install libmagic pcre2 zlib
     - name: configure
       run: |
+        echo 'int main(void) { return 0; }' > conftest.cpp
+        echo "==="
+        cl -nologo -std:c++17 -o conftest.exe -EHsc -I/c/vcpkg/installed/x64-windows/lib/pkgconfig/../../include -Ic:/vcpkg/installed/x64-windows/include -L'C:\vcpkg/installed/x64-windows/bin' -L'C:\vcpkg/installed/x64-windows/lib' -Bsymbolic-functions conftest.cpp
+        echo "==="
+        bash -x /d/a/xapian/xapian/xapian-core/compile cl -nologo -std:c++17 -o conftest.exe -EHsc -I/c/vcpkg/installed/x64-windows/lib/pkgconfig/../../include -Ic:/vcpkg/installed/x64-windows/include -L'C:\vcpkg/installed/x64-windows/bin' -L'C:\vcpkg/installed/x64-windows/lib' -Wl,-Bsymbolic-functions conftest.cpp
+        echo "==="
         export PKG_CONFIG_LIBDIR=/c/vcpkg/installed/x64-windows/lib/pkgconfig:/c/vcpkg/installed/x64-windows/share/pkgconfig
         export PKG_CONFIG_PATH=/c/vcpkg/installed/x64-windows/lib/pkgconfig:/c/vcpkg/installed/x64-windows/share/pkgconfig
         pkg-config --list-all
@@ -181,7 +187,7 @@ jobs:
         # ./configure --enable-werror
         # popd
         pushd xapian-letor
-        ./configure --enable-werror
+        ./configure --enable-werror --disable-shared
         popd
     - name: make
       run: |
