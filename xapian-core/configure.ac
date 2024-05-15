@@ -320,8 +320,7 @@ xo_fn_unknown_option_check() {
       $GREP 'unrecognized option' conftest.err >/dev/null 2>&1 ||
       $GREP 'ignoring option' conftest.err >/dev/null 2>&1 ||
       $GREP 'not supported' conftest.err >/dev/null 2>&1 ||
-      echo "return 1"
-      return 1
+      { echo "return 1"; return 1; };
   echo "return 0"
   return 0
 }
