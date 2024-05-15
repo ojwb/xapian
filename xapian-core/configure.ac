@@ -320,7 +320,9 @@ xo_fn_unknown_option_check() {
       $GREP 'unrecognized option' conftest.err >/dev/null 2>&1 ||
       $GREP 'ignoring option' conftest.err >/dev/null 2>&1 ||
       $GREP 'not supported' conftest.err >/dev/null 2>&1 ||
+      echo "return 1"
       return 1
+  echo "return 0"
   return 0
 }
 
@@ -333,7 +335,8 @@ AC_DEFUN([XAPIAN_TEST_FLAGS_],
     XTF_save_$1=${$1}
     $1="${$1} $3"
     $2([AC_LANG_PROGRAM([], [])],
-      [if xo_fn_unknown_option_check ; then
+      [ls -l conftest*
+       if xo_fn_unknown_option_check ; then
 	 cachevar=no
        else
 	 cachevar=yes
