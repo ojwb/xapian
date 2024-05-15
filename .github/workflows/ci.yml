@@ -136,7 +136,7 @@ jobs:
       run: |
         echo 'int main(void) { return 0; }' > conftest.cpp
         echo "==="
-        cl -nologo -std:c++17 -Feconftest.exe -EHsc -I/c/vcpkg/installed/x64-windows/lib/pkgconfig/../../include -Ic:/vcpkg/installed/x64-windows/include -L 'C:\vcpkg/installed/x64-windows/bin' -L 'C:\vcpkg/installed/x64-windows/lib' -Bsymbolic-functions conftest.cpp
+        cl -nologo -std:c++17 -Feconftest.exe -EHsc -link -Bsymbolic-functions conftest.cpp||true
         echo "==="
         bash -x /d/a/xapian/xapian/xapian-core/compile cl -nologo -std:c++17 -o conftest.exe -EHsc -I/c/vcpkg/installed/x64-windows/lib/pkgconfig/../../include -Ic:/vcpkg/installed/x64-windows/include -L'C:\vcpkg/installed/x64-windows/bin' -L'C:\vcpkg/installed/x64-windows/lib' -Wl,-Bsymbolic-functions conftest.cpp > conftest.err
         sed 's/^/E> //' conftest.err
@@ -192,7 +192,7 @@ jobs:
         popd
     - name: make
       run: |
-        PATH=/c/Users/runneradmin/.cargo/bin:$PATH
+        PATH=$VCPKG_INSTALLATION_ROOT/installed/x64-windows/bin:/c/Users/runneradmin/.cargo/bin:$PATH
         make -j2 -C xapian-core
         echo XYZZY
         ls -l xapian-core/.libs
@@ -201,7 +201,7 @@ jobs:
         make -j2 -C xapian-letor
     - name: Run tests
       run: |
-        PATH=/c/Users/runneradmin/.cargo/bin:$PATH
+        PATH=$VCPKG_INSTALLATION_ROOT/installed/x64-windows/bin:/c/Users/runneradmin/.cargo/bin:$PATH
         export AUTOMATED_TESTING=1
         export VERBOSE=1
         make -j2 -C xapian-core check
@@ -302,3 +302,11 @@ jobs:
         make -j2 -C xapian-applications/omega check
         # make -j2 -C xapian-bindings check
         make -j2 -C xapian-letor check
+    - name: Save log files
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: logs-${{ github.job }}-${{ github.sha }}
+        overwrite: true
+        path: |
+          **/*.log
