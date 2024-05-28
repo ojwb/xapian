@@ -112,6 +112,21 @@ jobs:
       # if that input is empty.
       run: git status --porcelain|grep '^' && { echo "The generated files listed above are not in .gitignore" ; exit 1; }; true
 
+  netbsd-lseek-safety:
+    runs-on: 'ubuntu-22.04'
+    steps:
+    - uses: actions/checkout@v4
+    - uses: vmactions/netbsd-vm@v1
+      # Limit wasted resources if the VM action gets into an infinite loop.
+      timeout-minutes: 60
+      with:
+        # Default is ksh, which should be OK.
+        # usesh: true
+        run: |
+          set -e
+          cc -Wall -W lseek-safety-test.c
+          ./a.out
+
   solaris:
     runs-on: 'ubuntu-22.04'
     needs: makedist
