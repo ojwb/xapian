@@ -127,34 +127,34 @@ jobs:
           gcc:p
     - name: test
       run: |
-        gcc -Wall -W lseek-safety-test.c -o a.exe
+        gcc -Wall -W lseek-safety-test-win32.c -o a.exe
         ./a.exe TESTFILE
         ls -l TESTFILE
 
-  # opencsw's newest GCC is 5.5 which lack C++17 support.
-  solaris:
-    runs-on: 'ubuntu-22.04'
-      #    needs: makedist
-    steps:
-    - name: Install CCache
-      uses: hendrikmuhs/ccache-action@v1
-      with:
-        key: ${{ github.job }}
-#    - name: Fetch distribution
-#      uses: actions/download-artifact@v4
-#    - name: Unpack distribution
-#      run: |
-#        mv artifact/* .
-#        rmdir artifact
-#        # Do actual unpacking in the VM, mostly to help reduce the size of the
-#        # rsync output in the logs.
-    - uses: vmactions/solaris-vm@v1
-      # Limit wasted resources if the VM action gets into an infinite loop.
-      timeout-minutes: 60
-      with:
-        release: "11.4-gcc"
-        run: |
-          set -e
-          ulimit
-          find / -name '*CC' -print
-          find / -name '*++*' -print
+#  # opencsw's newest GCC is 5.5 which lack C++17 support.
+#  solaris:
+#    runs-on: 'ubuntu-22.04'
+#      #    needs: makedist
+#    steps:
+#    - name: Install CCache
+#      uses: hendrikmuhs/ccache-action@v1
+#      with:
+#        key: ${{ github.job }}
+##    - name: Fetch distribution
+##      uses: actions/download-artifact@v4
+##    - name: Unpack distribution
+##      run: |
+##        mv artifact/* .
+##        rmdir artifact
+##        # Do actual unpacking in the VM, mostly to help reduce the size of the
+##        # rsync output in the logs.
+#    - uses: vmactions/solaris-vm@v1
+#      # Limit wasted resources if the VM action gets into an infinite loop.
+#      timeout-minutes: 60
+#      with:
+#        release: "11.4-gcc"
+#        run: |
+#          set -e
+#          ulimit
+#          find / -name '*CC' -print
+#          find / -name '*++*' -print
