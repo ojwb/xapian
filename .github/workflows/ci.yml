@@ -160,8 +160,8 @@ jobs:
         run: |
           set -e
           ulimit
-          export CC='ccache cc'
-          export CXX='ccache c++'
+          export CC='ccache gcc'
+          export CXX='ccache g++'
           cd xapian-core
           gtar --strip-components=1 -xf xapian-core-*.tar.xz
           ./configure --enable-werror
