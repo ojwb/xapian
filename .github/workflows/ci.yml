@@ -130,6 +130,7 @@ jobs:
           du -k TESTFILE
           rm -f a.out TESTFILE
 
+  # opencsw's newest GCC is 5.5 which lack C++17 support.
   solaris:
     runs-on: 'ubuntu-22.04'
     needs: makedist
