@@ -143,7 +143,7 @@ in2:
     */
 
     if (setjmp(jb) == 0) {
-	signal(SIGXFSZ, sighandler);
+//	signal(SIGXFSZ, sighandler);
 	ssize_t r = write(fd, "", 1);
 	if (r >= 0) {
 	    fprintf(stderr, "warning: write() succeeded, writing %lld bytes\n", (long long)r);
