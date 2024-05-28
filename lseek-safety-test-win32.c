@@ -1,4 +1,5 @@
 #define _XOPEN_SOURCE 500
+#define _FILE_OFFSET_BITS 64
 #define _LARGE_FILES 1 /* For AIX */
 
 #include <sys/types.h>
