@@ -125,7 +125,10 @@ jobs:
         run: |
           set -e
           cc -Wall -W lseek-safety-test.c
-          ./a.out
+          ./a.out TESTFILE
+          ls -l TESTFILE
+          du -k TESTFILE
+          rm -f a.out TESTFILE
 
   solaris:
     runs-on: 'ubuntu-22.04'
