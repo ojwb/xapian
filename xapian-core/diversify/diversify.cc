@@ -163,7 +163,7 @@ DocumentSet
 Diversify::Internal::get_dmset(const MSet& mset)
 {
     // Return original mset if no need to diversify
-    if (k == 0 || mset.size() <= 2) {
+    if (k < 2 || mset.size() <= 2) {
 	DocumentSet dmset;
 	for (MSetIterator it = mset.begin(); it != mset.end(); ++it)
 	    dmset.add_document(it.get_document());
@@ -185,9 +185,11 @@ Diversify::Internal::get_dmset(const MSet& mset)
     vector<Xapian::docid> topc;
 
     // Build topC
-    for (unsigned int c = 0; c < cset.size(); ++c) {
+    auto cset_size = cset.size();
+    for (Xapian::doccount c = 0; c < cset_size; ++c) {
 	auto documents = cset[c].get_documents();
-	for (unsigned int d = 0; d < r && d < documents.size(); ++d) {
+	auto limit = std::min(r, documents.size());
+	for (Xapian::doccount d = 0; d < limit; ++d) {
 	    auto doc_id = documents[d].get_docid();
 	    topc.push_back(doc_id);
 	}
