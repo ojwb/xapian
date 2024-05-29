@@ -112,28 +112,6 @@ Diversify::Internal::compute_similarities(const Xapian::ClusterSet& cset)
     }
 }
 
-vector<Xapian::docid>
-Diversify::Internal::compute_diff_dmset(const vector<Xapian::docid>& dmset)
-{
-    vector<Xapian::docid> diff_dmset;
-    for (auto point : points) {
-	Xapian::docid point_id = point.first;
-	bool found_point = false;
-	for (auto doc_id : dmset) {
-	    if (point_id == doc_id) {
-		found_point = true;
-		break;
-	    }
-	}
-
-	if (!found_point) {
-	    diff_dmset.push_back(point_id);
-	}
-    }
-
-    return diff_dmset;
-}
-
 double
 Diversify::Internal::evaluate_dmset(const vector<Xapian::docid>& dmset,
 				    const Xapian::ClusterSet& cset)
@@ -156,7 +134,7 @@ Diversify::Internal::evaluate_dmset(const vector<Xapian::docid>& dmset,
 	score_2 += min_dist;
     }
 
-    return -lambda * score_1 + (1 - lambda) * score_2;
+    return (1 - lambda) * score_2 - lambda * score_1;
 }
 
 DocumentSet
@@ -239,14 +217,36 @@ Diversify::Internal::get_dmset(const MSet& mset)
 	main_dmset = curr_dmset;
     }
 
-    // Merge main_dmset and diff_dmset into final dmset
+    // Reorder the results to reflect the diversification.
+
+    // Mapping from docid to MSet index.
+    unordered_map<Xapian::docid, Xapian::doccount> rank;
+
+    // Temporary structure until we refactor to reorder the MSet.
+    vector<Xapian::docid> rank_dual;
+
+    Xapian::doccount c = 0;
+    // First we rank the documents from the best dmset, in order.
+    for (auto doc_id : main_dmset) {
+	rank[doc_id] = c++;
+	rank_dual.push_back(doc_id);
+    }
+
+    // Then we rank any remaining documents.
+    for (auto point : points) {
+	Xapian::docid doc_id = point.first;
+	if (rank.try_emplace(doc_id, c).second) {
+	    ++c;
+	    rank_dual.push_back(doc_id);
+	}
+    }
+
+    // FIXME: work through permuting cycles?
+    // Or avoid the need for `rank` and use some other structure?
+
     DocumentSet dmset;
-    for (auto doc_id : main_dmset)
+    for (Xapian::docid doc_id : rank_dual) {
 	dmset.add_document(points.at(doc_id).get_document());
-
-    vector<Xapian::docid> diff_dmset = compute_diff_dmset(main_dmset);
-    for (auto doc_id : diff_dmset)
-	dmset.add_document(points.at(doc_id).get_document());
-
+    }
     return dmset;
 }
