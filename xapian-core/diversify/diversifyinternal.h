@@ -54,8 +54,13 @@ class Xapian::Diversify::Internal : public Xapian::Internal::intrusive_base {
     /// Store the relevance score of each document
     std::unordered_map<Xapian::docid, double> scores;
 
-    /// Store pairwise cosine similarities of documents of given mset
-    std::map<std::pair<Xapian::docid, Xapian::docid>, double> pairwise_sim;
+    /** Pairwise dissimilarity scores between documents in the MSet.
+     *
+     *  These scores are:
+     *
+     *  1.0 - cosine_similarity(doc1, doc2)
+     */
+    std::map<std::pair<Xapian::docid, Xapian::docid>, double> dissimilarity;
 
     /// Store docids of top k diversified documents
     std::vector<Xapian::docid> main_dmset;
@@ -68,27 +73,6 @@ class Xapian::Diversify::Internal : public Xapian::Internal::intrusive_base {
 	     double b,
 	     double sigma_sqr)
 	: k(k_), r(r_), lambda(lambda_), factor(2.0 * b * sigma_sqr) { }
-
-    /** Initialise diversified document set
-     *
-     *  Convert top-k documents of mset into vector of Points, which
-     *  represents the initial diversified document set.
-     *
-     *  @param source	MSet object containing the documents of which
-     *			top-k are to be diversified
-     */
-    void initialise_points(const Xapian::MSet& source);
-
-    /** Return a key for a pair of documents
-     *
-     *  Returns a key as a pair of given documents ids
-     *
-     *  @param doc_id	Document id of the document
-     *  @param centroid_idx	Index of cluster to which the given centroid
-     *  			belongs to in the cluster set
-     */
-    std::pair<Xapian::docid, unsigned int>
-    get_key(Xapian::docid doc_id, unsigned int centroid_idx);
 
     /** Compute pairwise similarities
      *

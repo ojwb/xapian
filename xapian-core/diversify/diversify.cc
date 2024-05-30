@@ -76,38 +76,15 @@ Diversify::get_dmset(const MSet& mset)
 }
 
 void
-Diversify::Internal::initialise_points(const MSet& source)
-{
-    unsigned int count = 0;
-    TermListGroup tlg(source);
-    for (MSetIterator it = source.begin(); it != source.end(); ++it) {
-	points.emplace(*it, Xapian::Point(tlg, it.get_document()));
-	scores[*it] = it.get_weight();
-	// Initial top-k diversified documents
-	if (count < k) {
-	    main_dmset.push_back(*it);
-	    ++count;
-	}
-    }
-}
-
-pair<Xapian::docid, unsigned int>
-Diversify::Internal::get_key(Xapian::docid doc_id, unsigned int centroid_id)
-{
-    return make_pair(doc_id, centroid_id);
-}
-
-void
 Diversify::Internal::compute_similarities(const Xapian::ClusterSet& cset)
 {
     Xapian::CosineDistance d;
     for (auto p : points) {
 	Xapian::docid point_id = p.first;
-	Xapian::Point point = p.second;
+	const Xapian::Point& point = p.second;
 	for (unsigned int c = 0; c < cset.size(); ++c) {
 	    double dist = d.similarity(point, cset[c].get_centroid());
-	    auto key = get_key(point_id, c);
-	    pairwise_sim[key] = dist;
+	    pairwise_dissim[make_pair(point_id, c)] = 1.0 - dist;
 	}
     }
 }
@@ -125,16 +102,15 @@ Diversify::Internal::evaluate_dmset(const vector<Xapian::docid>& dmset,
 	double min_dist = numeric_limits<double>::max();
 	unsigned int pos = 1;
 	for (auto doc_id : dmset) {
-	    auto key = get_key(doc_id, c);
-	    double sim = pairwise_sim[key];
-	    double weight = factor / log(1 + pos) * (1 - sim);
+	    // FIXME: c should be a docid, not an index.
+	    double weight = dissimilarity[make_pair(docid, c)] / log(1.0 + pos);
 	    min_dist = min(min_dist, weight);
 	    ++pos;
 	}
 	score_2 += min_dist;
     }
 
-    return (1 - lambda) * score_2 - lambda * score_1;
+    return (1 - lambda) * factor * score_2 - lambda * score_1;
 }
 
 DocumentSet
@@ -152,7 +128,21 @@ Diversify::Internal::get_dmset(const MSet& mset)
     if (k_ > mset.size())
 	k_ = mset.size();
 
-    initialise_points(mset);
+    unsigned int count = 0;
+    TermListGroup tlg(source);
+    std::unordered_map<Xapian::docid, Xapian::Point> points;
+    for (MSetIterator it = source.begin(); it != source.end(); ++it) {
+	Xapian::docid did = *it;
+	points.emplace(did, Xapian::Point(tlg, it.get_document()));
+	scores[did] = it.get_weight();
+	// Initial top-k diversified documents
+	if (count < k) {
+	    // The initial diversified document set is the top-k documents from
+	    // the MSet.
+	    main_dmset.push_back(did);
+	    ++count;
+	}
+    }
 
     // Cluster the given mset into k clusters
     Xapian::LCDClusterer lc(k_);
