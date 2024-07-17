@@ -75,20 +75,6 @@ Diversify::get_dmset(const MSet& mset)
     return internal->get_dmset(mset);
 }
 
-void
-Diversify::Internal::compute_similarities(const Xapian::ClusterSet& cset)
-{
-    Xapian::CosineDistance d;
-    for (auto p : points) {
-	Xapian::docid point_id = p.first;
-	const Xapian::Point& point = p.second;
-	for (unsigned int c = 0; c < cset.size(); ++c) {
-	    double dist = d.similarity(point, cset[c].get_centroid());
-	    dissimilarity[make_pair(point_id, c)] = 1.0 - dist;
-	}
-    }
-}
-
 double
 Diversify::Internal::evaluate_dmset(const vector<Xapian::docid>& dmset,
 				    const Xapian::ClusterSet& cset)
@@ -98,13 +84,14 @@ Diversify::Internal::evaluate_dmset(const vector<Xapian::docid>& dmset,
     for (auto doc_id : dmset)
 	score_1 += scores[doc_id];
 
-    for (unsigned int c = 0; c < cset.size(); ++c) {
+    auto cset_size = cset.size();
+    for (unsigned int c = 0; c < cset_size; ++c) {
 	double min_dist = numeric_limits<double>::max();
 	unsigned int pos = 1;
 	for (auto doc_id : dmset) {
 	    // FIXME: c should be a docid, not an index?
 	    // No, I think not but we should correct types and comments...
-	    double weight = dissimilarity[make_pair(docid, c)] / log(1.0 + pos);
+	    double weight = dissimilarity[make_pair(doc_id, c)] / log(1.0 + pos);
 	    min_dist = min(min_dist, weight);
 	    ++pos;
 	}
@@ -130,9 +117,9 @@ Diversify::Internal::get_dmset(const MSet& mset)
 	k_ = mset.size();
 
     unsigned int count = 0;
-    TermListGroup tlg(source);
+    TermListGroup tlg(mset);
     std::unordered_map<Xapian::docid, Xapian::Point> points;
-    for (MSetIterator it = source.begin(); it != source.end(); ++it) {
+    for (MSetIterator it = mset.begin(); it != mset.end(); ++it) {
 	Xapian::docid did = *it;
 	points.emplace(did, Xapian::Point(tlg, it.get_document()));
 	scores[did] = it.get_weight();
@@ -148,13 +135,23 @@ Diversify::Internal::get_dmset(const MSet& mset)
     // Cluster the given mset into k clusters
     Xapian::LCDClusterer lc(k_);
     Xapian::ClusterSet cset = lc.cluster(mset);
-    compute_similarities(cset);
+    auto cset_size = cset.size();
+    {
+	Xapian::CosineDistance d;
+	for (auto p : points) {
+	    Xapian::docid point_id = p.first;
+	    const Xapian::Point& point = p.second;
+	    for (unsigned int c = 0; c < cset_size; ++c) {
+		double dist = d.similarity(point, cset[c].get_centroid());
+		dissimilarity[make_pair(point_id, c)] = 1.0 - dist;
+	    }
+	}
+    }
 
     // topC contains union of top-r relevant documents of each cluster
     vector<Xapian::docid> topc;
 
     // Build topC
-    auto cset_size = cset.size();
     for (Xapian::doccount c = 0; c < cset_size; ++c) {
 	auto documents = cset[c].get_documents();
 	auto limit = std::min(r, documents.size());

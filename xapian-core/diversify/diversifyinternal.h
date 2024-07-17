@@ -48,9 +48,6 @@ class Xapian::Diversify::Internal : public Xapian::Internal::intrusive_base {
     /// MPT factor: this is 2 * b * sigma_sqr
     double factor;
 
-    /// Store each document from given mset as a point
-    std::unordered_map<Xapian::docid, Xapian::Point> points;
-
     /// Store the relevance score of each document
     std::unordered_map<Xapian::docid, double> scores;
 
@@ -73,15 +70,6 @@ class Xapian::Diversify::Internal : public Xapian::Internal::intrusive_base {
 	     double b,
 	     double sigma_sqr)
 	: k(k_), r(r_), lambda(lambda_), factor(2.0 * b * sigma_sqr) { }
-
-    /** Compute pairwise similarities
-     *
-     *  Used for pre-computing pairwise cosine similarities of documents
-     *  of given mset, which is used to speed up evaluate_dmset
-     *
-     *  @param cset	Cluster of given relevant documents
-     */
-    void compute_similarities(const Xapian::ClusterSet& cset);
 
     /** Return difference of 'points' and current dmset
      *
