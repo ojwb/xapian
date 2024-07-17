@@ -84,7 +84,7 @@ Diversify::Internal::compute_similarities(const Xapian::ClusterSet& cset)
 	const Xapian::Point& point = p.second;
 	for (unsigned int c = 0; c < cset.size(); ++c) {
 	    double dist = d.similarity(point, cset[c].get_centroid());
-	    pairwise_dissim[make_pair(point_id, c)] = 1.0 - dist;
+	    dissimilarity[make_pair(point_id, c)] = 1.0 - dist;
 	}
     }
 }
@@ -102,7 +102,8 @@ Diversify::Internal::evaluate_dmset(const vector<Xapian::docid>& dmset,
 	double min_dist = numeric_limits<double>::max();
 	unsigned int pos = 1;
 	for (auto doc_id : dmset) {
-	    // FIXME: c should be a docid, not an index.
+	    // FIXME: c should be a docid, not an index?
+	    // No, I think not but we should correct types and comments...
 	    double weight = dissimilarity[make_pair(docid, c)] / log(1.0 + pos);
 	    min_dist = min(min_dist, weight);
 	    ++pos;
