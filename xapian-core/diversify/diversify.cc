@@ -26,11 +26,15 @@
 
 #include "debuglog.h"
 #include "diversify/diversifyinternal.h"
+#include "api/msetinternal.h"
+#include "api/result.h"
 
 #include <algorithm>
 #include <cmath>
 #include <limits>
 #include <vector>
+
+#include <cstdlib>
 
 using namespace Xapian;
 using namespace std;
@@ -81,6 +85,8 @@ Diversify::Internal::evaluate_dmset(const vector<Xapian::docid>& dmset,
 {
     double score_1 = 0, score_2 = 0;
 
+    // FIXME: We could compute score_1 once then adjust for each candidate change.
+    // Seems hard to do similar for score_2 though.
     for (auto doc_id : dmset)
 	score_1 += scores[doc_id];
 
@@ -89,8 +95,7 @@ Diversify::Internal::evaluate_dmset(const vector<Xapian::docid>& dmset,
 	double min_dist = numeric_limits<double>::max();
 	unsigned int pos = 1;
 	for (auto doc_id : dmset) {
-	    // FIXME: c should be a docid, not an index?
-	    // No, I think not but we should correct types and comments...
+	    // FIXME: Pre-compute 1.0 / log(2.0 + i) for i = [0, dmset.size()) ?
 	    double weight = dissimilarity[make_pair(doc_id, c)] / log(1.0 + pos);
 	    min_dist = min(min_dist, weight);
 	    ++pos;
@@ -98,7 +103,7 @@ Diversify::Internal::evaluate_dmset(const vector<Xapian::docid>& dmset,
 	score_2 += min_dist;
     }
 
-    return (1 - lambda) * factor * score_2 - lambda * score_1;
+    return factor * score_2 - lambda * score_1;
 }
 
 DocumentSet
@@ -115,6 +120,7 @@ Diversify::Internal::get_dmset(const MSet& mset)
     unsigned int k_ = k;
     if (k_ > mset.size())
 	k_ = mset.size();
+    // FIXME: If k_ == mset.size() is diversification a no-op?
 
     unsigned int count = 0;
     TermListGroup tlg(mset);
@@ -132,9 +138,10 @@ Diversify::Internal::get_dmset(const MSet& mset)
 	}
     }
 
-    // Cluster the given mset into k clusters
-    Xapian::LCDClusterer lc(k_);
-    Xapian::ClusterSet cset = lc.cluster(mset);
+    // Cluster the mset into k clusters
+    Xapian::ClusterSet cset = Xapian::LCDClusterer(k_).cluster(mset);
+
+    // Pre-compute all the dissimilarity values.
     auto cset_size = cset.size();
     {
 	Xapian::CosineDistance d;
@@ -148,16 +155,25 @@ Diversify::Internal::get_dmset(const MSet& mset)
 	}
     }
 
-    // topC contains union of top-r relevant documents of each cluster
+    // Build topc, which contains the union of the top-r relevant documents of
+    // each cluster.
     vector<Xapian::docid> topc;
-
-    // Build topC
     for (Xapian::doccount c = 0; c < cset_size; ++c) {
 	auto documents = cset[c].get_documents();
 	auto limit = std::min(r, documents.size());
+	double last_w = HUGE_VAL;
 	for (Xapian::doccount d = 0; d < limit; ++d) {
 	    auto doc_id = documents[d].get_docid();
+	    double w = scores[doc_id];
+	    if (w > last_w) std::abort();
+	    last_w = w;
 	    topc.push_back(doc_id);
+	}
+	for (Xapian::doccount d = r ; d < documents.size(); ++d) {
+	    auto doc_id = documents[d].get_docid();
+	    double w = scores[doc_id];
+	    if (w > last_w) std::abort();
+	    last_w = w;
 	}
     }
 
@@ -171,8 +187,8 @@ Diversify::Internal::get_dmset(const MSet& mset)
 	    bool found_better_doc = false;
 
 	    for (unsigned int j = 0; j < topc.size(); ++j) {
-		// Continue if candidate document from topC already
-		// exists in curr_dmset
+		// Continue if candidate document from topc already
+		// exists in curr_dmset.  FIXME: Linear search!
 		auto candidate_doc = find(curr_dmset.begin(), curr_dmset.end(),
 					  topc[j]);
 		if (candidate_doc != curr_dmset.end()) {
@@ -207,17 +223,13 @@ Diversify::Internal::get_dmset(const MSet& mset)
 
     // Reorder the results to reflect the diversification.
 
-    // Mapping from docid to MSet index.
+    // Mapping from docid to diversified MSet index.
     unordered_map<Xapian::docid, Xapian::doccount> rank;
-
-    // Temporary structure until we refactor to reorder the MSet.
-    vector<Xapian::docid> rank_dual;
 
     Xapian::doccount c = 0;
     // First we rank the documents from the best dmset, in order.
     for (auto doc_id : main_dmset) {
 	rank[doc_id] = c++;
-	rank_dual.push_back(doc_id);
     }
 
     // Then we rank any remaining documents.
@@ -225,16 +237,14 @@ Diversify::Internal::get_dmset(const MSet& mset)
 	Xapian::docid doc_id = point.first;
 	if (rank.try_emplace(doc_id, c).second) {
 	    ++c;
-	    rank_dual.push_back(doc_id);
 	}
     }
 
-    // FIXME: work through permuting cycles?
-    // Or avoid the need for `rank` and use some other structure?
-
-    DocumentSet dmset;
-    for (Xapian::docid doc_id : rank_dual) {
-	dmset.add_document(points.at(doc_id).get_document());
+    std::vector<Result> diversified_items{mset.internal->items.size()};
+    for (Result&& result : mset.internal.items) {
+	diversified_items[rank[result.get_docid()]] = std::move(result);
     }
-    return dmset;
+
+    mset.internal.items = std::move(diversified_items);
+    return mset;
 }

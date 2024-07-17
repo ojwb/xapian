@@ -45,19 +45,19 @@ class Xapian::Diversify::Internal : public Xapian::Internal::intrusive_base {
     /// MPT parameter.
     double lambda;
 
-    /// MPT factor: this is 2 * b * sigma_sqr
+    /// MPT factor: this is (1 - lambda) * 2 * b * sigma_sqr
     double factor;
 
     /// Store the relevance score of each document
     std::unordered_map<Xapian::docid, double> scores;
 
-    /** Pairwise dissimilarity scores between documents in the MSet.
+    /** Dissimilarity scores between documents and cluster centroids.
      *
      *  These scores are:
      *
-     *  1.0 - cosine_similarity(doc1, doc2)
+     *  1.0 - cosine_similarity(docid, cluster_index)
      */
-    std::map<std::pair<Xapian::docid, Xapian::docid>, double> dissimilarity;
+    std::map<std::pair<Xapian::docid, unsigned>, double> dissimilarity;
 
     /// Store docids of top k diversified documents
     std::vector<Xapian::docid> main_dmset;
@@ -69,7 +69,8 @@ class Xapian::Diversify::Internal : public Xapian::Internal::intrusive_base {
 	     double lambda_,
 	     double b,
 	     double sigma_sqr)
-	: k(k_), r(r_), lambda(lambda_), factor(2.0 * b * sigma_sqr) { }
+	: k(k_), r(r_), lambda(lambda_),
+	  factor((1.0 - lambda_) * 2.0 * b * sigma_sqr) { }
 
     /** Return difference of 'points' and current dmset
      *
