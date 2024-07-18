@@ -40,14 +40,11 @@ class Matcher;
 
 namespace Xapian {
 
-class Diversify;
-
 /// Xapian::MSet internals.
 class MSet::Internal : public Xapian::Internal::intrusive_base {
     friend class MSet;
     friend class MSetIterator;
     friend class ::Matcher;
-    friend class Diversify::Internal;
 
     /// Don't allow assignment.
     void operator=(const Internal &) = delete;

@@ -2,6 +2,7 @@
  * @brief Xapian::MSet class
  */
 /* Copyright (C) 2017,2024 Olly Betts
+ * Copyright (C) 2018 Uppinder Chugh
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,11 +32,14 @@
 #include "serialise-double.h"
 #include "str.h"
 #include "unicode/description_append.h"
+#include "xapian/cluster.h"
 
 #include <algorithm>
 #include <cfloat>
 #include <string>
 #include <string_view>
+
+#include <cstdlib>
 
 using namespace std;
 
@@ -67,6 +71,198 @@ void
 MSet::set_item_weight(Xapian::doccount i, double weight)
 {
     internal->set_item_weight(i, weight);
+}
+
+/** Evaluate a diversified mset
+ *
+ *  Evaluate a diversified mset using MPT algorithm
+ *
+ *  @param dmset	Set of points representing candidate diversifed set of
+ *			documents.
+ *  @param cset		Set of clusters of given MSet.
+ */
+
+static double
+evaluate_dmset(const vector<Xapian::docid>& dmset,
+	       const Xapian::ClusterSet& cset,
+	       double factor1,
+	       double factor2,
+	       unordered_map<Xapian::docid, double>& scores,
+	       map<pair<Xapian::docid, unsigned>, double>& dissimilarity)
+{
+    double score_1 = 0, score_2 = 0;
+
+    // FIXME: We could compute score_1 once then adjust for each candidate change.
+    // Seems hard to do similar for score_2 though.
+    for (auto doc_id : dmset)
+	score_1 += scores[doc_id];
+
+    auto cset_size = cset.size();
+    for (unsigned int c = 0; c < cset_size; ++c) {
+	double min_dist = numeric_limits<double>::max();
+	unsigned int pos = 1;
+	for (auto doc_id : dmset) {
+	    // FIXME: Pre-compute 1.0 / log(2.0 + i) for i = [0, dmset.size()) ?
+	    double weight = dissimilarity[make_pair(doc_id, c)] / log(1.0 + pos);
+	    min_dist = min(min_dist, weight);
+	    ++pos;
+	}
+	score_2 += min_dist;
+    }
+
+    return factor2 * score_2 - factor1 * score_1;
+}
+
+void
+MSet::diversify_(Xapian::doccount k,
+		 Xapian::doccount r,
+		 double factor1,
+		 double factor2)
+{
+    // Ensured by inlined caller.
+    AssertRel(k, >=, 2);
+
+    auto mset_size = size();
+    if (mset_size <= 2) {
+	// No need to diversify.
+	return;
+    }
+
+    if (k > mset_size) {
+	k = mset_size;
+    }
+    // FIXME: If k == mset_size is diversification a no-op?
+
+    /// Store the relevance score of each document
+    std::unordered_map<Xapian::docid, double> scores;
+
+    /// Store docids of top k diversified documents
+    std::vector<Xapian::docid> main_dmset;
+
+    unsigned int count = 0;
+    TermListGroup tlg(*this);
+    std::unordered_map<Xapian::docid, Xapian::Point> points;
+    for (MSetIterator it = begin(); it != end(); ++it) {
+	Xapian::docid did = *it;
+	points.emplace(did, Xapian::Point(tlg, it.get_document()));
+	scores[did] = it.get_weight();
+	// Initial top-k diversified documents
+	if (count < k) {
+	    // The initial diversified document set is the top-k documents from
+	    // the MSet.
+	    main_dmset.push_back(did);
+	    ++count;
+	}
+    }
+
+    // Cluster the MSet into k clusters.
+    Xapian::ClusterSet cset = Xapian::LCDClusterer(k).cluster(*this);
+
+    /** Dissimilarity scores between documents and cluster centroids.
+     *
+     *  These scores are:
+     *
+     *  1.0 - cosine_similarity(docid, cluster_index)
+     */
+    std::map<std::pair<Xapian::docid, unsigned>, double> dissimilarity;
+
+    // Pre-compute all the dissimilarity values.
+    auto cset_size = cset.size();
+    {
+	Xapian::CosineDistance d;
+	for (auto p : points) {
+	    Xapian::docid point_id = p.first;
+	    const Xapian::Point& point = p.second;
+	    for (unsigned int c = 0; c < cset_size; ++c) {
+		double dist = d.similarity(point, cset[c].get_centroid());
+		dissimilarity[make_pair(point_id, c)] = 1.0 - dist;
+	    }
+	}
+    }
+
+    // Build topc, which contains the union of the top-r relevant documents of
+    // each cluster.
+    vector<Xapian::docid> topc;
+    for (Xapian::doccount c = 0; c < cset_size; ++c) {
+	auto documents = cset[c].get_documents();
+	auto limit = std::min(r, documents.size());
+	double last_w = HUGE_VAL;
+	for (Xapian::doccount d = 0; d < limit; ++d) {
+	    auto doc_id = documents[d].get_docid();
+	    double w = scores[doc_id];
+	    if (w > last_w) std::abort();
+	    last_w = w;
+	    topc.push_back(doc_id);
+	}
+	for (Xapian::doccount d = r ; d < documents.size(); ++d) {
+	    auto doc_id = documents[d].get_docid();
+	    double w = scores[doc_id];
+	    if (w > last_w) std::abort();
+	    last_w = w;
+	}
+    }
+
+    vector<Xapian::docid> curr_dmset = main_dmset;
+
+    while (true) {
+	bool found_better_dmset = false;
+	for (unsigned int i = 0; i < main_dmset.size(); ++i) {
+	    auto curr_doc = main_dmset[i];
+	    double best_score = evaluate_dmset(curr_dmset, cset,
+					       factor1, factor2,
+					       scores, dissimilarity);
+	    bool found_better_doc = false;
+
+	    for (unsigned int j = 0; j < topc.size(); ++j) {
+		// Continue if candidate document from topc already
+		// exists in curr_dmset.  FIXME: Linear search!
+		auto candidate_doc = find(curr_dmset.begin(), curr_dmset.end(),
+					  topc[j]);
+		if (candidate_doc != curr_dmset.end()) {
+		    continue;
+		}
+
+		auto temp_doc = curr_dmset[i];
+		curr_dmset[i] = topc[j];
+		double score = evaluate_dmset(curr_dmset, cset,
+					      factor1, factor2,
+					      scores, dissimilarity);
+
+		if (score < best_score) {
+		    curr_doc = curr_dmset[i];
+		    best_score = score;
+		    found_better_doc = true;
+		}
+
+		curr_dmset[i] = temp_doc;
+	    }
+	    if (found_better_doc) {
+		curr_dmset[i] = curr_doc;
+		found_better_dmset = true;
+	    }
+	}
+
+	// Terminate algorithm when there's no change in current
+	// document matchset
+	if (!found_better_dmset)
+	    break;
+
+	main_dmset = curr_dmset;
+    }
+
+    // Reorder the results to reflect the diversification.  To do this we need
+    // to partition the MSet so the promoted documents come first (in original
+    // MSet order), followed by the non-promoted documents (also in original
+    // MSet order).
+    unordered_set<Xapian::docid> promoted;
+    for (auto doc_id : main_dmset) {
+	promoted.insert(doc_id);
+    }
+    stable_partition(internal->items.begin(), internal->items.end(),
+		     [&](const Result& result) {
+			 Xapian::docid doc_id = result.get_docid();
+			 return promoted.find(doc_id) != promoted.end();
+		     });
 }
 
 void
