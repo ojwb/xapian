@@ -234,6 +234,9 @@ class Document::Internal : public Xapian::Internal::intrusive_base {
      */
     Xapian::docid get_docid() const { return did; }
 
+    /// Internal method used by MSet::diversify().
+    void set_docid(Xapian::docid new_did) { did = new_did; }
+
     /// Get the document data.
     std::string get_data() const {
 	if (data)
