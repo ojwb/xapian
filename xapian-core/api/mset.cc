@@ -39,6 +39,7 @@
 #include <cfloat>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 
 // FIXME:
 #include <cstdlib>
@@ -91,11 +92,12 @@ evaluate_dmset(const vector<Xapian::docid>& dmset,
 	       double factor1,
 	       double factor2,
 	       const Xapian::MSet& mset,
-	       map<pair<Xapian::docid, unsigned>, double>& dissimilarity)
+	       const vector<double>& dissimilarity)
 {
     double score_1 = 0, score_2 = 0;
 
-    // FIXME: We could compute score_1 once then adjust for each candidate change.
+    // FIXME: We could compute score_1 once then adjust for each candidate
+    // change.
     // Seems hard to do similar for score_2 though.
     for (auto mset_index : dmset)
 	score_1 += mset[mset_index].get_weight();
@@ -106,7 +108,8 @@ evaluate_dmset(const vector<Xapian::docid>& dmset,
 	unsigned int pos = 1;
 	for (auto mset_index : dmset) {
 	    // FIXME: Pre-compute 1.0 / log(2.0 + i) for i = [0, dmset.size()) ?
-	    double weight = dissimilarity[make_pair(mset_index, c)] / log(1.0 + pos);
+	    double weight = dissimilarity[mset_index * cset_size + c];
+	    weight /= log(1.0 + pos);
 	    min_dist = min(min_dist, weight);
 	    ++pos;
 	}
@@ -145,7 +148,7 @@ MSet::diversify_(Xapian::doccount k,
     for (MSetIterator it = begin(); it != end(); ++it) {
 	Xapian::docid did = *it;
 	Xapian::Document doc = it.get_document();
-	doc.internal->set_docid(count);
+	doc.internal->set_index(count);
 	points.emplace(did, Xapian::Point(tlg, doc));
 	// Initial top-k diversified documents
 	if (count++ < k) {
@@ -163,19 +166,25 @@ MSet::diversify_(Xapian::doccount k,
      *  These scores are:
      *
      *  1.0 - cosine_similarity(docid, cluster_index)
+     *
+     *  The index into dissimilarity is:
+     *
+     *    mset_index * number_of_clusters + cluster_index
      */
-    std::map<std::pair<Xapian::docid, unsigned>, double> dissimilarity;
 
     // Pre-compute all the dissimilarity values.
     auto cset_size = cset.size();
+    std::vector<double> dissimilarity;
+    dissimilarity.reserve(cset_size * points.size());
     {
 	Xapian::CosineDistance d;
 	for (auto p : points) {
 	    Xapian::docid point_id = p.first;
 	    const Xapian::Point& point = p.second;
+	    cout << "point_id = " << point_id << " index " << point.get_document().internal->get_index() << '\n';
 	    for (unsigned int c = 0; c < cset_size; ++c) {
 		double dist = d.similarity(point, cset[c].get_centroid());
-		dissimilarity[make_pair(point_id, c)] = 1.0 - dist;
+		dissimilarity.push_back(1.0 - dist);
 	    }
 	}
     }
@@ -188,7 +197,7 @@ MSet::diversify_(Xapian::doccount k,
 	auto limit = std::min(r, documents.size());
 	double last_w = HUGE_VAL;
 	for (Xapian::doccount d = 0; d < limit; ++d) {
-	    auto mset_index = documents[d].get_docid();
+	    auto mset_index = documents[d].internal->get_index();
 	    double w = (*this)[mset_index].get_weight();
 	    if (w > last_w) {
 		cerr << "topc: " << w << " > " << last_w << '\n';
@@ -196,8 +205,8 @@ MSet::diversify_(Xapian::doccount k,
 	    last_w = w;
 	    topc.push_back(mset_index);
 	}
-	for (Xapian::doccount d = r ; d < documents.size(); ++d) {
-	    auto mset_index = documents[d].get_docid();
+	for (Xapian::doccount d = r; d < documents.size(); ++d) {
+	    auto mset_index = documents[d].internal->get_index();
 	    double w = (*this)[mset_index].get_weight();
 	    if (w > last_w) {
 		cerr << "rest: " << w << " > " << last_w << '\n';
@@ -258,14 +267,16 @@ MSet::diversify_(Xapian::doccount k,
     // to partition the MSet so the promoted documents come first (in original
     // MSet order), followed by the non-promoted documents (also in original
     // MSet order).
-    unordered_set<Xapian::docid> promoted;
+    vector<bool> promoted;
+    promoted.resize(this->size());
     for (auto mset_index : main_dmset) {
-	promoted.insert((*this)[mset_index].get_document().get_docid());
+	cout << "final dmset index " << mset_index << '\n';
+	promoted[mset_index] = true;
     }
     stable_partition(internal->items.begin(), internal->items.end(),
 		     [&](const Result& result) {
-			 Xapian::docid doc_id = result.get_docid();
-			 return promoted.find(doc_id) != promoted.end();
+			 (void)result;
+			 return true; // FIXME need to have access to index into items promoted[result.get_index()];
 		     });
 }
 
