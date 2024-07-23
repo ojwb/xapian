@@ -329,8 +329,13 @@ jobs:
       # ancestor of the target branch of the PR (or master if this isn't a PR)
       # and the revision being checked.
       run: |
-        git branch -a
-        git remote -v
-        # FIXME: avoid refetching when in the upstream repo already...
-        git remote add -t master xapian https://github.com/xapian/xapian.git
-        git diff ${GITHUB_BASE_REF:+origin/}${GITHUB_BASE_REF:-xapian/master}.. --|xapian-maintainer-tools/xapian-check-patch
+        case ${GITHUB_BASE_REF:+PR}:`git remote get-url origin` in
+          PR:*)
+            BASE=origin/$GITHUB_BASE_REF ;;
+          :https://github.com/xapian/xapian)
+            BASE=origin/master ;;
+          *)
+            git remote add -t master xapian https://github.com/xapian/xapian.git
+            BASE=xapian/master ;;
+        esac
+        git diff "${BASE}.." --|xapian-maintainer-tools/xapian-check-patch
