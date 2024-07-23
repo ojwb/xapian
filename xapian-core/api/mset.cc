@@ -39,7 +39,6 @@
 #include <cfloat>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 
 // FIXME:
 #include <cstdlib>
@@ -139,23 +138,25 @@ MSet::diversify_(Xapian::doccount k,
     }
     // FIXME: If k == mset_size is diversification a no-op?
 
-    /// Store docids of top k diversified documents
-    std::vector<Xapian::docid> main_dmset;
+    /// Store MSet indices of top k diversified documents
+    std::vector<Xapian::doccount> main_dmset;
+    main_dmset.reserve(k);
 
     Xapian::doccount count = 0;
     TermListGroup tlg(*this);
-    std::unordered_map<Xapian::docid, Xapian::Point> points;
+    std::vector<Xapian::Point> points;
+    points.reserve(mset_size);
     for (MSetIterator it = begin(); it != end(); ++it) {
-	Xapian::docid did = *it;
 	Xapian::Document doc = it.get_document();
 	doc.internal->set_index(count);
-	points.emplace(did, Xapian::Point(tlg, doc));
+	points.push_back(Xapian::Point(tlg, doc));
 	// Initial top-k diversified documents
-	if (count++ < k) {
+	if (count < k) {
 	    // The initial diversified document set is the top-k documents from
 	    // the MSet.
-	    main_dmset.push_back(did);
+	    main_dmset.push_back(count);
 	}
+	++count;
     }
 
     // Cluster the MSet into k clusters.
@@ -215,7 +216,7 @@ MSet::diversify_(Xapian::doccount k,
 	}
     }
 
-    vector<Xapian::docid> curr_dmset = main_dmset;
+    vector<Xapian::doccount> curr_dmset = main_dmset;
 
     while (true) {
 	bool found_better_dmset = false;
