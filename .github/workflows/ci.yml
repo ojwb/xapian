@@ -320,7 +320,7 @@ jobs:
           :https://github.com/xapian/xapian)
             BASE=origin/master ;;
           *)
-            git remote add -t master xapian https://github.com/xapian/xapian.git
+            git remote add -f -t master xapian https://github.com/xapian/xapian.git
             BASE=xapian/master ;;
         esac
         git diff "${BASE}.." --|xapian-maintainer-tools/xapian-check-patch
