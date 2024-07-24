@@ -174,7 +174,7 @@ jobs:
         printf '%s\n' 'database_dir .' 'template_dir .' 'log_dir .' 'default_template test-template' 'default_db test-db' > omega.conf
         echo '$querydescription | $error' > test-template
         echo 'inmemory' > test-db
-        ./libtool --mode=execute gdb -ex 'bt full' -ex q --args ./omega START=19600228 SPAN=3
+        ./libtool --mode=execute gdb -ex run -ex 'bt full' -ex q --args ./omega START=19600228 SPAN=3
 
   msys2-mingw64:
     runs-on: 'windows-latest'
@@ -236,7 +236,7 @@ jobs:
         printf '%s\n' 'database_dir .' 'template_dir .' 'log_dir .' 'default_template test-template' 'default_db test-db' > omega.conf
         echo '$querydescription | $error' > test-template
         echo 'inmemory' > test-db
-        ./libtool --mode=execute gdb -ex 'bt full' -ex q --args ./omega START=19600228 SPAN=3
+        ./libtool --mode=execute gdb -ex run -ex 'bt full' -ex q --args ./omega START=19600228 SPAN=3
 
   msys2-ucrt64:
     runs-on: 'windows-latest'
@@ -297,4 +297,12 @@ jobs:
         printf '%s\n' 'database_dir .' 'template_dir .' 'log_dir .' 'default_template test-template' 'default_db test-db' > omega.conf
         echo '$querydescription | $error' > test-template
         echo 'inmemory' > test-db
-        ./libtool --mode=execute gdb -ex 'bt full' -ex q --args ./omega START=19600228 SPAN=3
+        ./libtool --mode=execute gdb -ex run -ex 'bt full' -ex q --args ./omega START=19600228 SPAN=3
+    - name: Save log files
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: logs-${{ github.job }}-${{ github.sha }}
+        overwrite: true
+        path: |
+          **/*.log
