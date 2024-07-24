@@ -207,8 +207,8 @@ date_range_filter(const string & date_start, const string & date_end,
 	    t.tm_hour = 12;
 	    t.tm_min = t.tm_sec = 0;
 	    t.tm_isdst = -1;
-	    time_t then = safe_mktime(&t) - secs;
-	    struct tm *t2 = localtime(&then);
+	    time_t then = timegm(&t) - secs;
+	    struct tm *t2 = gmtime(&then);
 	    y1 = t2->tm_year + 1900;
 	    m1 = t2->tm_mon + 1;
 	    d1 = t2->tm_mday;
@@ -221,8 +221,8 @@ date_range_filter(const string & date_start, const string & date_end,
 	    t.tm_hour = 12;
 	    t.tm_min = t.tm_sec = 0;
 	    t.tm_isdst = -1;
-	    time_t end = safe_mktime(&t) + secs;
-	    struct tm *t2 = localtime(&end);
+	    time_t end = timegm(&t) + secs;
+	    struct tm *t2 = gmtime(&end);
 	    y2 = t2->tm_year + 1900;
 	    m2 = t2->tm_mon + 1;
 	    d2 = t2->tm_mday;
