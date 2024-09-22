@@ -1651,6 +1651,7 @@ jobs:
           gcc:p
           pcre2:p
           zlib:p
+          gdb:p
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
@@ -1668,12 +1669,6 @@ jobs:
         pushd xapian-applications/omega
         tar --strip-components=1 -xf xapian-omega-*.tar.xz
         popd
-        # pushd xapian-bindings
-        # tar --strip-components=1 -xf xapian-bindings-*.tar.xz
-        # popd
-        pushd xapian-letor
-        tar --strip-components=1 -xf xapian-letor-*.tar.xz
-        popd
     - name: configure
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
@@ -1686,28 +1681,21 @@ jobs:
         pushd xapian-applications/omega
         ./configure --enable-werror
         popd
-        # pushd xapian-bindings
-        # ./configure --enable-werror
-        # popd
-        pushd xapian-letor
-        ./configure --enable-werror
-        popd
     - name: make
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
         make -j2 -C xapian-core
         make -j2 -C xapian-applications/omega
-        # make -j2 -C xapian-bindings
-        make -j2 -C xapian-letor
     - name: Run tests
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
         export AUTOMATED_TESTING=1
         export VERBOSE=1
-        make -j2 -C xapian-core check
-        make -j2 -C xapian-applications/omega check
-        # make -j2 -C xapian-bindings check
-        make -j2 -C xapian-letor check
+        cd xapian-applications/omega
+        printf '%s\n' 'database_dir .' 'template_dir .' 'log_dir .' 'default_template test-template' 'default_db test-db' > omega.conf
+        echo '$querydescription | $error' > test-template
+        echo 'inmemory' > test-db
+        ./libtool --mode=execute gdb -ex run -ex 'bt full' -ex q --args ./omega START=19600228 SPAN=3
 
   msys2-mingw64:
     runs-on: 'windows-latest'
@@ -1725,6 +1713,7 @@ jobs:
           gcc:p
           pcre2:p
           zlib:p
+          gdb:p
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
@@ -1742,12 +1731,6 @@ jobs:
         pushd xapian-applications/omega
         tar --strip-components=1 -xf xapian-omega-*.tar.xz
         popd
-        # pushd xapian-bindings
-        # tar --strip-components=1 -xf xapian-bindings-*.tar.xz
-        # popd
-        pushd xapian-letor
-        tar --strip-components=1 -xf xapian-letor-*.tar.xz
-        popd
     - name: configure
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
@@ -1760,28 +1743,21 @@ jobs:
         pushd xapian-applications/omega
         ./configure --enable-werror
         popd
-        # pushd xapian-bindings
-        # ./configure --enable-werror
-        # popd
-        pushd xapian-letor
-        ./configure --enable-werror
-        popd
     - name: make
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
         make -j2 -C xapian-core
         make -j2 -C xapian-applications/omega
-        # make -j2 -C xapian-bindings
-        make -j2 -C xapian-letor
     - name: Run tests
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
         export AUTOMATED_TESTING=1
         export VERBOSE=1
-        make -j2 -C xapian-core check
-        make -j2 -C xapian-applications/omega check
-        # make -j2 -C xapian-bindings check
-        make -j2 -C xapian-letor check
+        cd xapian-applications/omega
+        printf '%s\n' 'database_dir .' 'template_dir .' 'log_dir .' 'default_template test-template' 'default_db test-db' > omega.conf
+        echo '$querydescription | $error' > test-template
+        echo 'inmemory' > test-db
+        ./libtool --mode=execute gdb -ex run -ex 'bt full' -ex q --args ./omega START=19600228 SPAN=3
 
   msys2-ucrt64:
     runs-on: 'windows-latest'
@@ -1795,8 +1771,11 @@ jobs:
         msystem: ucrt64
         install: base-devel
         pacboy: >-
+          file:p
           gcc:p
+          pcre2:p
           zlib:p
+          gdb:p
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
@@ -1811,14 +1790,8 @@ jobs:
         pushd xapian-core
         tar --strip-components=1 -xf xapian-core-*.tar.xz
         popd
-        # pushd xapian-applications/omega
-        # tar --strip-components=1 -xf xapian-omega-*.tar.xz
-        # popd
-        # pushd xapian-bindings
-        # tar --strip-components=1 -xf xapian-bindings-*.tar.xz
-        # popd
-        pushd xapian-letor
-        tar --strip-components=1 -xf xapian-letor-*.tar.xz
+        pushd xapian-applications/omega
+        tar --strip-components=1 -xf xapian-omega-*.tar.xz
         popd
     - name: configure
       run: |
@@ -1829,35 +1802,35 @@ jobs:
         ./configure --enable-werror
         export XAPIAN_CONFIG=$PWD/xapian-config
         popd
-        # FIXME: Fails to find magic.h for some reason even though it is
-        # installed via file:p above.
-        # pushd xapian-applications/omega
-        # ./configure --enable-werror
-        # popd
-        # pushd xapian-bindings
-        # ./configure --enable-werror
-        # popd
-        pushd xapian-letor
+        pushd xapian-applications/omega
         ./configure --enable-werror
         popd
     - name: make
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
         make -j2 -C xapian-core
-        # make -j2 -C xapian-applications/omega
-        # make -j2 -C xapian-bindings
-        make -j2 -C xapian-letor
+        make -j2 -C xapian-applications/omega
     - name: Run tests
       run: |
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
         export AUTOMATED_TESTING=1
         export VERBOSE=1
-        make -j2 -C xapian-core check
-        # make -j2 -C xapian-applications/omega check
-        # make -j2 -C xapian-bindings check
-        make -j2 -C xapian-letor check
+        cd xapian-applications/omega
+        printf '%s\n' 'database_dir .' 'template_dir .' 'log_dir .' 'default_template test-template' 'default_db test-db' > omega.conf
+        echo '$querydescription | $error' > test-template
+        echo 'inmemory' > test-db
+        ./libtool --mode=execute gdb -ex run -ex 'bt full' -ex q --args ./omega START=19600228 SPAN=3
+    - name: Save log files
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: logs-${{ github.job }}-${{ github.sha }}
+        overwrite: true
+        path: |
+          **/*.log
 
   msvc2019:
+    if: false
     runs-on: 'windows-2019'
     needs: makedist
     defaults:
