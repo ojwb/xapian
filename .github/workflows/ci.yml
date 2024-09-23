@@ -1558,7 +1558,7 @@ jobs:
             --host=$host_triplet \
             CC="ccache ${host_triplet}-clang" \
             CXX="ccache ${host_triplet}-clang++" \
-            PKG_CONFIG=/bin/false
+            PKG_CONFIG=/bin/false LIBS=-lgcc
     - name: make
       run: |
         PATH=$PATH:$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin
