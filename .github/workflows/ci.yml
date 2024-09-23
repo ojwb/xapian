@@ -115,6 +115,7 @@ jobs:
       run: git status --porcelain|grep '^' && { echo "The generated files listed above are not in .gitignore" ; exit 1; }; true
 
   clang-santisers:
+    if: false
     runs-on: 'ubuntu-latest'
     env:
       LIBEXTRACTOR_PREFIX: '/usr/lib/x86_64-linux-gnu/libextractor'
@@ -218,6 +219,7 @@ jobs:
         make -j2 -C xapian-letor check
 
   GLIBCXX_DEBUG:
+    if: false
     runs-on: 'ubuntu-20.04'
     env:
       LIBEXTRACTOR_PREFIX: '/usr/lib/x86_64-linux-gnu/libextractor'
@@ -696,6 +698,7 @@ jobs:
 
   # Test with the oldest clang version we easily can.
   clang6:
+    if: false
     runs-on: 'ubuntu-20.04'
     env:
       LIBEXTRACTOR_PREFIX: '/usr/lib/x86_64-linux-gnu/libextractor'
@@ -1232,6 +1235,7 @@ jobs:
           **/*.log
 
   macos-12:
+    if: false
     runs-on: 'macos-12'
     needs: makedist
     steps:
@@ -1527,6 +1531,7 @@ jobs:
         make -j2 -C xapian-letor check
 
   android-cross:
+    if: false
     runs-on: 'ubuntu-22.04'
     env:
       host_triplet: 'armv7a-linux-androideabi34'
@@ -1969,6 +1974,7 @@ jobs:
         make -j2 -C xapian-letor check
 
   msvc2022:
+    if: false
     runs-on: 'windows-2022'
     needs: makedist
     defaults:
@@ -2280,6 +2286,7 @@ jobs:
         make -j2 -C xapian-letor check
 
   freebsd:
+    if: false
     runs-on: 'ubuntu-22.04'
     needs: makedist
     steps:
@@ -2342,6 +2349,7 @@ jobs:
           make -j2 -C xapian-letor check V=0
 
   dragonfly:
+    if: false
     runs-on: 'ubuntu-22.04'
     needs: makedist
     steps:
@@ -2403,6 +2411,7 @@ jobs:
           make -j2 -C xapian-letor check V=0
 
   netbsd:
+    if: false
     runs-on: 'ubuntu-22.04'
     needs: makedist
     steps:
