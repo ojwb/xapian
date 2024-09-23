@@ -2464,15 +2464,13 @@ jobs:
           echo 'int main(){}'|c++ -stdlib=libstdc++ -xc++ - || true
           printenv | sort || true
           pkg_info || true
-          pkg_info -Q | grep perl || true
-          pkg_info -Q | grep ruby || true
-          pkg_info -Q | grep ccache || true
-          pkg_info -Q | grep pcre || true
+          pkg_info -a -Q perl || true
+          pkg_info -a -Q ruby || true
+          pkg_info -a -Q ccache || true
+          pkg_info -a -Q pcre || true
           #pkg install -y bash ccache perl5 pcre2
           #/usr/sbin/pkg_add -u ccache perl pcre2
-          pkg_add ccache perl pcre2 ruby || true
-          pkg_add devel/ccache || true
-          pkg_add ccache perl pcre2 ruby || true
+          pkg_add ccache perl5 pcre2 ruby-3.3.5 || true
           ccache --set-config=cache_dir="$HOME/work/xapian/xapian/.ccache"
           ccache --set-config=max_size='500M'
           ccache --set-config=compression=true
