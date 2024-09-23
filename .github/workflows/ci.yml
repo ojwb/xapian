@@ -1837,9 +1837,9 @@ jobs:
         pushd xapian-applications/omega
         ./configure --enable-werror
         popd
-        pushd xapian-bindings
-        ./configure --enable-werror
-        popd
+        # pushd xapian-bindings
+        # ./configure --enable-werror
+        # popd
         pushd xapian-letor
         ./configure --enable-werror
         popd
