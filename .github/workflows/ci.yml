@@ -2521,6 +2521,7 @@ jobs:
           cd ../..
           cd xapian-bindings
           gtar --strip-components=1 -xf xapian-bindings-*.tar.xz
+          ./configure --enable-werror
           cd ..
           cd xapian-letor
           gtar --strip-components=1 -xf xapian-letor-*.tar.xz
