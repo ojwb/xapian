@@ -1115,7 +1115,7 @@ if test yes = "$GXX" ; then
 	  XAPIAN_LIBS="$XAPIAN_LIBS -lstdc++" ;;
 	*)
 	  XAPIAN_LIBS="$XAPIAN_LIBS -lc++" ;;
-      ;;
+      esac ;;
   esac
 
   dnl Intel's C++ compiler is identified as "GXX" by autoconf's test - check
