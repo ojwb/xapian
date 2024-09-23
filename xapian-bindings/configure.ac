@@ -1107,15 +1107,9 @@ if test yes = "$GXX" ; then
       dnl (discovered on OpenBSD 3.7 with GCC 3.3.5 but still the case on
       dnl OpenBSD 7.5 with clang 16.0.6) due to a deliberate decision on the
       dnl part of OpenBSD developers).
+      AC_MSG_NOTICE([postdeps=$postdeps])
       AC_MSG_NOTICE([postdeps_CXX=$postdeps_CXX])
-      case $postdeps_CXX in
-	*-lc++*|*libc++*)
-	  XAPIAN_LIBS="$XAPIAN_LIBS -lc++" ;;
-	*-lstdc++*|*libstdc++*)
-	  XAPIAN_LIBS="$XAPIAN_LIBS -lstdc++" ;;
-	*)
-	  XAPIAN_LIBS="$XAPIAN_LIBS -lc++" ;;
-      esac ;;
+      postdeps_CXX=-lc++abi
   esac
 
   dnl Intel's C++ compiler is identified as "GXX" by autoconf's test - check

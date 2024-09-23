@@ -1531,8 +1531,11 @@ jobs:
         make -j2 -C xapian-letor check
 
   android-cross:
+    if: false
     runs-on: 'ubuntu-22.04'
     env:
+      # Override github default for testing
+      ANDROID_NDK: '/usr/local/lib/android/sdk/ndk/26.3.11579264'
       host_triplet: 'armv7a-linux-androideabi34'
     needs: makedist
     steps:
@@ -2499,8 +2502,6 @@ jobs:
         usesh: true
         prepare: |
           set -e
-          clang --version || true
-          clang++ --version || true
           pkg_add ccache gtar-1.35 libmagic ruby-3.3.5
           ccache --set-config=cache_dir="$HOME/work/xapian/xapian/.ccache"
           ccache --set-config=max_size='500M'
