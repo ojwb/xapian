@@ -45,6 +45,7 @@ jobs:
         key: ${{ github.job }}-${{ runner.os }}-${{ hashFiles( 'bootstrap', 'patches/**' ) }}
     - name: Install package dependencies
       run: |
+        ls -l "$ANDROID_NDK/.."
         sudo apt-get update
         sudo apt-get install \
             doxygen \
