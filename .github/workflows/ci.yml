@@ -1531,11 +1531,8 @@ jobs:
         make -j2 -C xapian-letor check
 
   android-cross:
-    if: false
     runs-on: 'ubuntu-22.04'
     env:
-      # Override github default for testing
-      ANDROID_NDK: '/usr/local/lib/android/sdk/ndk/26.3.11579264'
       host_triplet: 'armv7a-linux-androideabi34'
     needs: makedist
     steps:
