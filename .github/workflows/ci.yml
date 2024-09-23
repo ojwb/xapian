@@ -1534,7 +1534,7 @@ jobs:
     runs-on: 'ubuntu-22.04'
     env:
       # Override github default for testing
-      NDK: '/usr/local/lib/android/sdk/ndk/26.3.11579264'
+      ANDROID_NDK: '/usr/local/lib/android/sdk/ndk/26.3.11579264'
       host_triplet: 'armv7a-linux-androideabi34'
     needs: makedist
     steps:
