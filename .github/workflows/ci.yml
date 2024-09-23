@@ -2460,17 +2460,13 @@ jobs:
         usesh: true
         prepare: |
           set -e
-          echo 'int main(){}'|c++ -stdlib=libc++ -xc++ - || true
-          echo 'int main(){}'|c++ -stdlib=libstdc++ -xc++ - || true
-          printenv | sort || true
-          pkg_info || true
-          pkg_info -a -Q perl || true
-          pkg_info -a -Q ruby || true
-          pkg_info -a -Q ccache || true
-          pkg_info -a -Q pcre || true
+          perl --version || true
+          ruby --version || true
           #pkg install -y bash ccache perl5 pcre2
           #/usr/sbin/pkg_add -u ccache perl pcre2
-          pkg_add ccache perl5 pcre2 ruby-3.3.5 || true
+          pkg_add ccache || true
+          pkg_add p5 || true
+          pkg_add ruby-3.3.5 || true
           ccache --set-config=cache_dir="$HOME/work/xapian/xapian/.ccache"
           ccache --set-config=max_size='500M'
           ccache --set-config=compression=true
@@ -2478,6 +2474,7 @@ jobs:
           set -e
           export CC='ccache cc'
           export CXX='ccache c++'
+          export RUBY=ruby33
           mv xapian-* "$HOME"
           cd
           cd xapian-core
