@@ -191,29 +191,31 @@ static int
 ymd_to_days(int y, int m, int d)
 {
     static const int m_to_d[12] = {
-        0 - 461 + 365,
-        31 - 461 + 365,
-        59 - 461,
-        90 - 461,
-        120 - 461,
-        151 - 461,
-        181 - 461,
-        212 - 461,
-        243 - 461,
-        273 - 461,
-        304 - 461,
-        334 - 461
+	0 + 365,
+	31 + 365,
+	59,
+	90,
+	120,
+	151,
+	181,
+	212,
+	243,
+	273,
+	304,
+	334
     };
     if (m < 3)
-        --y;
+	--y;
     return d + (y * 365) + m_to_d[m - 1] + (y / 4) - (y / 100) + (y / 400);
 }
 
 static void
 days_to_ymd(int days, int& y, int& m, int& d)
 {
-    days += 693901;
-    int g = days / 146097;
+    // Clamp to avoid negative years.
+    if (days < 0) days = 0;
+    days += 146037;
+    int g = days / 146097 - 1;
     int dg = days % 146097;
     int c = (dg / 36524 + 1) * 3 / 4;
     int dc = dg - c * 36524;
@@ -221,9 +223,9 @@ days_to_ymd(int days, int& y, int& m, int& d)
     int db = dc % 1461;
     int a = (db / 365 + 1) * 3 / 4;
     int da = db - a * 365;
-    y = g * 400 + c * 100 + b * 4 + a;
+    int Y = g * 400 + c * 100 + b * 4 + a;
     int M = (da * 5 + 308) / 153;
-    y = y + M / 12;
+    y = Y + M / 12;
     m = M % 12 + 1;
     d = da - (M + 2) * 153 / 5 + 123;
 }
@@ -238,25 +240,23 @@ date_range_filter(const string & date_start, const string & date_end,
 	if (!parse_unsigned(date_span.c_str(), days)) {
 	    throw "Datespan value must be >= 0";
 	}
-	if (!date_end.empty() || date_start.empty()) {
-	    if (date_start.empty()) {
-		// SPAN but not START or END, so use now as the end.
-		time_t end = time(NULL);
-		struct tm* t = localtime(&end);
-		y2 = t->tm_year + 1900;
-		m2 = t->tm_mon + 1;
-		d2 = t->tm_mday;
-	    } else {
-		parse_date(date_end, &y2, &m2, &d2, false);
-	    }
-
-	    int start_days = ymd_to_days(y2, m2, d2) - days;
-	    days_to_ymd(start_days, y1, m1, d1);
-	} else {
+	if (!date_end.empty()) {
+	    parse_date(date_end, &y2, &m2, &d2, false);
+	    int then = ymd_to_days(y2, m2, d2) - days;
+	    days_to_ymd(then, y1, m1, d1);
+	} else if (!date_start.empty()) {
 	    parse_date(date_start, &y1, &m1, &d1, true);
-
-	    int end_days = ymd_to_days(y1, m1, d1) + days;
-	    days_to_ymd(end_days, y2, m2, d2);
+	    int end = ymd_to_days(y1, m1, d1) + days;
+	    days_to_ymd(end, y2, m2, d2);
+	} else {
+	    time_t end = time(NULL);
+	    struct tm *t = localtime(&end);
+	    y2 = t->tm_year + 1900;
+	    m2 = t->tm_mon + 1;
+	    d2 = t->tm_mday;
+	    parse_date(date_end, &y2, &m2, &d2, false);
+	    int then = ymd_to_days(y2, m2, d2) - days;
+	    days_to_ymd(then, y1, m1, d1);
 	}
     } else {
 	if (date_start.empty()) {
