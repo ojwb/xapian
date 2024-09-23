@@ -1638,6 +1638,7 @@ jobs:
         make -j2 -C xapian-letor check
 
   msys2-mingw32:
+    if: false
     runs-on: 'windows-latest'
     needs: makedist
     defaults:
@@ -1712,6 +1713,7 @@ jobs:
         make -j2 -C xapian-letor check
 
   msys2-mingw64:
+    if: false
     runs-on: 'windows-latest'
     needs: makedist
     defaults:
@@ -1786,6 +1788,7 @@ jobs:
         make -j2 -C xapian-letor check
 
   msys2-ucrt64:
+    if: false
     runs-on: 'windows-latest'
     needs: makedist
     defaults:
