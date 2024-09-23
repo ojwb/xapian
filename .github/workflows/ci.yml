@@ -1552,6 +1552,7 @@ jobs:
         cd xapian-core
         ./configure --enable-werror \
             --host=$host_triplet \
+            --disable-shared --enable-static \
             CC="ccache ${host_triplet}-clang" \
             CXX="ccache ${host_triplet}-clang++" \
             PKG_CONFIG=/bin/false
