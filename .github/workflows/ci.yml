@@ -45,7 +45,6 @@ jobs:
         key: ${{ github.job }}-${{ runner.os }}-${{ hashFiles( 'bootstrap', 'patches/**' ) }}
     - name: Install package dependencies
       run: |
-        ls -l "$ANDROID_NDK/.."
         sudo apt-get update
         sudo apt-get install \
             doxygen \
@@ -1532,9 +1531,10 @@ jobs:
         make -j2 -C xapian-letor check
 
   android-cross:
-    if: false
     runs-on: 'ubuntu-22.04'
     env:
+      # Override github default for testing
+      NDK: '/usr/local/lib/android/sdk/ndk/26.3.11579264'
       host_triplet: 'armv7a-linux-androideabi34'
     needs: makedist
     steps:
@@ -1558,7 +1558,6 @@ jobs:
         cd xapian-core
         ./configure --enable-werror \
             --host=$host_triplet \
-            --disable-shared --enable-static \
             CC="ccache ${host_triplet}-clang" \
             CXX="ccache ${host_triplet}-clang++" \
             PKG_CONFIG=/bin/false
