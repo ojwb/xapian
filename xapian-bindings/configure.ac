@@ -1109,7 +1109,7 @@ if test yes = "$GXX" ; then
       dnl part of OpenBSD developers).
       AC_MSG_NOTICE([postdeps=$postdeps])
       AC_MSG_NOTICE([postdeps_CXX=$postdeps_CXX])
-      postdeps_CXX=-lc++
+      ;;
   esac
 
   dnl Intel's C++ compiler is identified as "GXX" by autoconf's test - check
