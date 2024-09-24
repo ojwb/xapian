@@ -1101,17 +1101,6 @@ if test yes = "$GXX" ; then
   dnl with GCC 2.95 and we don't support anything older.
   SWIG_CXXFLAGS="-fno-strict-aliasing"
 
-  case $host_os in
-    openbsd*)
-      dnl We need to explicitly link against -lstdc++ or libc++ on OpenBSD
-      dnl (discovered on OpenBSD 3.7 with GCC 3.3.5 but still the case on
-      dnl OpenBSD 7.5 with clang 16.0.6) due to a deliberate decision on the
-      dnl part of OpenBSD developers).
-      AC_MSG_NOTICE([postdeps=$postdeps])
-      AC_MSG_NOTICE([postdeps_CXX=$postdeps_CXX])
-      ;;
-  esac
-
   dnl Intel's C++ compiler is identified as "GXX" by autoconf's test - check
   dnl which we actually have.
   AC_EGREP_CPP(yes,
