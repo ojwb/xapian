@@ -999,7 +999,7 @@ if test no != "$with_lua" ; then
       AC_ARG_VAR([LUA_SO], [Extension for compiled Lua modules (e.g. LUA_SO=.so)])
       AC_MSG_CHECKING([for directory to install compiled Lua modules into])
       if test -z "$LUA_LIB" -o -z "$LUA_SO" ; then
-	lua_cpath=`$LUA -e 'require("package") print(package.cpath)'`
+	lua_cpath=`$LUA -e 'require("package") print(package.cpath)'|$SED '$q'`
 	dnl Look for the first absolute path in lua_cpath which has leaf
 	dnl "?.<ext>" and put the directory part into lua_lib and <ext> into
 	dnl lua_so.  If LUA_SO was specified by the user, only consider
@@ -1020,18 +1020,18 @@ if test no != "$with_lua" ; then
 	    ;;
 	esac
 	while test x"$lua_cpath" != x ; do
-	  [lua_lib=`expr X"$lua_cpath" : X'\([^;]*\)'`]
-	  lua_so=.`expr X"$lua_lib" : X'/.*/?\.\('"$lua_so_pat"'\)$'`
+	  [lua_lib=`expr X"$lua_cpath" : X'\([^;]*\)'|$SED '$q'`]
+	  lua_so=.`expr X"$lua_lib" : X'/.*/?\.\('"$lua_so_pat"'\)$'|$SED '$q'`
 	  case $lua_so in
 	    .|.lua)
 	      dnl If someone has foolishly put ?.lua in cpath, ignore them.
 	      lua_lib=
 	      ;;
 	    *)
-	      lua_lib=`expr X"$lua_lib" : X'\(/.*\)/?\.'"$lua_so_pat"'$'`
+	      lua_lib=`expr X"$lua_lib" : X'\(/.*\)/?\.'"$lua_so_pat"'$'|$SED '$q'`
 	      break ;;
 	  esac
-	  [lua_cpath=`expr X"$lua_cpath" : X'[^;]*;*\(.*\)'`]
+	  [lua_cpath=`expr X"$lua_cpath" : X'[^;]*;*\(.*\)'|$SED '$q'`]
 	done
 	test -n "$LUA_LIB" || LUA_LIB=$lua_lib
 	test -n "$LUA_SO" || LUA_SO=$lua_so
