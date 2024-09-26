@@ -1620,7 +1620,7 @@ jobs:
         #./configure --enable-werror
         #popd
         pushd xapian-bindings
-        ./configure --enable-werror
+        ./configure --enable-werror --with-ruby
         popd
         #pushd xapian-letor
         #./configure --enable-werror
@@ -1631,7 +1631,7 @@ jobs:
         #make -j2 -C xapian-applications/omega
         # Perl fails with:
         # fatal error: crypt.h: No such file or directory
-        make -j2 -C xapian-bindings --with-ruby
+        make -j2 -C xapian-bindings
         #make -j2 -C xapian-letor
     - name: Run tests
       run: |
@@ -1657,8 +1657,8 @@ jobs:
           file:p
           gcc:p
           pcre2:p
+          pkgconf:p
           ruby:p
-          ruby-devel:p
           zlib:p
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
@@ -1742,6 +1742,7 @@ jobs:
           gcc:p
           lua:p
           pcre2:p
+          pkgconf:p
           zlib:p
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
@@ -1824,7 +1825,9 @@ jobs:
           file:p
           gcc:p
           pcre2:p
+          pkgconf:p
           python3:p
+          python-sphinx:p
           zlib:p
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1

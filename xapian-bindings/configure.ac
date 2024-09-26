@@ -992,7 +992,9 @@ if test no != "$with_lua" ; then
   AC_ARG_VAR(LUA, [lua interpreter])
   if test -n "$LUA" ; then
     dnl We need Lua 5.1 or later.
-    PKG_CHECK_MODULES([LUA], [lua$lua_version >= 5.1], [], [LUA=])
+    PKG_CHECK_MODULES([LUA], [lua$lua_version >= 5.1], [], [
+      PKG_CHECK_MODULES([LUA], [lua-$lua_version >= 5.1], [], [LUA=])
+    ])
 
     if test -n "$LUA" ; then
       AC_ARG_VAR([LUA_LIB], [Directory to install compiled Lua modules into])
