@@ -1585,7 +1585,7 @@ jobs:
     - name: Install Cygwin
       uses: egor-tensin/setup-cygwin@v4
       with:
-        packages: gcc-g++ make file-devel libpcre2-devel zlib-devel perl ruby ruby-rdoc
+        packages: gcc-g++ make file-devel libpcre2-devel zlib-devel perl ruby ruby-devel ruby-rdoc
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
@@ -1629,7 +1629,9 @@ jobs:
       run: |
         make -j2 -C xapian-core
         #make -j2 -C xapian-applications/omega
-        make -j2 -C xapian-bindings
+        # Perl fails with:
+        # fatal error: crypt.h: No such file or directory
+        make -j2 -C xapian-bindings --with-ruby
         #make -j2 -C xapian-letor
     - name: Run tests
       run: |
@@ -1656,6 +1658,7 @@ jobs:
           gcc:p
           pcre2:p
           ruby:p
+          ruby-devel:p
           zlib:p
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
@@ -1714,6 +1717,14 @@ jobs:
         #make -j2 -C xapian-applications/omega check
         make -j2 -C xapian-bindings check
         #make -j2 -C xapian-letor check
+    - name: Save log files
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: logs-${{ github.job }}-${{ github.sha }}
+        overwrite: true
+        path: |
+          **/*.log
 
   msys2-mingw64:
     runs-on: 'windows-latest'
@@ -1789,6 +1800,14 @@ jobs:
         #make -j2 -C xapian-applications/omega check
         make -j2 -C xapian-bindings check
         #make -j2 -C xapian-letor check
+    - name: Save log files
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: logs-${{ github.job }}-${{ github.sha }}
+        overwrite: true
+        path: |
+          **/*.log
 
   msys2-ucrt64:
     runs-on: 'windows-latest'
@@ -1845,7 +1864,7 @@ jobs:
         pushd xapian-bindings
         # perl fails dues to perl_langinfo.h trying to include langinfo.h.
         grep -C4 -i langinfo D:/a/_temp/msys64/usr/lib/perl5/core_perl/CORE/perl_langinfo.h D:/a/_temp/msys64/usr/lib/perl5/core_perl/CORE/config.h || true
-        ./configure --enable-werror --enable-python3
+        ./configure --enable-werror --with-python3
         popd
         #pushd xapian-letor
         #./configure --enable-werror
@@ -2320,6 +2339,7 @@ jobs:
           pkg install -y bash ccache lua54 perl5 php82 pcre2 pkgconf py311-sphinx python3 ruby
           ls -l /usr/bin/lua* /usr/local/bin/lua* || true
           ls -l /usr/bin/php* /usr/local/bin/php* || true
+          pkg-config --list-all|grep -i lua || true
           ccache --set-config=cache_dir="$HOME/work/xapian/xapian/.ccache"
           ccache --set-config=max_size='500M'
           ccache --set-config=compression=true
@@ -2393,9 +2413,10 @@ jobs:
         usesh: true
         prepare: |
           set -e
-          pkg install -y bash ccache lua54 perl5 php82 pcre2 pkconf py39-sphinx python3 ruby
+          pkg install -y bash ccache lua54 perl5 php82 pcre2 pkgconf py39-sphinx python3 ruby
           ls -l /usr/bin/lua* /usr/local/bin/lua* || true
           ls -l /usr/bin/php* /usr/local/bin/php* || true
+          pkg-config --list-all|grep -i lua || true
           ccache --set-config=cache_dir="$HOME/work/xapian/xapian/.ccache"
           ccache --set-config=max_size='500M'
           ccache --set-config=compression=true
@@ -2476,7 +2497,7 @@ jobs:
           # used by textproc/php-xapian/Makefile
           # used by textproc/py-xapian/Makefile
           # used by textproc/ruby-xapian/Makefile
-          ls -l /usr/bin/lua* /usr/local/bin/lua* /opt/bin/lua* || true
+          for v in `pkg-config --print-variables lua` ; do printf '%s=' "$v" ; pkg-config --variable=$v lua ; done
           ccache --set-config=cache_dir="$HOME/work/xapian/xapian/.ccache"
           ccache --set-config=max_size='500M'
           ccache --set-config=compression=true
