@@ -991,10 +991,26 @@ if test no != "$with_lua" ; then
   AC_PATH_PROGS(LUA, ["${LUA-lua}"], [])
   AC_ARG_VAR(LUA, [lua interpreter])
   if test -n "$LUA" ; then
-    dnl We need Lua 5.1 or later.
-    PKG_CHECK_MODULES([LUA], [lua$lua_version >= 5.1], [], [
-      PKG_CHECK_MODULES([LUA], [lua-$lua_version >= 5.1], [], [LUA=])
-    ])
+    AC_MSG_CHECKING([$LUA version])
+    lua_version=`$LUA -e 'print(_VERSION:sub(_VERSION:find(" ")+1))' 2>&AS_MESSAGE_LOG_FD`
+    if test -n "$lua_version"; then
+      AC_MSG_RESULT([$lua_version])
+      AC_MSG_CHECKING([for pkg-config module for Lua $lua_version])
+      dnl We need Lua 5.1 or later.  Unhelpfully there are different naming
+      dnl schemes for Lua in pkg-config on different platforms.
+      PKG_CHECK_MODULES([LUA], [lua$lua_version >= 5.1], [
+	  AC_MSG_RESULT([lua$lua_version])
+	], [
+	  PKG_CHECK_MODULES([LUA], [lua-$lua_version >= 5.1], [
+	      AC_MSG_RESULT([lua-$lua_version])
+	    ], [
+	      AC_MSG_RESULT([not found])
+	      LUA=
+	    ])
+	])
+    else
+      AC_MSG_RESULT([could not determine])
+    fi
 
     if test -n "$LUA" ; then
       AC_ARG_VAR([LUA_LIB], [Directory to install compiled Lua modules into])
