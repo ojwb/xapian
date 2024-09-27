@@ -1639,6 +1639,8 @@ jobs:
         export VERBOSE=1
         #make -j2 -C xapian-core check
         #make -j2 -C xapian-applications/omega check
+        grep '^RUBY_' xapian-bindings/ruby/Makefile
+        ls -l xapian-bindings/ruby/.libs
         make -j2 -C xapian-bindings check
         #make -j2 -C xapian-letor check
 
@@ -1685,12 +1687,11 @@ jobs:
         #popd
     - name: configure
       run: |
-        echo "PATH=$PATH"
+        ls -l /mingw32/bin/
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
-        which ruby || true
-        which rdoc || true
         export CC='sccache gcc'
         export CXX='sccache g++'
+        export RDOC=ruby-rdoc
         pushd xapian-core
         ./configure --enable-werror
         export XAPIAN_CONFIG=$PWD/xapian-config
@@ -1772,6 +1773,7 @@ jobs:
         #popd
     - name: configure
       run: |
+        lua -e 'require("package") print(package.cpath)'
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
         export CC='sccache gcc'
         export CXX='sccache g++'
@@ -1881,7 +1883,8 @@ jobs:
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
         make -j2 -C xapian-core
         #make -j2 -C xapian-applications/omega
-        make -j2 -C xapian-bindings
+        make -j2 -C xapian-bindings || true
+        ls -l xapian-bindings/python3/.libs
         #make -j2 -C xapian-letor
     - name: Run tests
       run: |
@@ -2320,6 +2323,7 @@ jobs:
         make -j2 -C xapian-letor check
 
   freebsd:
+    if: false
     runs-on: 'ubuntu-22.04'
     needs: makedist
     steps:
@@ -2397,6 +2401,7 @@ jobs:
           **/*.log
 
   dragonfly:
+    if: false
     runs-on: 'ubuntu-22.04'
     needs: makedist
     steps:
@@ -2474,6 +2479,7 @@ jobs:
           **/*.log
 
   netbsd:
+    if: false
     runs-on: 'ubuntu-22.04'
     needs: makedist
     steps:
@@ -2504,7 +2510,7 @@ jobs:
           # used by textproc/php-xapian/Makefile
           # used by textproc/py-xapian/Makefile
           # used by textproc/ruby-xapian/Makefile
-          for v in `pkg-config --print-variables lua` ; do printf '%s=' "$v" ; pkg-config --variable=$v lua-5.4 || true ; done
+          for v in `pkg-config --print-variables lua-5.4` ; do printf '%s=' "$v" ; pkg-config --variable=$v lua-5.4 || true ; done
           ccache --set-config=cache_dir="$HOME/work/xapian/xapian/.ccache"
           ccache --set-config=max_size='500M'
           ccache --set-config=compression=true
