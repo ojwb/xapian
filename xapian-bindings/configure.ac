@@ -995,19 +995,13 @@ if test no != "$with_lua" ; then
     lua_version=`$LUA -e 'print(_VERSION:sub(_VERSION:find(" ")+1))' 2>&AS_MESSAGE_LOG_FD`
     if test -n "$lua_version"; then
       AC_MSG_RESULT([$lua_version])
-      AC_MSG_CHECKING([for pkg-config module for Lua $lua_version])
       dnl We need Lua 5.1 or later.  Unhelpfully there are different naming
       dnl schemes for Lua in pkg-config on different platforms.
-      PKG_CHECK_MODULES([LUA], [lua$lua_version >= 5.1], [
-	  AC_MSG_RESULT([lua$lua_version])
-	], [
-	  PKG_CHECK_MODULES([LUA], [lua-$lua_version >= 5.1], [
-	      AC_MSG_RESULT([lua-$lua_version])
-	    ], [
-	      AC_MSG_RESULT([not found])
-	      LUA=
-	    ])
+      PKG_CHECK_MODULES([LUA], [lua$lua_version >= 5.1], [], [
+	PKG_CHECK_MODULES([LUA], [lua-$lua_version >= 5.1], [], [
+	  LUA=
 	])
+      ])
     else
       AC_MSG_RESULT([could not determine])
     fi
