@@ -1034,7 +1034,7 @@ if test no != "$with_lua" ; then
 	while test x"$lua_cpath" != x ; do
 	  [lua_lib=`expr X"$lua_cpath" : X'\([^;]*\)'|$SED '$q'`]
 	  lua_so=.`expr X"$lua_lib" : X'/.*/?\.\('"$lua_so_pat"'\)$'|$SED '$q'`
-	  AC_MSG_INFO([lua_so=$lua_so])
+	  AC_MSG_NOTICE([lua_so=$lua_so])
 	  case $lua_so in
 	    .|.lua)
 	      dnl If someone has foolishly put ?.lua in cpath, ignore them.
