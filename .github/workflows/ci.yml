@@ -1653,6 +1653,7 @@ jobs:
           **/*.log
 
   msys2-mingw32:
+    if: false
     runs-on: 'windows-latest'
     needs: makedist
     defaults:
@@ -1668,7 +1669,7 @@ jobs:
           gcc:p
           pcre2:p
           pkgconf:p
-          ruby:p
+          ruby:p # No rdoc...
           zlib:p
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
