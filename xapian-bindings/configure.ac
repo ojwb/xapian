@@ -1005,8 +1005,8 @@ if test no != "$with_lua" ; then
 	    ;;
 	esac
 	while test x"$lua_cpath" != x ; do
-	  [lua_lib=`expr X"$lua_cpath" : X'\([^;]*\)'|$SED '$q'`]
-	  lua_so=.`expr X"$lua_lib" : X'/.*/?\.\('"$lua_so_pat"'\)$'|$SED '$q'`
+	  [lua_lib=`expr X"$lua_cpath" : X'\([^;]*\)'`]
+	  lua_so=.`expr X"$lua_lib" : X'[\\/].*[\\/]?\.\('"$lua_so_pat"'\)$'`
 	  AC_MSG_NOTICE([lua_so=$lua_so])
 	  case $lua_so in
 	    .|.lua)
@@ -1014,10 +1014,10 @@ if test no != "$with_lua" ; then
 	      lua_lib=
 	      ;;
 	    *)
-	      lua_lib=`expr X"$lua_lib" : X'\(/.*\)/?\.'"$lua_so_pat"'$'|$SED '$q'`
+	      lua_lib=`expr X"$lua_lib" : X'\([\\/].*\)[\\/]?\.'"$lua_so_pat"'$'`
 	      break ;;
 	  esac
-	  [lua_cpath=`expr X"$lua_cpath" : X'[^;]*;*\(.*\)'|$SED '$q'`]
+	  [lua_cpath=`expr X"$lua_cpath" : X'[^;]*;*\(.*\)'`]
 	done
 	test -n "$LUA_LIB" || LUA_LIB=$lua_lib
 	test -n "$LUA_SO" || LUA_SO=$lua_so
