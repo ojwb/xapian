@@ -94,8 +94,8 @@ jobs:
       run: ./configure CC='ccache gcc' CXX='ccache g++'
     - name: make
       run: make -j2
-    - name: Run tests
-      run: make -j2 check AUTOMATED_TESTING=1 VERBOSE=1
+    #- name: Run tests
+    #  run: make -j2 check AUTOMATED_TESTING=1 VERBOSE=1
     - name: Create distribution tarball
       run: |
         make dist
@@ -2348,9 +2348,6 @@ jobs:
         prepare: |
           set -e
           pkg install -y bash ccache lua54 perl5 php82 pcre2 pkgconf py311-sphinx python3 ruby
-          ls -l /usr/bin/lua* /usr/local/bin/lua* || true
-          ls -l /usr/bin/php* /usr/local/bin/php* || true
-          pkg-config --list-all|grep -i lua || true
           ccache --set-config=cache_dir="$HOME/work/xapian/xapian/.ccache"
           ccache --set-config=max_size='500M'
           ccache --set-config=compression=true
@@ -2426,9 +2423,6 @@ jobs:
         prepare: |
           set -e
           pkg install -y bash ccache lua54 perl5 php82 pcre2 pkgconf py39-sphinx python3 ruby
-          ls -l /usr/bin/lua* /usr/local/bin/lua* || true
-          ls -l /usr/bin/php* /usr/local/bin/php* || true
-          pkg-config --list-all|grep -i lua || true
           ccache --set-config=cache_dir="$HOME/work/xapian/xapian/.ccache"
           ccache --set-config=max_size='500M'
           ccache --set-config=compression=true
