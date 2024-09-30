@@ -1585,7 +1585,7 @@ jobs:
     - name: Install Cygwin
       uses: egor-tensin/setup-cygwin@v4
       with:
-        packages: gcc-g++ make file-devel libpcre2-devel zlib-devel perl ruby ruby-devel ruby-rdoc ruby-test-unit
+        packages: gcc-g++ make file-devel libpcre2-devel zlib-devel liblua-devel perl ruby ruby-devel ruby-rdoc ruby-test-unit tcl-devel
     - name: Install CCache
       uses: hendrikmuhs/ccache-action@v1
       with:
@@ -1620,7 +1620,7 @@ jobs:
         #./configure --enable-werror
         #popd
         pushd xapian-bindings
-        ./configure --enable-werror --with-ruby
+        ./configure --enable-werror --with-lua --with-tcl # --with-perl --with-ruby
         popd
         #pushd xapian-letor
         #./configure --enable-werror
@@ -1643,6 +1643,14 @@ jobs:
         ls -l xapian-bindings/ruby/.libs
         make -j2 -C xapian-bindings check
         #make -j2 -C xapian-letor check
+    - name: Save log files
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: logs-${{ github.job }}-${{ github.sha }}
+        overwrite: true
+        path: |
+          **/*.log
 
   msys2-mingw32:
     runs-on: 'windows-latest'
