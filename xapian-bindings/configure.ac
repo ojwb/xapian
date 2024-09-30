@@ -982,46 +982,21 @@ if test no != "$with_lua" ; then
     if test yes = "$lua_ok" ; then
       AC_ARG_VAR([LUA_LIB], [Directory to install compiled Lua modules into])
       AC_ARG_VAR([LUA_SO], [Extension for compiled Lua modules (e.g. LUA_SO=.so)])
-      AC_MSG_CHECKING([for directory to install compiled Lua modules into])
       if test -z "$LUA_LIB" || test -z "$LUA_SO" ; then
-	lua_cpath=`$LUA -e 'require("package") print(package.cpath)'`
-	dnl Look for the first absolute path in lua_cpath which has leaf
-	dnl "?.<ext>" and put the directory part into lua_lib and <ext> into
-	dnl lua_so.  If LUA_SO was specified by the user, only consider
-	dnl entries where <ext> matches LUA_SO.
-	lua_lib=
-	lua_so=
+	dnl If LUA_SO is specified, ensure it has a leading `.`.
 	case $LUA_SO in
-	  "")
-	   [lua_so_pat='[a-zA-Z][a-zA-Z]*'] ;;
-	  .*)
-	    dnl If LUA_SO has a leading '.', remove it.
-	    lua_so_pat=`AS_ECHO("$LUA_SO")|sed 's/^\.//'` ;;
-	  *)
-	    dnl If LUA_SO was specified without a leading '.', add one to the
-	    dnl value substituted into Makefile.in.
-	    lua_so_pat=$LUA_SO
-	    LUA_SO=.$LUA_SO
-	    ;;
+	  "") ;;
+	  .*) ;;
+	  *) LUA_SO=.$LUA_SO ;;
 	esac
-	while test x"$lua_cpath" != x ; do
-	  [lua_lib=`expr X"$lua_cpath" : X'\([^;]*\)'`]
-	  lua_so=.`expr X"$lua_lib" : X'[\\/].*[\\/]?\.\('"$lua_so_pat"'\)$'`
-	  AC_MSG_NOTICE([lua_so=$lua_so])
-	  case $lua_so in
-	    .|.lua)
-	      dnl If someone has foolishly put ?.lua in cpath, ignore them.
-	      lua_lib=
-	      ;;
-	    *)
-	      lua_lib=`expr X"$lua_lib" : X'\([\\/].*\)[\\/]?\.'"$lua_so_pat"'$'`
-	      break ;;
-	  esac
-	  [lua_cpath=`expr X"$lua_cpath" : X'[^;]*;*\(.*\)'`]
-	done
-	test -n "$LUA_LIB" || LUA_LIB=$lua_lib
-	test -n "$LUA_SO" || LUA_SO=$lua_so
+	dnl Look for the first absolute path in lua_cpath which has leaf
+	dnl "?.<ext>" where <ext> is not "lua".  If LUA_SO was specified by the
+	dnl user, only consider entries where <ext> matches LUA_SO.
+	lua_lib_and_so=`$LUA "$srcdir/lua/unpick-cpath.lua" "$LUA_SO"`
+	test -n "$LUA_LIB" || LUA_LIB=`expr X"$lua_lib_and_so" : X'\(.*\);'`
+	test -n "$LUA_SO" || LUA_SO=`expr X"$lua_lib_and_so" : '.*;\(.*\)'`
       fi
+      AC_MSG_CHECKING([for directory to install compiled Lua modules into])
       if test -z "$LUA_LIB"; then
 	AC_MSG_RESULT([not found])
 	lua_ok=no
