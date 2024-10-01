@@ -1868,6 +1868,7 @@ jobs:
         #popd
     - name: configure
       run: |
+        find D:/a/_temp/msys64/ucrt64 -name '*ws2_32.*' -ls
         ls -l D:/a/_temp/msys64/ucrt64/lib
         PATH=/c/Users/runneradmin/.cargo/bin:$PATH
         export CC='sccache gcc'
