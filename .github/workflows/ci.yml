@@ -1639,6 +1639,8 @@ jobs:
         export VERBOSE=1
         #make -j2 -C xapian-core check
         #make -j2 -C xapian-applications/omega check
+        grep '^LUA_' xapian-bindings/ruby/Makefile
+        ls -l xapian-bindings/lua/.libs || true
         grep '^RUBY_' xapian-bindings/ruby/Makefile
         ls -l xapian-bindings/ruby/.libs || true
         make -j2 -C xapian-bindings check
@@ -1741,6 +1743,9 @@ jobs:
           **/*.log
 
   msys2-mingw64:
+    # FIXME: core fails to build shared because libtool doesn't find shared
+    # versions of -lz -lrpcrt4 and -lws2_32.
+    if: false
     runs-on: 'windows-latest'
     needs: makedist
     defaults:
@@ -1827,6 +1832,9 @@ jobs:
           **/*.log
 
   msys2-ucrt64:
+    # FIXME: core fails to build shared because libtool doesn't find shared
+    # versions of -lz -lrpcrt4 and -lws2_32.
+    if: false
     runs-on: 'windows-latest'
     needs: makedist
     defaults:
@@ -1895,7 +1903,7 @@ jobs:
         make -j2 -C xapian-core
         #make -j2 -C xapian-applications/omega
         make -j2 -C xapian-bindings || true
-        ls -l xapian-bindings/python3/.libs
+        ls -l xapian-bindings/python3/.libs || true
         #make -j2 -C xapian-letor
     - name: Run tests
       run: |
