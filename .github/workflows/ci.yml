@@ -1640,7 +1640,7 @@ jobs:
         #make -j2 -C xapian-core check
         #make -j2 -C xapian-applications/omega check
         grep '^RUBY_' xapian-bindings/ruby/Makefile
-        ls -l xapian-bindings/ruby/.libs
+        ls -l xapian-bindings/ruby/.libs || true
         make -j2 -C xapian-bindings check
         #make -j2 -C xapian-letor check
     - name: Save log files
