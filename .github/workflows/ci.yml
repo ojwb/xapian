@@ -1620,7 +1620,7 @@ jobs:
         #./configure --enable-werror
         #popd
         pushd xapian-bindings
-        ./configure --enable-werror --with-lua --with-tcl # --with-perl --with-ruby
+        ./configure --enable-werror --with-lua # --with-tcl Needs -lssp? # --with-perl --with-ruby
         popd
         #pushd xapian-letor
         #./configure --enable-werror
