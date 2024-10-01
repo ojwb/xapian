@@ -989,6 +989,7 @@ if test no != "$with_lua" ; then
 	  .*) ;;
 	  *) LUA_SO=.$LUA_SO ;;
 	esac
+	AC_MSG_NOTICE([`$LUA -e 'require("package") print(package.cpath)'`])
 	dnl Look for the first absolute path in lua_cpath which has leaf
 	dnl "?.<ext>" where <ext> is not "lua".  If LUA_SO was specified by the
 	dnl user, only consider entries where <ext> matches LUA_SO.
