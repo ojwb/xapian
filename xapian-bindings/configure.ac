@@ -957,7 +957,12 @@ fi
 
 if test no != "$with_lua" ; then
   lua_ok=no
-  AC_PATH_PROGS(LUA, ["${LUA-lua lua5.4 lua54 lua5.3 lua53 lua5.2 lua52 lua5.1 lua51}"], [])
+  if test -n "$LUA" ; then
+    AC_PATH_PROGS(LUA, ["$LUA"], [])
+  fi
+  if test -z "$LUA" ; then
+    AC_PATH_PROGS(LUA, [lua lua5.4 lua54 lua5.3 lua53 lua5.2 lua52 lua5.1 lua51], [])
+  fi
   AC_ARG_VAR(LUA, [lua interpreter])
   if test -n "$LUA" ; then
     lua_ok=yes
