@@ -3,7 +3,7 @@ require("io")
 so = string.lower(arg[1])
 for e in string.gmatch(string.gsub(package.cpath,"\\","/"), "[^;]*") do
   io.stderr:write("cpath entry: "..e.."\n")
-  l,s = string.match(e, "^(/.*)/%?(%.%a+)$")
+  l,s = string.match(e, "^((%a:)?/.*)/%?(%.%a+)$")
   if l and string.lower(s) ~= ".lua" then
     if so == "" or string.lower(s) == so then
       print(l..";"..s)
