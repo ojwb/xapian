@@ -749,6 +749,9 @@ if test no != "$with_java" ; then
 	      jni_host_os=win32 ;;
 	    darwin*)
 	      jni_host_os=darwin ;;
+	    freebsd*)
+	      dnl Correct for FreeBSD openjdk17 package.
+	      jni_host_os=freebsd ;;
 	    *bsd*)
 	      jni_host_os=bsd ;;
 	    aix*)

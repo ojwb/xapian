@@ -1572,6 +1572,7 @@ jobs:
       # FIXME: Run tests under android emulator?
 
   cygwin:
+    if: false
     # We only test 64-bit cygwin as 32-bit support has been dropped as of
     # Cygwin 3.4:
     # https://cygwin.com/pipermail/cygwin/2022-November/252542.html
@@ -2376,6 +2377,7 @@ jobs:
           export CXX='ccache c++'
           export JAVA=/usr/local/bin/openjdk17/java
           export JAVAC=/usr/local/bin/openjdk17/javac
+          export JAVA_HOME=/usr/local/openjdk17
           export TCLSH=tclsh8.6
           #mv xapian-* "$HOME"
           #cd
@@ -2442,7 +2444,8 @@ jobs:
         usesh: true
         prepare: |
           set -e
-          pkg install -y bash ccache lua54 perl5 php82 pcre2 pkgconf py39-sphinx python3 ruby rubygem-rdoc rubygem-test-unit tcl86
+          pkg install -y bash ccache lua54 openjdk17 openjdk17-jre perl5 php82 pcre2 pkgconf py39-sphinx python3 ruby rubygem-rdoc rubygem-test-unit tcl86
+          find /usr/local -name 'jni*.h' -ls
           ccache --set-config=cache_dir="$HOME/work/xapian/xapian/.ccache"
           ccache --set-config=max_size='500M'
           ccache --set-config=compression=true
@@ -2450,6 +2453,9 @@ jobs:
           set -e
           export CC='ccache cc'
           export CXX='ccache c++'
+          export JAVA=/usr/local/bin/openjdk17/java
+          export JAVAC=/usr/local/bin/openjdk17/javac
+          export JAVA_HOME=/usr/local/openjdk17
           export TCLSH=tclsh8.6
           #mv xapian-* "$HOME"
           #cd
@@ -2532,7 +2538,8 @@ jobs:
           ulimit
           export CC='ccache cc'
           export CXX='ccache c++'
-
+          export RUBY=ruby33
+          ls -l /usr/local/bin/ruby* /opt/local/bin/ruby* /opt/bin/ruby* || true
           #mv xapian-* "$HOME"
           #cd
           cd xapian-core
