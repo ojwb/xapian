@@ -755,6 +755,12 @@ if test no != "$with_java" ; then
 	    freebsd*)
 	      dnl Correct for FreeBSD openjdk17 package.
 	      jni_host_os=freebsd ;;
+	    netbsd*)
+	      if test -d $jnidir/netbsd ; then
+		jni_host_os=netbsd
+	      else
+		jni_host_os=bsd
+	      fi ;;
 	    *bsd*)
 	      jni_host_os=bsd ;;
 	    aix*)

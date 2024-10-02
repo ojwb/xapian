@@ -2519,7 +2519,7 @@ jobs:
         prepare: |
           set -e
           /usr/sbin/pkg_add -u ccache lua54 openjdk21 perl pcre2 pkgconf ruby33
-          find /opt -name 'jni*.h' -ls
+          find /usr/pkg -name 'jni*.h' -ls
           # used by textproc/csharp-xapian/Makefile
           # used by textproc/php-xapian/Makefile
           # used by textproc/py-xapian/Makefile
@@ -2531,10 +2531,9 @@ jobs:
           ulimit
           export CC='ccache cc'
           export CXX='ccache c++'
-          export JAVA_HOME=/opt/local/openjdk21
-          export JDK_HOME=/opt/openjdk21
+          export JAVA_HOME=/usr/pkg/openjdk21
           export RUBY=ruby33
-          ls -l /usr/local/bin/ruby* /opt/local/bin/ruby* /opt/bin/ruby* || true
+          ls -l /usr/pkg/bin/ruby* || true
           #mv xapian-* "$HOME"
           #cd
           cd xapian-core
