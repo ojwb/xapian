@@ -2530,6 +2530,9 @@ jobs:
           ulimit
           export CC='ccache cc'
           export CXX='ccache c++'
+          find /usr -name javac -print || true
+          find /usr -name jdk.h -print || true
+          ls -l /usr/pkg/openjdk21 || true
           export JAVA_HOME=/usr/pkg/openjdk21
           export RUBY=ruby33
           ls -l /usr/pkg/bin/ruby* || true
