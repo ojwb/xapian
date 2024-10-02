@@ -2518,9 +2518,8 @@ jobs:
         # usesh: true
         prepare: |
           set -e
-          /usr/sbin/pkg_add -u ccache lua54 openjdk21 perl pcre2 pkgconf ruby33
+          /usr/sbin/pkg_add -u ccache lua54 openjdk21 perl pcre2 php82 pkgconf ruby33
           # used by textproc/csharp-xapian/Makefile
-          # used by textproc/php-xapian/Makefile
           # used by textproc/py-xapian/Makefile
           ccache --set-config=cache_dir="$HOME/work/xapian/xapian/.ccache"
           ccache --set-config=max_size='500M'
@@ -2530,11 +2529,10 @@ jobs:
           ulimit
           export CC='ccache cc'
           export CXX='ccache c++'
-          find /usr -name javac -print || true
-          find /usr -name jdk.h -print || true
-          ls -l /usr/pkg/openjdk21 || true
-          export JAVA_HOME=/usr/pkg/openjdk21
+          export JAVA_HOME=/usr/pkg/java/openjdk21
+          export PHP_CONFIG=/usr/pkg/bin/php82
           export RUBY=ruby33
+          ls -l /usr/pkg/bin/php* || true
           ls -l /usr/pkg/bin/ruby* || true
           #mv xapian-* "$HOME"
           #cd
