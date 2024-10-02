@@ -2519,6 +2519,10 @@ jobs:
         prepare: |
           set -e
           /usr/sbin/pkg_add -u ccache lua54 openjdk21 perl pcre2 php pkgconf ruby33
+          /usr/sbin/pkg_add -u python || true
+          ls -l /usr/pkg/bin/python* || true
+          /usr/sbin/pkg_add -u mono || true
+          ls -l /usr/pkg/bin/mcs* || true
           # used by textproc/csharp-xapian/Makefile
           # used by textproc/py-xapian/Makefile
           ccache --set-config=cache_dir="$HOME/work/xapian/xapian/.ccache"
@@ -2548,7 +2552,6 @@ jobs:
           tar --strip-components=1 -xf xapian-bindings-*.tar.xz
           ./configure --enable-werror --with-java --with-php --with-ruby #--with-lua
           grep '^RUBY' Makefile
-          ls -l java/.libs
           cd ..
           #cd xapian-letor
           #tar --strip-components=1 -xf xapian-letor-*.tar.xz
@@ -2560,6 +2563,7 @@ jobs:
           make -j2 -C xapian-core V=0 || make -C xapian-core
           #make -j2 -C xapian-applications/omega V=0 || make -C xapian-applications/omega
           make -j2 -C xapian-bindings V=0 || make -C xapian-bindings
+          ls -l java/.libs || true
           #make -j2 -C xapian-letor V=0 || make -C xapian-letor
           export AUTOMATED_TESTING=1
           export VERBOSE=1
