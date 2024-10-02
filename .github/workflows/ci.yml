@@ -2518,7 +2518,10 @@ jobs:
         # usesh: true
         prepare: |
           set -e
-          /usr/sbin/pkg_add -u ccache lua54 openjdk21 perl pcre2 php82 pkgconf ruby33
+          /usr/sbin/pkg_add -u ccache lua54 openjdk21 perl pcre2 pkgconf ruby33
+          /usr/sbin/pkg_add -u php || true
+          /usr/sbin/pkg_add -u php82 || true
+          /usr/sbin/pkg_add -u php8.2 || true
           # used by textproc/csharp-xapian/Makefile
           # used by textproc/py-xapian/Makefile
           ccache --set-config=cache_dir="$HOME/work/xapian/xapian/.ccache"
@@ -2533,6 +2536,7 @@ jobs:
           export PHP_CONFIG=/usr/pkg/bin/php82
           export RUBY=ruby33
           ls -l /usr/pkg/bin/php* || true
+          ls -l /usr/pkg/php*/bin/php* || true
           ls -l /usr/pkg/bin/ruby* || true
           #mv xapian-* "$HOME"
           #cd
