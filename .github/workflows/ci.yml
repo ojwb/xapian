@@ -2520,10 +2520,6 @@ jobs:
           set -e
           echo "PATH=$PATH"
           /usr/sbin/pkg_add -u ccache lua54 mono openjdk21 perl pcre2 php pkgconf ruby33
-          ls -l /usr/pkg/bin/python* || true
-          ls -l /usr/pkg/bin/cli* || true
-          ls -l /usr/pkg/bin/*gacutil* || true
-          ls -l /usr/pkg/bin/*sn* || true
           ccache --set-config=cache_dir="$HOME/work/xapian/xapian/.ccache"
           ccache --set-config=max_size='500M'
           ccache --set-config=compression=true
@@ -2533,11 +2529,8 @@ jobs:
           export CC='ccache cc'
           export CXX='ccache c++'
           export JAVA_HOME=/usr/pkg/java/openjdk21
-          export CSC=/usr/pkg/bin/mcs
-          export PHP_CONFIG=/usr/pkg/bin/php-config
           export PYTHON=python3.11
           export RUBY=ruby33
-          ls -l /usr/pkg/bin/ruby* || true
           #mv xapian-* "$HOME"
           #cd
           cd xapian-core
@@ -2551,8 +2544,7 @@ jobs:
           #cd ../..
           cd xapian-bindings
           tar --strip-components=1 -xf xapian-bindings-*.tar.xz
-          ./configure --enable-werror --with-csharp --with-java --with-php --with-python --with-ruby #--with-lua
-          grep '^RUBY' Makefile
+          ./configure --enable-werror --with-csharp --with-java --with-lua --with-php --with-python3 --with-ruby
           cd ..
           #cd xapian-letor
           #tar --strip-components=1 -xf xapian-letor-*.tar.xz
