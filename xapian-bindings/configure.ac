@@ -568,7 +568,9 @@ if test no != "$with_csharp" ; then
   if test -n "$CSC" ; then
     AC_PATH_PROGS(CSC, ["$CSC"], [])
   fi
-  if test -z "$CSC" ; then
+  if test -n "$CSC" ; then
+    csharp_ok=yes
+  else
     dnl First we try cli-csc and mono-csc, which are used by Debian and Ubuntu
     dnl as "alternatives" which can be mapped to the CSharp compiler the admin
     dnl favours.
