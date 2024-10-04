@@ -2519,7 +2519,7 @@ jobs:
         prepare: |
           set -e
           echo "PATH=$PATH"
-          /usr/sbin/pkg_add -u ccache lua54 mono openjdk21 perl pcre2 php pkgconf ruby33
+          /usr/sbin/pkg_add -u ccache lua54 mono openjdk21 perl pcre2 php pkgconf py312-sphinx python312 ruby33
           ccache --set-config=cache_dir="$HOME/work/xapian/xapian/.ccache"
           ccache --set-config=max_size='500M'
           ccache --set-config=compression=true
@@ -2529,7 +2529,7 @@ jobs:
           export CC='ccache cc'
           export CXX='ccache c++'
           export JAVA_HOME=/usr/pkg/java/openjdk21
-          export PYTHON3=python3.11
+          export PYTHON3=python3.12
           export RUBY=ruby33
           #mv xapian-* "$HOME"
           #cd
