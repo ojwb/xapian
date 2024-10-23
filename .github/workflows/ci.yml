@@ -1558,7 +1558,6 @@ jobs:
     - name: configure
       run: |
         PATH=$PATH:$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin
-        ls -l "$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin"
         cd xapian-core
         ./configure --enable-werror \
             --host=$host_triplet \
@@ -2577,7 +2576,6 @@ jobs:
           **/*.log
 
   openbsd:
-    if: false
     runs-on: 'ubuntu-22.04'
     needs: makedist
     steps:
