@@ -1,10 +1,6 @@
 Xapian Java Bindings
 ********************
 
-The current API should be regarded as experimental - we plan to review it,
-possibly make some changes and then declare it stable early in the 1.4.x
-release series.
-
 How to build the bindings:
 ##########################
 
@@ -111,8 +107,6 @@ If you want to be compatible with earlier versions, you can continue to use
 TODO list:
 ##########
 
-* Write SimpleExpand.java.
-
 * Fix string passing to be zero-byte clean:
   https://trac.xapian.org/ticket/46
 
@@ -120,8 +114,6 @@ TODO list:
   SmokeTest.java:
 
     - optional parameter "parameter" for Query ctor.
-
-    - new QueryParser API.
 
     - changes to Enquire sorting API.
 
