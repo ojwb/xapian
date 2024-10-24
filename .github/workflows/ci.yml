@@ -1176,7 +1176,6 @@ jobs:
             libmagic \
             libmwaw \
             lua \
-            mono-mdk \
             pcre2 \
             pkgconfig \
             poppler \
@@ -1184,7 +1183,9 @@ jobs:
             python \
             sphinx-doc
         # mono-mdk: "make check" fails on aarch64 macos-14 (but works on
-        # x86_64 macos-12 and macos-13).  Last checked 2024-05-05.
+        # x86_64 macos-12 and macos-13):
+        # System.DllNotFoundException: _XapianSharp assembly:<unknown assembly> type:<unknown type> member:(null)
+        # Last checked 2024-10-24.
         #
         # libeatmydata doesn't currently actually do anything on macOS:
         # https://github.com/stewartsmith/libeatmydata/issues/34
@@ -1268,9 +1269,9 @@ jobs:
         popd
     - name: Install package dependencies
       run: |
-        # Workaround apparent homebrew bug 2024-01-17
-        #rm -f /usr/local/bin/2to3-3.* /usr/local/bin/idle3.* /usr/local/bin/pydoc3.* /usr/local/bin/python3.* /usr/local/bin/python3.*-config
-        #rm -f /usr/local/bin/2to3 /usr/local/bin/idle3 /usr/local/bin/pydoc3 /usr/local/bin/python3 /usr/local/bin/python3-config
+        # Workaround apparent homebrew bug 2024-10-24
+        rm -f /usr/local/bin/2to3-3.* /usr/local/bin/idle3.* /usr/local/bin/pydoc3.* /usr/local/bin/python3.* /usr/local/bin/python3.*-config
+        rm -f /usr/local/bin/2to3 /usr/local/bin/idle3 /usr/local/bin/pydoc3 /usr/local/bin/python3 /usr/local/bin/python3-config
         brew update
         brew install -q \
             gmime \
