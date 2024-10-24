@@ -88,8 +88,7 @@ jobs:
         touch --no-create INST/*.stamp
         export PATH=/usr/lib/ccache:$PATH
         echo verbose=off > ~/.wgetrc
-        # ./bootstrap xapian-core xapian-applications/omega swig xapian-bindings xapian-letor
-        ./bootstrap xapian-core swig xapian-bindings
+        ./bootstrap xapian-core xapian-applications/omega swig xapian-bindings xapian-letor
     - name: configure
       run: ./configure CC='ccache gcc' CXX='ccache g++'
     - name: make
@@ -103,9 +102,9 @@ jobs:
       with:
         path: |
           xapian-core/xapian-core-*.tar.xz
-          # xapian-applications/omega/xapian-omega-*.tar.xz
+          xapian-applications/omega/xapian-omega-*.tar.xz
           xapian-bindings/xapian-bindings-*.tar.xz
-          # xapian-letor/xapian-letor-*.tar.xz
+          xapian-letor/xapian-letor-*.tar.xz
         # Files are already compressed so don't try to compress again.
         compression-level: 0
         retention-days: 1
