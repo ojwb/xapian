@@ -511,7 +511,7 @@ if test no != "$with_tcl" ; then
       TCL_CPPFLAGS=
       AC_MSG_CHECKING([for tcl.h from Tcl $tcl_version])
       if test x"$TCL_INC" != x && test -f "$TCL_INC/tcl.h" ; then
-	tcl_hdr_version=`awk '($1 == "#define" && $2 == "TCL_VERSION") {print $3}' "$TCL_INC/tcl.h"|sed 's/"//g'`
+	tcl_hdr_version=`$SED 's/	/ /g;s/^ *# *define *TCL_VERSION *"\([^"]*\)".*/\1/p;d' "$TCL_INC/tcl.h"`
 	if test x"$tcl_hdr_version" = x"$tcl_version" ; then
 	  AC_MSG_RESULT([$TCL_INC/tcl.h])
 	  if test x"$TCL_INC" != x"/usr/include" ; then
