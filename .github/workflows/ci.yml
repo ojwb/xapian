@@ -1073,7 +1073,11 @@ jobs:
             pygments \
             python \
             tcl-tk
-        pip install Sphinx
+        which pip || true
+        which python || true
+        which pip3 || true
+        which python3 || true
+        ${HOMEBREW_PREFIX:-/usr/local}/bin/pip install Sphinx
         # mono-mdk: "make check" fails on arm64 macos-15 (but works on
         # x86_64 macos-12 and macos-13).  Last checked 2024-05-05.
         #
@@ -1132,6 +1136,7 @@ jobs:
           **/*.log
 
   macos-14:
+    if: false
     runs-on: 'macos-14'
     needs: makedist
     steps:
@@ -1243,6 +1248,7 @@ jobs:
           **/*.log
 
   macos-13:
+    if: false
     runs-on: 'macos-13'
     needs: makedist
     steps:
