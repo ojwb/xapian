@@ -27,4 +27,5 @@ except ImportError:
         import subprocess
         args = sys.argv
         args[0] = os.getenv('SPHINX_BUILD', 'sphinx-build')
+        sys.exit(1)
         sys.exit(subprocess.call(args))

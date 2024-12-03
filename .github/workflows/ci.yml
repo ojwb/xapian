@@ -1072,10 +1072,8 @@ jobs:
             pkgconfig \
             poppler \
             pygments \
-            python \
-            sphinx-doc
-        echo 'export PATH="/opt/homebrew/opt/sphinx-doc/bin:$PATH"' >> /Users/runner/.bash_profile
-        cat /opt/homebrew/opt/sphinx-doc/bin/sphinx-build
+            python
+        pip install Sphinx
         # mono-mdk: "make check" fails on arm64 macos-15 (but works on
         # x86_64 macos-12 and macos-13).  Last checked 2024-05-05.
         #
