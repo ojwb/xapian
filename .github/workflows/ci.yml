@@ -1073,11 +1073,7 @@ jobs:
             pygments \
             python \
             tcl-tk
-        which pip || true
-        which python || true
-        which pip3 || true
-        which python3 || true
-        ${HOMEBREW_PREFIX:-/usr/local}/bin/pip install Sphinx
+        pip3 install Sphinx
         # mono-mdk: "make check" fails on arm64 macos-15 (but works on
         # x86_64 macos-12 and macos-13).  Last checked 2024-05-05.
         #
@@ -1136,7 +1132,6 @@ jobs:
           **/*.log
 
   macos-14:
-    if: false
     runs-on: 'macos-14'
     needs: makedist
     steps:
@@ -1187,7 +1182,7 @@ jobs:
             pygments \
             python \
             tcl-tk
-        pip install Sphinx
+        pip3 install Sphinx
         # mono-mdk: "make check" fails on aarch64 macos-14 (but works on
         # x86_64 macos-12 and macos-13):
         # System.DllNotFoundException: _XapianSharp assembly:<unknown assembly> type:<unknown type> member:(null)
@@ -1248,7 +1243,6 @@ jobs:
           **/*.log
 
   macos-13:
-    if: false
     runs-on: 'macos-13'
     needs: makedist
     steps:
@@ -1298,7 +1292,7 @@ jobs:
             pygments \
             python \
             tcl-tk
-        pip install Sphinx
+        pip3 install Sphinx
         # libeatmydata doesn't currently actually do anything on macOS:
         # https://github.com/stewartsmith/libeatmydata/issues/34
         # It's also started failing to even run in homebrew so don't install
