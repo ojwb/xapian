@@ -10,11 +10,21 @@ try:
     from sphinx.cmd.build import build_main
     sys.exit(build_main(sys.argv[1:]))
 except ImportError:
-    # Sphinx < 1.7.0 didn't have sphinx.cmd.build.
-    #
-    # Prior to Sphinx 1.7.0, sphinx.main always skipped the first argument
-    # passed.  In 1.7.0 it stopped doing this, but this fallback handling
-    # should only be used for older versions so we no longer need to worry
-    # about this.
-    from sphinx import main
-    sys.exit(main(sys.argv))
+    try:
+        # Sphinx < 1.7.0 didn't have sphinx.cmd.build.
+        #
+        # Prior to Sphinx 1.7.0, sphinx.main always skipped the first argument
+        # passed.  In 1.7.0 it stopped doing this, but this fallback handling
+        # should only be used for older versions so we no longer need to worry
+        # about this.
+        from sphinx import main
+        sys.exit(main(sys.argv))
+    except ImportError:
+        # The homebrew sphinx-doc package doesn't seem to install the module.
+        # The concerns about getting the Python2 version are less important now
+        # so fall back to just trying to run sphinx-build.
+        import os
+        import subprocess
+        args = sys.argv
+        args[0] = os.getenv('SPHINX_BUILD', 'sphinx-build')
+        sys.exit(subprocess.call(args))
