@@ -27,7 +27,7 @@ set -e
 MIRROR=http://httpredir.debian.org/debian/
 
 DEBIAN_CODENAMES='bookworm bullseye'
-UBUNTU_CODENAMES='noble mantic jammy focal bionic xenial'
+UBUNTU_CODENAMES='oracular noble mantic jammy focal bionic xenial'
 UBUNTU_LATEST=`echo "$UBUNTU_CODENAMES"|sed 's/ .*//'`
 
 V_OPT=
@@ -354,7 +354,7 @@ esac
 if [ -n "$PPA" ] ; then
   for CODENAME in $CODENAMES ; do
     if [ `expr " $UBUNTU_CODENAMES " : " $CODENAME "` != 0 ] ; then
-      echo "dput -U $PPA build/${PKG}_${VERSION}${BACKPORT_SUFFIX}_source.changes"
+      echo "dput -U $PPA build/${PKG}_${VERSION}${SUFFIX}${BACKPORT_SUFFIX}_source.changes"
     fi
   done
 fi
