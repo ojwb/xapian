@@ -2503,7 +2503,6 @@ jobs:
           **/*.log
 
   netbsd:
-    if: false
     runs-on: 'ubuntu-22.04'
     needs: makedist
     steps:
