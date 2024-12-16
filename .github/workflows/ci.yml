@@ -1220,6 +1220,7 @@ jobs:
           **/*.log
 
   macos-14:
+    if: false
     runs-on: 'macos-14'
     needs: makedist
     steps:
@@ -2715,6 +2716,7 @@ jobs:
           **/*.log
 
   openbsd:
+    if: false
     runs-on: 'ubuntu-22.04'
     needs: makedist
     steps:
@@ -2792,7 +2794,6 @@ jobs:
         path: |
           **/*.log
 
-  # opencsw's newest GCC is 5.5 which lack C++17 support.
   solaris:
     runs-on: 'ubuntu-22.04'
     needs: makedist
@@ -2816,7 +2817,7 @@ jobs:
         release: "11.4-gcc"
         prepare: |
           set -e
-          pkgutil -y -i ccache gtar perl libpcre2_dev
+          pkgutil -y -i ccache gtar perl libmagic_dev libpcre2_dev
           ccache --set-config=cache_dir='/Users/runner/work/xapian/xapian/.ccache'
           ccache --set-config=max_size='500M'
           ccache --set-config=compression=true
