@@ -68,7 +68,7 @@ Database::Internal::readahead_for_query(const Xapian::Query &) const
 Xapian::termcount
 Database::Internal::get_unique_terms_lower_bound() const
 {
-    return 1;
+    return get_doclength_upper_bound() ? 1 : 0;
 }
 
 Xapian::termcount
@@ -386,7 +386,8 @@ Database::Internal::request_document(Xapian::docid) const
 }
 
 void
-Database::Internal::write_changesets_to_fd(int, const string&, bool, ReplicationInfo*)
+Database::Internal::write_changesets_to_fd(int, string_view, bool,
+					   ReplicationInfo*)
 {
     throw Xapian::UnimplementedError("This backend doesn't provide changesets");
 }
@@ -515,12 +516,15 @@ Database::Internal::reconstruct_text(Xapian::docid did,
     unique_ptr<TermList> termlist(open_term_list_direct(did));
     if (usual(termlist)) {
 	if (prefix.empty()) {
-	    termlist->next();
-	    reconstruct_open_poslists(termlist.get(), start_pos, end_pos,
-				      "A", heap);
-	    termlist->skip_to("[");
-	    reconstruct_open_poslists(termlist.get(), start_pos, end_pos,
-				      prefix, heap);
+	    if (termlist->next() == NULL) {
+		reconstruct_open_poslists(termlist.get(), start_pos, end_pos,
+					  "A", heap);
+		if (termlist->skip_to("[") == NULL) {
+		    reconstruct_open_poslists(termlist.get(),
+					      start_pos, end_pos,
+					      prefix, heap);
+		}
+	    }
 	} else {
 	    if (termlist->skip_to(prefix) == NULL) {
 		// Calculate the first possible term without the specified

@@ -143,18 +143,6 @@ DocumentSet::Internal::add_document(const Document& document)
     documents.push_back(document);
 }
 
-Document&
-DocumentSet::operator[](doccount i)
-{
-    return internal->get_document(i);
-}
-
-Document&
-DocumentSet::Internal::get_document(doccount i)
-{
-    return documents[i];
-}
-
 const Document&
 DocumentSet::operator[](doccount i) const
 {
@@ -227,71 +215,24 @@ PointType::termlist_begin() const
     return TermIterator(new PointTermIterator(weights));
 }
 
-bool
-PointType::contains(string_view term) const
-{
-    LOGCALL(API, bool, "PointType::contains", term);
-    return weights.find(string(term)) != weights.end();
-}
-
-double
-PointType::get_weight(string_view term) const
-{
-    LOGCALL(API, double, "PointType::get_weight", term);
-    auto it = weights.find(string(term));
-    return (it == weights.end()) ? 0.0 : it->second;
-}
-
-double
-PointType::get_magnitude() const {
-    LOGCALL(API, double, "PointType::get_magnitude", NO_ARGS);
-    return magnitude;
-}
-
-void
-PointType::add_weight(string_view term, double weight)
-{
-    LOGCALL_VOID(API, "PointType::add_weight", term | weight);
-    weights[string(term)] += weight;
-}
-
-void
-PointType::set_weight(string_view term, double weight)
-{
-    LOGCALL_VOID(API, "PointType::set_weight", term | weight);
-    weights.insert_or_assign(string(term), weight);
-}
-
-termcount
-PointType::termlist_size() const
-{
-    LOGCALL(API, termcount, "PointType::termlist_size", NO_ARGS);
-    return weights.size();
-}
-
-Document
-Point::get_document() const
-{
-    LOGCALL(API, Document, "Point::get_document", NO_ARGS);
-    return document;
-}
-
 Point::Point(const FreqSource& freqsource, const Document& document_)
 {
-    LOGCALL_CTOR(API, "Point::initialize", freqsource | document_);
+    LOGCALL_CTOR(API, "Point", freqsource | document_);
     doccount size = freqsource.get_doccount();
     document = document_;
     for (TermIterator it = document.termlist_begin();
 	 it != document.termlist_end();
 	 ++it) {
 	doccount wdf = it.get_wdf();
+	// Ignore filter terms.
+	if (wdf == 0)
+	    continue;
 	string term = *it;
 	double termfreq = freqsource.get_termfreq(term);
 
-	// If the term exists in only one document, or if it exists in
-	// every document within the MSet, or if it is a filter term, then
-	// these terms are not used for document vector calculations
-	if (wdf < 1 || termfreq <= 1 || size == termfreq)
+	// Ignore terms which index only one document in the MSet, or
+	// which index all documents in the MSet.
+	if (termfreq <= 1 || termfreq == size)
 	    continue;
 
 	double tf = 1 + log(double(wdf));
@@ -326,13 +267,6 @@ Centroid::divide(double cluster_size)
     }
 }
 
-void
-Centroid::clear()
-{
-    LOGCALL_VOID(API, "Centroid::clear", NO_ARGS);
-    weights.clear();
-}
-
 Cluster&
 Cluster::operator=(const Cluster&) = default;
 
@@ -359,11 +293,6 @@ Cluster::~Cluster()
     LOGCALL_DTOR(API, "Cluster");
 }
 
-Centroid::Centroid()
-{
-    LOGCALL_CTOR(API, "Centroid", NO_ARGS);
-}
-
 DocumentSet
 Cluster::get_documents() const
 {
@@ -378,18 +307,6 @@ Cluster::Internal::get_documents() const
     for (auto&& point : cluster_docs)
 	docs.add_document(point.get_document());
     return docs;
-}
-
-Point&
-Cluster::operator[](Xapian::doccount i)
-{
-    return internal->get_point(i);
-}
-
-Point&
-Cluster::Internal::get_point(Xapian::doccount i)
-{
-    return cluster_docs[i];
 }
 
 const Point&
@@ -446,18 +363,6 @@ ClusterSet::add_cluster(const Cluster& cluster)
 {
     LOGCALL_VOID(API, "ClusterSet::add_cluster", cluster);
     internal->add_cluster(cluster);
-}
-
-Cluster&
-ClusterSet::Internal::get_cluster(doccount i)
-{
-    return clusters[i];
-}
-
-Cluster&
-ClusterSet::operator[](doccount i)
-{
-    return internal->get_cluster(i);
 }
 
 const Cluster&

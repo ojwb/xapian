@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # omegatest: Test omega CGI
 #
-# Copyright (C) 2015-2023 Olly Betts
+# Copyright (C) 2015-2024 Olly Betts
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -325,6 +325,7 @@ qtestcase('VALUE_RANGE 10 2015021 ~', 'DATEVALUE=10', 'START=20150210');
 qtestcase('VALUE_RANGE 10 2000022 ~', 'DATEVALUE=10', 'START=20000220');
 qtestcase('VALUE_LE 11 19840401~', 'DATEVALUE=11', 'END=19840401');
 qtestcase('VALUE_LE 11 19881128~', 'DATEVALUE=11', 'END=19881128');
+qtestcase('VALUE_RANGE 1234 196 ~', 'DATEVALUE=1234', 'START=1960');
 
 # Leap year tests:
 qtestcase('VALUE_LE 1 201502~', 'DATEVALUE=1', 'END=20150228');
@@ -526,6 +527,7 @@ qtestcase('(D20151201 OR D20151202 OR D20151203 OR D20151204 OR D20151205 OR D20
 # Forward spans:
 qtestcase('(D20151104 OR D20151105 OR D20151106 OR D20151107 OR Dlatest)', 'START=20151104', 'SPAN=3');
 qtestcase('(D20141104 OR D20141105 OR D20141106 OR D20141107 OR D20141108 OR D20141109 OR D20141110 OR D20141111 OR D20141112 OR D20141113 OR D20141114 OR D20141115 OR D20141116 OR D20141117 OR D20141118 OR D20141119 OR D20141120 OR D20141121 OR D20141122 OR D20141123 OR D20141124 OR D20141125 OR D20141126 OR D20141127 OR D20141128 OR D20141129 OR D20141130 OR M201412 OR M201501 OR M201502 OR M201503 OR M201504 OR M201505 OR M201506 OR M201507 OR M201508 OR M201509 OR M201510 OR D20151101 OR D20151102 OR D20151103 OR D20151104 OR Dlatest)', 'START=20141104', 'SPAN=365');
+qtestcase('(D19600228 OR D19600229 OR D19600301 OR D19600302 OR Dlatest)', 'START=19600228', 'SPAN=3');
 
 # Backward spans:
 qtestcase('(D20151103 OR D20151104 OR D20151105 OR D20151106 OR Dlatest)', 'END=20151106', 'SPAN=3');
@@ -643,6 +645,14 @@ qtestcase('(capitalised@1 AND tests@2 AND Zstem@3)', 'P=Capitalised "tests" stem
 qtestcase('(Znear@1 NEAR 11 Zdistanc@2)', 'P=nearing NEAR distances', 'stem_strategy=some_full_pos');
 qtestcase('(capitalised@1 AND tests@2 AND Zstem@3)', 'P=Capitalised "tests" stemmed', 'stem_strategy=some', 'stem_all=true');
 qtestcase('(nearing@1 NEAR 11 distances@2)', 'P=nearing NEAR distances', 'stem_strategy=some', 'stem_all=true');
+
+# Test intra_query_op.
+print_to_file $test_template, '$if{$cgi{iqop},$set{intra_query_op,$cgi{iqop}}}$querydescription';
+qtestcase 'testing@1', 'P=Testing', 'iqop=OR';
+qtestcase '(Ztest@1 AND ZStitl@1)', 'P=testing', 'P.S=title';
+qtestcase '(Ztest@1 OR ZStitl@1)', 'P=testing', 'P.S=title', 'iqop=OR';
+qtestcase '(Ztest@1 OR ZStitl@1)', 'P=testing', 'P.S=title', 'iqop=or';
+qtestcase '(Ztest@1 AND ZStitl@1)', 'P=testing', 'P.S=title', 'iqop=invalid';
 
 # Feature tests for $contains.
 print_to_file $test_template, '$contains{$cgi{a},$cgi{b}}';
@@ -865,6 +875,56 @@ print_to_file $test_template, '$msizelower $msize $msizeupper $msizeexact';
 testcase('1 1 1 true', 'P=this');
 testcase('1 1 1 true', 'P=Some text');
 testcase('0 0 0 true', 'P=potato');
+
+print_to_file $test_template, '$set{weighting,$cgi{w}}$hitlist{$weight.}$or{$error,OK}';
+testcase('OK', 'w=bb2');
+testcase('OK', 'w=bb2 .5');
+testcase("InvalidArgumentError: Parameter is invalid: 'bb2 x'", 'w=bb2 x');
+testcase("InvalidArgumentError: Extra data after parameter: 'bb2 .5 .5'", 'w=bb2 .5 .5');
+testcase('OK', 'w=bm25');
+testcase('OK', 'w=bm25 1 1 1 1 1');
+testcase("InvalidArgumentError: Parameter 5 (min_normlen) is invalid: 'bm25 1 1 1 1 x'", 'w=bm25 1 1 1 1 x');
+testcase("InvalidArgumentError: Extra data after parameter 5: 'bm25 1 1 1 1 1 1'", 'w=bm25 1 1 1 1 1 1');
+testcase('OK', 'w=bm25+');
+testcase('OK', 'w=bm25+ 1 1 1 1 1 1');
+testcase("InvalidArgumentError: Parameter 6 (delta) is invalid: 'bm25+ 1 1 1 1 1 x'", 'w=bm25+ 1 1 1 1 1 x');
+testcase("InvalidArgumentError: Extra data after parameter 6: 'bm25+ 1 1 1 1 1 1 1'", 'w=bm25+ 1 1 1 1 1 1 1');
+testcase('OK', 'w=bool');
+testcase('InvalidArgumentError: No parameters are required for BoolWeight', 'w=bool 1');
+testcase('OK', 'w=coord');
+testcase('InvalidArgumentError: No parameters are required for CoordWeight', 'w=coord 1');
+testcase('OK', 'w=dlh');
+testcase('InvalidArgumentError: No parameters are required for DLHWeight', 'w=dlh 1');
+testcase('OK', 'w=dph');
+testcase('InvalidArgumentError: No parameters are required for DPHWeight', 'w=dph 1');
+testcase('OK', 'w=ifb2');
+testcase('OK', 'w=ifb2 .5');
+testcase("InvalidArgumentError: Parameter is invalid: 'ifb2 x'", 'w=ifb2 x');
+testcase("InvalidArgumentError: Extra data after parameter: 'ifb2 .5 1'", 'w=ifb2 .5 1');
+testcase('OK', 'w=ineb2');
+testcase('OK', 'w=ineb2 .5');
+testcase("InvalidArgumentError: Parameter is invalid: 'ineb2 x'", 'w=ineb2 x');
+testcase("InvalidArgumentError: Extra data after parameter: 'ineb2 .5 1'", 'w=ineb2 .5 1');
+testcase('OK', 'w=inl2');
+testcase('OK', 'w=inl2 .5');
+testcase("InvalidArgumentError: Parameter is invalid: 'inl2 x'", 'w=inl2 x');
+testcase("InvalidArgumentError: Extra data after parameter: 'inl2 .5 1'", 'w=inl2 .5 1');
+testcase('OK', 'w=pl2');
+testcase('OK', 'w=pl2 .5');
+testcase("InvalidArgumentError: Parameter is invalid: 'pl2 x'", 'w=pl2 x');
+testcase("InvalidArgumentError: Extra data after parameter: 'pl2 .5 1'", 'w=pl2 .5 1');
+testcase('OK', 'w=pl2+');
+testcase('OK', 'w=pl2+ .5 .5');
+testcase("InvalidArgumentError: Parameter 2 (delta) is invalid: 'pl2+ .5 x'", 'w=pl2+ .5 x');
+testcase("InvalidArgumentError: Extra data after parameter 2: 'pl2+ .5 .5 1'", 'w=pl2+ .5 .5 1');
+testcase('OK', 'w=tfidf');
+testcase('OK', 'w=tfidf ntn');
+testcase("InvalidArgumentError: Parameter 1 (wdf_normalisation) is invalid: 'tfidf ntn 1'", 'w=tfidf ntn 1');
+testcase('OK', 'w=trad');
+testcase('OK', 'w=trad 1.5');
+testcase("InvalidArgumentError: Parameter is invalid: 'trad x'", 'w=trad x');
+testcase("InvalidArgumentError: Extra data after parameter: 'trad 1.5 1'", 'w=trad 1.5 1');
+testcase('InvalidArgumentError: Unknown weighting scheme: invalid', 'w=invalid');
 
 print_to_file $test_template, '$set{weighting,coord}$hitlist{$weight.}';
 testcase('', 'P=aardvark');
@@ -1502,6 +1562,14 @@ print_to_file $test_template, '$setmap{foo,key 1,1,key"2,$split{1 2},key3,$split
 testcase('{"key 1":[2],"key\"2":[2,3],"key3":[3,4,6]}');
 print_to_file $test_template, '$setmap{foo,key 1,,key"2,1,key3,0}$jsonobject{foo,$upper{$_},$jsonarray{$_,$add{$_}}}';
 testcase('{"KEY 1":[],"KEY\"2":[1],"KEY3":[0]}');
+
+# Feature tests for $jsonobject2
+print_to_file $test_template, '$jsonobject2{$split{$cgi{K}},$split{$cgi{V}},,"$json{$upper{$_}}"}$error';
+testcase '{"k1":"VALUE1","k2":"VAL2","key3":"V3"}', 'K=k1 k2 key3', 'V=value1 val2 v3';
+testcase 'Exception: $jsonobject2: Different number of keys and values', 'K=1 2', 'V=one';
+testcase 'Exception: $jsonobject2: Different number of keys and values', 'K=1', 'V=one two';
+testcase '{"k1":""}', 'K=k1', 'V=';
+testcase '{}', 'K=', 'V=';
 
 # Feature tests for $stoplist
 print_to_file $test_template, '$setmap{prefix,foo,XFOO}[$list{$stoplist,|}]';

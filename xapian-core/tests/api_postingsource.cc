@@ -57,7 +57,7 @@ class MyOddPostingSource : public Xapian::PostingSource {
 	return new MyOddPostingSource(num_docs, last_docid);
     }
 
-    void init(const Xapian::Database&) override { did = 0; }
+    void reset(const Xapian::Database&, Xapian::doccount) override { did = 0; }
 
     // These bounds could be better, but that's not important here.
     Xapian::doccount get_termfreq_min() const override { return 0; }
@@ -159,6 +159,8 @@ class MyOddWeightingPostingSource : public Xapian::PostingSource {
 	return new MyOddWeightingPostingSource(num_docs, last_docid);
     }
 
+    // Deliberately override init() instead of reset() here to test that still
+    // works.
     void init(const Xapian::Database&) override { did = 0; }
 
     double get_weight() const override {
@@ -258,7 +260,7 @@ class MyDontAskWeightPostingSource : public Xapian::PostingSource {
 	return new MyDontAskWeightPostingSource(num_docs, last_docid);
     }
 
-    void init(const Xapian::Database& db) override {
+    void reset(const Xapian::Database& db, Xapian::doccount) override {
 	num_docs = db.get_doccount();
 	last_docid = db.get_lastdocid();
 	did = 0;
@@ -362,7 +364,7 @@ DEFINE_TESTCASE(valueweightsource1, backend) {
 DEFINE_TESTCASE(valueweightsource2, valuestats) {
     Xapian::Database db(get_database("apitest_phrase"));
     Xapian::ValueWeightPostingSource src(11);
-    src.init(db);
+    src.reset(db, 0);
     TEST_EQUAL(src.get_termfreq_min(), 17);
     TEST_EQUAL(src.get_termfreq_est(), 17);
     TEST_EQUAL(src.get_termfreq_max(), 17);
@@ -373,7 +375,7 @@ DEFINE_TESTCASE(valueweightsource2, valuestats) {
 DEFINE_TESTCASE(valueweightsource3, valuestats) {
     Xapian::Database db(get_database("apitest_phrase"));
     Xapian::ValueWeightPostingSource src(11);
-    src.init(db);
+    src.reset(db, 0);
     TEST(!src.at_end());
     src.skip_to(8, 0.0);
     TEST(!src.at_end());
@@ -406,7 +408,7 @@ DEFINE_TESTCASE(fixedweightsource1, backend) {
     {
 	// Check next and skip_to().
 	Xapian::FixedWeightPostingSource src(wt);
-	src.init(db);
+	src.reset(db, 0);
 
 	src.next(1.0);
 	TEST(!src.at_end());
@@ -423,7 +425,7 @@ DEFINE_TESTCASE(fixedweightsource1, backend) {
     {
 	// Check check() as the first operation, followed by next.
 	Xapian::FixedWeightPostingSource src(wt);
-	src.init(db);
+	src.reset(db, 0);
 
 	TEST_EQUAL(src.check(5, 1.0), true);
 	TEST(!src.at_end());
@@ -435,7 +437,7 @@ DEFINE_TESTCASE(fixedweightsource1, backend) {
     {
 	// Check check() as the first operation, followed by skip_to().
 	Xapian::FixedWeightPostingSource src(wt);
-	src.init(db);
+	src.reset(db, 0);
 
 	TEST_EQUAL(src.check(5, 1.0), true);
 	TEST(!src.at_end());
@@ -459,7 +461,7 @@ class ChangeMaxweightPostingSource : public Xapian::PostingSource {
     ChangeMaxweightPostingSource(Xapian::docid maxid_accessed_)
 	    : did(0), maxid_accessed(maxid_accessed_) { }
 
-    void init(const Xapian::Database&) override { did = 0; }
+    void reset(const Xapian::Database&, Xapian::doccount) override { did = 0; }
 
     double get_weight() const override {
 	if (did > maxid_accessed) {
@@ -634,7 +636,7 @@ DEFINE_TESTCASE(matchtimelimit1, backend && !remote)
 
     int count = 0;
     SlowDecreasingValueWeightPostingSource src(count);
-    src.init(db);
+    src.reset(db, 0);
     Xapian::Enquire enquire(db);
     enquire.set_query(Xapian::Query(&src));
 
@@ -663,10 +665,12 @@ class CheckBoundsPostingSource
 	return new CheckBoundsPostingSource(doclen_lb, doclen_ub);
     }
 
-    void init(const Xapian::Database& database) override {
+    void reset(const Xapian::Database& database,
+	       Xapian::doccount shard_index) override {
 	doclen_lb = database.get_doclength_lower_bound();
 	doclen_ub = database.get_doclength_upper_bound();
-	Xapian::DecreasingValueWeightPostingSource::init(database);
+	Xapian::DecreasingValueWeightPostingSource::reset(database,
+							  shard_index);
     }
 };
 
@@ -703,7 +707,7 @@ class CloneTestPostingSource : public Xapian::PostingSource {
 	return new CloneTestPostingSource(clone_count);
     }
 
-    void init(const Xapian::Database&) override { }
+    void reset(const Xapian::Database&, Xapian::doccount) override { }
 
     Xapian::doccount get_termfreq_min() const override { return 0; }
 
@@ -843,7 +847,7 @@ class EstimatePS : public Xapian::PostingSource {
 	return new EstimatePS(lb, est, ub);
     }
 
-    void init(const Xapian::Database&) override { }
+    void reset(const Xapian::Database&, Xapian::doccount) override { }
 
     Xapian::doccount get_termfreq_min() const override { return lb; }
 

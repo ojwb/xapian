@@ -660,7 +660,7 @@ class AndContext : public Context {
     }
 
     bool add_postlist(PostList* pl, TermFreqs* termfreqs) {
-	if (termfreqs) termfreqs_list.emplace_back(*termfreqs);
+	add_termfreqs(termfreqs);
 	if (pl) {
 	    if (pls.empty() && termfreqs_list.size() > 1) {
 		qopt->destroy_postlist(pl);
@@ -1770,7 +1770,8 @@ found_special:
     min_len = max_len = prefix.size();
 
     tail = i;
-    bool had_qm = false, had_star = false;
+    size_t qm_count = 0;
+    bool had_star = false;
     while (i != pattern.size()) {
 	switch (pattern[i]) {
 	    default:
@@ -1787,7 +1788,7 @@ default_case:
 		had_star = true;
 		tail = i + 1;
 		if (!suffix.empty()) {
-		    check_pattern = true;
+		    min_check_len = 0;
 		    suffix.clear();
 		}
 		break;
@@ -1798,16 +1799,10 @@ default_case:
 		// Matches exactly one character.
 		tail = i + 1;
 		if (!suffix.empty()) {
-		    check_pattern = true;
+		    min_check_len = 0;
 		    suffix.clear();
 		}
-		// `?` matches one Unicode character, which is 1-4 bytes in
-		// UTF-8, so we have to actually check the pattern if there's
-		// more than one `?` in it.
-		if (had_qm) {
-		    check_pattern = true;
-		}
-		had_qm = true;
+		++qm_count;
 		++min_len;
 		max_len += MAX_UTF_8_CHARACTER_LENGTH;
 		break;
@@ -1818,12 +1813,16 @@ default_case:
 
     if (had_star) {
 	max_len = numeric_limits<decltype(max_len)>::max();
-    } else {
-	// If the pattern only contains `?` wildcards we'll need to check it
-	// since `?` matches one Unicode character, which is 1-4 bytes in
-	// UTF-8.  FIXME: We can avoid this if there's only one `?` wildcard
-	// and the candidate is min_len bytes long.
-	check_pattern = true;
+    } else if (qm_count > 1) {
+	// `?` matches one Unicode character, which is 1-4 bytes in UTF-8, so
+	// we have to actually check the pattern if there's more than one `?`
+	// in it.
+	min_check_len = 0;
+    } else if (qm_count == 1) {
+	// If the pattern contains exactly one `?` wildcard we need to check it
+	// unless the candidate is exactly min_len bytes long.  Note that we
+	// know it can't match if it's < min_len long.
+	min_check_len = min_len + 1;
     }
 }
 
@@ -1881,7 +1880,7 @@ QueryWildcard::test_prefix_known(const string& candidate) const
     if (candidate.size() > max_len) return false;
     if (!endswith(candidate, suffix)) return false;
 
-    if (!check_pattern) return true;
+    if (candidate.size() < min_check_len) return true;
 
     return test_wildcard_(candidate, prefix.size(),
 			  candidate.size() - suffix.size(),
@@ -1925,12 +1924,8 @@ QueryWildcard::postlist(QueryOptimiser* qopt, double factor,
 
 	// We build an OP_OR tree for OP_SYNONYM and then wrap it in a
 	// SynonymPostList, which supplies the weights.
-	//
-	// We know the subqueries from a wildcard expansion are wdf-disjoint
-	// (i.e. each wdf from the document contributes at most itself to the
-	// wdf of the subquery).
 	RETURN(qopt->make_synonym_postlist(ctx.postlist(&synonym_freqs, true),
-					   factor, true, synonym_freqs));
+					   factor, synonym_freqs));
     }
 
     ctx.expand_wildcard(this, factor, termfreqs);
@@ -2039,12 +2034,8 @@ QueryEditDistance::postlist(QueryOptimiser* qopt, double factor,
 
 	// We build an OP_OR tree for OP_SYNONYM and then wrap it in a
 	// SynonymPostList, which supplies the weights.
-	//
-	// We know the subqueries from an edit distance expansion are
-	// wdf-disjoint (i.e. each wdf from the document contributes at most
-	// itself to the wdf of the subquery).
 	RETURN(qopt->make_synonym_postlist(ctx.postlist(&synonym_freqs, true),
-					   factor, true, synonym_freqs));
+					   factor, synonym_freqs));
     }
 
     ctx.expand_edit_distance(this, factor, termfreqs);
@@ -2307,54 +2298,6 @@ QueryBranch::do_synonym(QueryOptimiser* qopt,
     qopt->compound_weight = old_compound_weight;
     if (!pl) return NULL;
 
-    bool wdf_disjoint = false;
-    Assert(!subqueries.empty());
-    auto type = subqueries.front().get_type();
-    if (type == Query::OP_WILDCARD) {
-	// Detect common easy case where all subqueries are OP_WILDCARD whose
-	// constant prefixes form a prefix-free set.
-	wdf_disjoint = true;
-	vector<string> prefixes;
-	for (auto&& q : subqueries) {
-	    if (q.get_type() != Query::OP_WILDCARD) {
-		wdf_disjoint = false;
-		break;
-	    }
-	    auto qw = static_cast<const QueryWildcard*>(q.internal.get());
-	    prefixes.push_back(qw->get_fixed_prefix());
-	}
-
-	if (wdf_disjoint) {
-	    sort(prefixes.begin(), prefixes.end());
-	    const string* prev = nullptr;
-	    for (const auto& i : prefixes) {
-		if (prev) {
-		    if (startswith(i, *prev)) {
-			wdf_disjoint = false;
-			break;
-		    }
-		}
-		prev = &i;
-	    }
-	}
-    } else if (type == Query::LEAF_TERM) {
-	// Detect common easy case where all subqueries are terms, none of
-	// which are the same.
-	wdf_disjoint = true;
-	unordered_set<string> terms;
-	for (auto&& q : subqueries) {
-	    if (q.get_type() != Query::LEAF_TERM) {
-		wdf_disjoint = false;
-		break;
-	    }
-	    auto qt = static_cast<const QueryTerm*>(q.internal.get());
-	    if (!terms.insert(qt->get_term()).second) {
-		wdf_disjoint = false;
-		break;
-	    }
-	}
-    }
-
     // We currently assume wqf is 1 for calculating the synonym's weight
     // since conceptually the synonym is one "virtual" term.  If we were
     // to combine multiple occurrences of the same synonym expansion into
@@ -2362,8 +2305,7 @@ QueryBranch::do_synonym(QueryOptimiser* qopt,
 
     // We build an OP_OR tree for OP_SYNONYM and then wrap it in a
     // SynonymPostList, which supplies the weights.
-    RETURN(qopt->make_synonym_postlist(pl, factor, wdf_disjoint,
-				       synonym_freqs));
+    RETURN(qopt->make_synonym_postlist(pl, factor, synonym_freqs));
 }
 
 PostList *

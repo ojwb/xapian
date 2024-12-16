@@ -437,7 +437,22 @@ parse_queries(const string& oldp)
 	    if (!q.empty())
 		queries.push_back(q);
 	}
-	query = Xapian::Query(query.OP_AND, queries.begin(), queries.end());
+
+	Xapian::Query::op intra_query_op = Xapian::Query::OP_AND;
+	if (queries.size() > 1) {
+	    // Determine operator to use to combine multiple P and P.<prefix>
+	    // parameters.  Note that we only need to bother if there are two
+	    // or more query strings, since for one or none the operator
+	    // specified isn't actually used.
+	    opt_it = option.find("intra_query_op");
+	    if (opt_it != option.end()) {
+		const string& v = opt_it->second;
+		if (v == "OR" || v == "or") {
+		    intra_query_op = Xapian::Query::OP_OR;
+		}
+	    }
+	}
+	query = Xapian::Query(intra_query_op, queries.begin(), queries.end());
     } catch (Xapian::QueryParserError &e) {
 	error_msg = e.get_msg();
 	return BAD_QUERY;
@@ -986,6 +1001,7 @@ CMD_json,
 CMD_jsonarray,
 CMD_jsonbool,
 CMD_jsonobject,
+CMD_jsonobject2,
 CMD_keys,
 CMD_last,
 CMD_lastpage,
@@ -1137,6 +1153,7 @@ T(json,		   1, 1, N, 0), // JSON string escaping
 T(jsonarray,	   1, 2, 1, 0), // Format list as a JSON array
 T(jsonbool,	   1, 1, 1, 0), // Format list as a JSON bool
 T(jsonobject,	   1, 3, 1, 0), // Format map as JSON object
+T(jsonobject2,	   2, 4, 2, 0), // Format 2 lists as JSON object
 T(keys,		   1, 1, N, 0), // list of keys from a map
 T(last,		   0, 0, N, M), // hit number one beyond end of current page
 T(lastpage,	   0, 0, N, M), // number of last hit page
@@ -1914,8 +1931,7 @@ eval(const string& fmt, vector<string>& param)
 		value = args[0].empty() ? "false" : "true";
 		break;
 	    case CMD_jsonobject: {
-		vector<string> new_args;
-		new_args.push_back(string());
+		vector<string> new_args(1);
 
 		class map_range {
 		    typedef map<string, string>::const_iterator iterator;
@@ -1945,6 +1961,109 @@ eval(const string& fmt, vector<string>& param)
 				    if (args.size() > 2 && !args[2].empty()) {
 					new_args[0] = v;
 					return eval(args[2], new_args);
+				    }
+				    string r(1, '"');
+				    string elt = v;
+				    json_escape(elt);
+				    r += elt;
+				    r += '"';
+				    return r;
+				});
+		break;
+	    }
+	    case CMD_jsonobject2: {
+		vector<string> new_args(1);
+
+		static string dummy;
+
+		class list_range {
+		    const string& keys;
+		    const string& values;
+
+		  public:
+		    class iterator {
+			const string& keys;
+			const string& values;
+			string::size_type ki = 0;
+			string::size_type kj;
+			string::size_type vi = 0;
+			string::size_type vj;
+
+		      public:
+			iterator()
+			    : keys(dummy), values(dummy),
+			      ki(string::npos), vi(string::npos) {}
+
+			iterator(const string& k, const string& v)
+			    : keys(k), values(v) {
+			    if (keys.empty() && values.empty()) {
+				// Don't treat this as: { "": "" }
+				ki = kj = vi = vj = string::npos;
+			    } else {
+				kj = keys.find('\t');
+				vj = values.find('\t');
+			    }
+			}
+
+			pair<string, string> operator*() const {
+			    return {keys.substr(ki, kj - ki),
+				    values.substr(vi, vj - vi)};
+			}
+
+			iterator& operator++() {
+			    ki = kj;
+			    if (ki != string::npos) {
+				++ki;
+				kj = keys.find('\t', ki);
+			    }
+			    vi = vj;
+			    if (vi != string::npos) {
+				++vi;
+				vj = values.find('\t', vi);
+			    }
+			    if ((ki == string::npos) !=
+				(vi == string::npos)) {
+				throw "$jsonobject2: Different number of keys "
+				      "and values";
+			    }
+			    return *this;
+			}
+
+			iterator operator++(int) {
+			    iterator r = *this;
+			    operator++();
+			    return r;
+			}
+
+			bool operator==(const iterator& o) const {
+			    return ki == o.ki && vi == o.vi;
+			}
+
+			bool operator!=(const iterator& o) const {
+			    return !(*this == o);
+			}
+		    };
+
+		    list_range(const string& k, const string& v)
+			: keys(k), values(v) { }
+
+		    iterator begin() const { return iterator(keys, values); }
+		    iterator end() const { return iterator(); }
+		};
+
+		value = to_json(list_range(args[0], args[1]),
+				[&](const string& k) {
+				    string key = k;
+				    if (args.size() > 2 && !args[2].empty()) {
+					new_args[0] = std::move(key);
+					key = eval(args[2], new_args);
+				    }
+				    return key;
+				},
+				[&](const string& v) {
+				    if (args.size() > 3 && !args[3].empty()) {
+					new_args[0] = v;
+					return eval(args[3], new_args);
 				    }
 				    string r(1, '"');
 				    string elt = v;

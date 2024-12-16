@@ -31,7 +31,9 @@
 #include "backends/databaseinternal.h"
 #include "internaltypes.h"
 #include "omassert.h"
+#include "stringutils.h"
 
+#include <algorithm>
 #include <cerrno>
 #include <cstdlib>
 #include <functional>
@@ -49,12 +51,13 @@ namespace Internal {
 
 /// The frequencies for a term.
 struct TermFreqs {
-    Xapian::doccount termfreq;
-    Xapian::doccount reltermfreq;
-    Xapian::termcount collfreq;
-    double max_part;
+    Xapian::doccount termfreq = 0;
+    Xapian::doccount reltermfreq = 0;
+    Xapian::termcount collfreq = 0;
 
-    TermFreqs() : termfreq(0), reltermfreq(0), collfreq(0), max_part(0.0) {}
+    double max_part = 0.0;
+
+    TermFreqs() {}
     TermFreqs(Xapian::doccount termfreq_,
 	      Xapian::doccount reltermfreq_,
 	      Xapian::termcount collfreq_,
@@ -68,7 +71,9 @@ struct TermFreqs {
 	termfreq += other.termfreq;
 	reltermfreq += other.reltermfreq;
 	collfreq += other.collfreq;
-	max_part += other.max_part;
+	// max_part shouldn't be set yet.
+	Assert(max_part == 0.0);
+	Assert(other.max_part == 0.0);
     }
 
     void operator*=(double factor) {
@@ -119,6 +124,18 @@ class Weight::Internal {
 
     /** Number of relevant documents in the collection. */
     Xapian::doccount rset_size = 0;
+
+    /// A lower bound on the minimum length of any document in the database.
+    Xapian::termcount db_doclength_lower_bound = 0;
+
+    /// An upper bound on the maximum length of any document in the database.
+    Xapian::termcount db_doclength_upper_bound = 0;
+
+    /// A lower bound on the number of unique terms in any document.
+    Xapian::termcount db_unique_terms_lower_bound = 0;
+
+    /// An upper bound on the number of unique terms in any document.
+    Xapian::termcount db_unique_terms_upper_bound = 0;
 
     /** Has max_part been set for any term?
      *
@@ -243,11 +260,13 @@ class Weight::Internal {
 
     /// Set max_part for a term.
     void set_max_part(const std::string & term, double max_part) {
-	have_max_part = true;
 	Assert(!term.empty());
 	auto i = termfreqs.find(term);
-	if (i != termfreqs.end())
-	    i->second.max_part += max_part;
+	if (i != termfreqs.end()) {
+	    have_max_part = true;
+	    double& val = i->second.max_part;
+	    val = std::max(val, max_part);
+	}
     }
 
     Xapian::doclength get_average_length() const {
@@ -266,6 +285,8 @@ class Weight::Internal {
     static bool double_param(const char ** p, double * ptr_val) {
 #ifdef HAVE_STD_FROM_CHARS_DOUBLE
 	const char* startptr = *p;
+	// Unlike strtod(), std::from_chars() doesn't skip leading whitespace.
+	while (C_isspace(*startptr)) ++startptr;
 	const char* endptr = startptr + std::strlen(startptr);
 	double v;
 	const auto& r = std::from_chars(startptr, endptr, v);
@@ -297,11 +318,17 @@ class Weight::Internal {
 	return true;
     }
 
-    static void parameter_error(const char * msg,
-				const std::string & scheme) {
+    [[noreturn]]
+    static void parameter_error(const char* msg,
+				const std::string& scheme,
+				const char* params) {
 	std::string m(msg);
 	m += ": '";
 	m += scheme;
+	if (*params) {
+	    m += ' ';
+	    m += params;
+	}
 	m += "'";
 	throw InvalidArgumentError(m);
     }

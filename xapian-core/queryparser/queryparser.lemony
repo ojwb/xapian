@@ -689,99 +689,183 @@ struct yyParser;
 static void yy_parse_failed(yyParser *);
 
 void
-QueryParser::Internal::add_prefix(const string &field, const string &prefix)
+QueryParser::Internal::add_prefix(string_view field, string_view prefix)
 {
-    auto r = field_map.try_emplace(field, NON_BOOLEAN, prefix);
-    if (!r.second) {
-	auto&& p = r.first->second;
-	// Check that this is the same type of filter as the existing one(s).
-	if (p.type != NON_BOOLEAN) {
-	    throw Xapian::InvalidOperationError("Can't use add_prefix() and add_boolean_prefix() on the same field name, or add_boolean_prefix() with different values of the 'exclusive' parameter");
-	}
-	if (p.proc)
-	    throw Xapian::FeatureUnavailableError("Mixing FieldProcessor objects and string prefixes currently not supported");
-	// Only add if it's not already there as duplicate entries just result
-	// in redundant query terms.  This is a linear scan so makes calling
-	// add_prefix() n times for the same field value with different prefix
-	// values O(n²), but you wouldn't realistically want to map one field
-	// to more than a handful of prefixes.
-	auto& prefixes = p.prefixes;
-	if (find(prefixes.begin(), prefixes.end(), prefix) == prefixes.end()) {
-	    prefixes.push_back(prefix);
-	}
-   }
+    // Allow for optional trailing `:` for consistency with how range prefixes
+    // are specified.
+    if (!field.empty() && field.back() == ':') {
+	field = field.substr(0, field.size() - 1);
+    }
+#ifdef  __cpp_lib_associative_heterogeneous_insertion // C++26
+    auto [it, inserted] = field_map.try_emplace(field, NON_BOOLEAN);
+#else
+    auto [it, inserted] = field_map.try_emplace(string(field), NON_BOOLEAN);
+#endif
+    auto&& p = it->second;
+    if (inserted) {
+	p.append(prefix);
+	return;
+    }
+
+    // Check that this is the same type of filter as the existing one(s).
+    if (p.type != NON_BOOLEAN) {
+	throw Xapian::InvalidOperationError("Can't use add_prefix() and "
+					    "add_boolean_prefix() on the "
+					    "same field name, or "
+					    "add_boolean_prefix() with "
+					    "different values of the "
+					    "'exclusive' parameter");
+    }
+    if (p.proc)
+	throw Xapian::FeatureUnavailableError("Mixing FieldProcessor objects "
+					      "and string prefixes currently "
+					      "not supported");
+    // Only add if it's not already there as duplicate entries just result
+    // in redundant query terms.  This is a linear scan so makes calling
+    // add_prefix() n times for the same field value with different prefix
+    // values O(n²), but you wouldn't realistically want to map one field
+    // to more than a handful of prefixes.
+    auto& prefixes = p.prefixes;
+    if (find(prefixes.begin(), prefixes.end(), prefix) == prefixes.end()) {
+	p.append(prefix);
+    }
 }
 
 void
-QueryParser::Internal::add_prefix(const string &field, FieldProcessor *proc)
+QueryParser::Internal::add_prefix(string_view field, FieldProcessor* proc)
 {
-    auto r = field_map.try_emplace(field, NON_BOOLEAN, proc);
-    if (!r.second) {
-	auto&& p = r.first->second;
-	// Check that this is the same type of filter as the existing one(s).
-	if (p.type != NON_BOOLEAN) {
-	    throw Xapian::InvalidOperationError("Can't use add_prefix() and add_boolean_prefix() on the same field name, or add_boolean_prefix() with different values of the 'exclusive' parameter");
-	}
-	if (!p.prefixes.empty())
-	    throw Xapian::FeatureUnavailableError("Mixing FieldProcessor objects and string prefixes currently not supported");
-	throw Xapian::FeatureUnavailableError("Multiple FieldProcessor objects for the same prefix currently not supported");
-   }
+    // Allow for optional trailing `:` for consistency with how range prefixes
+    // are specified.
+    if (!field.empty() && field.back() == ':') {
+	field = field.substr(0, field.size() - 1);
+    }
+#ifdef  __cpp_lib_associative_heterogeneous_insertion // C++26
+    auto [it, inserted] = field_map.try_emplace(field,
+						NON_BOOLEAN, proc);
+#else
+    auto [it, inserted] = field_map.try_emplace(string(field),
+						NON_BOOLEAN, proc);
+#endif
+    if (inserted)
+	return;
+
+    auto&& p = it->second;
+    // Check that this is the same type of filter as the existing one(s).
+    if (p.type != NON_BOOLEAN) {
+	throw Xapian::InvalidOperationError("Can't use add_prefix() and "
+					    "add_boolean_prefix() on the "
+					    "same field name, or "
+					    "add_boolean_prefix() with "
+					    "different values of the "
+					    "'exclusive' parameter");
+    }
+    if (!p.prefixes.empty())
+	throw Xapian::FeatureUnavailableError("Mixing FieldProcessor objects "
+					      "and string prefixes currently "
+					      "not supported");
+    throw Xapian::FeatureUnavailableError("Multiple FieldProcessor objects "
+					  "for the same prefix currently not "
+					  "supported");
 }
 
 void
-QueryParser::Internal::add_boolean_prefix(const string &field,
-					  const string &prefix,
+QueryParser::Internal::add_boolean_prefix(string_view field,
+					  string_view prefix,
 					  const string* grouping)
 {
+    // Allow for optional trailing `:` for consistency with how range prefixes
+    // are specified.
+    if (!field.empty() && field.back() == ':') {
+	field = field.substr(0, field.size() - 1);
+    }
     // Don't allow the empty prefix to be set as boolean as it doesn't
     // really make sense.
     if (field.empty())
 	throw Xapian::UnimplementedError("Can't set the empty prefix to be a boolean filter");
-    if (!grouping) grouping = &field;
-    filter_type type = grouping->empty() ? BOOLEAN : BOOLEAN_EXCLUSIVE;
-    auto r = field_map.try_emplace(field, type, prefix, *grouping);
-    if (!r.second) {
-	auto&& p = r.first->second;
-	// Check that this is the same type of filter as the existing one(s).
-	if (p.type != type) {
-	    throw Xapian::InvalidOperationError("Can't use add_prefix() and add_boolean_prefix() on the same field name, or add_boolean_prefix() with different values of the 'exclusive' parameter"); // FIXME
-	}
-	if (p.proc)
-	    throw Xapian::FeatureUnavailableError("Mixing FieldProcessor objects and string prefixes currently not supported");
-	// Only add if it's not already there as duplicate entries just result
-	// in redundant query terms.  This is a linear scan so makes calling
-	// add_prefix() n times for the same field value with different prefix
-	// values O(n²), but you wouldn't realistically want to map one field
-	// to more than a handful of prefixes.
-	auto& prefixes = p.prefixes;
-	if (find(prefixes.begin(), prefixes.end(), prefix) == prefixes.end()) {
-	    prefixes.push_back(prefix); // FIXME grouping
-	}
-   }
+    // If grouping == nullptr then it defaults to field which is not empty().
+    bool inclusive = grouping && grouping->empty();
+    filter_type type = inclusive ? BOOLEAN : BOOLEAN_EXCLUSIVE;
+#ifdef __cpp_lib_associative_heterogeneous_insertion // C++26
+    auto [it, inserted] = field_map.try_emplace(field, type,
+						grouping ? *grouping : field);
+#else
+    auto [it, inserted] = field_map.try_emplace(string(field), type,
+						grouping ? *grouping : field);
+#endif
+    auto&& p = it->second;
+    if (inserted) {
+	p.append(prefix);
+	return;
+    }
+
+    // Check that this is the same type of filter as the existing one(s).
+    if (p.type != type) {
+	throw Xapian::InvalidOperationError("Can't use add_prefix() and "
+					    "add_boolean_prefix() on the "
+					    "same field name, or "
+					    "add_boolean_prefix() with "
+					    "different values of the "
+					    "'exclusive' parameter"); // FIXME
+    }
+    if (p.proc)
+	throw Xapian::FeatureUnavailableError("Mixing FieldProcessor objects "
+					      "and string prefixes currently "
+					      "not supported");
+    // Only add if it's not already there as duplicate entries just result
+    // in redundant query terms.  This is a linear scan so makes calling
+    // add_prefix() n times for the same field value with different prefix
+    // values O(n²), but you wouldn't realistically want to map one field
+    // to more than a handful of prefixes.
+    auto& prefixes = p.prefixes;
+    if (find(prefixes.begin(), prefixes.end(), prefix) == prefixes.end()) {
+	prefixes.emplace_back(prefix); // FIXME grouping
+    }
 }
 
 void
-QueryParser::Internal::add_boolean_prefix(const string &field,
+QueryParser::Internal::add_boolean_prefix(string_view field,
 					  FieldProcessor *proc,
 					  const string* grouping)
 {
+    // Allow for optional trailing `:` for consistency with how range prefixes
+    // are specified.
+    if (!field.empty() && field.back() == ':') {
+	field = field.substr(0, field.size() - 1);
+    }
     // Don't allow the empty prefix to be set as boolean as it doesn't
     // really make sense.
     if (field.empty())
 	throw Xapian::UnimplementedError("Can't set the empty prefix to be a boolean filter");
-    if (!grouping) grouping = &field;
-    filter_type type = grouping->empty() ? BOOLEAN : BOOLEAN_EXCLUSIVE;
-    auto r = field_map.try_emplace(field, type, proc, *grouping);
-    if (!r.second) {
-	auto&& p = r.first->second;
-	// Check that this is the same type of filter as the existing one(s).
-	if (p.type != type) {
-	    throw Xapian::InvalidOperationError("Can't use add_prefix() and add_boolean_prefix() on the same field name, or add_boolean_prefix() with different values of the 'exclusive' parameter"); // FIXME
-	}
-	if (!p.prefixes.empty())
-	    throw Xapian::FeatureUnavailableError("Mixing FieldProcessor objects and string prefixes currently not supported");
-	throw Xapian::FeatureUnavailableError("Multiple FieldProcessor objects for the same prefix currently not supported");
-   }
+    // If grouping == nullptr then it defaults to field which is not empty().
+    bool inclusive = grouping && grouping->empty();
+    filter_type type = inclusive ? BOOLEAN : BOOLEAN_EXCLUSIVE;
+#ifdef __cpp_lib_associative_heterogeneous_insertion // C++26
+    auto [it, inserted] = field_map.try_emplace(field, type, proc,
+						grouping ? *grouping : field);
+#else
+    auto [it, inserted] = field_map.try_emplace(string(field), type, proc,
+						grouping ? *grouping : field);
+#endif
+    if (inserted)
+	return;
+
+    auto&& p = it->second;
+    // Check that this is the same type of filter as the existing one(s).
+    if (p.type != type) {
+	throw Xapian::InvalidOperationError("Can't use add_prefix() and "
+					    "add_boolean_prefix() on the "
+					    "same field name, or "
+					    "add_boolean_prefix() with "
+					    "different values of the "
+					    "'exclusive' parameter"); // FIXME
+    }
+    if (!p.prefixes.empty())
+	throw Xapian::FeatureUnavailableError("Mixing FieldProcessor objects "
+					      "and string prefixes currently "
+					      "not supported");
+    throw Xapian::FeatureUnavailableError("Multiple FieldProcessor objects "
+					  "for the same prefix currently not "
+					  "supported");
 }
 
 inline bool
@@ -1010,7 +1094,7 @@ QueryParser::Internal::parse_query(string_view qs, unsigned flags,
 
     // If default_prefix is specified, use it.  Otherwise, use any list
     // that has been set for the empty prefix.
-    const FieldInfo def_pfx(NON_BOOLEAN, default_prefix);
+    const FieldInfo def_pfx = FieldInfo{NON_BOOLEAN}.append(default_prefix);
     {
 	const FieldInfo * default_field_info = &def_pfx;
 	if (default_prefix.empty()) {
@@ -1222,13 +1306,34 @@ just_had_operator_needing_term:
 			// Or if not after whitespace, +, -, or an open bracket.
 			break;
 		    }
-		    if (!is_wordchar(*it)) {
+		    if (!is_wordchar(*it) && !is_double_quote(*it)) {
 			// Ignore if not followed by a word character.
 			break;
 		    }
 		    Parse(&parser, SYNONYM, NULL, &state);
 		    mode = EXPLICIT_SYNONYM;
-		    goto just_had_operator_needing_term;
+		    if (!is_double_quote(*it))
+			goto just_had_operator_needing_term;
+
+		    // Support ~"foo bar" syntax to explicitly expand
+		    // a multi-word synonym.
+
+		    // Skip whitespace.
+		    ++it;
+		    it = find_if(it, end, is_not_whitespace);
+		    if (it == end) {
+			// Ignore an unmatched " at the end of the query to
+			// avoid generating an empty pair of QUOTEs which will
+			// cause a parse error.
+			goto done;
+		    }
+		    if (is_double_quote(*it)) {
+			// Ignore empty ~"".
+			newprev = *it++;
+			break;
+		    }
+		    Parse(&parser, QUOTE, NULL, &state);
+		    mode = IN_QUOTES;
 		}
 		break;
 	      case '*':
@@ -1971,6 +2076,46 @@ class Terms {
 	return as_opwindow_query(Query::OP_PHRASE, 0);
     }
 
+    /// Convert to a Xapian::Query * using adjacent OP_PHRASE.
+    Query* as_synonym_phrase_query(State* state) const {
+	string name;
+	termpos pos = 0;
+	for (Term* t : terms) {
+	    if (!name.empty()) {
+		name += ' ';
+	    } else {
+		pos = t->pos;
+	    }
+	    name += t->name;
+	}
+
+	for (auto&& prefix : *prefixes) {
+	    // Only try unstemmed for multi-word.
+	    string term;
+	    if (!prefix.empty()) {
+		term += prefix;
+		if (prefix_needs_colon(prefix, name[0])) term += ':';
+	    }
+	    term += name;
+
+	    Xapian::Database db = state->get_database();
+	    Xapian::TermIterator syn = db.synonyms_begin(term);
+	    Xapian::TermIterator end = db.synonyms_end(term);
+
+	    // Caution: this does `delete this;`!
+	    Query* q = as_opwindow_query(Query::OP_PHRASE, 0);
+	    // FIXME: Is this right when there's more than one entry in
+	    // prefixes?
+	    Query* q2 = new Query(q->OP_SYNONYM,
+				  SynonymIterator(syn, pos, q),
+				  SynonymIterator(end));
+	    delete q;
+	    return q2;
+	    // FIXME: Handle multiple prefixes properly...
+	}
+	return new Query();
+    }
+
     /// Convert to a Xapian::Query * using OP_NEAR.
     Query * as_near_query() const {
 	// The common meaning of 'a NEAR b' is "a within 10 terms of b", which
@@ -2416,6 +2561,9 @@ compound_term(T) ::= SYNONYM TERM(U). {
     T = new Query(U->get_query_with_synonyms());
     delete U;
 }
+
+compound_term(T) ::= SYNONYM QUOTE phrase(P) QUOTE.
+    { T = P->as_synonym_phrase_query(state); }
 
 compound_term(T) ::= UNBROKEN_WORDS(U). {
     { T = U->as_unbroken_query(); /*T-overwrites-U*/ }

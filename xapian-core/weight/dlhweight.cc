@@ -157,12 +157,6 @@ DLHWeight::init(double factor)
 string
 DLHWeight::name() const
 {
-    return "Xapian::DLHWeight";
-}
-
-string
-DLHWeight::short_name() const
-{
     return "dlh";
 }
 
@@ -201,20 +195,6 @@ double
 DLHWeight::get_maxpart() const
 {
     return upper_bound;
-}
-
-double
-DLHWeight::get_sumextra(Xapian::termcount,
-			Xapian::termcount,
-			Xapian::termcount) const
-{
-    return 0;
-}
-
-double
-DLHWeight::get_maxextra() const
-{
-    return 0;
 }
 
 DLHWeight *

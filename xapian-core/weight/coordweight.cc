@@ -43,12 +43,6 @@ CoordWeight::init(double factor_)
 string
 CoordWeight::name() const
 {
-    return "Xapian::CoordWeight";
-}
-
-string
-CoordWeight::short_name() const
-{
     return "coord";
 }
 
@@ -78,20 +72,6 @@ double
 CoordWeight::get_maxpart() const
 {
     return factor;
-}
-
-double
-CoordWeight::get_sumextra(Xapian::termcount,
-			  Xapian::termcount,
-			  Xapian::termcount) const
-{
-    return 0;
-}
-
-double
-CoordWeight::get_maxextra() const
-{
-    return 0;
 }
 
 CoordWeight *

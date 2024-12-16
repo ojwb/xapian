@@ -265,11 +265,20 @@ if test -z "$CC_FOR_BUILD" ; then
 fi
 AC_ARG_VAR([CC_FOR_BUILD], [C compiler command for native compilation (needed to compile build tools during cross-builds)])
 
+dnl Enable large file support if possible.  There's a bug in this macro in
+dnl autoconf 2.72 where it always tests with the C compiler.  We could just
+dnl let it, but Xapian is only C++ so the C compiler could be a totally
+dnl different compiler with different large-file settings, so we temporarily
+dnl set CC to the C++ compiler in order to actually test the C++ compiler.
+AC_LANG([C])
+save_CC=$CC
+CC=$CXX
+AC_SYS_LARGEFILE
+CC=$save_CC
+
 dnl Run tests using the C++ compiler.
 AC_LANG([C++])
 
-dnl Enable large file support if possible.
-AC_SYS_LARGEFILE
 dnl With xlC on AIX, -D_LARGE_FILES changes the ABI of std::string, so it
 dnl also needs to be used when compiling user code.
 abi_affecting_cxxflags=
@@ -1409,21 +1418,31 @@ AH_BOTTOM(
 # pragma warning(disable:4566)
 
 /* POSIX get to deprecate POSIX things, not Microsoft. */
-# define _CRT_NONSTDC_NO_WARNINGS
-# define _CRT_SECURE_NO_WARNINGS
+# ifndef _CRT_NONSTDC_NO_WARNINGS
+#  define _CRT_NONSTDC_NO_WARNINGS
+# endif
+# ifndef _CRT_SECURE_NO_WARNINGS
+#  define _CRT_SECURE_NO_WARNINGS
+# endif
 
 /* WSAAddressToStringA() is deprecated and we should apparently use
  * WSAAddressToStringW(), but we don't want wide character output so
  * that would mean we'd have to convert the result back to ASCII
  * which is a really stupid idea.
  */
-# define _WINSOCK_DEPRECATED_NO_WARNINGS
+# ifndef _WINSOCK_DEPRECATED_NO_WARNINGS
+#  define _WINSOCK_DEPRECATED_NO_WARNINGS
+# endif
 
 /* Tell MSVC we want M_PI, etc defined. */
-# define _USE_MATH_DEFINES
+# ifndef _USE_MATH_DEFINES
+#  define _USE_MATH_DEFINES
+# endif
 
 /* Tell MSVC we don't want max() and min() macros defined. */
-# define NOMINMAX
+# ifndef NOMINMAX
+#  define NOMINMAX
+# endif
 #endif
 
 /* Tell zlib to include const in method signatures.  Define this in config.h

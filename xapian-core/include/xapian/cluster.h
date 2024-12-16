@@ -119,9 +119,6 @@ class XAPIAN_VISIBILITY_DEFAULT DocumentSet {
     Xapian::doccount size() const;
 
     /// Return the Document in the DocumentSet at index i
-    Xapian::Document& operator[](Xapian::doccount i);
-
-    /// Return the Document in the DocumentSet at index i
     const Xapian::Document& operator[](Xapian::doccount i) const;
 
     /** Add a new Document to the DocumentSet
@@ -218,9 +215,9 @@ class XAPIAN_VISIBILITY_DEFAULT TermListGroup : public FreqSource {
      *
      *  @param tname	The term for which to return the term frequency
      */
-    doccount get_termfreq(const std::string &tname) const;
+    doccount get_termfreq(const std::string& tname) const override;
 
-    doccount get_doccount() const;
+    doccount get_doccount() const override;
 };
 
 /** Abstract class representing a point in the VSM
@@ -243,7 +240,9 @@ class XAPIAN_VISIBILITY_DEFAULT PointType
      *  @param weight	The weight to which the mapping of the
      *			term is to be set
      */
-    void set_weight(std::string_view term, double weight);
+    void set_weight(std::string_view term, double weight) {
+	weights[std::string(term)] = weight;
+    }
 
   public:
     /// Default constructor
@@ -262,13 +261,18 @@ class XAPIAN_VISIBILITY_DEFAULT PointType
      *
      *  @param term	Term which is to be searched
      */
-    bool contains(std::string_view term) const;
+    bool contains(std::string_view term) const {
+	return weights.find(std::string(term)) != weights.end();
+    }
 
     /** Return the TF-IDF weight associated with a certain term
      *
      *  @param term	Term for which TF-IDF weight is returned
      */
-    double get_weight(std::string_view term) const;
+    double get_weight(std::string_view term) const {
+	auto it = weights.find(std::string(term));
+	return (it == weights.end()) ? 0.0 : it->second;
+    }
 
     /** Add the weight 'weight' to the mapping of a term
      *
@@ -276,13 +280,15 @@ class XAPIAN_VISIBILITY_DEFAULT PointType
      *  @param weight	Weight which has to be added to the existing
      *			mapping of the term
      */
-    void add_weight(std::string_view term, double weight);
+    void add_weight(std::string_view term, double weight) {
+	weights[std::string(term)] += weight;
+    }
 
     /// Return the pre-computed squared magnitude
-    double get_magnitude() const;
+    double get_magnitude() const { return magnitude; }
 
     /// Return the size of the termlist
-    Xapian::termcount termlist_size() const;
+    Xapian::termcount termlist_size() const { return weights.size(); }
 
     /** Start reference counting this object.
      *
@@ -329,7 +335,7 @@ class XAPIAN_VISIBILITY_DEFAULT Point : public PointType {
     Point(const FreqSource& freqsource, const Document& document);
 
     /// Returns the document corresponding to this Point
-    Document get_document() const;
+    Document get_document() const { return document; }
 };
 
 /** Class to represent cluster centroids in the vector space
@@ -337,7 +343,7 @@ class XAPIAN_VISIBILITY_DEFAULT Point : public PointType {
 class XAPIAN_VISIBILITY_DEFAULT Centroid : public PointType {
   public:
     /// Default constructor
-    Centroid();
+    Centroid() { }
 
     /** Constructor with Point argument
      *
@@ -356,7 +362,7 @@ class XAPIAN_VISIBILITY_DEFAULT Centroid : public PointType {
     void divide(double cluster_size);
 
     /// Clear the terms and corresponding values of the centroid
-    void clear();
+    void clear() { weights.clear(); }
 };
 
 /** Class to represents a Cluster which contains Points and Centroid
@@ -419,9 +425,6 @@ class XAPIAN_VISIBILITY_DEFAULT Cluster {
 
     /// Clear the cluster weights
     void clear();
-
-    /// Return the point at the given index in the cluster
-    Point& operator[](Xapian::doccount i);
 
     /// Return the point at the given index in the cluster
     const Point& operator[](Xapian::doccount i) const;
@@ -504,9 +507,6 @@ class XAPIAN_VISIBILITY_DEFAULT ClusterSet {
     Xapian::doccount size() const;
 
     /// Return the cluster at index 'i'
-    Cluster& operator[](Xapian::doccount i);
-
-    /// Return the cluster at index 'i'
     const Cluster& operator[](Xapian::doccount i) const;
 
     /// Clear all the clusters in the ClusterSet
@@ -541,10 +541,10 @@ class XAPIAN_VISIBILITY_DEFAULT CosineDistance : public Similarity {
     /** Calculates and returns the cosine similarity using the
      *  formula  cos(theta) = a.b/(|a|*|b|)
      */
-    double similarity(const PointType &a, const PointType &b) const;
+    double similarity(const PointType& a, const PointType& b) const override;
 
     /// Return a string describing this object
-    std::string get_description() const;
+    std::string get_description() const override;
 };
 
 /** Class representing an abstract class for a clusterer to be implemented
@@ -640,7 +640,7 @@ class XAPIAN_VISIBILITY_DEFAULT KMeans : public Clusterer {
      *  @param mset    MSet object containing the documents that are to
      *                 be clustered
      */
-    ClusterSet cluster(const MSet &mset);
+    ClusterSet cluster(const MSet &mset) override;
 
     /** Set the Xapian::Stopper object to be used for identifying stopwords.
      *
@@ -649,10 +649,10 @@ class XAPIAN_VISIBILITY_DEFAULT KMeans : public Clusterer {
      *  @param stop	The Stopper object to set (default NULL, which means no
      *			stopwords)
      */
-    void set_stopper(const Xapian::Stopper *stop = NULL);
+    void set_stopper(const Xapian::Stopper* stop = NULL) { stopper = stop; }
 
     /// Return a string describing this object
-    std::string get_description() const;
+    std::string get_description() const override;
 };
 
 /** LCD clusterer:
@@ -676,10 +676,10 @@ class XAPIAN_VISIBILITY_DEFAULT LCDClusterer : public Clusterer {
      *  @param mset    MSet object containing the documents that are to
      *                 be clustered
      */
-    ClusterSet cluster(const MSet &mset);
+    ClusterSet cluster(const MSet &mset) override;
 
     /// Return a string describing this object
-    std::string get_description() const;
+    std::string get_description() const override;
 };
 }
 #endif // XAPIAN_INCLUDED_CLUSTER_H

@@ -944,14 +944,19 @@ class XAPIAN_VISIBILITY_DEFAULT QueryParser {
      *  In 1.0.3 and earlier, subsequent calls to this method with the same
      *  value of @a field had no effect.
      *
-     *  @param field   The user visible field name
-     *  @param prefix  The term prefix to map this to
+     *  @param field   The user visible field name.  Currently this needs to
+     *		       consist of characters for which
+     *		       Xapian::Unicode::is_wordchar() is true (approximately
+     *		       alphanumerics plus connector punctuation such as `_`).
+     *		       Since 1.4.26 it can optionally end in a `:` for
+     *		       consistency with how range prefixes are specified.
+     *  @param prefix  The term prefix to map this to.
      */
-    void add_prefix(const std::string& field, const std::string& prefix);
+    void add_prefix(std::string_view field, std::string_view prefix);
 
     /** Register a FieldProcessor.
      */
-    void add_prefix(const std::string& field, Xapian::FieldProcessor * proc);
+    void add_prefix(std::string_view field, Xapian::FieldProcessor* proc);
 
     /** Add a boolean term prefix allowing the user to restrict a
      *  search with a boolean filter specified in the free text query.
@@ -995,7 +1000,13 @@ class XAPIAN_VISIBILITY_DEFAULT QueryParser {
      *  In 1.0.3 and earlier, subsequent calls to this method with the same
      *  value of @a field had no effect.
      *
-     *  @param field   The user visible field name
+     *  @param field   The user visible field name, which may not be empty
+     *		       for a boolean filter.  Currently this needs to
+     *		       consist of characters for which
+     *		       Xapian::Unicode::is_wordchar() is true (approximately
+     *		       alphanumerics plus connector punctuation such as `_`).
+     *		       Since 1.4.26 it can optionally end in a `:` for
+     *		       consistency with how range prefixes are specified.
      *  @param prefix  The term prefix to map this to
      *  @param grouping	Controls how multiple filters are combined - filters
      *			with the same grouping value are combined with OP_OR,
@@ -1006,7 +1017,7 @@ class XAPIAN_VISIBILITY_DEFAULT QueryParser {
      *			document can have multiple terms with this prefix).
      *			[default: NULL]
      */
-    void add_boolean_prefix(const std::string& field, const std::string& prefix,
+    void add_boolean_prefix(std::string_view field, std::string_view prefix,
 			    const std::string* grouping = NULL);
 
     /** Add a boolean term prefix allowing the user to restrict a
@@ -1015,7 +1026,13 @@ class XAPIAN_VISIBILITY_DEFAULT QueryParser {
      *  This is an older version of this method - use the version with
      *  the `grouping` parameter in preference to this one.
      *
-     *  @param field   The user visible field name
+     *  @param field   The user visible field name, which may not be empty
+     *		       for a boolean filter.  Currently this needs to
+     *		       consist of characters for which
+     *		       Xapian::Unicode::is_wordchar() is true (approximately
+     *		       alphanumerics plus connector punctuation such as `_`).
+     *		       Since 1.4.26 it can optionally end in a `:` for
+     *		       consistency with how range prefixes are specified.
      *  @param prefix  The term prefix to map this to
      *  @param exclusive Controls how multiple filters are combined.  If
      *			true then @a prefix is used as the `grouping` value,
@@ -1025,7 +1042,7 @@ class XAPIAN_VISIBILITY_DEFAULT QueryParser {
      *			each filter (this is sometimes useful when each
      *			document can have multiple terms with this prefix).
      */
-    void add_boolean_prefix(const std::string& field, const std::string& prefix,
+    void add_boolean_prefix(std::string_view field, std::string_view prefix,
 			    bool exclusive) {
 	if (exclusive) {
 	    add_boolean_prefix(field, prefix);
@@ -1037,7 +1054,7 @@ class XAPIAN_VISIBILITY_DEFAULT QueryParser {
 
     /** Register a FieldProcessor for a boolean prefix.
      */
-    void add_boolean_prefix(const std::string& field,
+    void add_boolean_prefix(std::string_view field,
 			    Xapian::FieldProcessor* proc,
 			    const std::string* grouping = NULL);
 
@@ -1046,7 +1063,7 @@ class XAPIAN_VISIBILITY_DEFAULT QueryParser {
      *  This is an older version of this method - use the version with
      *  the `grouping` parameter in preference to this one.
      */
-    void add_boolean_prefix(const std::string& field,
+    void add_boolean_prefix(std::string_view field,
 			    Xapian::FieldProcessor* proc,
 			    bool exclusive) {
 	if (exclusive) {

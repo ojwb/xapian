@@ -105,6 +105,10 @@ class MultiDatabase : public Xapian::Database::Internal {
 
     Xapian::termcount get_wdf_upper_bound(std::string_view term) const;
 
+    Xapian::termcount get_unique_terms_lower_bound() const;
+
+    Xapian::termcount get_unique_terms_upper_bound() const;
+
     ValueList* open_value_list(Xapian::valueno slot) const;
 
     Xapian::termcount get_doclength(Xapian::docid did) const;
@@ -139,7 +143,7 @@ class MultiDatabase : public Xapian::Database::Internal {
     bool locked() const;
 
     void write_changesets_to_fd(int fd,
-				const std::string& start_revision,
+				std::string_view start_revision,
 				bool need_whole_db,
 				Xapian::ReplicationInfo* info);
 

@@ -2,7 +2,7 @@
  * @brief Tests of percentage calculations.
  */
 /* Copyright (C) 2008,2009 Lemur Consulting Ltd
- * Copyright (C) 2008,2009,2010,2011,2012,2014 Olly Betts
+ * Copyright (C) 2008,2009,2010,2011,2012,2014,2024 Olly Betts
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 
 #include "api_percentages.h"
 
+#define XAPIAN_DEPRECATED(X) X
 #include <xapian.h>
 
 #include "apitest.h"
@@ -90,7 +91,9 @@ class MyPostingSource : public Xapian::PostingSource {
 	if (wt > get_maxweight()) set_maxweight(wt);
     }
 
-    void init(const Xapian::Database&) override { started = false; }
+    void reset(const Xapian::Database&, Xapian::doccount) override {
+	started = false;
+    }
 
     double get_weight() const override { return i->second; }
 
@@ -244,6 +247,13 @@ DEFINE_TESTCASE(topercent5, backend) {
     // It would be odd if the non-existent term was worth more, but in 1.0.x
     // the top hit got 4% in this testcase.  In 1.2.x it gets 50%, which is
     // better, but >50% would be more natural.
+    TEST_REL(mset[0].get_percent(), >=, 50);
+
+    // Repeat tests with TradWeight.
+    enquire.set_weighting_scheme(Xapian::TradWeight());
+    mset = enquire.get_mset(0, 10);
+    TEST(!mset.empty());
+    TEST(mset[0].get_percent() < 100);
     TEST_REL(mset[0].get_percent(), >=, 50);
 }
 

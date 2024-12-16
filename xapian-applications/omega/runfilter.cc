@@ -52,6 +52,10 @@
 #include "setenv.h"
 #include "stringutils.h"
 
+#ifdef __WIN32__
+# include "append_filename_arg.h"
+#endif
+
 using namespace std;
 
 #ifndef __WIN32__
@@ -85,7 +89,7 @@ single_quoted:
 	    if (j == s.npos) {
 		// Unmatched ' in command string.
 		// dash exits 2 in this case, bash exits 1.
-		_exit(2);
+		throw ReadError(2 << 8);
 	    }
 	    // Replace four character sequence '\'' with ' - this is
 	    // how a single quote inside single quotes gets escaped.
@@ -248,8 +252,7 @@ runfilter_init()
 }
 
 void
-run_filter(int fd_in, const string& cmd, bool use_shell, string* out,
-	   int alt_status)
+run_filter(int fd_in, const char* const cmd[], string* out, int alt_status)
 {
 #if defined HAVE_FORK && defined HAVE_SOCKETPAIR
     // We want to be able to get the exit status of the child process.
@@ -304,6 +307,344 @@ run_filter(int fd_in, const string& cmd, bool use_shell, string* out,
 		static_cast<rlim_t>(mem),
 		RLIM_INFINITY
 	    };
+	    // FIXME: setrlimit() is not listed in signal-safety(7) as safe to
+	    // call between fork() and exec...
+#ifdef RLIMIT_AS
+	    setrlimit(RLIMIT_AS, &ram_limit);
+#elif defined RLIMIT_VMEM
+	    setrlimit(RLIMIT_VMEM, &ram_limit);
+#else
+	    // Only limits the data segment rather than the total address
+	    // space, but that's better than nothing.
+	    setrlimit(RLIMIT_DATA, &ram_limit);
+#endif
+	}
+#endif
+#endif
+
+	execvp(cmd[0], const_cast<char **>(cmd));
+	// Emulate shell behaviour and exit with status 127 if the command
+	// isn't found, and status 126 for other problems.  In particular, we
+	// rely on 127 below to throw NoSuchFilter.
+	_exit(errno == ENOENT ? 127 : 126);
+    }
+
+    // We're the parent process.
+#ifdef HAVE_SETPGID
+    pid_to_kill_on_signal = -child;
+#else
+    pid_to_kill_on_signal = child;
+#endif
+
+    // Close the child's side of the socket pair.
+    close(fds[1]);
+    if (child == -1) {
+	// fork() failed.
+	close(fds[0]);
+	throw ReadError("fork failed");
+    }
+
+    int fd = fds[0];
+
+    fd_set readfds;
+    FD_ZERO(&readfds);
+    while (true) {
+	// If we wait 300 seconds (5 minutes) without getting data from the
+	// filter, then give up to avoid waiting forever for a filter which
+	// has ended up blocked waiting for something which will never happen.
+	struct timeval tv;
+	tv.tv_sec = 300;
+	tv.tv_usec = 0;
+	FD_SET(fd, &readfds);
+	int r = select(fd + 1, &readfds, NULL, NULL, &tv);
+	if (r <= 0) {
+	    if (r < 0) {
+		if (errno == EINTR || errno == EAGAIN) {
+		    // select() interrupted by a signal, so retry.
+		    continue;
+		}
+		cerr << "Reading from filter failed (" << strerror(errno) << ")"
+		     << endl;
+	    } else {
+		cerr << "Filter inactive for too long" << endl;
+	    }
+#ifdef HAVE_SETPGID
+	    kill(-child, SIGKILL);
+#else
+	    kill(child, SIGKILL);
+#endif
+	    close(fd);
+	    int status = 0;
+	    while (waitpid(child, &status, 0) < 0 && errno == EINTR) { }
+	    pid_to_kill_on_signal = 0;
+	    throw ReadError(status);
+	}
+
+	char buf[4096];
+	ssize_t res = read(fd, buf, sizeof(buf));
+	if (res == 0) break;
+	if (res == -1) {
+	    if (errno == EINTR) {
+		// read() interrupted by a signal, so retry.
+		continue;
+	    }
+	    close(fd);
+#ifdef HAVE_SETPGID
+	    kill(-child, SIGKILL);
+#endif
+	    int status = 0;
+	    while (waitpid(child, &status, 0) < 0 && errno == EINTR) { }
+	    pid_to_kill_on_signal = 0;
+	    throw ReadError(status);
+	}
+	if (out) out->append(buf, res);
+    }
+
+    close(fd);
+#ifdef HAVE_SETPGID
+    kill(-child, SIGKILL);
+#endif
+    int status = 0;
+    while (waitpid(child, &status, 0) < 0) {
+	if (errno != EINTR)
+	    throw ReadError("wait pid failed");
+    }
+    pid_to_kill_on_signal = 0;
+
+    if (WIFEXITED(status)) {
+	int exit_status = WEXITSTATUS(status);
+	if (exit_status == 0 || exit_status == alt_status)
+	    return;
+	if (exit_status == 127)
+	    throw NoSuchFilter();
+    }
+# ifdef SIGXCPU
+    if (WIFSIGNALED(status) && WTERMSIG(status) == SIGXCPU) {
+	cerr << "Filter process consumed too much CPU time" << endl;
+    }
+# endif
+#else
+    LARGE_INTEGER counter;
+    // QueryPerformanceCounter() will always succeed on XP and later
+    // and gives us a counter which increments each CPU clock cycle
+    // on modern hardware (Pentium or newer).
+    QueryPerformanceCounter(&counter);
+    char pipename[256];
+    snprintf(pipename, sizeof(pipename),
+	     "\\\\.\\pipe\\xapian-omega-filter-%lx-%lx_%" PRIx64,
+	     static_cast<unsigned long>(GetCurrentProcessId()),
+	     static_cast<unsigned long>(GetCurrentThreadId()),
+	     static_cast<unsigned long long>(counter.QuadPart));
+    pipename[sizeof(pipename) - 1] = '\0';
+    // Create a pipe so we can read stdout from the child process.
+    HANDLE hPipe = CreateNamedPipe(pipename,
+				   PIPE_ACCESS_DUPLEX|FILE_FLAG_OVERLAPPED,
+				   0,
+				   1, 4096, 4096, NMPWAIT_USE_DEFAULT_WAIT,
+				   NULL);
+
+    if (hPipe == INVALID_HANDLE_VALUE) {
+	throw ReadError("CreateNamedPipe failed");
+    }
+
+    HANDLE hClient = CreateFile(pipename,
+				GENERIC_READ|GENERIC_WRITE, 0, NULL,
+				OPEN_EXISTING,
+				FILE_FLAG_OVERLAPPED, NULL);
+
+    if (hClient == INVALID_HANDLE_VALUE) {
+	throw ReadError("CreateFile failed");
+    }
+
+    if (!ConnectNamedPipe(hPipe, NULL) &&
+	GetLastError() != ERROR_PIPE_CONNECTED) {
+	throw ReadError("ConnectNamedPipe failed");
+    }
+
+    // Set the appropriate handles to be inherited by the child process.
+    SetHandleInformation(hClient, HANDLE_FLAG_INHERIT, 1);
+
+    // Create the child process.
+    PROCESS_INFORMATION procinfo;
+    memset(&procinfo, 0, sizeof(PROCESS_INFORMATION));
+
+    STARTUPINFO startupinfo;
+    memset(&startupinfo, 0, sizeof(STARTUPINFO));
+    startupinfo.cb = sizeof(STARTUPINFO);
+    startupinfo.hStdError = GetStdHandle(STD_ERROR_HANDLE);
+    startupinfo.hStdOutput = hClient;
+    // FIXME: Is NULL the way to say "/dev/null"?
+    // It's what GetStdHandle() is documented to return if "an application does
+    // not have associated standard handles"...
+    startupinfo.hStdInput = fd_in >= 0 ? (HANDLE) _get_osfhandle(fd_in) : NULL;
+    startupinfo.dwFlags |= STARTF_USESTDHANDLES;
+
+    string cmdline;
+    for (auto i = cmd; *i; ++i) {
+	append_filename_argument(cmdline, *i, (i != cmd));
+    }
+    // For some reason Windows wants a modifiable command line so we
+    // pass `&cmdline[0]` rather than `cmdline.c_str()`.
+    if (!CreateProcess(NULL, &cmdline[0],
+		       0, 0, TRUE, 0, 0, 0,
+		       &startupinfo, &procinfo)) {
+	if (GetLastError() == ERROR_FILE_NOT_FOUND)
+	    throw NoSuchFilter();
+	throw ReadError("CreateProcess failed");
+    }
+
+    CloseHandle(hClient);
+    CloseHandle(procinfo.hThread);
+    HANDLE child = procinfo.hProcess;
+
+    while (true) {
+	char buf[4096];
+	DWORD received;
+	if (!ReadFile(hPipe, buf, sizeof(buf), &received, NULL)) {
+	    throw ReadError("ReadFile failed");
+	}
+	if (received == 0) break;
+
+	if (out) out->append(buf, received);
+    }
+    CloseHandle(hPipe);
+
+    WaitForSingleObject(child, INFINITE);
+    DWORD rc;
+    while (GetExitCodeProcess(child, &rc) && rc == STILL_ACTIVE) {
+	Sleep(100);
+    }
+    CloseHandle(child);
+    int status = int(rc);
+    if (status == 0 || status == alt_status)
+	return;
+
+#endif
+    throw ReadError(status);
+}
+
+void
+run_filter(int fd_in, const string& cmd, bool use_shell, string* out,
+	   int alt_status)
+{
+#if defined HAVE_FORK && defined HAVE_SOCKETPAIR
+    // We want to be able to get the exit status of the child process.
+    signal(SIGCHLD, SIG_DFL);
+
+    int fds[2];
+    if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, fds) < 0)
+	throw ReadError("socketpair failed");
+    // Ensure fds[1] != 0 to simplify handling in child process.
+    if (rare(fds[1] == 0)) swap(fds[0], fds[1]);
+
+    string s;
+    vector<const char *> argv;
+    vector<pair<const char *, const char*>> env;
+    vector<pair<int, int>> dups;
+    if (!use_shell) {
+	// Parse the command line before we fork() it's not safe to call
+	// malloc() between fork() and exec and std::string and std::vector
+	// creation is likely to need to allocate memory.
+	//
+	// FIXME: Maybe we should do this once per command and cache the
+	// results.
+	s = cmd;
+	// Handle any environment variable assignments.
+	// Name must start with alpha or '_', contain only alphanumerics and
+	// '_', and there must be no quoting of either the name or the '='.
+	size_t j = 0;
+	while (true) {
+	    j = s.find_first_not_of(" \t\n", j);
+	    if (!(C_isalpha(s[j]) || s[j] == '_')) break;
+	    size_t i = j;
+	    do ++j; while (C_isalnum(s[j]) || s[j] == '_');
+	    if (s[j] != '=') {
+		j = i;
+		break;
+	    }
+
+	    size_t eq = j;
+	    unquote(s, j);
+	    s[eq] = '\0';
+	    env.emplace_back(&s[i], &s[eq + 1]);
+	    j = s.find_first_not_of(" \t\n", j);
+	}
+
+	while (true) {
+	    size_t i = s.find_first_not_of(" \t\n", j);
+	    if (i == string::npos) break;
+	    bool quoted = unquote(s, j);
+	    const char * word = s.c_str() + i;
+	    if (!quoted) {
+		// Handle simple cases of redirection.
+		if (strcmp(word, ">/dev/null") == 0) {
+		    dups.emplace_back(devnull, 1);
+		    continue;
+		}
+		if (strcmp(word, "2>/dev/null") == 0) {
+		    dups.emplace_back(devnull, 2);
+		    continue;
+		}
+		if (strcmp(word, "2>&1") == 0) {
+		    dups.emplace_back(1, 2);
+		    continue;
+		}
+		if (strcmp(word, "1>&2") == 0) {
+		    dups.emplace_back(2, 1);
+		    continue;
+		}
+	    }
+	    argv.push_back(word);
+	}
+	if (argv.empty()) return; // Empty command!
+	argv.push_back(NULL);
+    }
+
+    pid_t child = fork();
+    if (child == 0) {
+	// We're the child process.
+
+#ifdef HAVE_SETPGID
+	// Put the child process into its own process group, so that we can
+	// easily kill it and any children it in turn forks if we need to.
+	setpgid(0, 0);
+#endif
+
+	// Close the parent's side of the socket pair.
+	close(fds[0]);
+
+	if (fd_in > -1) {
+	    // Connect piped input to stdin if it's not already fd 0.
+	    if (fd_in != 0) {
+		dup2(fd_in, 0);
+		close(fd_in);
+	    }
+	}
+
+	// Connect stdout to our side of the socket pair.
+	dup2(fds[1], 1);
+
+	// Close extraneous file descriptors (but leave stderr alone).
+	closefrom(3);
+
+#ifdef HAVE_SETRLIMIT
+	// Impose some pretty generous resource limits to prevent run-away
+	// filter programs from causing problems.
+
+	// Limit CPU time to 300 seconds (5 minutes).
+	struct rlimit cpu_limit = { 300, RLIM_INFINITY };
+	setrlimit(RLIMIT_CPU, &cpu_limit);
+
+#if defined RLIMIT_AS || defined RLIMIT_VMEM || defined RLIMIT_DATA
+	// Limit process data to free physical memory.
+	long mem = get_free_physical_memory();
+	if (mem > 0) {
+	    struct rlimit ram_limit = {
+		static_cast<rlim_t>(mem),
+		RLIM_INFINITY
+	    };
+	    // FIXME: setrlimit() is not listed in signal-safety(7) as safe to
+	    // call between fork() and exec...
 #ifdef RLIMIT_AS
 	    setrlimit(RLIMIT_AS, &ram_limit);
 #elif defined RLIMIT_VMEM
@@ -322,57 +663,15 @@ run_filter(int fd_in, const string& cmd, bool use_shell, string* out,
 	    _exit(-1);
 	}
 
-	string s(cmd);
-	// Handle any environment variable assignments.
-	// Name must start with alpha or '_', contain only alphanumerics and
-	// '_', and there must be no quoting of either the name or the '='.
-	size_t j = 0;
-	while (true) {
-	    j = s.find_first_not_of(" \t\n", j);
-	    if (!(C_isalpha(s[j]) || s[j] == '_')) break;
-	    size_t i = j;
-	    do ++j; while (C_isalnum(s[j]) || s[j] == '_');
-	    if (s[j] != '=') {
-		j = i;
-		break;
-	    }
-
-	    size_t eq = j;
-	    unquote(s, j);
-	    s[eq] = '\0';
-	    setenv(&s[i], &s[eq + 1], 1);
-	    j = s.find_first_not_of(" \t\n", j);
+	// Process any environment variable assignments.
+	for (auto& e : env) {
+	    setenv(e.first, e.second, 1);
 	}
 
-	vector<const char *> argv;
-	while (true) {
-	    size_t i = s.find_first_not_of(" \t\n", j);
-	    if (i == string::npos) break;
-	    bool quoted = unquote(s, j);
-	    const char * word = s.c_str() + i;
-	    if (!quoted) {
-		// Handle simple cases of redirection.
-		if (strcmp(word, ">/dev/null") == 0) {
-		    dup2(devnull, 1);
-		    continue;
-		}
-		if (strcmp(word, "2>/dev/null") == 0) {
-		    dup2(devnull, 2);
-		    continue;
-		}
-		if (strcmp(word, "2>&1") == 0) {
-		    dup2(1, 2);
-		    continue;
-		}
-		if (strcmp(word, "1>&2") == 0) {
-		    dup2(2, 1);
-		    continue;
-		}
-	    }
-	    argv.push_back(word);
+	// Process any redirections.
+	for (auto& d : dups) {
+	    dup2(d.first, d.second);
 	}
-	if (argv.empty()) _exit(0);
-	argv.push_back(NULL);
 
 	execvp(argv[0], const_cast<char **>(&argv[0]));
 	// Emulate shell behaviour and exit with status 127 if the command

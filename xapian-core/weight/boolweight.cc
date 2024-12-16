@@ -43,12 +43,6 @@ BoolWeight::init(double)
 string
 BoolWeight::name() const
 {
-    return "Xapian::BoolWeight";
-}
-
-string
-BoolWeight::short_name() const
-{
     return "bool";
 }
 
@@ -76,20 +70,6 @@ BoolWeight::get_sumpart(Xapian::termcount, Xapian::termcount,
 
 double
 BoolWeight::get_maxpart() const
-{
-    return 0;
-}
-
-double
-BoolWeight::get_sumextra(Xapian::termcount,
-			 Xapian::termcount,
-			 Xapian::termcount) const
-{
-    return 0;
-}
-
-double
-BoolWeight::get_maxextra() const
 {
     return 0;
 }

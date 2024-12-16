@@ -263,10 +263,10 @@ $freq{term}
 	frequency of a term
 
 $hash{TEXT,HASH}
-    unique ID for ``TEXT`` string using the hashing algorithm specified by
-    ``HASH`` which must be a lowercase string. Currently, this command only
-    supports MD5 which yields a 128-bit hash sequence serialised as 32
-    hexadecimal characters.
+        unique ID for ``TEXT`` string using the hashing algorithm specified by
+        ``HASH`` which must be a lowercase string. Currently, this command only
+        supports MD5 which yields a 128-bit hash sequence serialised as 32
+        hexadecimal characters.
 
 $highlight{TEXT,LIST[,OPEN[,CLOSE]]}
 	html escape string (<>&, etc) and highlight any terms from ``LIST``
@@ -385,6 +385,30 @@ $jsonobject{MAP[,KEYFORMAT[,VALUEFORMAT]]}
         Added in Omega 1.4.15.  Since 1.4.19 the returned JSON no longer
         contains newlines, which makes it usable as a single line serialisation
         format without post-processing.
+
+$jsonobject2{KEYLIST,VALUELIST[,KEYFORMAT[,VALUEFORMAT]]}
+        encodes OmegaScript lists ``KEYLIST`` and ``VALUELIST`` as a JSON
+        object.
+
+        An error is raised if the number of elements in ``KEYS`` and ``VALUES``
+        is not the same (except that it's OK for ``VALUES`` to be empty if
+        ``KEYS`` has a single element, because an OmegaScript list can't
+        represent a list with a single empty entry distinct from a list with
+        no entries).
+
+        ``KEYFORMAT`` and ``VALUEFORMAT`` work identically to how they do for
+        ``$jsonobject``.
+
+        Simple example::
+
+          $jsonobject2{$split{k1 k2 k3},$split{v1 v2 v3}}
+
+        More complex example which upper-cases the keys and uses JSON integers
+        for the values::
+
+          $jsonobject2{$split{k1 k2 k3},$split{1 2 3},$upper{$_},$_}
+
+        Added in Omega 1.5.0.
 
 $keys{MAP}
         returns a list containing the keys of MAP (as set by ``$setmap``).
@@ -623,22 +647,41 @@ $set{OPT,VALUE}
           parameters to use if the weighting scheme supports them.  The syntax
           is a string consisting of the scheme name followed by any parameters,
           all separated by whitespace.  Any parameters not specified will use
-          their default values.  Valid scheme names are
-          ``bb2`` (in Omega >= 1.3.2), ``bm25``, ``bool``,
-          ``coord`` (in Omega >= 1.4.1),
-          ``dlh`` (in Omega >= 1.3.2), ``dph`` (in Omega >= 1.3.2),
-          ``ifb2`` (in Omega >= 1.3.2), ``ineb2`` (in Omega >= 1.3.2),
-          ``inl2`` (in Omega >= 1.3.2), ``lm`` (in Omega >= 1.3.2),
-          ``pl2`` (in Omega >= 1.3.2), ``tfidf`` (in Omega >= 1.3.1),
-          and ``trad``.  e.g.  ``$set{weighting,bm25 1 0.8}``
+          their default values.
+
+          E.g. ``$set{weighting,bool}`` or ``$set{weighting,bm25 1 0.8}``
+
+          Valid scheme names are:
+
+          - ``bb2`` (in Omega >= 1.3.2)
+          - ``bm25``
+          - ``bm25+`` (in Omega >= 1.4.26)
+          - ``bool``
+          - ``coord`` (in Omega >= 1.4.1)
+          - ``dicecoeff`` (in Omega >= 1.5.0)
+          - ``dlh`` (in Omega >= 1.3.2)
+          - ``dph`` (in Omega >= 1.3.2)
+          - ``ifb2`` (in Omega >= 1.3.2)
+          - ``ineb2`` (in Omega >= 1.3.2)
+          - ``inl2`` (in Omega >= 1.3.2)
+          - ``lm2stage`` (in Omega >= 1.5.0)
+          - ``lmabsdiscount`` (in Omega >= 1.5.0)
+          - ``lmdirichlet`` (in Omega >= 1.5.0)
+          - ``lmjm`` (in Omega >= 1.5.0)
+          - ``pl2`` (in Omega >= 1.3.2)
+          - ``pl2+`` (in Omega >= 1.4.26)
+          - ``tfidf`` (in Omega >= 1.3.1)
+          - ``trad`` (deprecated since Omega 1.5.0)
 
         * expansion - set the query expansion scheme to use, and (optionally)
-          the parameters to use if the expansion scheme supports them. The syntax
-          is a string consisting of the scheme name followed by any parameters,
-          all separated by whitespace.  Any parameters not specified will use
-          their default values.  Valid expansion schemes names are
-          ``trad`` and ``bo1``.  e.g.
-          ``$set{expansion,trad 2.0}``
+          the parameters to use if the expansion scheme supports them. The
+          syntax is the scheme name followed by any parameters, all separated
+          by whitespace.  Any parameters not specified will use their default
+          values.  Valid expansion schemes names are ``prob``, ``bo1`` and
+          ``trad`` (deprecated alias for ``prob``).
+
+          E.g. ``$set{expansion,trad 2.0}``.  If not specified, the
+          default scheme used is equivalent to ``$set{expansion,trad 1.0}``.
         * weightingpurefilter - normally a query consisting only of filter
           terms won't have relevance weights calculated.  This option allows
           you to specify a weighting scheme to use for such queries, with the
@@ -646,10 +689,10 @@ $set{OPT,VALUE}
           ``$set{weightingpurefilter,coord}`` will weight such queries by
           how many filter terms match each document.
 
-	Omega 1.2.5 and later support the following options, which can be set
-	to a non-empty value to enable the corresponding ``QueryParser`` flag.
-	Omega sets ``flag_default`` to ``true`` by default - you can set it to
-	an empty value to turn it off (``$set{flag_default,}``):
+        Omega 1.2.5 and later also support the following options, which can be
+        set to a non-empty value to enable the corresponding ``QueryParser``
+        flag.  Omega sets ``flag_default`` to ``true`` by default - you can set
+        it to an empty value to turn it off (``$set{flag_default,}``):
 
 	* flag_auto_multiword_synonyms
 	* flag_auto_synonyms
@@ -690,6 +733,11 @@ $set{OPT,VALUE}
 
 	Similarly, ``XFOO:stemmer`` specifies the stemmer to use for field
 	``XFOO``, with ``stemmer`` providing a default.
+
+        Omega 1.5.0 added support for specifying the operator to use to
+        combine multiple parsed query strings.  By default this is ``AND``,
+        but you can specify ``OR`` instead using ``$set{intra_query_op,OR}``
+        (``or`` also works).  Currently other operators aren't supported.
 
 $seterror{ERROR_MESSAGE}
 	set error message for the current execution, which can also be looked
@@ -1009,7 +1057,8 @@ Numeric Operators:
 
 OmegaScript numeric operators are forgiving in their interpretation of
 numeric arguments.  Any characters after an initial span of ASCII digits
-are ignored, so ``123abc`` is interpreted the same as ``123`` and values with no leading digits are interpreted as zero, including an empty string.
+are ignored, so ``123abc`` is interpreted the same as ``123`` and values with
+no leading digits are interpreted as zero, including an empty string.
 
 A reason for this behaviour is that it gives more robust handling for numeric
 values which are specified in CGI parameters - for example, if an Omega URL
