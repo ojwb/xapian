@@ -2825,9 +2825,7 @@ jobs:
           export CXX='ccache g++'
           # Needed for libmagic.
           export CPPFLAGS='-I/opt/csw/include'
-          export LDFLAGS='-L/opt/csw/lib/amd64'
-          export RUNPATH=/opt/csw/lib/amd64
-          export LD_LIBRARY_PATH=/opt/csw/lib/amd64
+          export LDFLAGS='-R/opt/csw/lib/amd64 -L/opt/csw/lib/amd64'
           mv xapian-* "$HOME"
           cd
           cd xapian-core
