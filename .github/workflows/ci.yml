@@ -2860,6 +2860,8 @@ jobs:
           gmake -j2 -C xapian-applications/omega check V=0
           # gmake -j2 -C xapian-bindings check V=0
           gmake -j2 -C xapian-letor check V=0
+          # Avoid bloating output with a huge file tree visualisation.
+          rm -rf xapian-*
     - name: Save log files
       if: ${{ failure() }}
       uses: actions/upload-artifact@v4
