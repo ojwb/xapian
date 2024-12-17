@@ -2836,8 +2836,8 @@ jobs:
           cd ..
           cd xapian-applications/omega
           gtar --strip-components=1 -xf xapian-omega-*.tar.xz
-          # -I option needed for configure to find magic.h.
-          ./configure --enable-werror CPPFLAGS='-I/opt/csw/include'
+          # -I and -L options needed for configure to find magic.h and -lmagic.
+          ./configure --enable-werror CPPFLAGS='-I/opt/csw/include' LDFLAGS='-L/opt/csw/lib'
           cd ../..
           # cd xapian-bindings
           # gtar --strip-components=1 -xf xapian-bindings-*.tar.xz
