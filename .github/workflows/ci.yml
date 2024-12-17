@@ -2817,7 +2817,7 @@ jobs:
         release: "11.4-gcc"
         prepare: |
           set -e
-          pkgutil -y -i ccache gtar perl # libmagic_dev libpcre2_dev
+          pkgutil -y -i ccache gmake gtar perl # libmagic_dev libpcre2_dev
           ccache --set-config=cache_dir='/Users/runner/work/xapian/xapian/.ccache'
           ccache --set-config=max_size='500M'
           ccache --set-config=compression=true
@@ -2846,14 +2846,14 @@ jobs:
           # Everything gets run in one script so use V=0 to reduce the size of
           # the log, but re-run without V=0 on failure to show the compiler
           # command line.
-          make -j2 -C xapian-core V=0 || make -C xapian-core
-          #make -j2 -C xapian-applications/omega V=0 || make -C xapian-core
-          make -j2 -C xapian-letor V=0 || make -C xapian-letor
+          gmake -j2 -C xapian-core V=0 || gmake -C xapian-core
+          #gmake -j2 -C xapian-applications/omega V=0 || gmake -C xapian-core
+          gmake -j2 -C xapian-letor V=0 || gmake -C xapian-letor
           export AUTOMATED_TESTING=1
           export VERBOSE=1
-          make -j2 -C xapian-core check V=0
-          #make -j2 -C xapian-applications/omega check V=0
-          make -j2 -C xapian-letor check V=0
+          gmake -j2 -C xapian-core check V=0
+          #gmake -j2 -C xapian-applications/omega check V=0
+          gmake -j2 -C xapian-letor check V=0
     - name: Save log files
       if: ${{ failure() }}
       uses: actions/upload-artifact@v4
