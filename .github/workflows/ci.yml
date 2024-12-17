@@ -2827,6 +2827,7 @@ jobs:
           export CPPFLAGS='-I/opt/csw/include'
           export LDFLAGS='-L/opt/csw/lib/amd64'
           export RUNPATH=/opt/csw/lib/amd64
+          export LD_LIBRARY_PATH=/opt/csw/lib/amd64
           mv xapian-* "$HOME"
           cd
           cd xapian-core
