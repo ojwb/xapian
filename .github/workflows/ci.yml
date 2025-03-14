@@ -166,7 +166,6 @@ jobs:
             libmagic \
             libmwaw \
             lua \
-            mono-mdk \
             pcre2 \
             php \
             pkgconfig \
@@ -177,7 +176,7 @@ jobs:
             valgrind
         pip3 install --user --break-system-packages Sphinx
         # mono-mdk: "make check" fails on arm64 macos-15 (but works on
-        # x86_64 macos-12 and macos-13).  Last checked 2024-05-05.
+        # x86_64 macos-12 and macos-13).  Last checked 2025-03-14.
         #
         # libeatmydata doesn't currently actually do anything on macOS:
         # https://github.com/stewartsmith/libeatmydata/issues/34
@@ -203,7 +202,7 @@ jobs:
         # Homebrew package mono-mdk-for-visual-studio is pre-installed in the
         # image so we need to select the bindings we want except for csharp
         # as that currently fails on aarch64 macos.
-        ./configure --enable-werror --with-java --with-lua --with-perl --with-php --with-python3 --with-ruby --with-tcl
+        ./configure --enable-werror --with-csharp --with-java --with-lua --with-perl --with-php --with-python3 --with-ruby --with-tcl
         popd
         pushd xapian-letor
         ./configure --enable-werror
@@ -278,7 +277,6 @@ jobs:
             libmagic \
             libmwaw \
             lua \
-            mono-mdk \
             pcre2 \
             php \
             pkgconfig \
@@ -291,7 +289,7 @@ jobs:
         # mono-mdk: "make check" fails on aarch64 macos-14 (but works on
         # x86_64 macos-12 and macos-13):
         # System.DllNotFoundException: _XapianSharp assembly:<unknown assembly> type:<unknown type> member:(null)
-        # Last checked 2024-10-24.
+        # Last checked 2025-03-14.
         #
         # libeatmydata doesn't currently actually do anything on macOS:
         # https://github.com/stewartsmith/libeatmydata/issues/34
@@ -317,7 +315,7 @@ jobs:
         # Homebrew package mono-mdk-for-visual-studio is pre-installed in the
         # image so we need to select the bindings we want except for csharp
         # as that currently fails on aarch64 macos.
-        ./configure --enable-werror --with-java --with-lua --with-perl --with-php --with-python3 --with-ruby --with-tcl
+        ./configure --enable-werror --with-csharp --with-java --with-lua --with-perl --with-php --with-python3 --with-ruby --with-tcl
         popd
         pushd xapian-letor
         ./configure --enable-werror
