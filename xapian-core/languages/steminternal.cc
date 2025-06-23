@@ -83,41 +83,57 @@ SnowballStemImplementation::create_s()
 }
 
 /*
-   new_c = skip_utf8(p, c, lb, l, n); skips n characters forwards from p + c
-   if n +ve, or n characters backwards from p + c - 1 if n -ve. new_c is the new
-   value of the cursor c, or -1 on failure.
+   new_p = skip_utf8(p, c, l, n); skips n characters forwards from p + c.
+   new_p is the new position, or -1 on failure.
 
    -- used to implement hop and next in the utf8 case.
 */
 
 int
-SnowballStemImplementation::skip_utf8(const symbol * p, int c, int lb, int l, int n)
+SnowballStemImplementation::skip_utf8(const symbol * p, int c, int limit, int n)
 {
-    if (n >= 0) {
-	for (; n > 0; --n) {
-	    if (c >= l) return -1;
-	    if (p[c++] >= 0xC0) {   /* 1100 0000 */
-		while (c < l) {
-		    /* break unless p[c] is 10------ */
-		    if (p[c] >> 6 != 2) break;
-		    c++;
-		}
-	    }
-	}
-    } else {
-	for (; n < 0; ++n) {
-	    if (c <= lb) return -1;
-	    if (p[--c] >= 0x80) {   /* 1000 0000 */
-		while (c > lb) {
-		    if (p[c] >= 0xC0) break; /* 1100 0000 */
-		    c--;
-		}
-	    }
-	}
+    int b;
+    if (n < 0) return -1;
+    for (; n > 0; n--) {
+        if (c >= limit) return -1;
+        b = p[c++];
+        if (b >= 0xC0) {   /* 1100 0000 */
+            while (c < limit) {
+                b = p[c];
+                if (b >= 0xC0 || b < 0x80) break;
+                /* break unless b is 10------ */
+                c++;
+            }
+        }
     }
     return c;
 }
 
+/*
+   new_p = skip_b_utf8(p, c, lb, n); skips n characters backwards from p + c - 1
+   new_p is the new position, or -1 on failure.
+
+   -- used to implement hop and next in the utf8 case.
+*/
+
+int
+SnowballStemImplementation::skip_b_utf8(const symbol * p, int c, int limit, int n)
+{
+    int b;
+    if (n < 0) return -1;
+    for (; n > 0; n--) {
+        if (c <= limit) return -1;
+        b = p[--c];
+        if (b >= 0x80) {   /* 1000 0000 */
+            while (c > limit) {
+                b = p[c];
+                if (b >= 0xC0) break; /* 1100 0000 */
+                c--;
+            }
+        }
+    }
+    return c;
+}
 
 /* Increase the size of the buffer pointed to by p to at least n symbols.
  * If insufficient memory, throw std::bad_alloc().

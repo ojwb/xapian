@@ -79,7 +79,8 @@ class SnowballStemImplementation : public StemImplementation {
 	alignment_cast<int *>(p)[-2] = n;
     }
 
-    static int skip_utf8(const symbol * p, int c, int lb, int l, int n);
+    static int skip_utf8(const symbol * p, int c, int limit, int n);
+    static int skip_b_utf8(const symbol * p, int c, int limit, int n);
 
     static symbol * increase_size(symbol * p, int n);
 

@@ -12,6 +12,9 @@
 #define DEFAULT_GO_PACKAGE "snowball"
 #define DEFAULT_GO_SNOWBALL_RUNTIME "github.com/snowballstem/snowball/go"
 
+#define DEFAULT_ADA_PACKAGE "Snowball"
+#define DEFAULT_ADA_SNOWBALL_RUNTIME "github.com/snowballstem/snowball/ada"
+
 #define DEFAULT_CS_NAMESPACE "Snowball"
 #define DEFAULT_CS_BASE_CLASS "Stemmer"
 #define DEFAULT_CS_AMONG_CLASS "Among"
@@ -29,24 +32,24 @@ static void print_arglist(int exit_code) {
     FILE * f = exit_code ? stderr : stdout;
     fprintf(f, "Usage: snowball SOURCE_FILE... [OPTIONS]\n\n"
                "Supported options:\n"
-               "  -o[utput] file\n"
-               "  -s[yntax]\n"
+               "  -o, -output OUTPUT_BASE\n"
+               "  -s, -syntax\n"
                "  -comments\n"
 #ifndef DISABLE_JAVA
-               "  -j[ava]\n"
+               "  -j, -java\n"
 #endif
 #ifndef DISABLE_CSHARP
-               "  -cs[harp]\n"
+               "  -cs, -csharp\n"
 #endif
                "  -c++\n"
 #ifndef DISABLE_PASCAL
                "  -pascal\n"
 #endif
 #ifndef DISABLE_PYTHON
-               "  -py[thon]\n"
+               "  -py, -python\n"
 #endif
 #ifndef DISABLE_JS
-               "  -js\n"
+               "  -js                              generate Javascript\n"
 #endif
 #ifndef DISABLE_RUST
                "  -rust\n"
@@ -54,25 +57,28 @@ static void print_arglist(int exit_code) {
 #ifndef DISABLE_GO
                "  -go\n"
 #endif
-               "  -w[idechars]\n"
-               "  -u[tf8]\n"
-               "  -n[ame] class name\n"
-               "  -ep[refix] string\n"
-               "  -vp[refix] string\n"
-               "  -i[nclude] directory\n"
-               "  -r[untime] path to runtime headers\n"
-               "  -p[arentclassname] fully qualified parent class name\n"
+#ifndef DISABLE_ADA
+               "  -ada\n"
+#endif
+               "  -w, -widechars\n"
+               "  -u, -utf8\n"
+               "  -n, -name CLASS_NAME\n"
+               "  -ep, -eprefix EXTERNAL_PREFIX\n"
+               "  -vp, -vprefix VARIABLE_PREFIX\n"
+               "  -i, -include DIRECTORY\n"
+               "  -r, -runtime DIRECTORY\n"
+               "  -p, -parentclassname CLASS_NAME  fully qualified parent class name\n"
 #if !defined(DISABLE_JAVA) || !defined(DISABLE_CSHARP)
-               "  -P[ackage] package name for stemmers\n"
-               "  -S[tringclass] StringBuffer-compatible class\n"
-               "  -a[mongclass] fully qualified name of the Among class\n"
+               "  -P, -Package PACKAGE_NAME        package name for stemmers\n"
+               "  -S, -Stringclass STRING_CLASS    StringBuffer-compatible class\n"
+               "  -a, -amongclass AMONG_CLASS      fully qualified name of the Among class\n"
 #endif
 #ifndef DISABLE_GO
-               "  -gop[ackage] Go package name for stemmers\n"
-               "  -gor[untime] Go snowball runtime package\n"
+               "  -gop, -gopackage PACKAGE_NAME    Go package name for stemmers\n"
+               "  -gor, -goruntime PACKAGE_NAME    Go snowball runtime package\n"
 #endif
-               "  --help        display this help and exit\n"
-               "  --version     output version information and exit\n"
+               "  --help                           display this help and exit\n"
+               "  --version                        output version information and exit\n"
            );
     exit(exit_code);
 }
@@ -84,19 +90,18 @@ static void check_lim(int i, int argc) {
     }
 }
 
-static FILE * get_output(symbol * b) {
-    char * s = b_to_s(b);
-    FILE * output = fopen(s, "w");
-    if (output == 0) {
-        fprintf(stderr, "Can't open output %s\n", s);
+static FILE * get_output(byte * s) {
+    s[SIZE(s)] = 0;
+    const char * filename = (const char *)s;
+    FILE * output = fopen(filename, "w");
+    if (output == NULL) {
+        fprintf(stderr, "Can't open output %s\n", filename);
         exit(1);
     }
-    free(s);
     return output;
 }
 
 static int read_options(struct options * o, int argc, char * argv[]) {
-    char * s;
     int i = 1;
     int new_argc = 1;
     /* Note down the last option used to specify an explicit encoding so
@@ -106,12 +111,13 @@ static int read_options(struct options * o, int argc, char * argv[]) {
 
     /* set defaults: */
 
-    o->output_file = 0;
+    o->output_file = NULL;
     o->syntax_tree = false;
     o->comments = false;
+    o->js_esm = false;
     o->externals_prefix = NULL;
-    o->variables_prefix = 0;
-    o->runtime_path = 0;
+    o->variables_prefix = NULL;
+    o->runtime_path = NULL;
     o->parent_class_name = NULL;
     o->string_class = NULL;
     o->among_class = NULL;
@@ -119,14 +125,14 @@ static int read_options(struct options * o, int argc, char * argv[]) {
     o->go_snowball_runtime = DEFAULT_GO_SNOWBALL_RUNTIME;
     o->name = NULL;
     o->make_lang = LANG_C;
-    o->includes = 0;
-    o->includes_end = 0;
+    o->includes = NULL;
+    o->includes_end = NULL;
     o->encoding = ENC_SINGLEBYTE;
 
     /* read options: */
 
     while (i < argc) {
-        s = argv[i++];
+        char * s = argv[i++];
         if (s[0] != '-') {
             /* Non-option argument - shuffle down. */
             argv[new_argc++] = s;
@@ -140,13 +146,23 @@ static int read_options(struct options * o, int argc, char * argv[]) {
                 continue;
             }
             if (eq(s, "-n") || eq(s, "-name")) {
+                char * new_name;
+                size_t len;
+
                 check_lim(i, argc);
-                o->name = argv[i++];
+                /* Take a copy of the argument here, because
+                 * later we will free o->name */
+                len = strlen(argv[i]);
+                new_name = MALLOC(len + 1);
+                memcpy(new_name, argv[i++], len);
+                new_name[len] = '\0';
+                o->name = new_name;
                 continue;
             }
 #ifndef DISABLE_JS
             if (eq(s, "-js")) {
                 o->make_lang = LANG_JAVASCRIPT;
+                o->js_esm = false;
                 continue;
             }
 #endif
@@ -190,6 +206,12 @@ static int read_options(struct options * o, int argc, char * argv[]) {
                 continue;
             }
 #endif
+#ifndef DISABLE_ADA
+            if (eq(s, "-ada")) {
+                o->make_lang = LANG_ADA;
+                continue;
+            }
+#endif
             if (eq(s, "-w") || eq(s, "-widechars")) {
                 encoding_opt = s;
                 o->encoding = ENC_WIDECHARS;
@@ -218,12 +240,15 @@ static int read_options(struct options * o, int argc, char * argv[]) {
 
                 {
                     NEW(include, p);
-                    symbol * b = add_s_to_b(0, argv[i++]);
-                    b = add_s_to_b(b, "/");
-                    p->next = 0; p->b = b;
+                    byte * include_dir = add_sz_to_s(NULL, argv[i++]);
+                    include_dir = add_char_to_s(include_dir, '/');
+                    p->next = NULL; p->s = include_dir;
 
-                    if (o->includes == 0) o->includes = p; else
-                                          o->includes_end->next = p;
+                    if (o->includes == NULL) {
+                        o->includes = p;
+                    } else {
+                        o->includes_end->next = p;
+                    }
                     o->includes_end = p;
                 }
                 continue;
@@ -313,6 +338,11 @@ static int read_options(struct options * o, int argc, char * argv[]) {
             if (!o->package)
                 o->package = DEFAULT_GO_PACKAGE;
             break;
+        case LANG_ADA:
+            o->encoding = ENC_UTF8;
+            if (!o->package)
+                o->package = DEFAULT_ADA_PACKAGE;
+            break;
         case LANG_JAVA:
             o->encoding = ENC_WIDECHARS;
             if (!o->parent_class_name)
@@ -373,7 +403,7 @@ static int read_options(struct options * o, int argc, char * argv[]) {
         }
 
         {
-            char * new_name = malloc(len + 1);
+            char * new_name = MALLOC(len + 1);
             switch (o->make_lang) {
                 case LANG_CSHARP:
                 case LANG_PASCAL:
@@ -387,23 +417,23 @@ static int read_options(struct options * o, int argc, char * argv[]) {
                      * underscore+letter or hyphen+letter to an upper case
                      * letter.
                      */
-                    size_t i, j = 0;
+                    size_t new_len = 0;
                     int uc_next = true;
-                    for (i = 0; i != len; ++i) {
-                        unsigned char ch = leaf[i];
+                    for (size_t j = 0; j != len; ++j) {
+                        unsigned char ch = leaf[j];
                         if (ch == '_' || ch == '-') {
                             uc_next = true;
                         } else {
                             if (uc_next) {
-                                new_name[j] = toupper(ch);
+                                new_name[new_len] = toupper(ch);
                                 uc_next = false;
                             } else {
-                                new_name[j] = ch;
+                                new_name[new_len] = ch;
                             }
-                            ++j;
+                            ++new_len;
                         }
                     }
-                    len = j;
+                    len = new_len;
                     break;
                 }
                 default:
@@ -420,14 +450,13 @@ static int read_options(struct options * o, int argc, char * argv[]) {
 }
 
 extern int main(int argc, char * argv[]) {
-
     int i;
     NEW(options, o);
     argc = read_options(o, argc, argv);
     {
         char * file = argv[1];
-        symbol * u = get_input(file);
-        if (u == 0) {
+        byte * u = get_input(file);
+        if (u == NULL) {
             fprintf(stderr, "Can't open input %s\n", file);
             exit(1);
         }
@@ -444,14 +473,14 @@ extern int main(int argc, char * argv[]) {
                 NEW(input, q);
                 file = argv[i];
                 u = get_input(file);
-                if (u == 0) {
+                if (u == NULL) {
                     fprintf(stderr, "Can't open input %s\n", file);
                     exit(1);
                 }
                 q->p = u;
                 q->c = 0;
                 q->file = file;
-                q->file_needs_freeing = false;
+                q->file_owned = 0;
                 q->line_number = 1;
                 *next_input_ptr = q;
                 next_input_ptr = &(q->next);
@@ -460,26 +489,25 @@ extern int main(int argc, char * argv[]) {
             read_program(a);
             if (t->error_count > 0) exit(1);
             if (o->syntax_tree) print_program(a);
-            close_tokeniser(t);
             if (!o->syntax_tree) {
                 struct generator * g;
 
-                const char * s = o->output_file;
-                if (!s) {
+                const char * output_base = o->output_file;
+                if (!output_base) {
                     fprintf(stderr, "Please include the -o option\n");
                     print_arglist(1);
                 }
                 g = create_generator(a, o);
                 if (o->make_lang == LANG_C || o->make_lang == LANG_CPLUSPLUS) {
-                    symbol * b = add_s_to_b(0, s);
-                    b = add_s_to_b(b, ".h");
-                    o->output_h = get_output(b);
-                    b[SIZE(b) - 1] = 'c';
+                    byte * s = add_sz_to_s(NULL, output_base);
+                    s = add_literal_to_s(s, ".h");
+                    o->output_h = get_output(s);
+                    s[SIZE(s) - 1] = 'c';
                     if (o->make_lang == LANG_CPLUSPLUS) {
-                        b = add_s_to_b(b, "c");
+                        s = add_char_to_s(s, 'c');
                     }
-                    o->output_src = get_output(b);
-                    lose_b(b);
+                    o->output_src = get_output(s);
+                    lose_s(s);
 
                     generate_program_c(g);
                     fclose(o->output_src);
@@ -487,86 +515,108 @@ extern int main(int argc, char * argv[]) {
                 }
 #ifndef DISABLE_JAVA
                 if (o->make_lang == LANG_JAVA) {
-                    symbol * b = add_s_to_b(0, s);
-                    b = add_s_to_b(b, ".java");
-                    o->output_src = get_output(b);
-                    lose_b(b);
+                    byte * s = add_sz_to_s(NULL, output_base);
+                    s = add_literal_to_s(s, ".java");
+                    o->output_src = get_output(s);
+                    lose_s(s);
                     generate_program_java(g);
                     fclose(o->output_src);
                 }
 #endif
 #ifndef DISABLE_PASCAL
                 if (o->make_lang == LANG_PASCAL) {
-                    symbol *b = add_s_to_b(0, s);
-                    b = add_s_to_b(b, ".pas");
-                    o->output_src = get_output(b);
-                    lose_b(b);
+                    byte * s = add_sz_to_s(NULL, output_base);
+                    s = add_literal_to_s(s, ".pas");
+                    o->output_src = get_output(s);
+                    lose_s(s);
                     generate_program_pascal(g);
                     fclose(o->output_src);
                 }
 #endif
 #ifndef DISABLE_PYTHON
                 if (o->make_lang == LANG_PYTHON) {
-                    symbol * b = add_s_to_b(0, s);
-                    b = add_s_to_b(b, ".py");
-                    o->output_src = get_output(b);
-                    lose_b(b);
+                    byte * s = add_sz_to_s(NULL, output_base);
+                    s = add_literal_to_s(s, ".py");
+                    o->output_src = get_output(s);
+                    lose_s(s);
                     generate_program_python(g);
                     fclose(o->output_src);
                 }
 #endif
 #ifndef DISABLE_JS
                 if (o->make_lang == LANG_JAVASCRIPT) {
-                    symbol * b = add_s_to_b(0, s);
-                    b = add_s_to_b(b, ".js");
-                    o->output_src = get_output(b);
-                    lose_b(b);
+                    byte * s = add_sz_to_s(NULL, output_base);
+                    if (o->js_esm) {
+                        s = add_literal_to_s(s, ".mjs");
+                    } else {
+                        s = add_literal_to_s(s, ".js");
+                    }
+                    o->output_src = get_output(s);
+                    lose_s(s);
                     generate_program_js(g);
                     fclose(o->output_src);
                 }
 #endif
 #ifndef DISABLE_CSHARP
                 if (o->make_lang == LANG_CSHARP) {
-                    symbol * b = add_s_to_b(0, s);
-                    b = add_s_to_b(b, ".cs");
-                    o->output_src = get_output(b);
-                    lose_b(b);
+                    byte * s = add_sz_to_s(NULL, output_base);
+                    s = add_literal_to_s(s, ".cs");
+                    o->output_src = get_output(s);
+                    lose_s(s);
                     generate_program_csharp(g);
                     fclose(o->output_src);
                 }
 #endif
 #ifndef DISABLE_RUST
                 if (o->make_lang == LANG_RUST) {
-                    symbol * b = add_s_to_b(0, s);
-                    b = add_s_to_b(b, ".rs");
-                    o->output_src = get_output(b);
-                    lose_b(b);
+                    byte * s = add_sz_to_s(NULL, output_base);
+                    s = add_literal_to_s(s, ".rs");
+                    o->output_src = get_output(s);
+                    lose_s(s);
                     generate_program_rust(g);
                     fclose(o->output_src);
                 }
 #endif
 #ifndef DISABLE_GO
                 if (o->make_lang == LANG_GO) {
-                    symbol * b = add_s_to_b(0, s);
-                    b = add_s_to_b(b, ".go");
-                    o->output_src = get_output(b);
-                    lose_b(b);
+                    byte * s = add_sz_to_s(NULL, output_base);
+                    s = add_literal_to_s(s, ".go");
+                    o->output_src = get_output(s);
+                    lose_s(s);
                     generate_program_go(g);
                     fclose(o->output_src);
                 }
 #endif
+#ifndef DISABLE_ADA
+                if (o->make_lang == LANG_ADA) {
+                    byte * s = add_sz_to_s(NULL, output_base);
+                    s = add_literal_to_s(s, ".ads");
+                    o->output_h = get_output(s);
+                    s[SIZE(s) - 1] = 'b';
+                    o->output_src = get_output(s);
+                    lose_s(s);
+
+                    generate_program_ada(g);
+                    fclose(o->output_src);
+                    fclose(o->output_h);
+                }
+#endif
                 close_generator(g);
             }
+            close_tokeniser(t);
             close_analyser(a);
         }
-        lose_b(u);
+        lose_s(u);
     }
     {   struct include * p = o->includes;
         while (p) {
             struct include * q = p->next;
-            lose_b(p->b); FREE(p); p = q;
+            lose_s(p->s);
+            FREE(p);
+            p = q;
         }
     }
+    FREE(o->name);
     FREE(o);
     if (space_count) fprintf(stderr, "%d blocks unfreed\n", space_count);
     return 0;

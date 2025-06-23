@@ -51,8 +51,7 @@ snowball_sources =\
 
 snowball_headers =\
 	languages/compiler/header.h\
-	languages/compiler/syswords.h\
-	languages/compiler/syswords2.h
+	languages/compiler/syswords.h
 
 EXTRA_DIST += $(snowball_sources) $(snowball_headers) $(snowball_algorithms) $(snowball_built_sources)\
 	languages/collate-sbl\
@@ -91,7 +90,7 @@ $(snowball_built_sources): languages/snowball $(snowball_algorithms)
 
 languages/snowball: $(snowball_sources) $(snowball_headers)
 	$(CC_FOR_BUILD) -o languages/snowball \
-	    -DDISABLE_CSHARP -DDISABLE_GO -DDISABLE_JAVA -DDISABLE_JS -DDISABLE_PASCAL -DDISABLE_PYTHON -DDISABLE_RUST \
+	    -DDISABLE_ADA -DDISABLE_CSHARP -DDISABLE_GO -DDISABLE_JAVA -DDISABLE_JS -DDISABLE_PASCAL -DDISABLE_PYTHON -DDISABLE_RUST \
 	    `for f in $(snowball_sources) ; do test -f $$f && echo $$f || echo $(srcdir)/$$f ; done`
 
 # /bin/tr on Solaris doesn't follow POSIX and requires [ and ] around ranges.
