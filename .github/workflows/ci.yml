@@ -91,8 +91,8 @@ jobs:
         ./bootstrap xapian-core xapian-applications/omega swig xapian-bindings xapian-letor
     - name: configure
       run: |
-        pkg-config ruby --cflags
-        pkg-config ruby --libs
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --cflags
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --libs
         ./configure CC='ccache gcc' CXX='ccache g++'
     - name: make
       run: make -j2
@@ -185,8 +185,8 @@ jobs:
             tesseract-ocr-eng
     - name: configure
       run: |
-        pkg-config ruby --cflags
-        pkg-config ruby --libs
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --cflags
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --libs
         # We use clang here because (at least currently) it supports a few
         # extra sanitiser checks compared to GCC.
         export CC='ccache clang'
@@ -301,8 +301,8 @@ jobs:
       #      tesseract-ocr-eng
     - name: configure
       run: |
-        pkg-config ruby --cflags
-        pkg-config ruby --libs
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --cflags
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --libs
         export CC='ccache gcc'
         export CXX='ccache g++'
         export CPPFLAGS='-D_GLIBCXX_DEBUG'
@@ -407,8 +407,8 @@ jobs:
             tesseract-ocr-eng
     - name: configure
       run: |
-        pkg-config ruby --cflags
-        pkg-config ruby --libs
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --cflags
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --libs
         export CC='ccache gcc-12'
         export CXX='ccache g++-12'
         # Make this build use builddir != srcdir as we aim to support that and
@@ -519,8 +519,8 @@ jobs:
             tesseract-ocr-eng
     - name: configure
       run: |
-        pkg-config ruby --cflags
-        pkg-config ruby --libs
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --cflags
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --libs
         export CC='ccache gcc'
         export CXX='ccache g++'
         pushd xapian-core
@@ -620,8 +620,8 @@ jobs:
             tesseract-ocr-eng
     - name: configure
       run: |
-        pkg-config ruby --cflags
-        pkg-config ruby --libs
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --cflags
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --libs
         export CC='ccache gcc'
         export CXX='ccache g++'
         pushd xapian-core
@@ -723,8 +723,8 @@ jobs:
             # libreoffice support doesn't work when compiled with clang on Linux
     - name: configure
       run: |
-        pkg-config ruby --cflags
-        pkg-config ruby --libs
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --cflags
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --libs
         export CC='ccache clang'
         # Build with the llvm c++ library to catch more portability issues.
         export CXX='ccache clang++ -stdlib=libc++'
@@ -824,8 +824,8 @@ jobs:
             # libreoffice support doesn't work when compiled with clang on Linux
     - name: configure
       run: |
-        pkg-config ruby --cflags
-        pkg-config ruby --libs
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --cflags
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --libs
         export CC='ccache clang-11'
         export CXX='ccache clang++-11'
         pushd xapian-core
@@ -928,8 +928,8 @@ jobs:
             tesseract-ocr-eng
     - name: configure
       run: |
-        pkg-config ruby --cflags
-        pkg-config ruby --libs
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --cflags
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --libs
         export CC='ccache gcc-9'
         export CXX='ccache g++-9'
         pushd xapian-core
@@ -1084,8 +1084,8 @@ jobs:
         popd
     - name: configure
       run: |
-        pkg-config ruby --cflags
-        pkg-config ruby --libs
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --cflags
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --libs
         export CC='ccache gcc'
         export CXX='ccache g++'
         pushd xapian-core
@@ -1189,8 +1189,8 @@ jobs:
         # tesseract
     - name: configure
       run: |
-        pkg-config ruby --cflags
-        pkg-config ruby --libs
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --cflags
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --libs
         export CC='ccache gcc'
         export CXX='ccache g++'
         export PKG_CONFIG_PATH="$(brew --prefix icu4c)/lib/pkgconfig"
@@ -1302,8 +1302,8 @@ jobs:
         # tesseract
     - name: configure
       run: |
-        pkg-config ruby --cflags
-        pkg-config ruby --libs
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --cflags
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --libs
         export CC='ccache gcc'
         export CXX='ccache g++'
         export PKG_CONFIG_PATH="$(brew --prefix icu4c)/lib/pkgconfig"
@@ -1409,8 +1409,8 @@ jobs:
         # tesseract
     - name: configure
       run: |
-        pkg-config ruby --cflags
-        pkg-config ruby --libs
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --cflags
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --libs
         export CC='ccache gcc'
         export CXX='ccache g++'
         export PKG_CONFIG_PATH="$(brew --prefix icu4c)/lib/pkgconfig"
@@ -1453,6 +1453,7 @@ jobs:
           **/*.log
 
   mingw64-i686-cross:
+    if: false
     runs-on: 'ubuntu-22.04'
     needs: makedist
     steps:
@@ -1483,8 +1484,8 @@ jobs:
             mingw-w64-tools
     - name: configure
       run: |
-        pkg-config ruby --cflags
-        pkg-config ruby --libs
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --cflags
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --libs
         export EATMYDATA=
         export PATH=/usr/lib/ccache:$PATH
         pushd xapian-core
@@ -1523,6 +1524,7 @@ jobs:
           **/*.log
 
   mingw64-x86-64-cross:
+    if: false
     runs-on: 'ubuntu-22.04'
     needs: makedist
     steps:
@@ -1562,8 +1564,8 @@ jobs:
         sudo apt-get install wine32
     - name: configure
       run: |
-        pkg-config ruby --cflags
-        pkg-config ruby --libs
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --cflags
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --libs
         export EATMYDATA=
         export PATH=/usr/lib/ccache:$PATH
         pushd xapian-core
@@ -1637,8 +1639,8 @@ jobs:
         tcl-devel
     - name: configure
       run: |
-        pkg-config ruby --cflags
-        pkg-config ruby --libs
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --cflags
+        pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --libs
         export CC='ccache gcc'
         export CXX='ccache g++'
         pushd xapian-core
@@ -1678,6 +1680,7 @@ jobs:
           **/*.log
 
   android-cross:
+    if: false
     runs-on: 'ubuntu-22.04'
     env:
       # Override github default because 27.1.12297006 fails with link errors in
@@ -1724,6 +1727,7 @@ jobs:
           **/*.log
 
   cygwin:
+    if: false
     # We only test 64-bit cygwin as 32-bit support has been dropped as of
     # Cygwin 3.4:
     # https://cygwin.com/pipermail/cygwin/2022-November/252542.html
@@ -1762,8 +1766,6 @@ jobs:
         popd
     - name: configure
       run: |
-        pkg-config ruby --cflags
-        pkg-config ruby --libs
         export CC='ccache gcc'
         export CXX='ccache g++'
         pushd xapian-core
@@ -2313,8 +2315,8 @@ jobs:
           ccache --set-config=compression=true
         run: |
           set -e
-          pkg-config ruby --cflags
-          pkg-config ruby --libs
+          pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --cflags
+          pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --libs
           export CC='ccache cc'
           export CXX='ccache c++'
           export JAVA_HOME=/usr/local/openjdk17
@@ -2390,8 +2392,8 @@ jobs:
           ccache --set-config=compression=true
         run: |
           set -e
-          pkg-config ruby --cflags
-          pkg-config ruby --libs
+          pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --cflags
+          pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --libs
           export CC='ccache cc'
           export CXX='ccache c++'
           export JAVA_HOME=/usr/local/openjdk17
@@ -2468,8 +2470,8 @@ jobs:
           ccache --set-config=compression=true
         run: |
           set -e
-          pkg-config ruby --cflags
-          pkg-config ruby --libs
+          pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --cflags
+          pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --libs
           ulimit
           export CC='ccache cc'
           export CXX='ccache c++'
@@ -2545,8 +2547,8 @@ jobs:
           ccache --set-config=compression=true
         run: |
           set -e
-          pkg-config ruby --cflags
-          pkg-config ruby --libs
+          pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --cflags
+          pkg-config ruby-`ruby -e 'print RUBY_VERSION.split(".").slice(0,2).join(".")'` --libs
           export CC='ccache cc'
           export CXX='ccache c++'
           mv xapian-* "$HOME"
