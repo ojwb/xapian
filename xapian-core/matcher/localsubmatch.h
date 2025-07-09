@@ -75,6 +75,16 @@ class LocalSubMatch {
      */
     EstimateOp* estimate_stack = nullptr;
 
+    /** Orphaned EstimateOp objects.
+     *
+     *  These shouldn't get stats reported to them, but code bugs could
+     *  mean they do so be robust and avoid use-after-free in this
+     *  situation.
+     *
+     *  This is a forward-linked list.
+     */
+    EstimateOp* orphans = nullptr;
+
   public:
     /// Constructor.
     LocalSubMatch(const Xapian::Database::Internal* db_,
@@ -89,6 +99,12 @@ class LocalSubMatch {
 
     ~LocalSubMatch() {
 	EstimateOp* p = estimate_stack;
+	while (p) {
+	    EstimateOp* next = p->get_next();
+	    delete p;
+	    p = next;
+	}
+	p = orphans;
 	while (p) {
 	    EstimateOp* next = p->get_next();
 	    delete p;
@@ -109,7 +125,8 @@ class LocalSubMatch {
 	    estimate_stack = estimate_stack->get_next();
 	    // We may need to pop subqueries (recursively!)
 	    elements_to_pop += p->get_subquery_count();
-	    delete p;
+	    p->set_next(orphans);
+	    orphans = p;
 	} while (--elements_to_pop);
     }
 

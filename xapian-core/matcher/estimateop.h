@@ -182,6 +182,8 @@ class EstimateOp {
 
     EstimateOp* get_next() const { return next; }
 
+    void set_next(EstimateOp* new_next) { next = new_next; }
+
     unsigned get_subquery_count() const { return n_subqueries; }
 };
 
