@@ -131,8 +131,7 @@ class EstimateOp {
     void report_range_ratio(Xapian::doccount accepted,
 			    Xapian::doccount rejected) {
 	AssertEq(type, KNOWN);
-	AssertEq(estimates.first, 1);
-	AssertEq(estimates.last, Xapian::docid(-1));
+
 	// Degenerate range case.
 	if (estimates.min == estimates.max) return;
 
