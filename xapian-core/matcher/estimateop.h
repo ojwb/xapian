@@ -133,6 +133,8 @@ class EstimateOp {
 	AssertEq(type, KNOWN);
 	AssertEq(estimates.first, 1);
 	AssertEq(estimates.last, Xapian::docid(-1));
+	// Degenerate range case.
+	if (estimates.min == estimates.max) return;
 
 	// The static min is 0.
 	AssertEq(estimates.min, 0);
