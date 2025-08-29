@@ -2571,7 +2571,10 @@ jobs:
         release: "11.4-gcc"
         prepare: |
           set -e
-          pkgutil -y -i ccache gmake gtar perl # libmagic_dev libpcre2_dev
+          pkg search -l -H -o pkg.name '*/bin/*tar' || true
+          pkg search -l -H -o pkg.name '*/bin/*ccache' || true
+          pkg search -l -H -o pkg.name '*/bin/*perl' || true
+          pkg install --no-backup-be --accept -v ccache gtar perl # libmagic_dev libpcre2_dev
           ccache --set-config=cache_dir="$GITHUB_WORKSPACE/.ccache"
           ccache --set-config=max_size='500M'
           ccache --set-config=compression=true
