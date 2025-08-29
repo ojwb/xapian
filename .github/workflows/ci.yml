@@ -122,15 +122,14 @@ jobs:
           set -e
           #pkg search -l -H -o pkg.name '*libmagic*' || true
           pkg install --no-backup-be --accept -v archiver/gnu-tar runtime/perl-538 # (no package for libmagic?) library/pcre2
-          echo "pkg install OK"
           # Install ccache from OpenCSW as there's no "pkg" package for it.
           pkgutil -y -i ccache
-          echo "pkgutil OK"
           PATH=$PATH:/opt/csw/bin
           ccache --set-config=cache_dir="$GITHUB_WORKSPACE/.ccache"
           ccache --set-config=max_size='500M'
           ccache --set-config=compression=true
-          echo "ccache OK"
+          ccache --show-stats
+          exit 0
         run: |
           set -e
           ulimit
