@@ -120,22 +120,17 @@ jobs:
         release: "11.4-gcc"
         prepare: |
           set -ex
-          #pkg search -l -H -o pkg.name '*libmagic*' || true
-          #pkg install --no-backup-be --accept -v archiver/gnu-tar runtime/perl-538 # (no package for libmagic?) library/pcre2
-          # Install ccache from OpenCSW as there's no "pkg" package for it.
-          pkgutil -y -i ccache
-          PATH=$PATH:/opt/csw/bin
+          echo "PATH=$PATH"
+          pkgutil -y -i ccache gmake gtar perl # libmagic_dev libpcre2_dev
           ccache --set-config=cache_dir="$GITHUB_WORKSPACE/.ccache"
           ccache --set-config=max_size='500M'
           ccache --set-config=compression=true
           ccache --show-stats
-          exit 0
         run: |
           set -e
           ulimit
           export CC='ccache gcc'
           export CXX='ccache g++'
-          PATH=$PATH:/opt/csw/bin
           mv xapian-* "$HOME"
           cd
           cd xapian-core
