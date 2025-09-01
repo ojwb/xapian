@@ -98,7 +98,7 @@ jobs:
           **/*.log
 
   solaris:
-    runs-on: 'ubuntu-22.04'
+    runs-on: 'ubuntu-24.04'
     needs: makedist
     steps:
     - name: Install CCache
@@ -119,9 +119,9 @@ jobs:
       with:
         release: "11.4-gcc"
         prepare: |
-          set -e
+          set -ex
           #pkg search -l -H -o pkg.name '*libmagic*' || true
-          pkg install --no-backup-be --accept -v archiver/gnu-tar runtime/perl-538 # (no package for libmagic?) library/pcre2
+          #pkg install --no-backup-be --accept -v archiver/gnu-tar runtime/perl-538 # (no package for libmagic?) library/pcre2
           # Install ccache from OpenCSW as there's no "pkg" package for it.
           pkgutil -y -i ccache
           PATH=$PATH:/opt/csw/bin
