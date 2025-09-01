@@ -98,7 +98,7 @@ jobs:
           **/*.log
 
   solaris:
-    runs-on: 'ubuntu-24.04'
+    runs-on: 'ubuntu-22.04'
     needs: makedist
     steps:
     - name: Install CCache
@@ -122,6 +122,7 @@ jobs:
           set -ex
           echo "PATH=$PATH"
           pkgutil -y -i ccache gmake gtar perl # libmagic_dev libpcre2_dev
+          ls -l /opt/csw/bin
           ccache --set-config=cache_dir="$GITHUB_WORKSPACE/.ccache"
           ccache --set-config=max_size='500M'
           ccache --set-config=compression=true
