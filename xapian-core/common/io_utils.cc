@@ -87,13 +87,12 @@ io_open_block_wr(const char * filename, bool anew)
 		   /* Subsequent operations may open this file to read, write
 		    * or delete it */
 		   FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-		   dwShareMode,
 		   NULL,
 		   anew ? CREATE_ALWAYS : 0,
 		   FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED,
 		   NULL);
     if (handleWin == INVALID_HANDLE_VALUE) {
-	return set_errno_from_getlasterror();
+	return posixy_set_errno_from_getlasterror();
     }
 
     // Wrap in a standard file descriptor.
