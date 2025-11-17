@@ -225,8 +225,7 @@ static inline void io_protect_from_write(int fd) {
       defined __APPLE__ || \
       defined __NetBSD__ || \
       defined __OpenBSD__ || \
-      defined __sun__ || \
-      defined __WIN32__
+      defined __sun__
     // The maximum off_t value worked in testing on:
     // * Cygwin 3.6.5
     // * DragonFlyBSD 6.4.2
@@ -235,7 +234,6 @@ static inline void io_protect_from_write(int fd) {
     // * NetBSD 10.0
     // * OpenBSD 7.5
     // * Solaris 10 and 11.4
-    // * Microsoft Windows Server 2025 10.0.26100
     (void)lseek(fd, std::numeric_limits<off_t>::max(), SEEK_SET);
 #elif defined __EMSCRIPTEN__
     if constexpr (sizeof(off_t) > 4) {
@@ -243,6 +241,11 @@ static inline void io_protect_from_write(int fd) {
 	// 4.0.19).
 	(void)lseek(fd, off_t(0x20000000000000), SEEK_SET);
     }
+#elif defined __WIN32__
+    // For Microsoft Windows we open the file with CreateFile() and
+    // FILE_FLAG_OVERLAPPED so write() will always fail with EINVAL which
+    // protects us from accidental writes.
+    (void)fd;
 #else
     (void)fd;
 #endif

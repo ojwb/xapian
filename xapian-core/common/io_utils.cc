@@ -67,22 +67,23 @@ io_unlink(const std::string & filename)
 const int MIN_WRITE_FD = 3;
 
 int
-io_open_block_wr(const char * fname, bool anew)
+io_open_block_wr(const char * filename, bool anew)
 {
 #ifndef __WIN32__
     // Use auto because on AIX O_CLOEXEC may be a 64-bit integer constant.
     auto flags = O_RDWR | O_BINARY | O_CLOEXEC;
     if (anew) flags |= O_CREAT | O_TRUNC;
-    int fd = ::open(fname, flags, 0666);
+    int fd = ::open(filename, flags, 0666);
 #else
     // Microsoft Windows lacks the POSIX standard functions pread() and
-    // pwrite().  To get an equivalent which doesn't update the file
-    // pointer (so we can set it high to protect the fd from accidental
-    // writes) we use overlapped I/O, which requires opening the file with
-    // CreateFile() so we can specify FILE_FLAG_OVERLAPPED.
+    // pwrite().  We can still protect the fd from accidental writes by
+    // opening the file with CreateFile() and specifying FILE_FLAG_OVERLAPPED,
+    // then wrapping the returned handle in a file descriptor to give a file
+    // descriptor for which write() fails with EINVAL.  We implement
+    // equivalents to pread() and pwrite() using ReadFile() and WriteFile().
     HANDLE handleWin =
 	CreateFile(filename,
-		   GENERIC_READ | GENERIC_WRITE.
+		   GENERIC_READ | GENERIC_WRITE,
 		   /* Subsequent operations may open this file to read, write
 		    * or delete it */
 		   FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
@@ -95,7 +96,7 @@ io_open_block_wr(const char * fname, bool anew)
 	return set_errno_from_getlasterror();
     }
 
-    /* Wrap in a standard file descriptor. */
+    // Wrap in a standard file descriptor.
     int fd = _open_osfhandle((intptr_t)(handleWin), O_CREAT|O_RDWR|O_BINARY);
 #endif
 
