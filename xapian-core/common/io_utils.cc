@@ -380,7 +380,13 @@ io_read_block(int fd, char * p, size_t n, off_t b, off_t o)
     }
     DWORD c;
     if (!ReadFile(h, p, n, &c, &overlapped)) {
-	throw_block_error("Error reading block ", b, -GetLastError());
+	if (GetLastError() != ERROR_IO_PENDING ||
+	    !GetOverlappedResult(h,
+				 &overlapped,
+				 &c,
+				 TRUE)) {
+	    throw_block_error("Error reading block ", b, -GetLastError());
+	}
     }
     if (c != n) {
 	throw_block_error("EOF reading block ", b);
@@ -445,7 +451,13 @@ io_write_block(int fd, const char * p, size_t n, off_t b, off_t o)
     }
     DWORD c;
     if (!WriteFile(h, p, n, &c, &overlapped)) {
-	throw Xapian::DatabaseError("Error writing block", -GetLastError());
+	if (GetLastError() != ERROR_IO_PENDING ||
+	    !GetOverlappedResult(h,
+				 &overlapped,
+				 &c,
+				 TRUE)) {
+	    throw_block_error("Error writing block ", b, -GetLastError());
+	}
     }
 #else
     if (rare(lseek(fd, o, SEEK_SET) < 0))
