@@ -141,7 +141,7 @@ pread(int fd, char * p, size_t n, OFF_T o)
     if (!ReadFile(h, p, n, &c, &overlapped)) {
 	if (GetLastError() != ERROR_IO_PENDING)
 	    return set_errno_from_getlasterror();
-	fprintf(stderr, "*** pread calling GetOverlappedResult()\n");
+	// fprintf(stderr, "*** pread calling GetOverlappedResult()\n"); triggers
 	if (!GetOverlappedResult(h,
 				 &overlapped,
 				 &c,
@@ -171,7 +171,7 @@ pwrite(int fd, const char * p, size_t n, OFF_T o)
     if (!WriteFile(h, p, n, &c, &overlapped)) {
 	if (GetLastError() != ERROR_IO_PENDING)
 	    return set_errno_from_getlasterror();
-	fprintf(stderr, "*** pwrite calling GetOverlappedResult()\n");
+	// fprintf(stderr, "*** pwrite calling GetOverlappedResult()\n"); does not trigger
 	if (!GetOverlappedResult(h,
 				 &overlapped,
 				 &c,
