@@ -2586,9 +2586,9 @@ jobs:
           gcc:p
     - name: test
       run: |
-        gcc -Wall -W lseek-safety-test-win32-simple.c -o a.exe
-        gcc -Wall -W lseek-safety-test-win32-nonoverlapped.c -o b.exe
-        gcc -Wall -W lseek-safety-test-win32.c -o c.exe
+        gcc -Wall -W lseek-safety-test-win32-simple.c -o b.exe
+        gcc -Wall -W lseek-safety-test-win32-nonoverlapped.c -o c.exe
+        gcc -Wall -W lseek-safety-test-win32.c -o a.exe
         ./a.exe TESTFILE
         ls -l TESTFILE
         ./b.exe TESTFILE
@@ -2621,9 +2621,9 @@ jobs:
         arch: x64
     - name: test
       run: |
-        cl -nologo -UCRT lseek-safety-test-win32-simple.c -o a.exe
-        cl -nologo -UCRT lseek-safety-test-win32-nonoverlapped.c -o b.exe
-        cl -nologo -UCRT lseek-safety-test-win32.c -o c.exe
+        cl -nologo -UCRT lseek-safety-test-win32-simple.c -o b.exe
+        cl -nologo -UCRT lseek-safety-test-win32-nonoverlapped.c -o c.exe
+        cl -nologo -UCRT lseek-safety-test-win32.c -o a.exe
         ./a.exe TESTFILE
         ls -l TESTFILE
         ./b.exe TESTFILE
