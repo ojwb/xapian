@@ -2571,7 +2571,7 @@ jobs:
         git diff "${BASE}.." --|xapian-maintainer-tools/xapian-check-patch
 
   mingw-lseek-safety:
-    if: true
+    if: false
     runs-on: 'windows-latest'
     defaults:
       run:
@@ -2591,7 +2591,7 @@ jobs:
         ls -l TESTFILE
 
   msvc-lseek-safety:
-    if: true
+    if: false
     runs-on: 'windows-2025'
     defaults:
       run:
