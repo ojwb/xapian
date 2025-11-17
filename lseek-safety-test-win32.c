@@ -141,12 +141,15 @@ pread(int fd, char * p, size_t n, OFF_T o)
     if (!ReadFile(h, p, n, &c, &overlapped)) {
 	if (GetLastError() != ERROR_IO_PENDING)
 	    return set_errno_from_getlasterror();
+	fprintf(stderr, "*** pread calling GetOverlappedResult()\n");
 	if (!GetOverlappedResult(h,
 				 &overlapped,
 				 &c,
 				 TRUE)) {
 	    return set_errno_from_getlasterror();
 	}
+    } else {
+	fprintf(stderr, "*** pread IO resolved synchronously\n");
     }
     return c;
 }
@@ -170,12 +173,15 @@ pwrite(int fd, const char * p, size_t n, OFF_T o)
     if (!WriteFile(h, p, n, &c, &overlapped)) {
 	if (GetLastError() != ERROR_IO_PENDING)
 	    return set_errno_from_getlasterror();
+	fprintf(stderr, "*** pwrite calling GetOverlappedResult()\n");
 	if (!GetOverlappedResult(h,
 				 &overlapped,
 				 &c,
 				 TRUE)) {
 	    return set_errno_from_getlasterror();
 	}
+    } else {
+	fprintf(stderr, "*** pwrite IO resolved synchronously\n");
     }
     return c;
 }
