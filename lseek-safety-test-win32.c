@@ -186,7 +186,7 @@ static int openoverlapped(const char* filename, int test_read) {
     }
 
     /* Return a standard file descriptor. */
-    return _open_osfhandle((intptr_t)(handleWin), O_BINARY);
+    return _open_osfhandle((intptr_t)(handleWin), O_RDONLY|O_BINARY);
 }
 
 int main(int argc, char ** argv) {
