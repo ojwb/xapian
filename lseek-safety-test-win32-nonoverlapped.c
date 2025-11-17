@@ -139,15 +139,7 @@ pread(int fd, char * p, size_t n, OFF_T o)
     }
     DWORD c;
     if (!ReadFile(h, p, n, &c, &overlapped)) {
-	if (GetLastError() != ERROR_IO_PENDING)
-	    return set_errno_from_getlasterror();
-	fprintf(stderr, "*** pread calling GetOverlappedResult()\n");
-	if (!GetOverlappedResult(h,
-				 &overlapped,
-				 &c,
-				 TRUE)) {
-	    return set_errno_from_getlasterror();
-	}
+	return set_errno_from_getlasterror();
     }
     return c;
 }
@@ -169,40 +161,9 @@ pwrite(int fd, const char * p, size_t n, OFF_T o)
     }
     DWORD c;
     if (!WriteFile(h, p, n, &c, &overlapped)) {
-	if (GetLastError() != ERROR_IO_PENDING)
-	    return set_errno_from_getlasterror();
-	fprintf(stderr, "*** pwrite calling GetOverlappedResult()\n");
-	if (!GetOverlappedResult(h,
-				 &overlapped,
-				 &c,
-				 TRUE)) {
-	    return set_errno_from_getlasterror();
-	}
-    }
-    return c;
-}
-
-static int openoverlapped(const char* filename, int test_read) {
-    DWORD dwDesiredAccess = GENERIC_READ | GENERIC_WRITE;
-    /* Subsequent operations may open this file to read, write or delete it */
-    DWORD dwShareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
-
-    DWORD dwCreationDisposition = test_read ? OPEN_EXISTING : CREATE_ALWAYS;
-
-    HANDLE handleWin =
-	CreateFile(filename,
-		   dwDesiredAccess,
-		   dwShareMode,
-		   NULL,
-		   dwCreationDisposition,
-		   FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED,
-		   NULL);
-    if (handleWin == INVALID_HANDLE_VALUE) {
 	return set_errno_from_getlasterror();
     }
-
-    /* Return a standard file descriptor. */
-    return _open_osfhandle((intptr_t)(handleWin), O_CREAT|O_RDWR|O_TRUNC|O_BINARY);
+    return c;
 }
 
 int main(int argc, char ** argv) {
@@ -215,7 +176,9 @@ int main(int argc, char ** argv) {
 
     int test_read = argv[2] != NULL;
 
-    int fd = openoverlapped(filename, test_read);
+    int mode = O_RDWR | O_BINARY | O_CREAT | O_TRUNC;
+    if (test_read) mode = O_RDONLY | O_BINARY;
+    int fd = open(filename, mode, 0666);
     if (fd < 0) {
         perror("open failed");
 	return 1;

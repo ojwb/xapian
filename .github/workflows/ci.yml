@@ -23,7 +23,7 @@ on:
 
 jobs:
   makedist:
-    if: true
+    if: false
     name: 'make dist'
     runs-on: 'ubuntu-24.04'
     env:
@@ -1335,7 +1335,7 @@ jobs:
           **/*.log
 
   mingw64-i686-cross:
-    if: true
+    if: false
     runs-on: 'ubuntu-22.04'
     needs: makedist
     steps:
@@ -1404,7 +1404,7 @@ jobs:
           **/*.log
 
   mingw64-x86-64-cross:
-    if: true
+    if: false
     runs-on: 'ubuntu-22.04'
     needs: makedist
     steps:
@@ -1938,7 +1938,7 @@ jobs:
           **/*.log
 
   msvc2022:
-    if: true
+    if: false
     runs-on: 'windows-2025'
     needs: makedist
     defaults:
@@ -2052,7 +2052,7 @@ jobs:
           **/*.log
 
   msvc2022-x86:
-    if: true
+    if: false
     runs-on: 'windows-2025'
     needs: makedist
     defaults:
@@ -2571,7 +2571,7 @@ jobs:
         git diff "${BASE}.." --|xapian-maintainer-tools/xapian-check-patch
 
   mingw-lseek-safety:
-    if: false
+    if: true
     runs-on: 'windows-latest'
     defaults:
       run:
@@ -2586,12 +2586,24 @@ jobs:
           gcc:p
     - name: test
       run: |
-        gcc -Wall -W lseek-safety-test-win32.c -o a.exe
+        gcc -Wall -W lseek-safety-test-win32-simple.c -o a.exe
+        gcc -Wall -W lseek-safety-test-win32-nonoverlapped.c -o b.exe
+        gcc -Wall -W lseek-safety-test-win32.c -o c.exe
         ./a.exe TESTFILE
         ls -l TESTFILE
+        ./b.exe TESTFILE
+        ls -l TESTFILE
+        ./c.exe TESTFILE
+        ls -l TESTFILE
+        time ./a.exe TESTFILE
+        time ./a.exe TESTFILE r
+        time ./b.exe TESTFILE
+        time ./b.exe TESTFILE r
+        time ./c.exe TESTFILE
+        time ./c.exe TESTFILE r
 
   msvc-lseek-safety:
-    if: false
+    if: true
     runs-on: 'windows-2025'
     defaults:
       run:
@@ -2609,9 +2621,21 @@ jobs:
         arch: x64
     - name: test
       run: |
-        cl -nologo -UCRT lseek-safety-test-win32.c -o a.exe
+        cl -nologo -UCRT lseek-safety-test-win32-simple.c -o a.exe
+        cl -nologo -UCRT lseek-safety-test-win32-nonoverlapped.c -o b.exe
+        cl -nologo -UCRT lseek-safety-test-win32.c -o c.exe
         ./a.exe TESTFILE
         ls -l TESTFILE
+        ./b.exe TESTFILE
+        ls -l TESTFILE
+        ./c.exe TESTFILE
+        ls -l TESTFILE
+        time ./a.exe TESTFILE
+        time ./a.exe TESTFILE r
+        time ./b.exe TESTFILE
+        time ./b.exe TESTFILE r
+        time ./c.exe TESTFILE
+        time ./c.exe TESTFILE r
 
   Emscripten-lseek-safety:
     if: false
