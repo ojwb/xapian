@@ -139,15 +139,7 @@ pread(int fd, char * p, size_t n, OFF_T o)
     }
     DWORD c;
     if (!ReadFile(h, p, n, &c, &overlapped)) {
-	if (GetLastError() != ERROR_IO_PENDING)
-	    return set_errno_from_getlasterror();
-	// fprintf(stderr, "*** pread calling GetOverlappedResult()\n"); triggers
-	if (!GetOverlappedResult(h,
-				 &overlapped,
-				 &c,
-				 TRUE)) {
-	    return set_errno_from_getlasterror();
-	}
+	return set_errno_from_getlasterror();
     }
     return c;
 }
@@ -169,15 +161,7 @@ pwrite(int fd, const char * p, size_t n, OFF_T o)
     }
     DWORD c;
     if (!WriteFile(h, p, n, &c, &overlapped)) {
-	if (GetLastError() != ERROR_IO_PENDING)
-	    return set_errno_from_getlasterror();
-	// fprintf(stderr, "*** pwrite calling GetOverlappedResult()\n"); does not trigger
-	if (!GetOverlappedResult(h,
-				 &overlapped,
-				 &c,
-				 TRUE)) {
-	    return set_errno_from_getlasterror();
-	}
+	return set_errno_from_getlasterror();
     }
     return c;
 }
@@ -195,14 +179,14 @@ static int openoverlapped(const char* filename, int test_read) {
 		   dwShareMode,
 		   NULL,
 		   dwCreationDisposition,
-		   FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED,
+		   FILE_ATTRIBUTE_NORMAL,
 		   NULL);
     if (handleWin == INVALID_HANDLE_VALUE) {
 	return set_errno_from_getlasterror();
     }
 
     /* Return a standard file descriptor. */
-    return _open_osfhandle((intptr_t)(handleWin), O_CREAT|O_RDWR|O_TRUNC|O_BINARY);
+    return _open_osfhandle((intptr_t)(handleWin), O_BINARY);
 }
 
 int main(int argc, char ** argv) {
@@ -219,6 +203,12 @@ int main(int argc, char ** argv) {
     if (fd < 0) {
         perror("open failed");
 	return 1;
+    }
+
+    if (!test_read) {
+	errno = 0;
+	int r = write(fd, "", 1);
+	fprintf(stderr, "write() returned %lld (%s)\n", (long long)r, strerror(errno));
     }
 
     char data[8192];
