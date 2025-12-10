@@ -1,7 +1,7 @@
 /** @file
  * @brief The non-lemon-generated parts of the QueryParser class.
  */
-/* Copyright (C) 2005-2024 Olly Betts
+/* Copyright (C) 2005-2025 Olly Betts
  * Copyright (C) 2010 Adam Sjøgren
  *
  * This program is free software; you can redistribute it and/or
@@ -88,6 +88,12 @@ void
 QueryParser::set_stopper(const Stopper * stopper)
 {
     internal->stopper = stopper;
+}
+
+void
+QueryParser::set_stopper_strategy(stop_strategy strategy)
+{
+    internal->stop_mode = strategy;
 }
 
 void

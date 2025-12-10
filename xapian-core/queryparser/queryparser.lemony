@@ -2,7 +2,7 @@
 /** @file
  * @brief build a Xapian::Query object from a user query string
  */
-/* Copyright (C) 2004-2024 Olly Betts
+/* Copyright (C) 2004-2025 Olly Betts
  * Copyright (C) 2007,2008,2009 Lemur Consulting Ltd
  * Copyright (C) 2010 Adam Sjøgren
  *
@@ -284,6 +284,10 @@ class State {
 	return qpi->stopper.get();
     }
 
+    QueryParser::stop_strategy get_stopper_strategy() const {
+	return qpi->stop_mode;
+    }
+
     size_t stoplist_size() const {
 	return qpi->stoplist.size();
     }
@@ -328,6 +332,14 @@ class State {
 string
 Term::make_term(const string & prefix) const
 {
+    if (state->get_stopper_strategy() == QueryParser::STOP_ALL) {
+	const Xapian::Stopper* stopper = state->get_stopper();
+	if (stopper && (*stopper)(name)) {
+	    // FIXME: We need to handle this in any callers...
+	    return string();
+	}
+    }
+
     string term;
     if (stem != QueryParser::STEM_NONE && stem != QueryParser::STEM_ALL)
 	term += 'Z';
