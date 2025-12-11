@@ -47,6 +47,7 @@
 #include <algorithm>
 #include <cerrno>
 #include <cfloat> // For DBL_EPSILON.
+#include <iostream>
 #include <vector>
 
 #ifdef HAVE_POLL_H
@@ -390,6 +391,7 @@ Matcher::get_local_mset(Xapian::doccount first,
 								&total_subqs_i);
 	    total_subqs = max(total_subqs, total_subqs_i);
 	    if (plest.pl != nullptr) {
+		std::cerr << "PL: " << pl->get_description() << '\n';
 		all_null = false;
 		if (mdecider) {
 		    plest.est.reset(new EstimateOp(EstimateOp::DECIDER,
