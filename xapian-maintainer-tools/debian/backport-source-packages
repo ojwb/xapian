@@ -26,7 +26,7 @@ set -e
 MIRROR=http://httpredir.debian.org/debian/
 
 DEBIAN_CODENAMES='trixie bookworm bullseye'
-UBUNTU_CODENAMES='resolute questing noble jammy focal bionic'
+UBUNTU_CODENAMES='resolute noble jammy focal bionic'
 UBUNTU_LATEST=`echo "$UBUNTU_CODENAMES"|sed 's/ .*//'`
 
 V_OPT=
