@@ -215,7 +215,7 @@ HoneyTable::read_key(std::string& key,
             *p++ = char(ch2);
             if (ch2 < 128) break;
         }
-        r = p - buf;
+        r = int(p - buf);
     }
     const char* p = buf;
     const char* end = p + r;
@@ -382,7 +382,7 @@ HoneyTable::get_exact_entry(std::string_view key, std::string* tag) const
                         *p++ = ch2;
                         if (ch2 < 128) break;
                     }
-                    r = p - buf;
+                    r = int(p - buf);
                 }
                 const char* p = buf;
                 const char* end = p + r;

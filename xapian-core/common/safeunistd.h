@@ -1,7 +1,7 @@
 /** @file
  * @brief <unistd.h>, but with compat. and large file support for MSVC.
  */
-/* Copyright (C) 2007,2015 Olly Betts
+/* Copyright (C) 2007,2015,2026 Olly Betts
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -40,8 +40,12 @@
 
 #endif
 
+#ifdef __WIN32__
+
+# include <climits>
+
 // Under mingw we probably don't need to provide our own sleep().
-#if defined __WIN32__ && !defined HAVE_SLEEP
+# ifndef HAVE_SLEEP
 
 inline unsigned int
 sleep(unsigned int seconds)
@@ -62,6 +66,39 @@ sleep(unsigned int seconds)
     }
     xapian_sleep_milliseconds(seconds * 1000u);
     return 0;
+}
+
+# endif
+
+// POSIX `read()` takes `size_t count`, but Microsoft's takes `unsigned`.
+// This creates potential for bugs because large values will be truncated
+// to fit the type so a read of 4GB (or an exact multiple thereof) will
+// truncate to 0 and `read()` will return 0 incorrectly indicating EOF.
+//
+// Also, `count > INT_MAX` is treated as invalid.
+//
+// We provide a templated replacement which returns a short read if `count >
+// INT_MAX`.
+//
+// POSIX `read()` returns `ssize_t` ratehr than `int`, but we don't currently
+// attempt to emulate that since that can't result in truncation.
+template<typename S>
+inline int
+read(int fd, void* buf, S count)
+{
+    unsigned c =
+        rare(count > S{INT_MAX}) ? unsigned{INT_MAX} : unsigned(count);
+    return _read(fd, buf, c);
+}
+
+// Similarly for `write()`.
+template<typename S>
+inline int
+write(int fd, const void* buf, S count)
+{
+    unsigned c =
+        rare(count > S{INT_MAX}) ? unsigned{INT_MAX} : unsigned(count);
+    return _write(fd, buf, c);
 }
 
 #endif

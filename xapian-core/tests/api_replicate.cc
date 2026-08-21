@@ -113,7 +113,7 @@ truncated_copy(const string& srcpath,
     char buf[BUFSIZE];
     size_t total_bytes = 0;
     while (tocopy > 0) {
-        size_t thiscopy = tocopy > BUFSIZE ? BUFSIZE : tocopy;
+        size_t thiscopy = tocopy > BUFSIZE ? BUFSIZE : size_t(tocopy);
         size_t bytes = do_read(fdin, buf, thiscopy);
         if (thiscopy != bytes) {
             FAIL_TEST("Couldn't read desired number of bytes from changeset");

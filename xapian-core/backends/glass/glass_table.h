@@ -197,7 +197,7 @@ template<class T> class LeafItem_base {
         int cd = get_key_len() + I2 + K1;
         if (!first_component()) cd += X2;
         // Number of bytes to extract from current component.
-        int l = size() - cd;
+        size_t l = size() - cd;
         const char * chunk = reinterpret_cast<const char *>(p + cd);
         tag->append(chunk, l);
     }
@@ -206,7 +206,7 @@ template<class T> class LeafItem_base {
         int cd = get_key_len() + I2 + K1;
         if (!first_component()) cd += X2;
         // Number of bytes to extract from current component.
-        int l = size() - cd;
+        size_t l = size() - cd;
         const char * chunk = reinterpret_cast<const char *>(p + cd);
         return comp_stream.decompress_chunk(chunk, l, tag);
     }
@@ -259,7 +259,7 @@ class LeafItem_wr : public LeafItem_base<uint8_t *> {
             throw Xapian::InvalidArgumentError(msg);
         }
 
-        set_key_len(key_len);
+        set_key_len(int(key_len));
         *p |= I_FIRST_BIT;
         if (key_len)
             std::memmove(p + I2 + K1, key_.data(), key_len);

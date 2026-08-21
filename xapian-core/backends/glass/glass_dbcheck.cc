@@ -805,7 +805,8 @@ check_glass_table(const char* tablename, string_view db_dir, int fd,
                     string::size_type len = static_cast<unsigned char>(*pos++);
                     if (len > current_term.length()) {
                         // The wdf was squeezed into the same byte.
-                        current_wdf = len / (current_term.length() + 1) - 1;
+                        auto v = len / (current_term.length() + 1) - 1;
+                        current_wdf = Xapian::doccount(v);
                         len %= (current_term.length() + 1);
                         got_wdf = true;
                     }

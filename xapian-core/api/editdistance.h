@@ -183,7 +183,7 @@ class EditDistanceCalculator {
         }
 
         // Actually calculate the edit distance.
-        return calc(&utf32[0], utf32.size(), max_distance);
+        return calc(&utf32[0], int(utf32.size()), max_distance);
     }
 };
 

@@ -26,7 +26,9 @@
 #include "stringutils.h"
 
 #include <algorithm>
+#include <stdexcept>
 #include <cerrno>
+#include <climits>
 #include <cstring>
 
 using namespace std;
@@ -57,6 +59,9 @@ FileIndexer::index_to(Xapian::WritableDatabase & db)
 
         Xapian::Document doc;
         string para = get_paragraph(input);
+        if (para.size() > size_t{INT_MAX})
+            throw std::range_error("Paragraph > INT_MAX bytes!");
+        int para_size = int(para.size());
         doc.set_data(para);
 
         // Value 0 contains all possible character values so we can check that
@@ -79,18 +84,18 @@ FileIndexer::index_to(Xapian::WritableDatabase & db)
             "\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef"
             "\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff",
             7 + 256);
-        if (para.size() > 2) value0[0] = para[2];
+        if (para_size > 2) value0[0] = para[2];
         value0 += para;
         doc.add_value(0, value0);
 
-        for (Xapian::valueno i = min(para.length(), size_t(10)); i >= 1; --i) {
-            doc.add_value(i, para.substr(i, 1));
+        for (auto i = min(para_size, 10); i >= 1; --i) {
+            doc.add_value(Xapian::valueno(i), para.substr(i, 1));
         }
         // Value 11 is useful for tests of sorting
-        doc.add_value(11, Xapian::sortable_serialise(double(para.size())));
+        doc.add_value(11, Xapian::sortable_serialise(double(para_size)));
 
         // Value 12 is useful for tests of collapsing
-        doc.add_value(12, Xapian::sortable_serialise(double(para.size() % 5)));
+        doc.add_value(12, Xapian::sortable_serialise(double(para_size % 5)));
 
         // Value 13 contains the first 3 letters of the paragraph
         doc.add_value(13, para.substr(0, 3));

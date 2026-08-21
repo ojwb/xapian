@@ -66,7 +66,7 @@ PostList*
 MultiDatabase::open_post_list(string_view term) const
 {
     PostList** postlists = new PostList*[shards.size()];
-    size_t count = 0;
+    Xapian::doccount count = 0;
     try {
         for (auto&& shard : shards) {
             postlists[count] = shard->open_post_list(term);
@@ -98,7 +98,7 @@ MultiDatabase::open_term_list(Xapian::docid did) const
 TermList*
 MultiDatabase::open_term_list_direct(Xapian::docid did) const
 {
-    Xapian::doccount n_shards = shards.size();
+    Xapian::doccount n_shards = Xapian::doccount(shards.size());
     auto shard_index = shard_number(did, n_shards);
     auto shard = shards[shard_index];
     Xapian::docid shard_did = shard_docid(did, n_shards);

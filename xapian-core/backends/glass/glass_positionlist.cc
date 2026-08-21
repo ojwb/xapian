@@ -1,7 +1,7 @@
 /** @file
  * @brief A position list in a glass database.
  */
-/* Copyright (C) 2004,2005,2006,2008,2009,2010,2013,2017,2019 Olly Betts
+/* Copyright (C) 2004,2005,2006,2008,2009,2010,2013,2017,2019,2026 Olly Betts
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -26,8 +26,10 @@
 
 #include "bitstream.h"
 #include "debuglog.h"
+#include "omassert.h"
 #include "pack.h"
 
+#include <limits>
 #include <string>
 
 using namespace std;
@@ -38,14 +40,17 @@ GlassPositionListTable::pack(string & s,
 {
     LOGCALL_VOID(DB, "GlassPositionListTable::pack", s | vec);
     Assert(!vec.empty());
+    // vec entries should be unique, so we can't have more entries than there
+    // are different Xapian::termpos values.
+    AssertRel(vec.size() - 1, <=, std::numeric_limits<Xapian::termpos>::max());
 
     pack_uint(s, vec.back());
 
     if (vec.size() > 1) {
         BitWriter wr(s);
         wr.encode(vec[0], vec.back());
-        wr.encode(vec.size() - 2, vec.back() - vec[0]);
-        wr.encode_interpolative(vec, 0, vec.size() - 1);
+        wr.encode(Xapian::termpos(vec.size() - 2), vec.back() - vec[0]);
+        wr.encode_interpolative(vec, 0, Xapian::termpos(vec.size() - 1));
         swap(s, wr.freeze());
     }
 }

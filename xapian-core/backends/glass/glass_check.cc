@@ -162,7 +162,7 @@ GlassTableCheck::block_check(Glass::Cursor * C_, int j, int opts,
     int significant_c = j == 0 ? DIR_START : DIR_START + D2;
         /* the first key in an index block is dummy, remember */
 
-    size_t max_free = MAX_FREE(p);
+    int max_free = MAX_FREE(p);
     int dir_end = DIR_END(p);
     int total_free = block_size - dir_end;
 
@@ -184,10 +184,10 @@ GlassTableCheck::block_check(Glass::Cursor * C_, int j, int opts,
     if (j == 0) {
         for (c = DIR_START; c < dir_end; c += D2) {
             LeafItem item(p, c);
-            int o = item.get_address() - p;
+            auto o = item.get_address() - p;
             if (o > int(block_size))
                 failure("item starts outside block", n, c);
-            if (o - dir_end < int(max_free))
+            if (o - dir_end < max_free)
                 failure("item overlaps directory", n, c);
 
             int kt_len = item.size();
@@ -201,10 +201,10 @@ GlassTableCheck::block_check(Glass::Cursor * C_, int j, int opts,
     } else {
         for (c = DIR_START; c < dir_end; c += D2) {
             BItem item(p, c);
-            int o = item.get_address() - p;
+            auto o = item.get_address() - p;
             if (o > int(block_size))
                 failure("item starts outside block", n, c);
-            if (o - dir_end < int(max_free))
+            if (o - dir_end < max_free)
                 failure("item overlaps directory", n, c);
 
             int kt_len = item.size();

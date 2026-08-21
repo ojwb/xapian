@@ -411,7 +411,7 @@ HoneySpellingTermList::next()
     } else if (usual(!current_term.empty())) {
         keep = data[p++] ^ MAGIC_XOR_VALUE;
     }
-    size_t add;
+    unsigned add;
     if (p == data.size() ||
         (add = data[p] ^ MAGIC_XOR_VALUE) >= data.size() - p) {
         throw Xapian::DatabaseCorruptError("Bad spelling data (too little "

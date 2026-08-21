@@ -36,7 +36,6 @@
 #include <algorithm>
 #include <cerrno>
 #include <climits>
-#include <cstdint>
 #include <string>
 #ifdef __WIN32__
 # include <type_traits>
@@ -632,11 +631,11 @@ RemoteConnection::get_message_chunked(double end_time)
 
     if (!read_at_least(2, end_time))
         RETURN(-1);
-    // This code assume things about the pack_uint() encoding in order to
+    // This code assumes things about the pack_uint() encoding in order to
     // handle partial reads.
-    uint_least64_t len = static_cast<unsigned char>(buffer[1]);
-    if (len < 128) {
-        chunked_data_left = len;
+    auto len_first_byte = static_cast<unsigned char>(buffer[1]);
+    if (len_first_byte < 128) {
+        chunked_data_left = len_first_byte;
         char type = buffer[0];
         buffer.erase(0, 2);
         RETURN(type);
@@ -649,10 +648,9 @@ RemoteConnection::get_message_chunked(double end_time)
     const char* p = buffer.data();
     const char* p_end = p + buffer.size();
     ++p;
-    if (!unpack_uint(&p, p_end, &len)) {
+    if (!unpack_uint(&p, p_end, &chunked_data_left)) {
         RETURN(-1);
     }
-    chunked_data_left = len;
     size_t header_len = (p - buffer.data());
     unsigned char type = buffer[0];
     buffer.erase(0, header_len);

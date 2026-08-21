@@ -85,6 +85,12 @@ CC=$save_CC
 dnl Run tests using the C++ compiler.
 AC_LANG([C++])
 
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [[
+#ifdef _MSC_VER
+#error MSVC
+#endif
+]])], [msvc=no], [msvc=yes])
+
 dnl Test if the compiler works with $1 added to CXXFLAGS; if it does, add $1 to
 dnl variable $2.  If the test passes, also do $3; if it fails, also do $4.
 AC_DEFUN([XAPIAN_TEST_CXXFLAGS],
@@ -582,9 +588,9 @@ if test yes = "$GXX"; then
   rm -f conftest.cc
 elif test yes = "$msvc"; then
   dnl -W1 is command-line default, -W3 IDE default, -W4 highest numbered level.
-  dnl AM_CXXFLAGS="$AM_CXXFLAGS -W4"
+  AM_CXXFLAGS="$AM_CXXFLAGS -W3"
 
-  WERROR=-WX
+  WERROR=
 fi
 
 AC_MSG_CHECKING([for option to turn warnings into errors])

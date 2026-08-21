@@ -59,6 +59,12 @@ esac
 dnl Run tests using the C++ compiler.
 AC_LANG([C++])
 
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [[
+#ifdef _MSC_VER
+#error MSVC
+#endif
+]])], [msvc=no], [msvc=yes])
+
 dnl Probe for any options needed to enable C++17 support.
 AX_CXX_COMPILE_STDCXX([17])
 
@@ -1097,6 +1103,9 @@ if test yes = "$GXX" ; then
       AC_MSG_RESULT([no])
     fi
   fi
+elif test yes = "$msvc"; then
+  dnl -W1 is command-line default, -W3 IDE default, -W4 highest numbered level.
+  SWIG_CXXFLAGS="$AM_CXXFLAGS -W3"
 fi
 AC_SUBST(SWIG_CXXFLAGS)
 

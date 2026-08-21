@@ -103,7 +103,7 @@ HoneyCursor::next_from_index()
             *p++ = char(ch2);
             if (ch2 < 128) break;
         }
-        r = p - buf;
+        r = int(p - buf);
     }
     const char* p = buf;
     const char* end = p + r;
