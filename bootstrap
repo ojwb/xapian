@@ -415,10 +415,8 @@ case $srcdir in
 esac
 
 # Commit hash to pass to handle_git_external for swig.  Equivalent to
-# SWIG 4.2.1 plus 68 commits, in order to get typemaps for std::string_view
-# including a fix for a regression in handling a function taking multiple
-# std::string_view parameters.
-swig_git_commit_hash=6226d58065005a31f3737530ae93eaa628ae4995
+# SWIG 4.5.0.
+swig_git_commit_hash=d598176759f5d199e288cf78413cfaa3bf84449f
 
 # Commit hashes to use for common in omega and letor respectively:
 omega_common_commit_hash=b418bbabfaa3169feba75bc0ee9a30af555e9413
