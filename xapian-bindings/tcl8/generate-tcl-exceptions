@@ -1,6 +1,6 @@
 # generate-tcl-exceptions: generate error handling code for Tcl bindings
 my $copyright = <<'END';
- Copyright (c) 2006,2007,2011,2012 Olly Betts
+ Copyright (c) 2006,2007,2011,2012,2026 Olly Betts
 
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU General Public License as
@@ -72,7 +72,7 @@ print FD <<'EOF';
 
 %exception {
     try {
-        $function
+        $action
     } catch (const Xapian::Error &e) {
         return XapianTclHandleError(interp, e);
     } catch (const std::exception &e) {

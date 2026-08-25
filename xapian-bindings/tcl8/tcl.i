@@ -129,7 +129,7 @@ static int XapianTclHandleError(Tcl_Interp * interp) {
 
 %exception {
     try {
-        $function
+        $action
     } catch (const Xapian::Error &e) {
         return XapianTclHandleError(interp, e);
     } catch (...) {

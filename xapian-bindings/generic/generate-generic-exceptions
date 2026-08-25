@@ -1,6 +1,6 @@
 # generate-generic-exceptions: generate generic error handling code
 my $copyright = <<'END';
- Copyright (C) 2004,2005,2006,2007,2011,2012,2018 Olly Betts
+ Copyright (C) 2004,2005,2006,2007,2011,2012,2018,2026 Olly Betts
  Copyright (C) 2007 Lemur Consulting Ltd
 
  This program is free software; you can redistribute it and/or
@@ -91,7 +91,7 @@ print FD <<'EOF';
 
 %exception {
     try {
-        $function
+        $action
     } catch (...) {
         string msg;
         int code = XapianExceptionHandler(msg);
