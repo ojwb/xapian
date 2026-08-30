@@ -462,9 +462,14 @@ MSet::Internal::convert_to_percent(double weight) const
         // precision (e.g. on x86 when not using SSE), but this code seems like
         // it's generally asking for problems with floating point rounding
         // issues - maybe we ought to carry through the matching and total
-        // number of subqueries and calculate using those instead.
+        // number of subqueries and calculate using those instead (FIXME).
         //
         // There are corresponding hacks in matcher/matcher.cc.
+        //
+        // The conversion to int here will discard the fractional part so,
+        // aside from floating point rounding issues and the 100 * DBL_EPSILON
+        // hack, this should only give 100% when a document matches all
+        // weighted query terms, which is the documented behaviour.
         percent = int(weight * percent_scale_factor + 100.0 * DBL_EPSILON);
         if (percent <= 0) {
             // Make any non-zero weight give a non-zero percentage.
@@ -473,8 +478,6 @@ MSet::Internal::convert_to_percent(double weight) const
             // Make sure we don't ever exceed 100%.
             percent = 100;
         }
-        // FIXME: Ideally we should also make sure any non-exact match gives
-        // < 100%.
     }
     return percent;
 }
