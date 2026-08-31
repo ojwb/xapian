@@ -216,6 +216,7 @@ static void show_usage() {
 // FIXME: It would be nice to report valid schemes like we used to when we had
 // a hard-coded list of scheme names here.
 "  -F, --freqs                       show query term frequencies\n"
+"  -P, --percentage                  show percentage scores\n"
 "  -h, --help                        display this help and exit\n"
 "  -v, --version                     output version information and exit\n";
 }
@@ -223,7 +224,7 @@ static void show_usage() {
 int
 main(int argc, char **argv)
 try {
-    const char * opts = "d:m:c:s:S:p:b:f:o:w:Fhv";
+    const char * opts = "d:m:c:s:S:p:b:f:o:w:FPhv";
     static const struct option long_opts[] = {
         { "db",             required_argument, 0, 'd' },
         { "msize",          required_argument, 0, 'm' },
@@ -236,6 +237,7 @@ try {
         { "default-op",     required_argument, 0, 'o' },
         { "weight",         required_argument, 0, 'w' },
         { "freqs",          no_argument, 0, 'F' },
+        { "percentage",     no_argument, 0, 'P' },
         { "help",           no_argument, 0, 'h' },
         { "version",        no_argument, 0, 'v' },
         { NULL,             0, 0, 0}
@@ -253,6 +255,7 @@ try {
     unsigned flags = 0;
     bool flags_set = false;
     bool show_termfreqs = false;
+    bool show_percent = false;
     const char* weighting_scheme = "bm25";
 
     int c;
@@ -356,6 +359,9 @@ try {
             case 'F':
                 show_termfreqs = true;
                 break;
+            case 'P':
+                show_percent = true;
+                break;
             case 'v':
                 cout << PROG_NAME " - " PACKAGE_STRING "\n";
                 exit(0);
@@ -427,7 +433,11 @@ try {
     for (Xapian::MSetIterator i = mset.begin(); i != mset.end(); ++i) {
         Xapian::Document doc = i.get_document();
         string data = doc.get_data();
-        cout << *i << ": [" << i.get_weight() << "]\n" << data << "\n";
+        cout << *i << ": ";
+        if (show_percent) {
+            cout << i.get_percent() << "% ";
+        }
+        cout << '[' << i.get_weight() << "]\n" << data << "\n";
     }
     cout << flush;
 } catch (const Xapian::QueryParserError & e) {
