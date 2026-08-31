@@ -2896,13 +2896,12 @@ QueryWindowed::postlist_windowed(Query::op op,
             if (factor == 0.0) break;
             // If we don't complete the iteration, the subquery count may be
             // wrong, and weighting information may not be filled in.
-            while (i != subqueries.end()) {
+            while (++i != subqueries.end()) {
                 // MatchNothing subqueries should have been removed by done().
                 // FIXME: Can we handle this more gracefully?
                 Assert((*i).internal);
                 qopt->destroy_postlist((*i).internal->postlist(qopt, factor,
                                                                NULL).pl);
-                ++i;
             }
             break;
         }
