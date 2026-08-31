@@ -1334,7 +1334,7 @@ eval(const string& fmt, vector<string>& param)
                 continue;
             case '_':
                 ch = '0';
-                // FALL THRU
+                [[fallthrough]];
             case '1': case '2': case '3': case '4': case '5':
             case '6': case '7': case '8': case '9':
                 ch -= '0';
@@ -1831,7 +1831,7 @@ eval(const string& fmt, vector<string>& param)
                             break;
                           case ' ':
                             ch = '+';
-                            /* fall through */
+                            [[fallthrough]];
                           default:
                             url_query_string += ch;
                         }

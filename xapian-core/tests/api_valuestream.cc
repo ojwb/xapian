@@ -109,7 +109,7 @@ DEFINE_TESTCASE(valuestream3, backend) {
                 switch (operation) {
                     case CHECK_AND_LOOP:
                         operation = CHECK;
-                        // FALLTHRU.
+                        [[fallthrough]];
                     case CHECK: case CHECK2:
                         positioned = it.check(did);
                         break;

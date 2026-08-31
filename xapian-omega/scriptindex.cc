@@ -853,7 +853,7 @@ bad_hex_digit:
                         break;
                     case Action::BOOLEAN:
                         boolmap[val] = Action::BOOLEAN;
-                        /* FALLTHRU */
+                        [[fallthrough]];
                     default:
                         actions.emplace_back(code, action_pos, val);
                 }
@@ -1099,8 +1099,8 @@ run_actions(vector<Action>::const_iterator action_it,
                     exit(1);
                 }
                 if (!truncated) break;
+                [[fallthrough]];
             }
-            /* FALLTHRU */
             case Action::TRUNCATE:
                 utf8_truncate(value, action.get_num_arg());
                 break;
@@ -1257,7 +1257,7 @@ run_actions(vector<Action>::const_iterator action_it,
                     switch (unique_missing) {
                       case UNIQUE_ERROR:
                         diag = DIAG_ERROR;
-                        /* FALLTHRU */
+                        [[fallthrough]];
                       case UNIQUE_WARN_NEW:
                       case UNIQUE_WARN_SKIP:
                         report_location(diag, fname, line_no);
@@ -1490,7 +1490,7 @@ index_file(const char *fname, istream &stream,
             switch (unique_missing) {
               case UNIQUE_ERROR:
                 diag = DIAG_ERROR;
-                /* FALLTHRU */
+                [[fallthrough]];
               case UNIQUE_WARN_NEW:
               case UNIQUE_WARN_SKIP:
                 report_location(diag, fname, line_no);
