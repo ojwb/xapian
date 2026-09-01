@@ -1,7 +1,7 @@
 /** @file
  *  @brief Functions for handling a time or time interval in a double.
  */
-/* Copyright (C) 2010,2011,2013,2014,2015,2020 Olly Betts
+/* Copyright (C) 2010,2011,2013,2014,2015,2020,2026 Olly Betts
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,11 +43,28 @@
 extern void xapian_sleep_milliseconds(unsigned int millisecs);
 #endif
 
+#ifdef __EMSCRIPTEN__
+# include <emscripten.h>
+#endif
+
 namespace RealTime {
 
-/// Return the current time.
+/** Get the current time.
+ *
+ *  @return The current time in seconds as a double, measured from an
+ *          unspecified epoch.
+ */
 inline double now() {
-#if defined HAVE_CLOCK_GETTIME
+#ifdef __EMSCRIPTEN__
+    // Returns the highest-precision representation of the current time that
+    // the browser provides.
+    // [...]
+    // The result is not an absolute time, and is only meaningful in comparison
+    // to other calls to this function.
+    // [...]
+    // Returns: The current time, in milliseconds (ms).
+    return emscripten_get_now() * 1e-3;
+#elif defined HAVE_CLOCK_GETTIME
     // We prefer functions which can return the time with a higher precision.
     // On POSIX platforms that means we prefer clock_gettime() over
     // gettimeofday() over ftime().

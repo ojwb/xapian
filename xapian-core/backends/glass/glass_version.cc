@@ -1,7 +1,7 @@
 /** @file
  * @brief GlassVersion class
  */
-/* Copyright (C) 2006,2007,2008,2009,2010,2013,2014,2015,2016,2017,2024 Olly Betts
+/* Copyright (C) 2006-2026 Olly Betts
  * Copyright (C) 2011 Dan Colish
  *
  * This program is free software; you can redistribute it and/or modify
@@ -46,6 +46,16 @@
 
 #include "xapian/constants.h"
 #include "xapian/error.h"
+
+#ifdef __EMSCRIPTEN__
+# include <emscripten/version.h>
+# if __EMSCRIPTEN_MAJOR__ < 1 || \
+     __EMSCRIPTEN_MAJOR__ == 1 && (\
+         __EMSCRIPTEN_MINOR__ < 39 || \
+	 __EMSCRIPTEN_MINOR__ == 39 && __EMSCRIPTEN_TINY__ < 10)
+#  error Compilation with Emscripten < 1.39.10 is not supported
+# endif
+#endif
 
 using namespace std;
 
@@ -295,25 +305,9 @@ GlassVersion::write(glass_revision_number_t new_rev, int flags)
         else
             tmpfile += "/v.tmp";
 
-#ifdef __EMSCRIPTEN__
-        // Emscripten < 1.39.10 fails to create a file if O_TRUNC is specified
-        // and the filename is the previous name of a renamed file (which it
-        // will be the second time we write out the version file for a DB):
-        //
-        // https://github.com/emscripten-core/emscripten/issues/8187
-        //
-        // We avoid triggering this bug by not using O_TRUNC and instead
-        // truncating once the file is opened.
-        fd = posixy_open(tmpfile.c_str(),
-                         O_CREAT|O_WRONLY|O_BINARY,
-                         0666);
-        if (fd >= 0)
-            ftruncate(fd, 0);
-#else
         fd = posixy_open(tmpfile.c_str(),
                          O_CREAT|O_TRUNC|O_WRONLY|O_BINARY,
                          0666);
-#endif
 
         if (rare(fd < 0))
             throw Xapian::DatabaseOpeningError("Couldn't write new rev file: " + tmpfile,
