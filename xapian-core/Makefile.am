@@ -92,7 +92,7 @@ EXTRA_DIST = ChangeLog ChangeLog.0 ChangeLog.examples HACKING \
  generate-exceptions exception_data.pm preautoreconf
 
 EXTRA_DIST += \
- emscripten/README.md \
+ emscripten/README.rst \
  emscripten/xapianjstest.cc
 
 cmakedir = $(libdir)/cmake/xapian
