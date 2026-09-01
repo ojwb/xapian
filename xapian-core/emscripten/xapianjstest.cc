@@ -24,6 +24,5 @@ int main() {
     termgenerator.index_text("This is a test document.");
     db.replace_document("Q1", doc);
 
-    cout << "Created database with " << db.get_doccount()
-         << " documents" << endl;
+    cout << "Created database with " << db.get_doccount() << " documents\n";
 }
