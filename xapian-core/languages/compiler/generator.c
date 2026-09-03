@@ -205,6 +205,12 @@ void write_comment_content(struct generator * g, struct node * p,
         case c_name:
             write_s(g, p->name->s);
             break;
+        case c_slicefrom:
+            if (p->literalstring && SIZE(p->literalstring) == 0) {
+                write_string(g, "delete");
+                break;
+            }
+            /* FALLTHRU */
         default:
             write_string(g, name_of_token(p->type));
             if (p->name) {

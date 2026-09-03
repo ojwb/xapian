@@ -39,6 +39,14 @@ extern void print_program(struct analyser * a) {
 static void free_among(struct among * q) {
     FREE(q->v);
     FREE(q->commands);
+    FREE(q->af);
+    lose_b(q->table);
+    lose_s(q->table_endianness);
+    while (q->subtree) {
+        struct among_subtree * t = q->subtree;
+        q->subtree = q->subtree->next;
+        FREE(t);
+    }
     FREE(q);
 }
 
@@ -748,9 +756,11 @@ static int nodes_equivalent_(const struct node *p, const struct node *q) {
     return nodes_equivalent(p->right, q->right);
 }
 
-static struct node * make_among(struct analyser * a, struct node * p, struct node * substring) {
+static struct node * make_among(struct analyser * a, struct node * p,
+                                int literalstring_count,
+                                struct node * substring) {
     NEW(among, x);
-    NEWVEC(amongvec, v, p->number);
+    NEWVEC(amongvec, v, literalstring_count);
     struct node * q = p->left;
     struct node * starter = NULL;
     struct amongvec * w0 = v;
@@ -838,7 +848,10 @@ static struct node * make_among(struct analyser * a, struct node * p, struct nod
         }
         q = q->right;
     }
-    if (w1-v != p->number) { fprintf(stderr, "oh! %d %d\n", (int)(w1-v), p->number); exit(1); }
+    if (w1-v != literalstring_count) {
+        fprintf(stderr, "oh! %d %d\n", (int)(w1-v), literalstring_count);
+        exit(1);
+    }
     x->command_count = result - 1;
     {
         NEWVEC(node*, commands, x->command_count);
@@ -913,7 +926,7 @@ static struct node * make_among(struct analyser * a, struct node * p, struct nod
                     a->tokeniser->file, w0->line_number);
         }
 
-    x->literalstring_count = p->number;
+    x->literalstring_count = literalstring_count;
     p->among = x;
 
     if (starter) {
@@ -1050,7 +1063,7 @@ static struct node * read_among(struct analyser * a) {
     struct node * substring = a->substring;
 
     a->substring = NULL;
-    p->number = 0; /* counts the number of literals */
+    int literalstring_count = 0;
     if (!get_token(a, c_bra)) return p;
     while (true) {
         struct node * q;
@@ -1065,7 +1078,7 @@ static struct node * read_among(struct analyser * a) {
                 } else {
                     hold_token(t);
                 }
-                p->number++;
+                literalstring_count++;
                 break;
             case c_bra:
                 if (previous_token == c_bra) {
@@ -1085,11 +1098,13 @@ static struct node * read_among(struct analyser * a) {
                 previous_token = token;
                 continue;
             case c_ket:
-                if (p->number == 0) {
+                if (literalstring_count == 0) {
                     report_error_location(a);
                     fprintf(stderr, "empty among(...)\n");
                 }
-                if (t->error_count == 0) p = make_among(a, p, substring);
+                if (t->error_count == 0) {
+                    p = make_among(a, p, literalstring_count, substring);
+                }
                 return p;
         }
         previous_token = token;
@@ -3158,8 +3173,57 @@ extern void read_program(struct analyser * a, unsigned localise_mask) {
                 continue;
             }
 
-            x->number = among_count++;
-            if (x->function_count > 0) ++a->among_with_function_count;
+            // Check for an already numbered among which is the same as this.
+            for (struct among * y = a->amongs; y != x; y = y->next) {
+                // Some of these are redundant to check, but doing so may allow
+                // us to more quickly detect amongs which are different.
+                if (y->literalstring_count != x->literalstring_count ||
+                    y->command_count != x->command_count ||
+                    y->nocommand_count != x->nocommand_count ||
+                    y->af_count != x->af_count ||
+                    y->function_count != x->function_count ||
+                    y->unique_function_count != x->unique_function_count ||
+                    y->amongvar_needed != x->amongvar_needed ||
+                    y->always_matches != x->always_matches ||
+                    y->same_action != x->same_action ||
+                    y->shortest_size != x->shortest_size ||
+                    y->longest_size != x->longest_size) {
+                    continue;
+                }
+                bool same = true;
+                for (int i = 0; i != y->literalstring_count; ++i) {
+                    const struct amongvec * p = &x->v[i];
+                    const struct amongvec * q = &y->v[i];
+                    int p_size = p->size;
+                    if (p_size != q->size) {
+                        same = false;
+                        break;
+                    }
+                    if (p->function != q->function) {
+                        same = false;
+                        break;
+                    }
+                    const symbol * b_p = p->b;
+                    const symbol * b_q = q->b;
+                    if (memcmp(b_p, b_q, p_size * sizeof(symbol)) != 0) {
+                        same = false;
+                        break;
+                    }
+                    if (!nodes_equivalent(p->action, q->action)) {
+                        same = false;
+                        break;
+                    }
+                }
+                if (!same) continue;
+                x->number = y->number;
+                x->duplicate = true;
+                break;
+            }
+
+            if (!x->duplicate) {
+                x->number = among_count++;
+                if (x->function_count > 0) ++a->among_with_function_count;
+            }
 
             for (int i = 1; i <= x->command_count; i++) {
                 int merge_with = 0;
