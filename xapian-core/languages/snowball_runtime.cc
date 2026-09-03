@@ -1,12 +1,11 @@
+#define SNOWBALL_RUNTIME_THROW_EXCEPTIONS
+
+#include "snowball_runtime.h"
 
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define SNOWBALL_RUNTIME_THROW_EXCEPTIONS
-
-#include "snowball_runtime.h"
 
 #ifdef SNOWBALL_RUNTIME_THROW_EXCEPTIONS
 # include <new>
