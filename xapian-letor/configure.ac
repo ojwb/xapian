@@ -150,9 +150,6 @@ if $GREP '^#define _LARGE_FILES 1$' confdefs.h > /dev/null 2>&1 ; then
 fi
 AC_SUBST([abi_affecting_cxxflags])
 
-XAPIANLETOR_LDFLAGS=
-AC_SUBST([XAPIANLETOR_LDFLAGS])
-
 AC_PREPROC_IFELSE([AC_LANG_SOURCE([[
 #if defined __WIN32__ || defined _WIN32
 #error WIN32
@@ -164,6 +161,9 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [[
 #error MSVC
 #endif
 ]])], [msvc=no], [msvc=yes])
+
+XAPIANLETOR_LDFLAGS=
+AC_SUBST([XAPIANLETOR_LDFLAGS])
 
 xo_fn_unknown_option_check() {
   dnl Some compilers don't error out on unknown options which unhelpfully
