@@ -1669,7 +1669,7 @@ XAPIAN_TEST_CXXFLAGS([-fno-math-errno], [AM_CXXFLAGS])
 dnl Enable Link Time Optimisation (LTO) if the compiler supports it.  This
 dnl produces a significantly smaller library with fewer relative relocations
 dnl (for a shared library build).
-XAPIAN_TEST_CXXFLAGS([-flto], [CXXFLAGS])
+XAPIAN_TEST_CXXFLAGS([-flto], [AM_CXXFLAGS])
 
 dnl **************************
 dnl * Build the output files *
