@@ -85,20 +85,6 @@ CC=$save_CC
 dnl Run tests using the C++ compiler.
 AC_LANG([C++])
 
-dnl Test if the compiler works with $1 added to CXXFLAGS; if it does, add $1 to
-dnl variable $2.  If the test passes, also do $3; if it fails, also do $4.
-AC_DEFUN([XAPIAN_TEST_CXXFLAGS],
-  [
-  XTC_save_CXXFLAGS=$CXXFLAGS
-  CXXFLAGS="$CXXFLAGS $1"
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
-                    [CXXFLAGS=$XTC_save_CXXFLAGS
-                     $2="${$2} $1"
-                     $3],
-                    [CXXFLAGS=$XTC_save_CXXFLAGS
-                     $4])
-  ])
-
 dnl Check for xapian-core.
 XO_LIB_XAPIAN([], [], [xapian-config])
 XO_REQUIRE([2.0.0])
