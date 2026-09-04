@@ -600,6 +600,10 @@ fi
 
 XAPIAN_TEST_LDFLAGS([-Wl,-Bsymbolic-functions], [XAPIANLETOR_LDFLAGS])
 
+dnl New in GCC 5.  Sort of like -Bsymbolic-functions, but for the compiler
+dnl rather than the linker.
+XAPIAN_TEST_LDFLAGS([-fno-semantic-interposition], [XAPIAN_LDFLAGS])
+
 AC_MSG_CHECKING([whether to use SSE instructions on x86])
 case $host_cpu in
   i*86)
