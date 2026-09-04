@@ -741,6 +741,11 @@ dnl compiler that it can optimise them better in some cases.  Apparently
 dnl most BSD-derived platforms don't set errno in this case anyway.
 XAPIAN_TEST_CXXFLAGS([-fno-math-errno], [AM_CXXFLAGS])
 
+dnl Enable Link Time Optimisation (LTO) if the compiler supports it.  This
+dnl produces a significantly smaller library with fewer relative relocations
+dnl (for a shared library build).
+XAPIAN_TEST_CXXFLAGS([-flto], [CXXFLAGS])
+
 dnl **************************
 dnl * Build the output files *
 dnl **************************
