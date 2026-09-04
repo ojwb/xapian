@@ -107,7 +107,7 @@ const int X2 = 2;
 */
 
 inline uint4 REVISION(const uint8_t * b) { return aligned_read4(b); }
-inline int GET_LEVEL(const uint8_t * b) { return (int)(unsigned)(unsigned char)b[4]; }
+inline int GET_LEVEL(const uint8_t * b) { return b[4]; }
 inline int MAX_FREE(const uint8_t * b) { return unaligned_read2(b + 5); }
 inline int TOTAL_FREE(const uint8_t * b) { return unaligned_read2(b + 7); }
 inline int DIR_END(const uint8_t * b) { return unaligned_read2(b + 9); }
