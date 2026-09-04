@@ -238,6 +238,25 @@ Should you wish to disable this for some reason, you can configure like so:
 If you're disabling it because it causes problems, please also report this to
 us (via the bug tracker or mailing lists).
 
+-flto
+-----
+
+We automatically pass -flto to the compiler when building the library when we
+detect that the compiler supports it.  This option enables Link Time
+Optimisation, which has two benefits.
+
+One is that it produces a significantly smaller library (25% in testing on
+x86-64, though this will likely vary by architecture and compiler version).
+Another is that current a shared library build has fewer relative relocations,
+which reduces the dynamic library load time.
+
+Should you wish to disable this for some reason, you can configure like so:
+
+./configure xo_cv_cxxflags__flto=no
+
+If you're disabling it because it causes problems, please also report this to
+us (via the bug tracker or mailing lists).
+
 Developers
 ==========
 
