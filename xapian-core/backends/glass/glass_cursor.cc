@@ -60,6 +60,10 @@ GlassCursor::GlassCursor(const GlassTable *B_, const Glass::Cursor * C_)
           level(B_->level)
 {
     B->cursor_created_since_last_modification = true;
+    if (rare(level < 0)) {
+        // Should never get executed but hopefully works around GCC 13 bug.
+        throw std::bad_alloc();
+    }
     C = new Glass::Cursor[level + 1];
     if (!C_) C_ = B->C;
     for (int j = 0; j <= level; ++j) {
@@ -80,6 +84,10 @@ GlassCursor::rebuild()
         }
     } else {
         Cursor * old_C = C;
+        if (rare(new_level < 0)) {
+            // Should never get executed but hopefully works around GCC 13 bug.
+            throw std::bad_alloc();
+        }
         C = new Cursor[new_level + 1];
         for (int i = 0; i < level; ++i) {
             C[i].swap(old_C[i]);
