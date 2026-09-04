@@ -1,6 +1,10 @@
 #include <stdio.h>
 #if __STDC_VERSION__ < 202311l
 # include <stdbool.h>
+#elif defined _MSC_VER && __STDC_VERSION__-0 <= 202312l
+// MSVC 2026 with -std:clatest defines __STDC_VERSION__ to 202312 (one more
+// than the correct value for C23!) but doesn't provide bool, true and false.
+# include <stdbool.h>
 #endif
 
 #define SNOWBALL_VERSION "3.1.1"
