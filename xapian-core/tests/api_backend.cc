@@ -2082,8 +2082,11 @@ DEFINE_TESTCASE(checksingletable1, glass || honey) {
 
     TEST_EQUAL(Xapian::Database::check(db_path + "/postlist"), 0);
 
-    // FIXME: This code compiler with MSVC seems to cause apitest.exe to exit.
-#ifndef _MSC_VER
+#ifndef __cpp_lib_filesystem
+# warning __cpp_lib_filesystem not defined
+#elif __cpp_lib_filesystem < 201703L
+# warning __cpp_lib_filesystem < 201703L
+#else
     // Also test passing just a leafname.
     auto cwd = std::filesystem::current_path();
     std::filesystem::current_path(std::filesystem::path(db_path));
