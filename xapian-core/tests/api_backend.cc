@@ -2082,14 +2082,19 @@ DEFINE_TESTCASE(checksingletable1, glass || honey) {
 
     TEST_EQUAL(Xapian::Database::check(db_path + "/postlist"), 0);
 
-#ifndef __cpp_lib_filesystem
-# warning __cpp_lib_filesystem not defined
-#elif __cpp_lib_filesystem < 201703L
-# warning __cpp_lib_filesystem < 201703L
+#if 0 //def __DragonFly__
+    // FIXME: Fails to link with:
+    // api_backend.cc:2091: error: undefined reference to 'std::filesystem::current_path[abi:cxx11]()'
+    // /usr/include/c++/8.0/bits/fs_path.h:184: error: undefined reference to 'std::filesystem::__cxx11::path::_M_split_cmpts()'
+    // api_backend.cc:2092: error: undefined reference to 'std::filesystem::current_path(std::filesystem::__cxx11::path const&)'
+    // api_backend.cc:2096: error: undefined reference to 'std::filesystem::current_path(std::filesystem::__cxx11::path const&)'
 #else
-    // Also test passing just a leafname.
     auto cwd = std::filesystem::current_path();
-    std::filesystem::current_path(std::filesystem::path(db_path));
+    //std::filesystem::current_path(std::filesystem::path(db_path));
+    if (chdir(db_path.c_str()) < 0) {
+        tout << "errno: " << strerror(errno) << '\n';
+        FAIL_TEST("chdir() failed");
+    }
     try {
         TEST_EQUAL(Xapian::Database::check("postlist"), 0);
     } catch (...) {
