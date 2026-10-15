@@ -1378,75 +1378,16 @@ jobs:
         path: |
           **/*.log
 
-  mingw64-i686-cross:
-    runs-on: 'ubuntu-22.04'
-    needs: makedist
-    steps:
-    - name: Install CCache
-      uses: hendrikmuhs/ccache-action@v1.2.21
-      with:
-        key: ${{ github.job }}
-    - name: Fetch distribution
-      uses: actions/download-artifact@v8
-      with:
-        name: artifact
-    - name: Unpack distribution
-      run: |
-        pushd xapian-core
-        tar --strip-components=1 -xf xapian-core-*.tar.xz
-        popd
-        pushd xapian-letor
-        tar --strip-components=1 -xf xapian-letor-*.tar.xz
-        popd
-    - name: Install package dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install \
-            g++-mingw-w64-i686-win32 \
-            mingw-w64-i686-dev \
-            binutils-mingw-w64-i686 \
-            libz-mingw-w64-dev \
-            mingw-w64-tools
-    - name: configure
-      run: |
-        export EATMYDATA=
-        export PATH=/usr/lib/ccache:$PATH
-        pushd xapian-core
-        ./configure --enable-werror --host i686-w64-mingw32
-        export XAPIAN_CONFIG=$PWD/xapian-config
-        popd
-        pushd xapian-letor
-        ./configure --enable-werror --host i686-w64-mingw32
-        popd
-    - name: make
-      run: |
-        export PATH=/usr/lib/ccache:$PATH
-        make -j2 -C xapian-core
-        make -j2 -C xapian-letor
-    - name: Run tests
-      run: |
-        # Stop mono binfmt trying to run .exe files.
-        sudo apt-get purge mono-runtime
-        sudo dpkg --add-architecture i386
-        sudo apt-get update
-        sudo apt-get install wine32 wine-binfmt:amd64 wine:amd64
-        export AUTOMATED_TESTING=1
-        export VERBOSE=1
-        export WINEPATH="$PWD/xapian-core/.libs;/usr/lib/gcc/i686-w64-mingw32/`i686-w64-mingw32-g++ --version 2>/dev/null|head -n1|sed 's/.*) //;s/ .*//'`"
-        export XAPIAN_TESTSUITE_RUNNING_UNDER_WINE=1
-        make -j2 -C xapian-core check
-        export WINEPATH="$PWD/xapian-letor/.libs;$WINEPATH"
-        make -j2 -C xapian-letor check
-    - name: Save log files
-      if: ${{ failure() }}
-      uses: actions/upload-artifact@v7
-      with:
-        name: logs-${{ github.job }}-${{ github.sha }}
-        overwrite: true
-        path: |
-          **/*.log
-
-  mingw64-x86-64-cross:
+  mingw64-cross:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [i686, x86-64]
+        include:
+          - arch: i686
+            arch_: i686
+          - arch: x86-64
+            arch_: x86_64
     runs-on: 'ubuntu-22.04'
     needs: makedist
     steps:
@@ -1472,9 +1413,9 @@ jobs:
         # Stop mono binfmt trying to run .exe files.
         sudo apt-get purge mono-runtime
         sudo apt-get install \
-            g++-mingw-w64-x86-64-win32 \
-            mingw-w64-x86-64-dev \
-            binutils-mingw-w64-x86-64 \
+            g++-mingw-w64-${{ matrix.arch }}-win32 \
+            mingw-w64-${{ matrix.arch }}-dev \
+            binutils-mingw-w64-${{ matrix.arch }} \
             libz-mingw-w64-dev \
             mingw-w64-tools \
             wine-binfmt \
@@ -1483,16 +1424,17 @@ jobs:
         sudo dpkg --add-architecture i386
         sudo apt-get update
         sudo apt-get install wine32
+        # FIXME: wine64 only for x86-64 job?
     - name: configure
       run: |
         export EATMYDATA=
         export PATH=/usr/lib/ccache:$PATH
         pushd xapian-core
-        ./configure --enable-werror --host x86_64-w64-mingw32
+        ./configure --enable-werror --host ${{ matrix.arch_ }}-w64-mingw32
         export XAPIAN_CONFIG=$PWD/xapian-config
         popd
         pushd xapian-letor
-        ./configure --enable-werror --host x86_64-w64-mingw32
+        ./configure --enable-werror --host ${{ matrix.arch_ }}-w64-mingw32
         popd
     - name: make
       run: |
@@ -1503,12 +1445,12 @@ jobs:
       run: |
         export AUTOMATED_TESTING=1
         export VERBOSE=1
-        export WINEPATH="$PWD/xapian-core/.libs;/usr/lib/gcc/x86_64-w64-mingw32/`x86_64-w64-mingw32-g++ --version 2>/dev/null|head -n1|sed 's/.*) //;s/ .*//'`"
+        export WINEPATH="$PWD/xapian-core/.libs;/usr/lib/gcc/${{ matrix.arch_ }}-w64-mingw32/`${{ matrix.arch_ }}-w64-mingw32-g++ --version 2>/dev/null|head -n1|sed 's/.*) //;s/ .*//'`"
         export XAPIAN_TESTSUITE_RUNNING_UNDER_WINE=1
-        # This used to work, but started to fail as of c8be1001e52b.  The
+        # This used to work, but started to fail with x86-64 as of c8be1001e52b.  The
         # parent commit dc08ce918f13 built OK at the time, but rebuilding now
-        # it also fails so this isn't due to a Xapian code change.
-        # make -j2 -C xapian-core check
+        # it also fails so this isn't due to a Xapian code change.  FIXME
+        make -j2 -C xapian-core check
         export WINEPATH="$PWD/xapian-letor/.libs;$WINEPATH"
         make -j2 -C xapian-letor check
     - name: Save log files
