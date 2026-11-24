@@ -1,8 +1,10 @@
-up to: 64c7de24cb5cfae61017e05bd9f4094d88e27c2d
+up to: 355162902b249661cc6709e74925b88a85033140
 
 Xapian-bindings 2.1.1 (UNRELEASED):
 
 Documentation:
+
+* NEWS: Fix typo in old entry.
 
 General:
 
@@ -10,19 +12,71 @@ General:
   in 2008, and it was removed in SWIG 4.4.0.  The replacement is the exactly
   equivalent (but better named) $action, which was added in 2001.
 
+* Use __VA_ARGS__ for XAPIAN_NONNULL macro, which has been supported by SWIG
+  since 2002.
+
 Build System:
+
+* Enable more C++ compiler warnings for SWIG-generated code.  Modern SWIG avoids
+  or suppresses warnings about unused or uninitialised variables, and enabling
+  such warnings can catch bugs in our custom typemaps (for example, they
+  found a `std:string` typo in java.i which parsed as label `std` followed by a
+  use of string, and compiled because `using namespace std;` was in effect -
+  this one was fortunately essentially harmless).
+
+* Improvements for building with MSVC.  Building the bindings with MSVC is not
+  currently tested by CI, so this may still not currently work out of the box,
+  but these changes should at least get us closer.  If you're wanting to build
+  the bindings with MSVC, please test and report problems or send patches.
+
+  + Automatically use -nologo flag which stops MSVC from spamming build
+    logs with a banner on every invocation.  We were previously adding it in
+    all the MSVC CI jobs and listing it in the INSTALL instructions, but those
+    are simpler if we just add it automatically.  This also means users can't
+    miss it off and send us unnecessarily huge build logs if they hit a build
+    problem.
+
+  + Add missing configure check for MSVC, which means some existing configure
+    code to enable some MSVC-specific options now actually triggers.
+
+  + Automatically add -EHsc to AM_CXXFLAGS rather than documenting that users
+    need to do this in INSTALL.
+
+  + Check if `-g` emits a warning (as it does with MSVC) and override default
+    CFLAGS=-g if it does.
+
+  + Explicitly handle clang-cl, which presents a more MSVC-like command line
+    interface.
+
+* Simplify warning flags enabled for Intel classic compiler.
 
 Packaging:
 
 Portability:
 
+* Document IBM xlC as unsupported in INSTALL and remove some conditional code
+  for it.  This compiler doesn't support C++17 which is required since Xapian
+  2.0.0.  Note that IBM Open XL C/C++ is a different compiler, which is based
+  on clang and so should support newer C++ standards.
+
 CSharp:
 
 Java:
 
+* Add tests of Database.getUuid() and Stem.getAvailableLanguages().  See #856.
+
 Lua:
 
 Perl:
+
+* Use Perl's $Config{ccflags} when compiling the Perl bindings, like the old
+  Search::Xapian bindings did.  These flags can contain -D options which change
+  the layout of perl's internal structures - for example, on 32-bit Linux,
+  -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64, which changes the size of Stat_t
+  (PL_statcache) in the interpreter structure, so every interpreter field after
+  it is at a different offset in the extension, leading to undefined behaviour.
+  The flags are filtered to remove GCC option -Wdeclaration-after-statement if
+  present, since this is not meaningful for C++.  Patch from Vitaly Lipatov.
 
 PHP:
 

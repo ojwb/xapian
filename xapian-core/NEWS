@@ -1,4 +1,530 @@
-up to: eb158aeb497b88b4daf7545806dadf196a878bea
+up to: 1158c05929b2423f163c1b9bb153aa41daee6705
+
+    Fix OrPostList::check() bug
+
+    In the case where the OrPostList decays to AndPostList or
+    AndMaybePostList, the returned valid flag should now be set
+    correctly (previously it was always set to true).
+
+    This bug was introduced in Xapian 2.0.0; 1.4.x is not affected.
+    It could result in returning documents which don't match the
+    query.
+
+    Reported by Ludovic on the xapian-discuss list.
+
+
+
+    Improve percentages with MatchAll subqueries
+
+    In some situations a MatchAll subquery was counted as a weighted
+    leaf query for the denominator, but not for the numerator, leading
+    to the top document not being able to achieve 100%.
+
+    We now consistently don't count MatchAll as a weighted leaf query
+    as it doesn't get a Weight object.
+
+
+
+    Handle positional query with value range subquery
+
+    We would throw Xapian::InvalidArgumentError for such cases, but we now
+    handle these like we do for other subqueries which we know never have
+    any positional information, replacing the positonal query with
+    MatchNothing.
+
+
+    Fix SelectPostList::skip_to() bug
+
+    SelectPostList::skip_to() could call get_docid() on its sub-postlist
+    when the sub-postlist hadn't yet started and then get_docid() isn't
+    valid to call.  This could result in documents which shouldn't match
+    being included in the results.
+
+    This bug was introduced in 2.0.0.
+
+    Related to #857, reported by Adrian Ratiu.
+
+
+
+    Fix AndNotPostList::skip_to() bug
+
+    AndNotPostList::skip_to() could call get_docid() on its left
+    sub-postlist when the sub-postlist hadn't yet started and then
+    get_docid() isn't valid to call.  This could result in documents which
+    shouldn't match being included in the results.
+
+    This bug was introduced in 2.0.0.
+
+    Fixes #857, reported by Adrian Ratiu.
+
+
+
+Author: Sergey Fedorov <vital.had@gmail.com>
+    Fix HAVE_ARC4RANDOM UUID generation code
+    Closes https://github.com/xapian/xapian/pull/345
+
+
+    configure: Probe for zlib with pkg-config if available
+    If it isn't, we probe using autoconf macros as before.
+
+
+    Avoid including zlib.h from config.h
+    We only do this for MSVC (and maybe mingw32, but that's pretty much
+    obsolete now), and it causes pain because then any `-I` option to
+    find zlib.h needs to always used.
+
+
+    Suppress ubsan defined behaviour complaints
+    Fix ubsan conversion complaints
+    These are defined behaviour, but value changes on implicit conversion are
+    something we want to avoid because they can result in bugs when unexpected.
+
+
+
+    version_h.cc: Drop unneeded config.h include
+    It looks like this hasn't been needed since
+    af22c624627be7c16df246e0f37fc98efddfd69e (over 20 years ago!)
+    This is now causing problems because config.h includes zlib.h for MSVC
+    but we don't use ZLIB_CPPFLAGS when generating version.h.
+
+commit 0df36e086d60e5c9d4fd1726842d1f944b7e3276
+Author: Olly Betts <olly@survex.com>
+Date:   Fri Oct 9 14:05:48 2026 +1300
+
+    Fix char vs unsigned char tests
+
+commit 75f296cab9ecdfdaf819afab3fa805ad0ef51f51
+Author: Olly Betts <olly@survex.com>
+Date:   Fri Oct 9 13:48:56 2026 +1300
+
+    Sort out namespace qualification
+
+commit ae3b94124bc33267abcf4a5f0ad76dca03f653a4
+Author: Olly Betts <olly@survex.com>
+Date:   Thu Sep 10 12:23:06 2026 +1200
+
+    Add Xapian::C::isalpha() and friends
+
+    These functions mostly follow those in <ctype.h> but always work
+    in the C locale, so are suitable for parsing file formats, etc.
+
+    They're long been available internally, and are already exposed
+    so that omega can use them, but they may be useful to applications
+    using Xapian as well.
+
+    See #63
+
+
+
+    Fix bugs in optimisation of term indexing all docs
+
+    If a query has such a term, we don't need its wdfs, and the used docids
+    don't form a contiguous range starting at 1, then we use an alldocs
+    PostList instead.  We call set_term() on this so it knows the real term
+    name, but unfortunately that termname was getting used in ways that it
+    shouldn't be.
+
+    For glass this could result in DatabaseCorruptError being thrown when
+    the database wasn't actually corrupt.
+
+    For both glass and honey it meant some operations such as skip_to()
+    could cause us to switch to the real postlist for the term.  The only
+    effects of that are on performance - we use the alldocs PostList when
+    we can because it's likely to be more disk cache friendly since the
+    alldocs PostList works from the document length data, which will
+    typically be used in most queries.
+
+    It seem the conditions to trigger DatabaseCorruptError are uncommon
+    in general, but it has hit multiple supmail users, probably due to
+    the way sup implements its default search-by-date.
+
+    Fixes #855, reported by Dan Callaghan.
+
+
+
+    safeunistd.h: Update description
+    MSVC LFS has been handled in config.h since
+    f48dab6cfcfbe184a0c65eba92251f8a1325d951.
+
+
+
+    Enable -Wzero-as-null-pointer-constant where useful
+
+
+    Consistently use nullptr rather than 0 or NULL
+    This has been done everywhere, but the user-visible aspect is from the
+    API headers as it means that user code can be compiled with compiler
+    options such as GCC's -Wzero-as-null-pointer-constant.
+
+    This also fixes a single use of assigning 0 to a bool variable in the
+    API headers.
+
+
+    Check for clang >= 6 in configure
+    The cppreference compiler-support pages suggest we probably need at
+    least this for decent C++17 support, and it seems sufficiently old that
+    nobody's likely to need to use anything older anyway.  We also can't
+    easily test anything nearly that old in CI.
+
+
+commit 8aef51694bdce4e6643b9ced4de990ce24bdebc1
+Author: Olly Betts <olly@survex.com>
+Date:   Fri Oct 2 17:38:06 2026 +1300
+
+    Delete thread_param struct sooner
+
+Notes:
+    Backport: RELEASE/1.4:no
+
+
+    Fix MSVC warnings and enable -W3 by default
+    This is apparently the default warning level in their IDE.  CI runs with
+    warnings made into errors so we shouldn't regress on this now.
+
+
+
+    Fail with EFBIG for stub file >= 1MB
+
+    If we are asked to open a large random file as a database, we'll
+    look at the start and see it doesn't look like a Xapian single-file
+    database and so try to load it as a stub file.
+
+    This is more problematic now as we recently changed to reading the
+    whole of a stub file into memory.
+
+    A simple protection is to limit the size of a file we'll try to
+    read as a stub file.  Stub files should never be anywhere near 1MB.
+
+
+
+
+    Use TermIterator() instead of TermIterator(NULL)
+
+    Both construct an end iterator, but the latter is inlined from the
+    API headers.
+
+
+
+    Probe for MSVC -nologo before LT_INIT
+
+    This means it gets included in the value of CXX which libtool uses.
+
+
+
+    Use Xapian::termcount for position vector size_type
+
+    The vector holds unique termcount values so termcount seems the
+    best choice for size_type (setting every single position would
+    need one more than the size allows, but that's not a useful case
+    and already wasn't supported when sizeof(std::size_t) ==
+    sizeof(Xapian::termcount).
+
+
+
+    Improve API docs for Database methods
+
+
+
+    Fix handling of DB method corner cases
+
+    An inmemory shard containing no documents now returns 2 for
+    get_doclength_lower_bound() for consistency with other backends.
+
+    Database::get_unique_terms() and Database::get_wdfdocmax() now throw
+    Xapian::DocNotFoundError instead of returning 0 when passed a docid
+    which isn't in use.
+
+    Database::reconstruct_text() now throws InvalidArgumentError instead
+    of DocNotFoundError when passed docid 0.
+
+    A Database containing no shards now consistently responds in the same
+    way as a database containing a shard with no documents:
+
+    * Database methods termlist_begin(), get_doclength(), get_unique_terms(),
+      get_wdfdocmax(), get_document(), reconstruct_text() and
+      delete_document() now throw DocNotFoundError instead of
+      InvalidOperationError.
+
+    * Database::positionlist_begin() no longer throws InvalidOperationError
+      and instead returns a PositionIterator already at its end.
+
+    * Database::has_positions() now returns false instead of throwing
+      InvalidOperationError.
+
+
+
+    Update lcov branch coverage option
+
+    Current versions of lcov warn that `lcov_branch_coverage` is deprecated.
+    As best I can make out, the newer `branch_coverage` option was
+    added in lcov 2.0 (e.g. present in Debian trixie and Ubuntu 24.04).
+
+
+
+    Check target length in EditDistanceCalculator
+
+    configure: Send $CXXCPP stderr to config.log
+
+commit ce66c90a7011187ea033d9de16438c77535316f0
+Author: Olly Betts <olly@survex.com>
+Date:   Wed Sep 23 13:06:02 2026 +1200
+
+    Override CFLAGS=-g default
+
+    configure: Check if -g emits a warning
+    Previously CXXFLAGS defaulted to `-g` for MSVC, which resulted in a
+    warning that option `-g` is unknown for every file compiled.
+
+    Use __VA_ARGS__ for XAPIAN_NONNULL macro
+    Variadic macros were standardised in C++11 so we can now use them in
+    the public API headers.  This seems cleaner, and in particular it
+    avoids an MSVC warning when the argument is empty.
+
+    Clean up MSVC/clang-cl handling
+    Make $msvc a tri-state.
+    Don't pass -nologo to clang-cl as it is a no-op there and just
+    serves to make the compile commands and logs longer.
+
+    Get build working with clang-cl
+
+    Spot clang-cl "unknown argument" warnings
+    `clang-cl` only warns about unknown options (presumably to assist
+    use as a drop-in replacement for MSVC).  This meant our `configure`
+    added `-fno-math-errno` to CXXFLAGS, which generates a warning on
+    every file compiled.  Worse, in maintainer-mode that warning is promoted
+    to an error at build-time by `-Werror`.
+
+
+    Make posixy_rename() work when the target is open
+    In this case MoveFileExA() fails, but ReplaceFileA() works.
+    MSDN documents that for two of the error cases of ReplaceFileA()
+    there's no file with the replacement name any more so it's clearly not
+    an atomic replacement.
+
+    MSVC: Automatically add -nologo flag
+    Without this MSVC spams build logs with a banner on every invocation.
+    We were previously adding it in all the MSVC CI jobs and listing it
+    in the INSTALL instructions, but those are simpler if we just add
+    it automatically.  It also means users can't miss it off and send us
+    unnecessarily huge build logs if they hit a build problem.
+
+    Make posixy_rename() work when the target is open
+    Testing shows MoveFileExA() fails in that case but ReplaceFileA() works.
+    However ReplaceFileA() fails unless the target already exists, so we
+    need to fall back to MoveFileExA().
+
+    Rework reading of stub database files
+    They should be a few KB at most, so they're now read into a temporary
+    block of memory and parsed from there.
+    We now read from a file descriptor, which fixes a potential race for
+    stub database files >= 2KB being read as `auto`.  In this case we
+    need to determine if the file is a stub file or a single file database
+    (and if the latter, if it's glass or honey).  To do this we open it
+    and look at the file magic which is at the start of a single file
+    database.  If we determined it was a stub database we previously then
+    closed it and opened it again to read the stub, which is a race if
+    a single file database is replaced with a stub database.  We now
+    keep the file descriptor from the file magic test open and read the
+    stub file from that.
+    Stub files are now opened using posixy_open(), which allows them to be
+    deleted while open on Microsoft Windows.  Fixes #229, reported by
+    Richard Boulton.
+
+    Move testcase pack_uint_preserving_sort1 to unittest
+    That's where unit tests for the other pack.h functions live.
+
+    Consistently throw DatabaseCorruptError for EOF while reading a DB.
+
+    Use standard stub file parser in replication code
+    We need to parse the stub file to determine whether the real DB which
+    it references is 0 or 1.
+    A user visible change is that there's now more syntax checking of the
+    stub file in this case, which seems like an improvement.
+
+    Avoid unnecessary lseek()
+    When opening a single-file database, the caller passes in a file
+    descriptor, and Xapian will read the database starting at the
+    file descriptor's current file offset, which allows the database to be
+    embedded within a larger file.
+    Now we call lseek() once on opening to read this positon, and after
+    that we don't use the file offset at all (assuming the platform provides
+    pread() and implements it with POSIX semantics - if it doesn't then we
+    will still change the file position, which seems unavoidable on such
+    platforms).
+    Xapian takes ownership of the fd passed in, so if the caller wants to
+    keep using the fd the obvious solution is to call dup(), which creates
+    another fd, but it shares its file position with the fd passed to dup().
+    Previously Xapian would call lseek() to set the offset - mostly
+    within the API call to open the database, but also if Database::reopen()
+    was called.  This might cause problems if the caller used lseek() on
+    its fd.
+    In most uses it's unlikely to be useful to call reopen() on an embedded
+    database, so we suspect this is a rare situation in practice.
+
+    Refactor to have one copy of sync logic
+    Pass the database flags to io_sync() and handle DB_NO_SYNC and
+    DB_FULL_SYNC there rather than in multiple places.
+    The functional change is that syncing of honey's database tables
+    now honours these flags.
+
+    Factor out code to update a file atomically
+    This is used for updating stub database files in compaction and
+    replication, and for replicating glass version files.
+    Functional changes:
+    * We now fsync() (or similar) the updated stub file before renaming it
+      to replace the existing one.
+    * Replicating glass version files now honours Xapian::DB_NO_SYNC and
+      Xapian::DB_FULL_SYNC, and throws an exception if syncing fails.
+    * Replication was throwing Xapian::DatabaseOpeningError if the
+      rename failed, which seems like the wrong exception.  Now
+      Xapian::DatabaseError is thrown.  If you catch Xapian::DatabaseError
+      you'll also catch Xapian::DatabaseOpeningError as it's a subclass.
+
+    configure: Make RTTI test more thorough
+    Check we can link as well as compile.
+
+    Remove lingering reference to HP's aCC
+    We noted in the 2.0.0 NEWS entry that compilation with HP's aCC is no
+    longer supported because it lacks C++17 support which we now require.
+
+    Update for dropping support for IBM xlC
+    We noted in the 2.0.0 NEWS entry that compilation with IBM's xlC is no
+    longer supported because it lacks C++17 support which we now require.
+    Remove some lingering special case code for it, and document it as
+    unsupported in the INSTALL files.  Also note that IBM Open XL C/C++ is a
+    different compiler.  It's based on clang and so should support newer C++
+    standards.
+
+    MSVC: Add -EHsc to AM_CXXFLAGS
+    Previously we told users to do this in INSTALL, and set it in the
+    CI config, but it is more helpful to just do it automatically for
+    MSVC.
+
+    serialise_double(): Use signbit() instead of < 0
+    We already switched for signed zero checks where it actually makes a
+    difference, but the generated code seems slightly more efficient in
+    general.
+
+    honey: Optimise merging chunks during compaction
+    Combine loops over the chunks.
+
+    CI: Adjust sanitizer flags
+    The functional changes are that we now enable UBSan's `vptr` check,
+    and we now select integer-related UBSan checks by specifying groups
+    which enables a few additional checks, and means we're likely to
+    get more new checks automatically.
+
+    Mark up deliberate unsigned overflow
+
+    Use `if constexpr`
+
+    internaltest: Avoid unsigned integer overflow
+
+    honey: Use unsigned for fixed-width doclen chunks
+    The size is currently one of 8, 16, 24, 32 so this makes no difference
+    in practice, but calculating a negative size and then casting it to an
+    unsigned type is a trap for future changes here.
+
+    Simplify redundant lazy weight calculation (around MatchSpy)
+
+    Adjust code for new sanitiser
+    Enable use of implicit-integer-sign-change (which checks for defined
+    behaviour which can be problematic if it happens where not intended).
+
+    Fix double serialisation on non-IEEE754 BE platforms
+    Xapian 2 switched to serialising doubles as little-endian IEEE 754.
+    This is extremely efficient for platforms which use that format, and
+    a very efficient for platforms using big-endian IEEE 754.  Most modern
+    platforms are the former, with most of the rest being the latter.
+    There's fallback code for platforms which don't use IEEE 754 format
+    for doubles, which was failing to byte swap on big endian platforms.
+    That's fixed by this commit, and now all platforms serialise compatibly.
+    The byte-swapping was missing in both serialisation and unserialisation
+    code, the remote backend would work if both client and server were on
+    the same architecture, but some combinations with differing
+    architectures would fail.  This change means that a client running
+    Xapian 2.0.0 to 2.1.0 and a server running >= 2.1.1 (or vice versa)
+    won't work together, but only on unusual platforms which don't use IEEE
+    754 doubles and are big-endian.
+
+    Fix sortable_serialise() handling of negative zero
+    The fallback code used on platforms which don't use IEEE double
+    representation was squashing negative zero to positive zero in
+    both serialise_double() and unserialise_double().
+
+    Fail test if (un)serialise_double() roundtrip fails
+    Previously we just wrote a message to `cout` and the test still passed.
+
+    Use std::find_if_not() (added in C++11)
+
+    Simplify character checks in QueryParser
+    In some places we know we are checking a byte.
+
+    Use __VA_ARGS__ for UNSIGNED_OVERFLOW_OK macro
+    This means it can now wrap expressions containing commas.
+
+    CI: Turn on unsigned-shift-base sanitiser
+    Don't reference unsigned-shift-base for clang < 12
+    Adjust code or markup places where we knowingly shift bits out.
+
+    QueryParser: Improve positional window size corner cases
+    Clamp the window size to fit in Xapian::termcount, which should give
+    correct answers since terms can't be further apart than that.
+    Previously the value was truncated to fit in the smaller of
+    Xapian::termcount or size_t.
+    Previously `NEAR/0` and `ADJ/0` failed to parse which would typically
+    trigger a reparse with most of the flags turned off, but it seems more
+    helpful to treat it as meaning the terms need to be as close as possible
+    (i.e. the same as `/1`).
+    Also on platforms where size_t is 32-bit, previously `NEAR/4294967295`
+    and `ADJ/4294967295` would perform an `AND` query, while
+    `NEAR/4294967296` and `ADJ/4294967296` were parse errors.
+
+    Use C++11 member initialisation
+
+    honey: Handle EOF/error via exception
+    Change BufferedFile::read() to return `unsigned char` and throw
+    an exception if we hit EOF or get a read error.  Previously its
+    return value had getc()-like semantics (unsigned char value in
+    an int, or EOF).  This simplifies code that uses this method
+    and eliminates potential for bugs if the caller fails to check
+    for EOF.
+
+
+commit d55bca663cbe58e37cbc9d2bb3465622fb5d298e
+Author: Olly Betts <olly@survex.com>
+Date:   Thu Sep 10 16:54:29 2026 +1200
+
+    Annotate code where unsigned << overflows
+
+    This is defined behaviour, but it's rarely relied on and if it
+    happens unintentionally could be a bug.
+
+    Turn off part of testcase as MSVC workaround
+    Turn off std::filesystem use on DragonflyBSD too
+    We get a link error there.  Needs investigating, but let's get CI green
+    again in the short term.
+
+    Use std::find_if_not() (added in C++11)
+    We can use e.g. `C_isspace` as a predicate in `std::find_if_not()` which
+    means we no longer need `C_isnotspace`, etc (so remove these), and we
+    can avoid using a lambda function just to flip the sense of a
+    `std::find_if()` predicate.
+
+    Mark up unsigned overflow in Database::check()
+    There's an expected unsigned overflow when checking a single table
+    and passing a leafname for the filename.
+
+    Mark up expected unsigned overflow in tools
+    copydatabase, xapian-inspect and xapian-inspect-honey each have one
+    instance.
+
+    Fix check for testcases with a numeric suffix
+    If a testcase doesn't have a numeric suffix we intend to skip this
+    check but actually would check if an empty testcase name was
+    specified.  It seems it's not actually possible to so this was
+    probably a latent bug (and fairly harmless even if there is a way
+    to do so).
 
 Xapian-core 2.1.1 (UNRELEASED):
 
@@ -13,7 +539,6 @@ API:
     .
     This reduces the number of relative relocations in the shared library
     built on Linux by 8901, bringing us down to much closer to 1.4.x again.
-
 
   + French:
 
@@ -73,6 +598,8 @@ build system:
 
     Add -fno-math-errno to AM_CXXFLAGS not CXXFLAGS
     CXXFLAGS should be left available for the user to override.
+
+* Simplify warning flags enabled for Intel classic compiler.
 
 documentation:
 

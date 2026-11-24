@@ -1,4 +1,63 @@
-up to: 85af5dcbb69c960f91295d8229bf90f12323686e
+up to: 044c8e5c7c0656e9cb1f05939d761b2051b00592
+
+    configure: Probe for zlib with pkg-config if available
+    If it isn't, we probe using autoconf macros as before.
+
+    Fix ubsan conversion complaints
+    These are defined behaviour, but value changes on implicit conversion are
+    something we want to avoid because they can result in bugs when unexpected.
+
+    Workaround magic.h from 5.48 breaking if ssize_t macro defined
+
+    Qualify use of hex_digit() with Xapian::C::
+    Add Xapian::C::isalpha() and friends
+    These functions mostly follow those in <ctype.h> but always work
+    in the C locale, so are suitable for parsing file formats, etc.
+    They're long been available internally, and are already exposed
+    so that omega can use them, but they may be useful to applications
+    using Xapian as well.
+    See #63
+
+    Enable -Wzero-as-null-pointer-constant where useful
+
+    Consistently use nullptr rather than 0 or NULL
+
+    [letor,omega] Add clang >=6 configure check
+
+    omindex: Add mapping from .xht to text/html
+    `.xht` seems a less common extension for XHTML, but it is listed in
+    RFC3236 as an extension in use.
+
+    omindex: Support message/global
+    This is like message/rfc822 but without the 7-bit clean requirements.
+
+    Fix MSVC warnings and enable -W3 by default
+    This is apparently the default warning level in their IDE.  CI runs with
+    warnings made into errors so we shouldn't regress on this now.
+
+    Skip after peek() with get() not seekg(tellg()+1)
+    Using get() seems simpler and clearer and should be at least as
+    efficient.
+
+
+    Use parseint.h to parse failed log entries
+
+    Return available memory as 64-bit value
+
+    Fix MD5 of data > 4GB
+
+    Fix some MSVC integer conversion warnings
+
+    omega: Squash silly Microsoft deprecation warnings
+    All the things warned about are either not problematic or can be
+    used in non-problematic ways.  None of them are Microsoft's to deprecate
+    anyway - POSIX get to deprecate POSIX things and ISO get to deprecate
+    ISO C/C++ things.
+
+
+    Fix string_view constructor use
+    It looks like this relied on a string iterator being (or being
+    implicitly convertible to) `const char*`.
 
 Omega 2.1.1 (UNRELEASED)
 
@@ -10,6 +69,11 @@ indexers:
 
 * omindex:
 
+  + Work around bug in libextractor <= 1.19 where the data_len value is one
+    byte shorter than documented in some cases.  We've not found a case where
+    this bug affects omindex use of libextractor, so it's possible it was only
+    a latent problem.
+
 * scriptindex:
 
 omega:
@@ -18,16 +82,63 @@ templates:
 
 testsuite:
 
+* Set UBSan to halt_on_error, so that unsigned overflow errors can't get
+  ignored (previously they just wrote a message to stderr, which is discarded
+  by some tests).
+
+* omegatest.pl: Remove redundant setting of UBSAN_OPTIONS, which is also set by
+  Makefile.am.
+
+* Annotate cases of expected unsigned overflow and implicit integer sign change
+  (which have defined behaviour but are rarely relied on and may indicate a
+  bug).
+
 build system:
+
+* Improvements for building with MSVC.  Building the omega with MSVC is not
+  currently tested by CI, so this may still not currently work out of the box,
+  but these changes should at least get us closer.  If you're wanting to build
+  the omega with MSVC, please test and report problems or send patches.
+
+  + Automatically use -nologo flag which stops MSVC from spamming build
+    logs with a banner on every invocation.  We were previously adding it in
+    all the MSVC CI jobs and listing it in the INSTALL instructions, but those
+    are simpler if we just add it automatically.  This also means users can't
+    miss it off and send us unnecessarily huge build logs if they hit a build
+    problem.
+
+  + Add missing configure check for MSVC, which means some existing configure
+    code to enable some MSVC-specific options now actually triggers.
+
+  + Automatically add -EHsc to AM_CXXFLAGS rather than documenting that users
+    need to do this in INSTALL.
+
+  + Check if `-g` emits a warning (as it does with MSVC) and override default
+    CFLAGS=-g if it does.
+
+  + Explicitly handle clang-cl, which presents a more MSVC-like command line
+    interface.
+
+* Simplify warning flags enabled for Intel classic compiler.
 
 * configure.ac: Remove macro XAPIAN_TEST_CXXFLAGS which has been unused since
   we dropped support for Sun C++ in 2.0.0.
 
 portability:
 
+* Get build working with clang-cl (clang with a more MSVC-like command line
+  interface).
+
+* Document IBM xlC as unsupported in INSTALL and remove some conditional code
+  for it.  This compiler doesn't support C++17 which is required since Xapian
+  2.0.0.  Note that IBM Open XL C/C++ is a different compiler, which is based
+  on clang and so should support newer C++ standards.
+
 * Use C++17 [[fallthrough]] instead of magic "FALLTHRU" comments.
 
-* Microsoft Windows: Use explicit A-suffixed Win32 APIs more widely.
+* Use C++11 std::find_if_not().
+
+* Microsoft Windows: Use explicit A-suffixed Win32 APIs.
 
 packaging:
 
